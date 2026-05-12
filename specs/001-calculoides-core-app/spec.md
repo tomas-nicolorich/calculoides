@@ -85,7 +85,7 @@ As a group member, I want to transfer my budget share to another member (e.g., I
 - Q: Can non-owners manage group members? → A: Owner-Only: Only the group owner can invite or remove members.
 - Q: How to handle savings goal contribution overrides? → A: Dynamic Deadline: Recalculate completion date and show difference between original and projected.
 - Q: How should mid-month income updates be handled? → A: Retroactive: Changes apply to all expenses and budgets for the entire current calendar month.
-- Q: Should historical records maintain income percentage history? → A: Simplified: Archived records only store the total monthly "settlement" amount per user, without preserving the underlying share logic.
+- Q: Should historical records maintain income percentage history? → A: Detailed History: Archived records MUST preserve individual expense entries while also displaying the final total monthly settlement amount per user. Underlying share logic is preserved for that specific archive period.
 - Q: How do budget categories reset? → A: Manual Archive Reset: Categories do not automatically reset based on the calendar; the spent balance resets to 0 only when the group owner performs an archive action.
 - Q: Are budget categories private if they have a subset of members? → A: All Visible: All group members can see all categories and their statuses, even if they are not part of a specific category's member subset.
 - Q: How are deletions handled? → A: Permanent: Deletions of expenses and budget categories are immediate and irreversible.
@@ -95,20 +95,20 @@ As a group member, I want to transfer my budget share to another member (e.g., I
 ### Functional Requirements
 
 - **FR-001**: System MUST support multiple independent groups with strictly isolated data.
-- **FR-002**: System MUST calculate income percentage shares based on the total combined income of all members (or selected subset) in a group. Mid-month income updates MUST be applied retroactively to all expenses and budgets for the entire current calendar month.
+- **FR-002**: System MUST calculate income percentage shares based on the total combined income of all members (or selected subset) in a group. Mid-month income updates MUST be applied retroactively to all expenses and budgets for the entire current calendar month, excluding already archived records.
 - **FR-003**: System MUST allow members to log expenses with description, amount, date, and payer. Deletions of expenses MUST be permanent and irreversible.
 - **FR-004**: System MUST display a dashboard showing income overview, remaining balance per user, recent expenses, transfers, and category status. All categories MUST be visible to all members of the group. Deletions of budget categories MUST be permanent and irreversible.
 - **FR-005**: System MUST allow budget transfers between members within a group, restricted to moving quota within the same budget category.
-- **FR-006**: System MUST calculate monthly savings contributions based on target amount, target date, and income percentages. If contributions are overridden, the system MUST recalculate the projected date and display the variance from the original target date.
-- **FR-007**: System MUST allow group owners to archive expenses for specific date ranges; archived records MUST be moved to an immutable historical view. These records MUST only store the final total monthly settlement amount per user. Upon archiving, the spent balance of the affected budget categories MUST reset to 0.
+- **FR-006**: System MUST calculate monthly savings contributions based on target amount, target date, and income percentages. Any group member MUST be able to override their own or any other member's contribution. If contributions are overridden, the system MUST recalculate the projected date and display the variance from the original target date.
+- **FR-007**: System MUST allow group owners to archive expenses for specific date ranges; archived records MUST be moved to an immutable historical view. This view MUST preserve individual expense records while also displaying the final total monthly settlement amount per user. Upon archiving, the spent balance of the affected budget categories MUST reset to 0.
 - **FR-008**: System MUST support a single-owner model per group. The creator is the initial owner, and ownership can be transferred to any other active group member. Owners have exclusive permissions to invite/remove members, transfer budgets for all members, and archive expenses. If an owner leaves without transferring, ownership MUST automatically transfer to the member with the longest tenure.
 
 ### Key Entities
 
 - **User**: Individual account holder.
 - **Group**: Container for shared budgeting, with a name and a collection of Members.
-- **Member**: A User within the context of a specific Group, having a specific monthly income and an ownership status.
-- **Budget Category**: A named bucket (e.g., "Rent") with an icon, total budget, and optionally a restricted list of Members.
+- **Member**: A User within the context of a specific Group, having a specific monthly income, an ownership status, and a `joinedAt` timestamp (used for tenure logic).
+- **Budget Quota**: The specific portion of a category's budget allocated to a member based on their income share or transfer adjustments.
 - **Expense**: A specific transaction tied to a Budget Category, recorded by a Member.
 - **Transfer**: A budget adjustment between two Members.
 - **Savings Goal**: A target amount and date with calculated monthly contributions.

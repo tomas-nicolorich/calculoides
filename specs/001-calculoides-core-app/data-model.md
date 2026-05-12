@@ -40,14 +40,27 @@ This document defines the database schema and entity relationships for the Calcu
 ### SavingsGoal
 - A target financial objective for the group.
 - Calculates contributions based on `targetAmount` and `targetDate`.
+- Individual member contributions can be overridden via `SavingsGoalContribution`.
+
+### SavingsGoalContribution (Join Table: GroupMember <-> SavingsGoal)
+- Stores manual overrides for a specific member's contribution to a savings goal.
+- If no entry exists, the contribution is calculated proportionally.
 
 ### Invitation
 - Tracks pending group invites sent via email.
+
+## Derived Concepts (Non-persistent)
+
+### Budget Quota
+- A virtual field calculated at runtime.
+- Represents the portion of a category's `monthlyBudget` assigned to a member.
+- Calculated as: `(Category Monthly Budget) * (Member Income Share %) + (Sum of Transfers IN) - (Sum of Transfers OUT)`.
 
 ## Relationships
 
 - **Many-to-Many**: Users and Groups via `GroupMember`.
 - **Many-to-Many**: GroupMembers and Categories via `CategoryMember`.
+- **Many-to-Many**: GroupMembers and SavingsGoals via `SavingsGoalContribution`.
 - **One-to-Many**: Group to Categories, Expenses, SavingsGoals.
 - **One-to-Many**: Category to Expenses, Transfers.
 
@@ -104,6 +117,7 @@ model GroupMember {
   transfersFrom    Transfer[]        @relation("FromMember")
   transfersTo      Transfer[]        @relation("ToMember")
   categoryLinks    CategoryMember[]
+  goalContributions SavingsGoalContribution[]
 
   @@unique([userId, groupId])
   @@map("group_members")
@@ -176,10 +190,24 @@ model SavingsGoal {
   targetAmount Decimal  @db.Decimal(12, 2)
   targetDate   DateTime
   
+  contributions SavingsGoalContribution[]
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@map("savings_goals")
+}
+
+model SavingsGoalContribution {
+  id           String      @id @default(uuid())
+  goalId       String
+  memberId     String
+  goal         SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  member       GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  customAmount Decimal     @db.Decimal(12, 2)
+
+  @@unique([goalId, memberId])
+  @@map("savings_goal_contributions")
 }
 
 model Invitation {
