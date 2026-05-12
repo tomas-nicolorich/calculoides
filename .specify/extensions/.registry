@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "git": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:9731aa8143a72fbebfdb440f155038ab42642517c2b2bdbbf67c8fdbe076ed79",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "gemini": [
+          "speckit.git.feature",
+          "speckit.git.validate",
+          "speckit.git.remote",
+          "speckit.git.initialize",
+          "speckit.git.commit"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T07:14:29.176129+00:00"
+    },
+    "version-guard": {
+      "version": "1.2.0",
+      "source": "local",
+      "manifest_hash": "sha256:e615d115dfbca910d5a3c92ee74296a140c4c7ca3b86e50730e4cffed2509184",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "gemini": [
+          "speckit.version-guard.check",
+          "speckit.version-guard.load",
+          "speckit.version-guard.validate"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T07:40:27.405123+00:00"
+    },
+    "blueprint": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:c0c5bf7b0ac6236d660693ff792a3658f5cc0b1742a7cf3cb69e1675e1811ada",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "gemini": [
+          "speckit.blueprint.generate",
+          "speckit.blueprint.validate"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T07:42:48.529465+00:00"
+    }
+  }
+}
