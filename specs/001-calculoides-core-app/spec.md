@@ -29,12 +29,12 @@ As a group member, I want to define budget categories (like Rent or Groceries) a
 
 **Why this priority**: This is the primary daily utility of the app. Without expense tracking, the budget is just a theoretical plan.
 
-**Independent Test**: Create a category "Rent" for €1000, log an expense of €600, and verify the remaining balance is €400.
+**Independent Test**: Create a category "Groceries" for €400, log an expense of €50, and verify the remaining balance for that member goes down by €50.
 
 **Acceptance Scenarios**:
 
 1. **Given** a group, **When** a member creates a "Groceries" category with a €400 budget and a "Grocery basket" emoji, **Then** all members should see their individual share of that €400 based on their income.
-2. **Given** a "Groceries" category, **When** a member logs a €50 expense for "Weekly shopping", **Then** the remaining balance for the category should update to €350.
+2. **Given** a "Groceries" category, **When** a member logs a €50 expense for "Weekly shopping", **Then** the remaining balance for the that member on that category should go down by €50.
 3. **Given** a category with a restricted subset of members, **When** income percentages are calculated, **Then** only the income of those selected members should be used to determine the shares.
 
 ---
@@ -74,20 +74,34 @@ As a group member, I want to transfer my budget share to another member (e.g., I
 - **Zero Income**: What happens if a group member has zero income? (Assumption: Their percentage share becomes 0%, and they owe nothing unless a custom contribution is set).
 - **Overspending**: How does the system handle expenses that exceed the category budget? (Assumption: The remaining balance becomes negative and is highlighted).
 - **No Members in Category**: What happens if a category is created with an empty subset of members? (Requirement says "optional subset", default is all members).
-- **Rounding Errors**: How are fractions of a cent handled in proportional shares? (Assumption: Round to 2 decimal places, with the last member absorbing any 0.01 discrepancy to ensure the total is 100%).
+- **Rounding Errors**: How are fractions of a cent handled in proportional shares? (Assumption: Round to 2 decimal places, with the highest income member absorbing any 0.01 discrepancy to ensure the total is 100%).
+
+## Clarifications
+
+### Session 2026-05-12
+- Q: Should budget transfers be category-specific or general? → A: Category-Specific: Transfers move budget "quota" within the same category.
+- Q: What is the state of archived expenses? → A: Immutable History: Archived records are moved to a historical view and become read-only.
+- Q: What happens if an owner leaves without transferring ownership? → A: Automatic Succession: Ownership transfers to the member with the longest tenure.
+- Q: Can non-owners manage group members? → A: Owner-Only: Only the group owner can invite or remove members.
+- Q: How to handle savings goal contribution overrides? → A: Dynamic Deadline: Recalculate completion date and show difference between original and projected.
+- Q: How should mid-month income updates be handled? → A: Retroactive: Changes apply to all expenses and budgets for the entire current calendar month.
+- Q: Should historical records maintain income percentage history? → A: Simplified: Archived records only store the total monthly "settlement" amount per user, without preserving the underlying share logic.
+- Q: How do budget categories reset? → A: Manual Archive Reset: Categories do not automatically reset based on the calendar; the spent balance resets to 0 only when the group owner performs an archive action.
+- Q: Are budget categories private if they have a subset of members? → A: All Visible: All group members can see all categories and their statuses, even if they are not part of a specific category's member subset.
+- Q: How are deletions handled? → A: Permanent: Deletions of expenses and budget categories are immediate and irreversible.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: System MUST support multiple independent groups with strictly isolated data.
-- **FR-002**: System MUST calculate income percentage shares based on the total combined income of all members (or selected subset) in a group.
-- **FR-003**: System MUST allow members to log expenses with description, amount, date, and payer.
-- **FR-004**: System MUST display a dashboard showing income overview, remaining balance per user, recent expenses, transfers, and category status.
-- **FR-005**: System MUST allow budget transfers between members within a group.
-- **FR-006**: System MUST calculate monthly savings contributions based on target amount, target date, and income percentages.
-- **FR-007**: System MUST allow group owners to archive expenses for specific date ranges.
-- **FR-008**: System MUST support a single-owner model per group. The creator is the initial owner, and ownership can be transferred to any other active group member. Owners have exclusive permissions to transfer budgets for all members and archive expenses.
+- **FR-002**: System MUST calculate income percentage shares based on the total combined income of all members (or selected subset) in a group. Mid-month income updates MUST be applied retroactively to all expenses and budgets for the entire current calendar month.
+- **FR-003**: System MUST allow members to log expenses with description, amount, date, and payer. Deletions of expenses MUST be permanent and irreversible.
+- **FR-004**: System MUST display a dashboard showing income overview, remaining balance per user, recent expenses, transfers, and category status. All categories MUST be visible to all members of the group. Deletions of budget categories MUST be permanent and irreversible.
+- **FR-005**: System MUST allow budget transfers between members within a group, restricted to moving quota within the same budget category.
+- **FR-006**: System MUST calculate monthly savings contributions based on target amount, target date, and income percentages. If contributions are overridden, the system MUST recalculate the projected date and display the variance from the original target date.
+- **FR-007**: System MUST allow group owners to archive expenses for specific date ranges; archived records MUST be moved to an immutable historical view. These records MUST only store the final total monthly settlement amount per user. Upon archiving, the spent balance of the affected budget categories MUST reset to 0.
+- **FR-008**: System MUST support a single-owner model per group. The creator is the initial owner, and ownership can be transferred to any other active group member. Owners have exclusive permissions to invite/remove members, transfer budgets for all members, and archive expenses. If an owner leaves without transferring, ownership MUST automatically transfer to the member with the longest tenure.
 
 ### Key Entities
 
@@ -111,7 +125,7 @@ As a group member, I want to transfer my budget share to another member (e.g., I
 ## Assumptions
 
 - **Currency**: The system defaults to a single currency per group (e.g., Euro as in the example).
-- **Month Boundaries**: Budgets and incomes are reset/calculated on a standard calendar month basis.
+- **Manual Reset**: Budgets do not auto-reset; they rely on the owner's archive action to clear spent balances.
 - **Invite Logic**: Invitations are sent via email, and the system handles the delivery and acceptance flow.
-- **Device**: The initial implementation is a responsive web application suitable for both desktop and mobile browsers.
+- **Device**: The initial implementation is a responsive web application suitable for both desktop and mobile browsers with a mobile-first design.
 - **Security**: Basic authentication (email/password) is required for all users.
