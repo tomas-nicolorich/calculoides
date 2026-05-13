@@ -18,7 +18,7 @@ The technical approach leverages a modern, type-safe stack:
 
 **Language/Version**: TypeScript 6.0.3 (Strict Mode)  
 **Primary Dependencies**: React 19.2.6, Vite 8.0.12, Tailwind CSS 4.3.0, Prisma 7.8.0, Zod 4.4.3, @supabase/supabase-js 2.105.4  
-**Storage**: PostgreSQL (Supabase) via Prisma ORM  
+**Storage**: PostgreSQL (Supabase) via Prisma ORM (Schema is locked/final)
 **Testing**: Vitest 4.1.6  
 **Target Platform**: Web (Mobile-first, responsive) deployed on Vercel  
 **Project Type**: Web Application (Monorepo-style structure)  
