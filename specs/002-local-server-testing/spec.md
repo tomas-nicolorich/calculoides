@@ -9,7 +9,7 @@
 
 ### Session 2024-05-22
 - Q: How should the local server persist its data? → A: It should still call Supabase, just not Vercel.
-- Q: How should the application detect whether it should use the "local" or "remote" configuration? → A: Use the existing `RIU_ENVIRONMENT` environment variable.
+- Q: How should the application detect whether it should use the "local" or "remote" configuration? → A: Use the existing `CALC_ENVIRONMENT` environment variable.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -19,11 +19,11 @@ As a developer, I want to run Calculoides entirely on my local machine while mai
 
 **Why this priority**: Core requirement for offline development (excluding DB) and faster iteration cycles.
 
-**Independent Test**: Can be fully tested by setting `RIU_ENVIRONMENT=local`, launching the local development server, and performing a basic calculation or data entry that persists to Supabase without any network requests to vercel.app.
+**Independent Test**: Can be fully tested by setting `CALC_ENVIRONMENT=local`, launching the local development server, and performing a basic calculation or data entry that persists to Supabase without any network requests to vercel.app.
 
 **Acceptance Scenarios**:
 
-1. **Given** the app is configured for local mode via `RIU_ENVIRONMENT`, **When** the app starts, **Then** it connects to a local development address for the application logic but remains connected to the Supabase backend.
+1. **Given** the app is configured for local mode via `CALC_ENVIRONMENT`, **When** the app starts, **Then** it connects to a local development address for the application logic but remains connected to the Supabase backend.
 2. **Given** the local server is running, **When** I create a new item in Calculoides, **Then** it is persisted to the remote Supabase instance and remains visible after refresh.
 
 ---
@@ -34,7 +34,7 @@ As a tester, I want to run the test suite against a stable local server connecte
 
 **Why this priority**: Ensures that local development remains reliable and consistent with production behavior.
 
-**Independent Test**: Running the existing test suite with `RIU_ENVIRONMENT=test-local` pointing to the local server and a test Supabase project.
+**Independent Test**: Running the existing test suite with `CALC_ENVIRONMENT=test-local` pointing to the local server and a test Supabase project.
 
 **Acceptance Scenarios**:
 
@@ -45,23 +45,23 @@ As a tester, I want to run the test suite against a stable local server connecte
 ### Edge Cases
 
 - **Supabase Unreachable**: What happens when the app is in local mode but the internet connection to Supabase is lost?
-- **Environment Variable Mismatch**: How does the system handle a local server configured with incorrect Supabase credentials or an unsupported `RIU_ENVIRONMENT` value?
+- **Environment Variable Mismatch**: How does the system handle a local server configured with incorrect Supabase credentials or an unsupported `CALC_ENVIRONMENT` value?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST support a configuration toggle using the `RIU_ENVIRONMENT` variable to switch between `remote` and `local` application environments.
-- **FR-002**: System MUST allow configuring separate Supabase credentials for local development via environment-specific configuration files.
+- **FR-001**: System MUST support a configuration toggle using the `CALC_ENVIRONMENT` variable to switch between `remote` and `local` application environments.
+- **FR-002**: System MUST allow configuring separate Supabase credentials for local development via environment-specific configuration files (`.env` for `local`, `.env.test` for `test-local`).
 - **FR-003**: All core CRUD operations in Calculoides MUST function identically when using the local server pointing to Supabase.
 - **FR-004**: System MUST provide a mechanism to launch the local application server independently of Vercel.
-- **FR-005**: System MUST provide clear feedback if the local server is reachable but the connection to Supabase fails.
+- **FR-005**: System MUST provide clear feedback if the local server is reachable but the connection to Supabase fails. Feedback MUST be provided as a `503 Service Unavailable` HTTP status with a JSON payload: `{ "error": "Supabase Connection Failed", "details": "..." }`.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Local Server**: A local process hosting the Calculoides application logic.
 - **Supabase**: The remote backend-as-a-service used for data persistence and authentication.
-- **RIU_ENVIRONMENT**: The environment variable used to select the active application configuration.
+- **CALC_ENVIRONMENT**: The environment variable used to select the active application configuration.
 
 ## Success Criteria *(mandatory)*
 

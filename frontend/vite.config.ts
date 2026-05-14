@@ -14,4 +14,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: (process.env.CALC_ENVIRONMENT === 'local' || process.env.CALC_ENVIRONMENT === 'test-local') ? {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    } : undefined,
+  },
 })
