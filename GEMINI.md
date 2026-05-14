@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/002-local-server-testing/plan.md](specs/002-local-server-testing/plan.md)
+[specs/001-calculoides-core-app/plan.md](specs/001-calculoides-core-app/plan.md)
 <!-- SPECKIT END -->
