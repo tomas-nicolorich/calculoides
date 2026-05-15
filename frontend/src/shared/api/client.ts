@@ -1,9 +1,15 @@
+import { supabase } from './supabase';
+
 export const apiClient = {
   async fetch(endpoint: string, options: RequestInit = {}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     const res = await fetch(`/api${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...options.headers,
       },
     });
@@ -24,11 +30,12 @@ export const apiClient = {
         method: 'POST',
         body: JSON.stringify({ name }),
       }),
+    getSummary: (groupId: string) => apiClient.fetch(`/summary?groupId=${groupId}`),
   },
 
   categories: {
     list: (groupId: string) => apiClient.fetch(`/categories?groupId=${groupId}`),
-    create: (groupId: string, data: { name: string; monthlyBudget: number; icon?: string }) =>
+    create: (groupId: string, data: { name: string; monthlyBudget: number; icon?: string; memberIds?: string[] }) =>
       apiClient.fetch(`/categories?groupId=${groupId}`, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -58,6 +65,19 @@ export const apiClient = {
       apiClient.fetch('/respond-invitation', {
         method: 'POST',
         body: JSON.stringify({ invitationId, action }),
+      }),
+  },
+
+  members: {
+    list: (groupId: string) => apiClient.fetch(`/members?groupId=${groupId}`),
+    updateIncome: (memberId: string, income: number) =>
+      apiClient.fetch(`/members?id=${memberId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ income }),
+      }),
+    remove: (groupId: string, memberId: string) =>
+      apiClient.fetch(`/members?id=${memberId}&groupId=${groupId}`, {
+        method: 'DELETE',
       }),
   },
 

@@ -8,8 +8,8 @@ export const UserSchema = z.object({
   id: IdSchema,
   email: z.string().email(),
   name: z.string().nullable().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 // Group
@@ -17,8 +17,8 @@ export const GroupSchema = z.object({
   id: IdSchema,
   name: z.string().min(1, 'Group name is required'),
   ownerId: IdSchema,
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const CreateGroupSchema = GroupSchema.pick({ name: true });
@@ -29,7 +29,7 @@ export const GroupMemberSchema = z.object({
   userId: IdSchema,
   groupId: IdSchema,
   income: z.number().nonnegative(),
-  joinedAt: z.date(),
+  joinedAt: z.coerce.date(),
 });
 
 // Category
@@ -39,14 +39,16 @@ export const CategorySchema = z.object({
   name: z.string().min(1, 'Category name is required'),
   icon: z.string().nullable().optional(),
   monthlyBudget: z.number().nonnegative('Budget must be positive'),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const CreateCategorySchema = CategorySchema.pick({
   name: true,
   icon: true,
   monthlyBudget: true,
+}).extend({
+  memberIds: z.array(IdSchema).optional(),
 });
 
 // Expense
@@ -56,9 +58,9 @@ export const ExpenseSchema = z.object({
   payerId: IdSchema,
   description: z.string().min(1, 'Description is required'),
   amount: z.number().positive('Amount must be positive'),
-  date: z.date(),
+  date: z.coerce.date(),
   isArchived: z.boolean().default(false),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
 });
 
 export const CreateExpenseSchema = ExpenseSchema.pick({
@@ -77,8 +79,8 @@ export const SavingsGoalSchema = z.object({
   name: z.string().min(1, 'Goal name is required'),
   targetAmount: z.number().positive('Target amount must be positive'),
   targetDate: z.coerce.date(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const CreateSavingsGoalSchema = SavingsGoalSchema.pick({
@@ -92,14 +94,16 @@ export const UpsertContributionSchema = z.object({
 });
 
 // Invitation
+export const InvitationStatusEnum = z.enum(['PENDING', 'ACCEPTED', 'DECLINED']);
+
 export const InvitationSchema = z.object({
   id: IdSchema,
   groupId: IdSchema,
   email: z.string().email(),
-  status: z.enum(['pending', 'accepted', 'declined']),
+  status: InvitationStatusEnum,
   inviterId: IdSchema,
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const CreateInvitationSchema = z.object({
@@ -113,5 +117,5 @@ export const TransferSchema = z.object({
   fromMemberId: IdSchema,
   toMemberId: IdSchema,
   amount: z.number().positive(),
-  date: z.date(),
+  date: z.coerce.date(),
 });
