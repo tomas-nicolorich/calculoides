@@ -32,6 +32,7 @@ This document defines the database schema and entity relationships for the Calcu
 - A transaction recorded against a Category.
 - Tracks who paid (`payerId`), the amount, and description.
 - Can be "archived" into historical records.
+- **Constraint**: ID types MUST be consistent with database migrations (e.g., using UUIDs consistently) to prevent null constraint violations (BUG-018).
 
 ### Transfer
 - A budget quota adjustment between two members within the same category.
@@ -215,7 +216,7 @@ model Invitation {
   groupId   String
   group     Group    @relation(fields: [groupId], references: [id])
   email     String
-  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  status    InvitationStatus @default(PENDING)
   inviterId String
   inviter   User     @relation("Inviter", fields: [inviterId], references: [id])
   
@@ -223,5 +224,13 @@ model Invitation {
   updatedAt DateTime @updatedAt
 
   @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+
+  @@map("invitation_status")
 }
 ```

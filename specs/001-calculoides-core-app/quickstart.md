@@ -34,10 +34,19 @@ Follow these steps to set up your local development environment for the Calculoi
    ```
 
 5. **Start Development Server**
+   Start both the frontend (Vite) and backend (Vercel Functions) concurrently.
    ```bash
    npm run dev
    ```
-   The application will be available at `http://localhost:5173`.
+   - **Frontend**: `http://localhost:5173` (proxies `/api` to `http://localhost:3001`)
+   - **Backend**: `http://localhost:3001` (managed by `vercel dev --listen 3001`)
+
+   Alternatively, to run with a local mock server (using `tsx` instead of `vercel dev`):
+   ```bash
+   npm run dev:local
+   ```
+
+   **Note on Local SSL**: If you encounter `SELF_SIGNED_CERT_IN_CHAIN` errors while connecting to a local Supabase instance or other services with self-signed certificates, the API is configured to bypass SSL verification in development mode. You can also manually set `NODE_TLS_REJECT_UNAUTHORIZED=0` in your terminal environment if needed, though the application handles this automatically when `NODE_ENV=development`.
 
 6. **Run Tests**
    ```bash
