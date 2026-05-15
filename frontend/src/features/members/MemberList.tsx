@@ -1,39 +1,80 @@
-import { Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
+import { useEffect, useState } from 'react';
+import { apiClient } from '../../shared/api/client';
+import { UserDisplay, Button } from '../../shared/ui';
 
 interface Member {
   id: string;
   userId: string;
   income: number;
-  joinedAt: Date;
+  joinedAt: string;
+  user?: {
+    name: string | null;
+    email: string;
+  }
 }
 
-export function MemberList({ members }: { members: Member[] }) {
+export function MemberList({ 
+  groupId, 
+  isOwner, 
+  currentUserId,
+  onEditIncome 
+}: { 
+  groupId: string; 
+  isOwner: boolean;
+  currentUserId: string;
+  onEditIncome: (member: Member) => void;
+}) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMembers = async () => {
+    setLoading(true);
+    try {
+      const data = await apiClient.members.list(groupId);
+      setMembers(data);
+    } catch (err) {
+      console.error('Failed to fetch members', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, [groupId]);
+
+  if (loading) return <div className="p-4 text-center">Loading members...</div>;
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Members</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {members.map((member) => (
-            <div key={member.id} className="flex justify-between items-center border-b pb-2 last:border-0">
-              <div>
-                <p className="font-medium">{member.userId}</p>
-                <p className="text-sm text-muted-foreground">
-                  Joined: {new Date(member.joinedAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">€{member.income.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Monthly Income</p>
-              </div>
+    <div className="space-y-4">
+      {members.map((member) => (
+        <div key={member.id} className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0">
+          <div>
+            <UserDisplay user={member.user} className="text-lg" />
+            <p className="text-sm text-muted-foreground">
+              Joined: {new Date(member.joinedAt).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="font-semibold">€{Number(member.income).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Monthly Income</p>
             </div>
-          ))}
-          {members.length === 0 && (
-            <p className="text-sm text-center text-muted-foreground">No members found</p>
-          )}
+            {(isOwner || member.userId === currentUserId) && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => onEditIncome(member)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+      {members.length === 0 && (
+        <p className="text-sm text-center text-muted-foreground">No members found</p>
+      )}
+    </div>
   );
 }

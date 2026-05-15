@@ -1,19 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
 import { apiClient } from '../../shared/api/client';
 
 export function SetIncomeForm({
   memberId,
+  memberName,
   currentIncome,
   onUpdated,
+  onCancel,
 }: {
   memberId: string;
+  memberName?: string;
   currentIncome: number;
   onUpdated: () => void;
+  onCancel?: () => void;
 }) {
   const [income, setIncome] = useState(currentIncome.toString());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Update local state if currentIncome changes (e.g. when switching members)
+  useEffect(() => {
+    setIncome(currentIncome.toString());
+  }, [currentIncome, memberId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,12 +30,7 @@ export function SetIncomeForm({
     setError(null);
 
     try {
-      // Note: This would require a new endpoint or updating GroupService to handle individual income updates
-      // For now, we assume the API client will have this method
-      await apiClient.fetch(`/members/${memberId}/income`, {
-        method: 'PATCH',
-        body: JSON.stringify({ income: Number(income) }),
-      });
+      await apiClient.members.updateIncome(memberId, Number(income));
       onUpdated();
     } catch (err: any) {
       setError(err.message);
@@ -37,8 +41,13 @@ export function SetIncomeForm({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Set My Income</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardTitle>{memberName ? `Set Income for ${memberName}` : 'Set My Income'}</CardTitle>
+        {onCancel && (
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex gap-2">

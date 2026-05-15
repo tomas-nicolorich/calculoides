@@ -39,7 +39,7 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
     setLoading(true);
     setError(null);
     try {
-      await apiClient.fetch(`/groups/transfer-ownership?groupId=${groupId}`, {
+      await apiClient.fetch(`/transfer-ownership?groupId=${groupId}`, {
         method: 'POST',
         body: JSON.stringify({ newOwnerId }),
       });
