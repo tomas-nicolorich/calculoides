@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start:api": "vercel dev",
+    "start:api": "vercel dev --listen 3001",
     "start:api:local": "node --import tsx src/server.ts",
     "test": "vitest",
     "lint": "eslint .",
@@ -19,6 +19,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.20.0",
+    "resend": "^6.12.3",
     "zod": "4.4.3"
   },
   "devDependencies": {
