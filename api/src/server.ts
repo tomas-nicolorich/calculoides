@@ -1,5 +1,4 @@
 import './env';
-import { prisma } from './utils/prisma';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -38,7 +37,7 @@ const checkSupabase = async () => {
   }
 };
 
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', async (_req, res) => {
   const isUp = await checkSupabase();
   if (isUp) {
     res.status(200).json({ status: 'OK', database: 'connected' });
@@ -60,7 +59,7 @@ const loadRoutes = async () => {
       
       try {
         // Use relative path for import to ensure proper module caching
-        const handlerModule = await import(`../${file}`);
+        const handlerModule = await import(`../${file}`) as { default: unknown };
         const handler = handlerModule.default;
         
         if (typeof handler === 'function') {
@@ -68,10 +67,10 @@ const loadRoutes = async () => {
             try {
               // Express req/res are compatible enough for our polyfilled handler
               // withErrorHandling middleware in the handlers will handle status/json
-              await handler(req, res);
+              await (handler as (req: express.Request, res: express.Response) => Promise<void>)(req, res);
             } catch (err) {
               console.error(`Error handling route /api/${routeName}:`, err);
-              if (!(res as any).headersSent) {
+              if (!res.headersSent) {
                 res.status(500).json({ error: 'Internal Server Error' });
               }
             }

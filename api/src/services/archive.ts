@@ -13,9 +13,9 @@ export class ArchiveService {
       throw new Error('Only the group owner can archive expenses');
     }
 
-    await prisma.expenses.updateMany({
+    await prisma.expense.updateMany({
       where: {
-        categories: { groupId },
+        category: { groupId },
         isArchived: false,
       },
       data: { isArchived: true },

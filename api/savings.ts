@@ -19,7 +19,8 @@ export default withErrorHandling(
           validatedMemberId,
           validatedBody.amount
         );
-        return res.status(200).json(contribution);
+        res.status(200).json(contribution);
+        return;
       }
 
       // Create goal
@@ -32,7 +33,8 @@ export default withErrorHandling(
         validatedBody.targetAmount,
         validatedBody.targetDate
       );
-      return res.status(201).json(goal);
+      res.status(201).json(goal);
+      return;
     }
 
     if (req.method === 'GET') {
@@ -41,20 +43,23 @@ export default withErrorHandling(
       const group = groups.find((g) => g.id === validatedGroupId);
 
       if (!group) {
-        return res.status(403).json({ error: 'Access denied to this group' });
+        res.status(403).json({ error: 'Access denied to this group' });
+        return;
       }
 
       const goals = await SavingsService.getGoalsForGroup(validatedGroupId);
-      return res.status(200).json(goals);
+      res.status(200).json(goals);
+      return;
     }
 
     if (req.method === 'DELETE') {
       const validatedGoalId = IdSchema.parse(goalId);
       await SavingsService.deleteGoal(validatedGoalId);
-      return res.status(204).end();
+      res.status(204).end();
+      return;
     }
 
     res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   })
 );

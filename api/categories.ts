@@ -2,6 +2,7 @@ import { withAuth, withErrorHandling } from './src/middleware/handler';
 import { BudgetService } from './src/services/budget';
 import { GroupService } from './src/services/group';
 import { CreateCategorySchema, IdSchema } from '../shared/validation';
+import { prisma } from './src/utils/prisma';
 
 export default withErrorHandling(
   withAuth(async (req, res) => {
@@ -14,13 +15,15 @@ export default withErrorHandling(
         validatedGroupId,
         validatedBody.name,
         validatedBody.monthlyBudget,
-        validatedBody.icon || undefined
+        validatedBody.icon || undefined,
+        validatedBody.memberIds
       );
       return res.status(201).json(category);
     }
 
     if (req.method === 'GET') {
       // For listing, we need member shares to calculate balances
+      // Verify group visibility before listing
       const groups = await GroupService.getGroupsForUser(req.user.id);
       const group = groups.find((g) => g.id === validatedGroupId);
 
@@ -28,15 +31,37 @@ export default withErrorHandling(
         return res.status(403).json({ error: 'Access denied to this group' });
       }
 
-      // TODO: Get actual shares. For now, we list categories.
-      // In a real flow, we'd fetch members and calculate shares first.
-      const categories = await prisma.categories.findMany({
-        where: { groupId: validatedGroupId },
-      });
+      const categories = await BudgetService.listCategoriesWithBalances(validatedGroupId);
       return res.status(200).json(categories);
     }
 
-    res.setHeader('Allow', ['GET', 'POST']);
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      const validatedId = IdSchema.parse(id);
+
+      const category = await prisma.category.findUnique({
+        where: { id: validatedId },
+      });
+
+      if (!category) {
+        return res.status(404).json({ error: 'Category not found' });
+      }
+
+      // Verify group ownership before deletion
+      const isOwner = await GroupService.isOwner(category.groupId, req.user.id);
+      
+      if (!isOwner) {
+        return res.status(403).json({ error: 'Only group owners can delete categories' });
+      }
+
+      await prisma.category.delete({
+        where: { id: validatedId },
+      });
+
+      return res.status(204).end();
+    }
+
+    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   })
 );

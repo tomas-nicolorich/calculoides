@@ -10,7 +10,7 @@ export class TransferService {
     toMemberId: string,
     amount: number
   ) {
-    return await prisma.transfers.create({
+    return await prisma.transfer.create({
       data: {
         categoryId,
         fromMemberId,
@@ -23,10 +23,23 @@ export class TransferService {
 
   /**
    * Retrieves all transfers for a category.
+   * Mandated by BUG-014 to include fromMember and toMember user names.
    */
   static async getTransfersForCategory(categoryId: string) {
-    return await prisma.transfers.findMany({
+    return await prisma.transfer.findMany({
       where: { categoryId },
+      include: {
+        fromMember: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+        },
+        toMember: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+        },
+      },
       orderBy: { date: 'desc' },
     });
   }

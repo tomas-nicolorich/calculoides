@@ -19,7 +19,7 @@ export type AuthenticatedRequest = ApiRequest & {
 };
 
 export type Handler = (req: ApiRequest, res: ApiResponse) => Promise<void>;
-export type AuthenticatedHandler = (req: AuthenticatedRequest, res: ApiResponse) => Promise<void>;
+export type AuthenticatedHandler = (req: AuthenticatedRequest, res: ApiResponse, user: User) => Promise<void>;
 
 /**
  * Middleware to enforce authentication via Supabase session
@@ -42,7 +42,7 @@ export function withAuth(handler: AuthenticatedHandler): Handler {
       const authReq = req as AuthenticatedRequest;
       authReq.user = user;
       
-      return await handler(authReq, res);
+      return await handler(authReq, res, user);
     } catch (error: unknown) {
       console.error('Auth Middleware Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });

@@ -1,4 +1,5 @@
 import { prisma } from '../utils/prisma';
+import { calculateIncomeShares } from './calculation';
 
 export interface MemberContribution {
   memberId: string;
@@ -38,7 +39,7 @@ export function calculateProjectedDate(
 
   if (totalMonthly <= 0) {
     const farDate = new Date(startDate);
-    farDate.setFullYear(9999);
+    farDate.setFullYear(startDate.getFullYear() + 100);
     return farDate;
   }
 
@@ -51,7 +52,7 @@ export function calculateProjectedDate(
 
 export class SavingsService {
   static async createGoal(groupId: string, name: string, targetAmount: number, targetDate: Date) {
-    return await prisma.savings_goals.create({
+    return await prisma.savingsGoal.create({
       data: {
         groupId,
         name,
@@ -62,17 +63,73 @@ export class SavingsService {
     });
   }
 
+  /**
+   * Retrieves all goals for a group with calculated projections and variances.
+   * Mandated by BUG-020.
+   */
   static async getGoalsForGroup(groupId: string) {
-    return await prisma.savings_goals.findMany({
+    // 1. Fetch group members and calculate shares
+    const members = await prisma.groupMember.findMany({
+      where: { groupId },
+      select: { id: true, income: true },
+    });
+
+    const incomeShares = calculateIncomeShares(
+      members.map((m) => ({ id: m.id, income: Number(m.income) }))
+    );
+
+    // 2. Fetch all goals for the group
+    const goals = await prisma.savingsGoal.findMany({
       where: { groupId },
       include: {
-        savings_goal_contributions: true,
+        contributions: true,
       },
+    });
+
+    // 3. Calculate projections for each goal
+    return goals.map((goal) => {
+      const targetAmount = Number(goal.targetAmount);
+      const targetDate = new Date(goal.targetDate);
+      const now = new Date();
+
+      // Default proportional contributions
+      const baseContributions = calculateSavingsContributions(targetAmount, targetDate, incomeShares);
+
+      // Map to final contributions (applying overrides)
+      const finalContributions = incomeShares.map((s) => {
+        const override = goal.contributions.find((c) => c.memberId === s.id);
+        const base = baseContributions.find((bc) => bc.memberId === s.id)?.monthlyContribution || 0;
+        
+        return {
+          memberId: s.id,
+          proportionalAmount: base,
+          actualAmount: override ? Number(override.customAmount) : base,
+          isOverridden: !!override,
+        };
+      });
+
+      const projectedDate = calculateProjectedDate(
+        targetAmount,
+        now,
+        finalContributions.map((fc) => ({ memberId: fc.memberId, amount: fc.actualAmount }))
+      );
+
+      // Variance in months
+      const targetMonths = (targetDate.getFullYear() - now.getFullYear()) * 12 + (targetDate.getMonth() - now.getMonth());
+      const projectedMonths = (projectedDate.getFullYear() - now.getFullYear()) * 12 + (projectedDate.getMonth() - now.getMonth());
+      const varianceMonths = projectedMonths - targetMonths;
+
+      return {
+        ...goal,
+        projectedDate,
+        varianceMonths,
+        breakdown: finalContributions,
+      };
     });
   }
 
   static async upsertContribution(goalId: string, memberId: string, amount: number) {
-    return await prisma.savings_goal_contributions.upsert({
+    return await prisma.savingsGoalContribution.upsert({
       where: {
         goalId_memberId: { goalId, memberId },
       },
@@ -88,9 +145,8 @@ export class SavingsService {
   }
 
   static async deleteGoal(goalId: string) {
-    return await prisma.savings_goals.delete({
+    return await prisma.savingsGoal.delete({
       where: { id: goalId },
     });
   }
 }
-

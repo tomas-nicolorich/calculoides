@@ -7,7 +7,33 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Handle SSL verification override for local development (BUG-006)
+const customFetch = (input: string | URL | Request, init?: RequestInit) => {
+  if (process.env.NODE_ENV === 'development' || process.env.CALC_ENVIRONMENT === 'local' || process.env.CALC_ENVIRONMENT === 'test-local') {
+    // Standard Node.js fetch honors NODE_TLS_REJECT_UNAUTHORIZED.
+    // For environments where it might not, or for more granular control:
+    return fetch(input, {
+      ...init,
+      // @ts-ignore - node-fetch or undici might support this or we rely on the global env var
+      rejectUnauthorized: false, 
+    });
+  }
+  return fetch(input, init);
+};
+
+if (process.env.NODE_ENV === 'development' || process.env.CALC_ENVIRONMENT === 'local' || process.env.CALC_ENVIRONMENT === 'test-local') {
+  // This is the most reliable way in Node.js to bypass SSL for self-signed certs
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+  },
+  global: {
+    fetch: customFetch as any, // Use any to bypass slight signature differences in library types
+  },
+});
 
 export async function getUserFromSession(token: string): Promise<User | null> {
   const {

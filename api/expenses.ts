@@ -7,27 +7,26 @@ export default withErrorHandling(
     if (req.method === 'POST') {
       const validatedBody = CreateExpenseSchema.parse(req.body);
       
-      // Need to find the memberId for the current user in this group
-      // This logic should probably be in a helper or service
-      // For now, assume payerId is provided or we fetch it
       const expense = await ExpenseService.logExpense(
         validatedBody.categoryId,
-        validatedBody.payerId || req.user.id, // Fallback to userId if memberId not provided (needs fix in service logic later)
+        validatedBody.payerId || req.user.id,
         validatedBody.description,
         validatedBody.amount,
-        validatedBody.date ? new Date(validatedBody.date) : new Date()
+        validatedBody.date
       );
-      return res.status(201).json(expense);
+      res.status(201).json(expense);
+      return;
     }
 
     if (req.method === 'DELETE') {
       const { id } = req.query;
       const validatedId = IdSchema.parse(id);
       await ExpenseService.deleteExpense(validatedId);
-      return res.status(204).end();
+      res.status(204).end();
+      return;
     }
 
     res.setHeader('Allow', ['POST', 'DELETE']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   })
 );

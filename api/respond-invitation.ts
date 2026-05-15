@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const RespondInvitationSchema = z.object({
   invitationId: z.string().uuid(),
-  action: z.enum(['accept', 'declined']),
+  action: z.enum(['ACCEPT', 'REJECT']),
 });
 
 export default withErrorHandling(
@@ -12,7 +12,7 @@ export default withErrorHandling(
     if (req.method === 'POST') {
       const { invitationId, action } = RespondInvitationSchema.parse(req.body);
 
-      if (action === 'accept') {
+      if (action === 'ACCEPT') {
         const result = await InvitationService.acceptInvitation(invitationId, req.user.id);
         return res.status(200).json(result);
       } else {

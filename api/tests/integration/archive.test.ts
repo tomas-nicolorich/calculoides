@@ -5,10 +5,10 @@ import { prisma } from '../../src/utils/prisma';
 
 vi.mock('../../src/utils/prisma', () => ({
   prisma: {
-    expenses: {
+    expense: {
       updateMany: vi.fn(),
     },
-    groups: {
+    group: {
       findUnique: vi.fn(),
     },
   },
@@ -23,14 +23,14 @@ vi.mock('../../src/services/group', () => ({
 describe('Archive Integration', () => {
   it('should allow owner to archive expenses', async () => {
     vi.mocked(GroupService.isOwner).mockResolvedValue(true);
-    vi.mocked(prisma.expenses.updateMany).mockResolvedValue({ count: 5 } as any);
+    vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 5 } as any);
 
     const result = await ArchiveService.archiveExpenses('group-1', 'owner-1');
     
     expect(result).toBe(true);
-    expect(prisma.expenses.updateMany).toHaveBeenCalledWith({
+    expect(prisma.expense.updateMany).toHaveBeenCalledWith({
       where: {
-        categories: { groupId: 'group-1' },
+        category: { groupId: 'group-1' },
         isArchived: false,
       },
       data: { isArchived: true },

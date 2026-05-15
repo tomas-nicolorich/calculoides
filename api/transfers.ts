@@ -1,6 +1,6 @@
 import { withAuth, withErrorHandling } from './src/middleware/handler';
 import { TransferService } from './src/services/transfer';
-import { IdSchema, TransferSchema } from '../shared/validation';
+import { IdSchema } from '../shared/validation';
 import { z } from 'zod';
 
 const CreateTransferSchema = z.object({

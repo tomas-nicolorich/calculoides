@@ -6,7 +6,7 @@ export class GroupService {
    */
   static async createGroup(ownerId: string, name: string) {
     return await prisma.$transaction(async (tx) => {
-      const group = await tx.groups.create({
+      const group = await tx.group.create({
         data: {
           name,
           ownerId,
@@ -14,7 +14,7 @@ export class GroupService {
         },
       });
 
-      await tx.group_members.create({
+      await tx.groupMember.create({
         data: {
           userId: ownerId,
           groupId: group.id,
@@ -29,25 +29,130 @@ export class GroupService {
 
   /**
    * Retrieves all groups where the user is either the owner or a member.
+   * Mandated by BUG-014 to include user names in member relations.
    */
   static async getGroupsForUser(userId: string) {
-    return await prisma.groups.findMany({
+    return await prisma.group.findMany({
       where: {
-        OR: [{ ownerId: userId }, { group_members: { some: { userId } } }],
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
       },
       include: {
-        group_members: true,
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
   }
 
   /**
-   * Updates a member's income for retroactive calculation.
+   * Retrieves a specific group by ID, ensuring the user has access.
    */
-  static async updateMemberIncome(memberId: string, income: number) {
-    return await prisma.group_members.update({
+  static async getGroupById(groupId: string, userId: string) {
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!group) return null;
+
+    // Check if user is a member or owner
+    const isMember = group.members.some((m) => m.userId === userId);
+    const isOwner = group.ownerId === userId;
+
+    if (!isMember && !isOwner) {
+      throw new Error('Unauthorized access to group');
+    }
+
+    return group;
+  }
+
+  /**
+   * Retrieves all members of a group with their user details.
+   * Mandated by BUG-014 to include user names.
+   */
+  static async getGroupMembers(groupId: string) {
+    return await prisma.groupMember.findMany({
+      where: { groupId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { joinedAt: 'asc' },
+    });
+  }
+
+  /**
+   * Updates a member's income for retroactive calculation.
+   * Mandated by BUG-013 to allow group owners to update any member's income.
+   */
+  static async updateMemberIncome(requesterId: string, memberId: string, income: number) {
+    const member = await prisma.groupMember.findUnique({
+      where: { id: memberId },
+      include: { group: true },
+    });
+
+    if (!member) throw new Error('Member not found');
+
+    const isOwner = member.group.ownerId === requesterId;
+    const isSelf = member.userId === requesterId;
+
+    if (!isOwner && !isSelf) {
+      throw new Error('Unauthorized: Only the group owner or the member themselves can update income');
+    }
+
+    return await prisma.groupMember.update({
       where: { id: memberId },
       data: { income },
+    });
+  }
+
+  /**
+   * Removes a member from the group.
+   * If the member is the owner, triggers automatic succession.
+   */
+  static async removeMember(groupId: string, memberId: string) {
+    const member = await prisma.groupMember.findUnique({
+      where: { id: memberId },
+      include: { group: true },
+    });
+
+    if (!member) throw new Error('Member not found');
+
+    const isOwner = member.group.ownerId === member.userId;
+
+    return await prisma.$transaction(async (tx) => {
+      await tx.groupMember.delete({
+        where: { id: memberId },
+      });
+
+      if (isOwner) {
+        await GroupService.handleOwnershipSuccession(groupId, member.userId);
+      }
     });
   }
 
@@ -56,7 +161,7 @@ export class GroupService {
    * Transfers ownership to the member with the longest tenure (earliest joinedAt).
    */
   static async handleOwnershipSuccession(groupId: string, leavingOwnerId: string) {
-    const nextOwner = await prisma.group_members.findFirst({
+    const nextOwner = await prisma.groupMember.findFirst({
       where: {
         groupId,
         NOT: { userId: leavingOwnerId },
@@ -65,7 +170,7 @@ export class GroupService {
     });
 
     if (nextOwner) {
-      return await prisma.groups.update({
+      return await prisma.group.update({
         where: { id: groupId },
         data: { ownerId: nextOwner.userId },
       });
@@ -80,7 +185,7 @@ export class GroupService {
    */
   static async transferOwnership(groupId: string, newOwnerId: string) {
     // Verify the new owner is a member of the group
-    const membership = await prisma.group_members.findUnique({
+    const membership = await prisma.groupMember.findUnique({
       where: { userId_groupId: { userId: newOwnerId, groupId } },
     });
 
@@ -88,14 +193,14 @@ export class GroupService {
       throw new Error('New owner must be a member of the group');
     }
 
-    return await prisma.groups.update({
+    return await prisma.group.update({
       where: { id: groupId },
       data: { ownerId: newOwnerId },
     });
   }
 
   static async isOwner(groupId: string, userId: string) {
-    const group = await prisma.groups.findUnique({
+    const group = await prisma.group.findUnique({
       where: { id: groupId },
     });
     return group?.ownerId === userId;

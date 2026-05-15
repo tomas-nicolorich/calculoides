@@ -51,10 +51,11 @@ describe('Savings Logic', () => {
     });
 
     it('should handle zero total contributions by returning a very far date (or Infinity equivalent)', () => {
-       const targetAmount = 1200;
-       const startDate = new Date('2026-01-01');
-       const projectedDate = calculateProjectedDate(targetAmount, startDate, []);
-       expect(projectedDate.getFullYear()).toBe(9999);
+      const targetAmount = 1000;
+      const startDate = new Date('2026-01-01');
+      const projectedDate = calculateProjectedDate(targetAmount, startDate, []);
+      expect(projectedDate.getFullYear()).toBe(2126);
     });
+
   });
 });

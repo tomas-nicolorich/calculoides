@@ -11,6 +11,13 @@ export default withErrorHandling(
     }
 
     if (req.method === 'GET') {
+      const { id } = req.query;
+      if (id && typeof id === 'string') {
+        const groups = await GroupService.getGroupsForUser(req.user.id);
+        const group = groups.find(g => g.id === id);
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+        return res.status(200).json(group);
+      }
       const groups = await GroupService.getGroupsForUser(req.user.id);
       return res.status(200).json(groups);
     }
