@@ -95,7 +95,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                 goal={goal}
                 onSuccess={() => {
                   setEditingGoalId(null);
-                  onRefresh?.();
+                  void onRefresh?.();
                 }}
                 onCancel={() => { setEditingGoalId(null); }}
               />

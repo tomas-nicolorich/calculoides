@@ -150,17 +150,15 @@ export function DashboardPage() {
   const refreshData = () => {
     if (selectedGroupId) {
       setLoading(true);
-      return fetchSummary(selectedGroupId);
+      void fetchSummary(selectedGroupId);
     }
-    return Promise.resolve();
   };
 
   const refreshSavings = () => {
     if (selectedGroupId) {
       setLoading(true);
-      return fetchSavings(selectedGroupId);
+      void fetchSavings(selectedGroupId);
     }
-    return Promise.resolve();
   };
 
   const renderTabContent = () => {
