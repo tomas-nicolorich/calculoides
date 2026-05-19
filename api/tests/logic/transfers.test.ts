@@ -1,0 +1,45 @@
+import { describe, it, expect } from 'vitest';
+import { calculateCategoryBalances } from '../../src/services/calculation';
+
+describe('Transfer Logic', () => {
+  it('should adjust individual quotas based on transfers', () => {
+    const category = { monthlyBudget: 1000 };
+    const members = [
+      { id: '1', share: 0.5 }, // €500 quota
+      { id: '2', share: 0.5 }, // €500 quota
+    ];
+    const expenses: { payerId: string; amount: number }[] = [];
+    const transfers = [
+      { fromMemberId: '1', toMemberId: '2', amount: 100 },
+    ];
+
+    const balances = calculateCategoryBalances(category, members, expenses, transfers);
+
+    const m1 = balances.find(b => b.memberId === '1');
+    const m2 = balances.find(b => b.memberId === '2');
+
+    expect(m1?.totalQuota).toBe(400); // 500 - 100
+    expect(m2?.totalQuota).toBe(600); // 500 + 100
+  });
+
+  it('should handle multiple transfers', () => {
+    const category = { monthlyBudget: 1000 };
+    const members = [
+      { id: '1', share: 0.5 },
+      { id: '2', share: 0.5 },
+    ];
+    const expenses: { payerId: string; amount: number }[] = [];
+    const transfers = [
+      { fromMemberId: '1', toMemberId: '2', amount: 100 },
+      { fromMemberId: '2', toMemberId: '1', amount: 50 },
+    ];
+
+    const balances = calculateCategoryBalances(category, members, expenses, transfers);
+
+    const m1 = balances.find(b => b.memberId === '1');
+    const m2 = balances.find(b => b.memberId === '2');
+
+    expect(m1?.totalQuota).toBe(450); // 500 - 100 + 50
+    expect(m2?.totalQuota).toBe(550); // 500 + 100 - 50
+  });
+});
