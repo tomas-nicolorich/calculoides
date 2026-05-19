@@ -1,26 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, UserDisplay } from '../../shared/ui';
-
-interface CategoryBalance {
-  memberId: string;
-  totalQuota: number;
-  spent: number;
-  remainingQuota: number;
-  share: number;
-  percentage: number;
-  user?: {
-    name: string | null;
-    email: string;
-  };
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon?: string;
-  monthlyBudget: number;
-  totalSpent: number;
-  balances: CategoryBalance[];
-}
+import { Category } from '../../shared/api/types';
 
 interface CategoryListProps {
   categories: Category[];

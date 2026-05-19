@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { apiClient } from './client';
 import { supabase } from './supabase';
-import type { Session, AuthResponse } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 vi.mock('./supabase', () => ({
   supabase: {
@@ -27,7 +27,7 @@ describe('apiClient', () => {
         user: null 
       },
       error: null,
-    } as unknown as AuthResponse);
+    } as any);
 
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValue({
@@ -54,7 +54,7 @@ describe('apiClient', () => {
     getSessionMock.mockResolvedValue({
       data: { session: null, user: null },
       error: null,
-    } as unknown as AuthResponse);
+    } as any);
 
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValue({
