@@ -33,7 +33,7 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
         console.error('Failed to fetch members for category form', err);
       }
     };
-    fetchMembers();
+    void fetchMembers();
   }, [groupId]);
 
   const toggleMember = (id: string) => {
@@ -42,7 +42,7 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -58,8 +58,9 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
       setMonthlyBudget('');
       setSelectedMemberIds([]);
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create category');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create category';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -71,13 +72,13 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
         <CardTitle>Create Category</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Category Name</label>
             <Input
               placeholder="e.g. Rent, Groceries"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); }}
               required
             />
           </div>
@@ -89,7 +90,7 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
               step="0.01"
               placeholder="0.00"
               value={monthlyBudget}
-              onChange={(e) => setMonthlyBudget(e.target.value)}
+              onChange={(e) => { setMonthlyBudget(e.target.value); }}
               required
             />
           </div>
@@ -99,7 +100,7 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
             <Input
               placeholder="💰"
               value={icon}
-              onChange={(e) => setIcon(e.target.value)}
+              onChange={(e) => { setIcon(e.target.value); }}
             />
           </div>
 
@@ -112,7 +113,7 @@ export function CategoryForm({ groupId, onSuccess }: CategoryFormProps) {
                   type="button"
                   variant={selectedMemberIds.includes(member.id) ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => toggleMember(member.id)}
+                  onClick={() => { toggleMember(member.id); }}
                   className="rounded-full"
                 >
                   <UserDisplay user={member.user} className="font-normal" />

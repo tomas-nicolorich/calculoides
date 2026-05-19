@@ -10,7 +10,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -23,7 +23,7 @@ export function LoginForm() {
     if (error) {
       setError(error.message);
     } else {
-      navigate('/dashboard');
+      void navigate('/dashboard');
     }
     setLoading(false);
   };
@@ -34,14 +34,14 @@ export function LoginForm() {
         <CardTitle className="text-2xl text-center">Sign In</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSignIn} className="space-y-4">
+        <form onSubmit={(e) => { void handleSignIn(e); }} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
             <Input
               type="email"
               placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); }}
               required
             />
           </div>
@@ -51,7 +51,7 @@ export function LoginForm() {
               type="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); }}
               required
             />
           </div>

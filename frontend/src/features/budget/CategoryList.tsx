@@ -6,6 +6,7 @@ interface CategoryBalance {
   spent: number;
   remainingQuota: number;
   share: number;
+  percentage: number;
   user?: {
     name: string | null;
     email: string;
@@ -48,12 +49,12 @@ export function CategoryList({ categories, onSelectCategory }: CategoryListProps
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Total Spent: €{category.totalSpent.toLocaleString()}</span>
-                    <span>Budget: €{Number(category.monthlyBudget).toLocaleString()}</span>
+                    <span>Budget: €{category.monthlyBudget.toLocaleString()}</span>
                   </div>
                   <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-primary" 
-                      style={{ width: `${Math.min((category.totalSpent / Number(category.monthlyBudget)) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((category.totalSpent / category.monthlyBudget) * 100, 100).toString()}%` }}
                     />
                   </div>
                 </div>
@@ -64,7 +65,7 @@ export function CategoryList({ categories, onSelectCategory }: CategoryListProps
                     <div key={balance.memberId} className="space-y-1">
                       <div className="flex justify-between items-center text-xs">
                         <UserDisplay user={balance.user} className="font-medium" />
-                        <span className="text-muted-foreground">{(balance.share * 100).toFixed(0)}% share</span>
+                        <span className="text-muted-foreground">{balance.percentage}% share</span>
                       </div>
                       <div className="flex justify-between text-[10px] text-muted-foreground">
                         <span>Spent: €{balance.spent.toLocaleString()}</span>
@@ -75,7 +76,7 @@ export function CategoryList({ categories, onSelectCategory }: CategoryListProps
                       <div className="h-1 w-full bg-secondary/50 rounded-full overflow-hidden">
                         <div 
                           className={`h-full ${balance.remainingQuota < 0 ? 'bg-destructive' : 'bg-primary/70'}`}
-                          style={{ width: `${Math.min((balance.spent / balance.totalQuota) * 100, 100)}%` }}
+                          style={{ width: `${Math.min((balance.spent / balance.totalQuota) * 100, 100).toString()}%` }}
                         />
                       </div>
                     </div>

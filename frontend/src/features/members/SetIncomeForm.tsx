@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
 import { apiClient } from '../../shared/api/client';
 
@@ -19,12 +19,7 @@ export function SetIncomeForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Update local state if currentIncome changes (e.g. when switching members)
-  useEffect(() => {
-    setIncome(currentIncome.toString());
-  }, [currentIncome, memberId]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -32,8 +27,9 @@ export function SetIncomeForm({
     try {
       await apiClient.members.updateIncome(memberId, Number(income));
       onUpdated();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -50,13 +46,13 @@ export function SetIncomeForm({
         )}
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="flex gap-2">
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
             <Input
               type="number"
               value={income}
-              onChange={(e) => setIncome(e.target.value)}
+              onChange={(e) => { setIncome(e.target.value); }}
               className="pl-7"
               placeholder="0.00"
               required

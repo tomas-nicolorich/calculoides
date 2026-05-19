@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { cn } from './index';
+import { cn } from '../lib/utils';
 
 test('cn utility combines classes correctly', () => {
   expect(cn('a', 'b')).toBe('a b');

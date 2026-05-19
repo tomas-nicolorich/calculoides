@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Button, UserDisplay } from '../../shared/ui';
+import { cn } from '../../shared/lib/utils';
 import { apiClient } from '../../shared/api/client';
+import { SavingsGoalForm } from './SavingsGoalForm';
 
 interface ContributionBreakdown {
   memberId: string;
@@ -15,8 +17,10 @@ interface ContributionBreakdown {
 
 interface SavingsGoal {
   id: string;
+  groupId: string;
   name: string;
   targetAmount: number;
+  startingAmount: number;
   targetDate: string;
   projectedDate: string;
   varianceMonths: number;
@@ -25,13 +29,16 @@ interface SavingsGoal {
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
 }
 
 export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [adjustingGoalId, setAdjustingGoalId] = useState<string | null>(null);
   const [overrideAmounts, setOverrideAmounts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successGoalId, setSuccessGoalId] = useState<string | null>(null);
 
   const handleOverrideChange = (memberId: string, amount: string) => {
     setOverrideAmounts((prev) => ({ ...prev, [memberId]: amount }));
@@ -39,17 +46,32 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
 
   const saveOverrides = async (goalId: string) => {
     setLoading(true);
+    setError(null);
+    setSuccessGoalId(null);
     try {
       // Save all changed amounts
-      const promises = Object.entries(overrideAmounts).map(([memberId, amount]) => 
-        apiClient.savings.upsertContribution(goalId, memberId, Number(amount))
-      );
+      const promises = Object.entries(overrideAmounts).map(([memberId, amount]) => {
+        if (amount === '' || isNaN(Number(amount))) {
+          throw new Error('Please enter valid numeric amounts for all members');
+        }
+        return apiClient.savings.upsertContribution(goalId, memberId, Number(amount));
+      });
       await Promise.all(promises);
-      setEditingGoalId(null);
-      setOverrideAmounts({});
-      onRefresh?.();
+      setSuccessGoalId(goalId);
+      
+      // Trigger refresh immediately and wait for it
+      await onRefresh?.();
+      
+      // Clear success state and editing mode after a short delay for feedback
+      setTimeout(() => {
+        setAdjustingGoalId(null);
+        setOverrideAmounts({});
+        setSuccessGoalId(null);
+      }, 800);
     } catch (err) {
       console.error('Failed to save overrides', err);
+      const message = err instanceof Error ? err.message : 'Failed to save changes. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -63,27 +85,60 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
           const targetDate = new Date(goal.targetDate);
           const projectedDate = new Date(goal.projectedDate);
           const isLate = goal.varianceMonths > 0;
-          const isOnTime = goal.varianceMonths <= 0;
+          const isSuccess = successGoalId === goal.id;
+
+          if (editingGoalId === goal.id) {
+            return (
+              <SavingsGoalForm 
+                key={goal.id}
+                groupId={goal.groupId}
+                goal={goal}
+                onSuccess={() => {
+                  setEditingGoalId(null);
+                  onRefresh?.();
+                }}
+                onCancel={() => { setEditingGoalId(null); }}
+              />
+            );
+          }
 
           return (
-            <Card key={goal.id}>
+            <Card key={goal.id} className={cn("transition-all duration-300", isSuccess ? "ring-2 ring-green-500 bg-green-50" : "")}>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle>{goal.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle>{goal.name}</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 w-6 p-0" 
+                        onClick={() => { setEditingGoalId(goal.id); }}
+                        title="Edit Goal Settings"
+                      >
+                        ✎
+                      </Button>
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Target: €{Number(goal.targetAmount).toLocaleString()}
+                      Target: €{goal.targetAmount.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Starting: €{goal.startingAmount.toLocaleString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-xs font-bold px-2 py-1 rounded ${isLate ? 'bg-destructive/10 text-destructive' : 'bg-green-100 text-green-700'}`}>
-                      {isLate ? `Delayed by ${goal.varianceMonths}mo` : 'On Track'}
+                    <p className={cn(
+                      "text-xs font-bold px-2 py-1 rounded",
+                      isLate ? 'bg-destructive/10 text-destructive' : 'bg-green-100 text-green-700'
+                    )}>
+                      {isLate ? `Delayed by ${goal.varianceMonths.toString()}mo` : 'On Track'}
                     </p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* ... target/projected dates ... */}
                   <div className="grid grid-cols-2 gap-2 text-xs border-b pb-2">
                     <div>
                       <p className="text-muted-foreground">Target Date</p>
@@ -104,11 +159,14 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                         variant="ghost" 
                         size="sm" 
                         className="h-6 text-[10px]"
+                        disabled={loading && adjustingGoalId === goal.id}
                         onClick={() => {
-                          if (editingGoalId === goal.id) {
-                            setEditingGoalId(null);
+                          if (adjustingGoalId === goal.id) {
+                            setAdjustingGoalId(null);
+                            setError(null);
                           } else {
-                            setEditingGoalId(goal.id);
+                            setAdjustingGoalId(goal.id);
+                            setError(null);
                             // Pre-fill current amounts
                             const initial: Record<string, string> = {};
                             goal.breakdown.forEach(b => {
@@ -118,7 +176,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                           }
                         }}
                       >
-                        {editingGoalId === goal.id ? 'Cancel' : 'Adjust'}
+                        {adjustingGoalId === goal.id ? 'Cancel' : 'Adjust'}
                       </Button>
                     </div>
 
@@ -126,12 +184,14 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                       <div key={item.memberId} className="flex justify-between items-center text-sm">
                         <UserDisplay user={item.user} className="font-normal" />
                         <div className="flex items-center gap-2">
-                          {editingGoalId === goal.id ? (
+                          {adjustingGoalId === goal.id ? (
                             <Input
                               type="number"
+                              step="0.01"
                               className="h-7 w-20 text-right text-xs"
+                              disabled={loading}
                               value={overrideAmounts[item.memberId] || ''}
-                              onChange={(e) => handleOverrideChange(item.memberId, e.target.value)}
+                              onChange={(e) => { handleOverrideChange(item.memberId, e.target.value); }}
                             />
                           ) : (
                             <div className="text-right">
@@ -145,15 +205,29 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                       </div>
                     ))}
 
-                    {editingGoalId === goal.id && (
-                      <Button 
-                        size="sm" 
-                        className="w-full mt-2 h-8 text-xs" 
-                        onClick={() => saveOverrides(goal.id)}
-                        disabled={loading}
-                      >
-                        {loading ? 'Saving...' : 'Save Adjustments'}
-                      </Button>
+                    {adjustingGoalId === goal.id && (
+                      <div className="space-y-2 pt-2">
+                        {error && (
+                          <p className="text-[10px] text-destructive font-medium bg-destructive/5 p-2 rounded border border-destructive/20">
+                            {error}
+                          </p>
+                        )}
+                        {isSuccess ? (
+                          <div className="flex items-center justify-center py-2 text-green-600 text-xs font-bold gap-2">
+                            <span className="h-2 w-2 bg-green-600 rounded-full animate-ping" />
+                            Changes saved successfully!
+                          </div>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            className="w-full h-8 text-xs" 
+                            onClick={() => { void saveOverrides(goal.id); }}
+                            disabled={loading}
+                          >
+                            {loading ? 'Saving Changes...' : 'Save Adjustments'}
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

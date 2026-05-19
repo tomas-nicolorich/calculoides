@@ -7,7 +7,7 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -16,8 +16,9 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
       await apiClient.groups.create(name);
       setName('');
       onCreated();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -29,7 +30,7 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
         <CardTitle>Create New Group</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium">
               Group Name
@@ -37,7 +38,7 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); }}
               placeholder="e.g. My Household"
               required
               disabled={isLoading}

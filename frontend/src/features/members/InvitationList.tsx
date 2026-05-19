@@ -1,21 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../../shared/api/client';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
-
-interface Invitation {
-  id: string;
-  groupId: string;
-  group: { name: string };
-  inviter: { name: string | null; email: string };
-  status: string;
-}
+import { Invitation } from '../../shared/api/types';
 
 export function InvitationList({ onAction }: { onAction?: () => void }) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchInvitations = async () => {
-    setLoading(true);
+  const fetchInvitations = useCallback(async () => {
     try {
       const data = await apiClient.invitations.list();
       setInvitations(data);
@@ -24,16 +16,30 @@ export function InvitationList({ onAction }: { onAction?: () => void }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchInvitations();
   }, []);
 
-  const handleAction = async (id: string, action: 'ACCEPT' | 'REJECT') => {
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await apiClient.invitations.list();
+        if (!active) return;
+        setInvitations(data);
+      } catch (err) {
+        console.error('Failed to fetch invitations', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, []);
+
+  const handleAction = async (token: string, action: 'ACCEPT' | 'REJECT') => {
     try {
-      await apiClient.invitations.respond(id, action);
-      fetchInvitations();
+      await apiClient.invitations.respond(token, action);
+      void fetchInvitations();
       onAction?.();
     } catch (err) {
       console.error(`Failed to ${action} invitation`, err);
@@ -52,14 +58,14 @@ export function InvitationList({ onAction }: { onAction?: () => void }) {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Invite to {invitation.group.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                From: {invitation.inviter.name || invitation.inviter.email}
+                From: {invitation.inviter.name ?? invitation.inviter.email}
               </p>
             </CardHeader>
             <CardContent className="flex gap-2">
-              <Button size="sm" onClick={() => handleAction(invitation.id, 'ACCEPT')}>
+              <Button size="sm" onClick={() => { void handleAction(invitation.token, 'ACCEPT'); }}>
                 Accept
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleAction(invitation.id, 'REJECT')}>
+              <Button size="sm" variant="outline" onClick={() => { void handleAction(invitation.token, 'REJECT'); }}>
                 Decline
               </Button>
             </CardContent>

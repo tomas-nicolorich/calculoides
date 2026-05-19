@@ -1,4 +1,4 @@
-import { useAuth } from '../app/providers/AuthProvider';
+import { useAuth } from '../app/providers/AuthContext';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../shared/ui';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,7 +8,7 @@ export function SettingsPage() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
+    void navigate('/login');
   };
 
   return (
@@ -36,14 +36,14 @@ export function SettingsPage() {
           <CardTitle>Account Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" onClick={handleSignOut}>
+          <Button variant="destructive" onClick={() => { void handleSignOut(); }}>
             Sign Out
           </Button>
         </CardContent>
       </Card>
       
       <div className="mt-6">
-        <Button variant="outline" onClick={() => navigate('/dashboard')}>
+        <Button variant="outline" onClick={() => { void navigate('/dashboard'); }}>
           Back to Dashboard
         </Button>
       </div>

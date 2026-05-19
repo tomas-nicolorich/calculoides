@@ -1,9 +1,4 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../lib/utils';
 
 export function Button({
   className,
@@ -79,4 +74,4 @@ export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDi
   return <div className={cn('p-6 pt-0', className)} {...props} />;
 }
 
-export * from './UserDisplay';
+export { UserDisplay } from './UserDisplay';

@@ -2,35 +2,64 @@ import { useState } from 'react';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '../../shared/ui';
 import { apiClient } from '../../shared/api/client';
 
-interface SavingsGoalFormProps {
-  groupId: string;
-  onSuccess?: () => void;
+interface SavingsGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  startingAmount: number;
+  targetDate: string;
 }
 
-export function SavingsGoalForm({ groupId, onSuccess }: SavingsGoalFormProps) {
-  const [name, setName] = useState('');
-  const [targetAmount, setTargetAmount] = useState('');
-  const [targetDate, setTargetDate] = useState('');
+interface SavingsGoalFormProps {
+  groupId: string;
+  goal?: SavingsGoal;
+  onSuccess?: () => void | Promise<void>;
+  onCancel?: () => void;
+}
+
+export function SavingsGoalForm({ groupId, goal, onSuccess, onCancel }: SavingsGoalFormProps) {
+  const isEditing = !!goal;
+  const [name, setName] = useState(goal?.name ?? '');
+  const [targetAmount, setTargetAmount] = useState(goal?.targetAmount.toString() ?? '');
+  const [startingAmount, setStartingAmount] = useState(goal?.startingAmount.toString() ?? '0');
+  const [targetDate, setTargetDate] = useState(
+    goal?.targetDate ? new Date(goal.targetDate).toISOString().split('T')[0] : ''
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      await apiClient.savings.create(groupId, {
-        name,
-        targetAmount: Number(targetAmount),
-        targetDate: new Date(targetDate).toISOString(),
-      });
-      setName('');
-      setTargetAmount('');
-      setTargetDate('');
-      onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create savings goal');
+      if (isEditing) {
+        await apiClient.savings.update(goal.id, {
+          name,
+          targetAmount: Number(targetAmount),
+          startingAmount: Number(startingAmount),
+          targetDate: new Date(targetDate).toISOString(),
+        });
+      } else {
+        await apiClient.savings.create(groupId, {
+          name,
+          targetAmount: Number(targetAmount),
+          startingAmount: Number(startingAmount),
+          targetDate: new Date(targetDate).toISOString(),
+        });
+      }
+      
+      if (!isEditing) {
+        setName('');
+        setTargetAmount('');
+        setStartingAmount('0');
+        setTargetDate('');
+      }
+      await onSuccess?.();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || `Failed to ${isEditing ? 'update' : 'create'} savings goal`);
     } finally {
       setLoading(false);
     }
@@ -39,16 +68,21 @@ export function SavingsGoalForm({ groupId, onSuccess }: SavingsGoalFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create Savings Goal</CardTitle>
+        <CardTitle>{isEditing ? 'Edit' : 'Create'} Savings Goal</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }} 
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <label className="text-sm font-medium">Goal Name</label>
             <Input
               placeholder="e.g. New Sofa, Vacation"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); }}
               required
             />
           </div>
@@ -60,8 +94,19 @@ export function SavingsGoalForm({ groupId, onSuccess }: SavingsGoalFormProps) {
               step="0.01"
               placeholder="0.00"
               value={targetAmount}
-              onChange={(e) => setTargetAmount(e.target.value)}
+              onChange={(e) => { setTargetAmount(e.target.value); }}
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Starting Amount (€)</label>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={startingAmount}
+              onChange={(e) => { setStartingAmount(e.target.value); }}
             />
           </div>
 
@@ -70,16 +115,23 @@ export function SavingsGoalForm({ groupId, onSuccess }: SavingsGoalFormProps) {
             <Input
               type="date"
               value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
+              onChange={(e) => { setTargetDate(e.target.value); }}
               required
             />
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Goal'}
-          </Button>
+          <div className="flex gap-2">
+            {isEditing && (
+              <Button type="button" variant="outline" className="flex-1" onClick={onCancel} disabled={loading}>
+                Cancel
+              </Button>
+            )}
+            <Button type="submit" className={isEditing ? 'flex-1' : 'w-full'} disabled={loading}>
+              {loading ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Goal' : 'Create Goal')}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

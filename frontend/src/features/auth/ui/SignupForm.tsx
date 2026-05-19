@@ -11,7 +11,7 @@ export function SignupForm() {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -37,7 +37,7 @@ export function SignupForm() {
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p>We've sent a confirmation link to {email}.</p>
-          <Button variant="outline" className="w-full" onClick={() => navigate('/login')}>
+          <Button variant="outline" className="w-full" onClick={() => { void navigate('/login'); }}>
             Back to Login
           </Button>
         </CardContent>
@@ -51,14 +51,14 @@ export function SignupForm() {
         <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSignUp} className="space-y-4">
+        <form onSubmit={(e) => { void handleSignUp(e); }} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
             <Input
               type="email"
               placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); }}
               required
             />
           </div>
@@ -68,7 +68,7 @@ export function SignupForm() {
               type="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); }}
               required
             />
           </div>

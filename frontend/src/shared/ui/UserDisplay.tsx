@@ -1,5 +1,4 @@
-import React from 'react';
-import { cn } from './index';
+import { cn } from '../lib/utils';
 
 interface UserDisplayProps {
   user?: {
@@ -18,7 +17,7 @@ export function UserDisplay({ user, className }: UserDisplayProps) {
   
   // BUG-014: Strictly use User.name for display. 
   // We provide fallbacks for safety, but data fetching should ensure name is present.
-  const displayName = user.name || user.email || 'Unnamed User';
+  const displayName = user.name ?? user.email ?? 'Unnamed User';
   
   return (
     <span className={cn("font-medium", className)}>

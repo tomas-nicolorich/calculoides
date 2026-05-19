@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../app/providers/AuthProvider';
+import { useAuth } from '../app/providers/AuthContext';
 import { LoginForm } from '../features/auth/ui/LoginForm';
 
 export function LoginPage() {

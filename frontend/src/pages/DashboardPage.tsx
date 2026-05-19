@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../app/providers/AuthProvider';
+import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '../app/providers/AuthContext';
 import { DashboardSummary } from '../widgets/dashboard/DashboardSummary';
 import { CreateGroupForm } from '../features/groups/CreateGroupForm';
 import { MemberList } from '../features/members/MemberList';
@@ -8,74 +8,77 @@ import { InvitationList } from '../features/members/InvitationList';
 import { CategoryList } from '../features/budget/CategoryList';
 import { CategoryForm } from '../features/budget/CategoryForm';
 import { ExpenseForm } from '../features/budget/ExpenseForm';
+import { CategoryExpenseList } from '../features/budget/CategoryExpenseList';
 import { SavingsGoalList } from '../features/savings/SavingsGoalList';
 import { SavingsGoalForm } from '../features/savings/SavingsGoalForm';
 import { TransferForm } from '../features/transfers/TransferForm';
 import { AdminPanel } from '../features/admin/AdminPanel';
 import { InviteMemberForm } from '../features/members/InviteMemberForm';
 import { apiClient } from '../shared/api/client';
-import { Button, cn } from '../shared/ui';
+import { Button } from '../shared/ui';
+import { cn } from '../shared/lib/utils';
+import { Group, Summary, Category, SavingsGoal, Member } from '../shared/api/types';
 
 type Tab = 'overview' | 'budget' | 'savings' | 'members' | 'admin';
 
 export function DashboardPage() {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [summary, setSummary] = useState<any>(null);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [myMemberId, setMyMemberId] = useState<string | null>(null);
   const [myCurrentIncome, setMyCurrentIncome] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
-  const [editingMember, setEditingMember] = useState<any>(null);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
 
-  const fetchGroups = async () => {
-    setLoading(true);
+  const fetchGroups = useCallback(async () => {
     try {
       const data = await apiClient.groups.list();
       setGroups(data);
-      if (data.length > 0) {
-        if (!selectedGroupId) {
-          setSelectedGroupId(data[0].id);
-        }
-      } else {
-        setLoading(false);
+      if (data.length > 0 && !selectedGroupId) {
+        setSelectedGroupId(data[0].id);
       }
     } catch (err) {
       console.error('Failed to fetch groups', err);
+    } finally {
       setLoading(false);
     }
-  };
+  }, [selectedGroupId]);
 
-  const fetchCategories = async (groupId: string) => {
+  const fetchCategories = useCallback(async (groupId: string) => {
     try {
       const data = await apiClient.categories.list(groupId);
       setCategories(data);
     } catch (err) {
       console.error('Failed to fetch categories', err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchSavings = async (groupId: string) => {
+  const fetchSavings = useCallback(async (groupId: string) => {
     try {
       const data = await apiClient.savings.list(groupId);
       setSavingsGoals(data);
     } catch (err) {
       console.error('Failed to fetch savings', err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchSummary = async (groupId: string) => {
-    setLoading(true);
+  const fetchSummary = useCallback(async (groupId: string) => {
     try {
       const data = await apiClient.groups.getSummary(groupId);
       setSummary(data);
       
-      const group = await apiClient.fetch(`/groups?id=${groupId}`);
-      const myMembership = group.members.find((m: any) => m.userId === user?.id);
+      const group = await apiClient.fetch<Group>(`/groups?id=${groupId}`);
+      const myMembership = group.members.find((m) => m.userId === user?.id);
       if (myMembership) {
         setMyMemberId(myMembership.id);
         setMyCurrentIncome(myMembership.income);
@@ -89,20 +92,75 @@ export function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchCategories, fetchSavings]);
 
   useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  useEffect(() => {
-    if (selectedGroupId) {
-      fetchSummary(selectedGroupId);
-    }
+    let active = true;
+    const init = async () => {
+      try {
+        const data = await apiClient.groups.list();
+        setGroups(data);
+        if (data.length > 0 && !selectedGroupId) {
+          setSelectedGroupId(data[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch groups', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void init();
+    return () => { active = false; };
   }, [selectedGroupId]);
 
+  useEffect(() => {
+    if (!selectedGroupId) return;
+    
+    let active = true;
+    const loadSummary = async () => {
+      setLoading(true);
+      try {
+        const data = await apiClient.groups.getSummary(selectedGroupId);
+        setSummary(data);
+        
+        const group = await apiClient.fetch<Group>(`/groups?id=${selectedGroupId}`);
+        
+        const myMembership = group.members.find((m) => m.userId === user?.id);
+        if (myMembership) {
+          setMyMemberId(myMembership.id);
+          setMyCurrentIncome(myMembership.income);
+        }
+        setIsOwner(group.ownerId === user?.id);
+
+        const categoriesData = await apiClient.categories.list(selectedGroupId);
+        setCategories(categoriesData);
+
+        const savingsData = await apiClient.savings.list(selectedGroupId);
+        setSavingsGoals(savingsData);
+      } catch (err) {
+        console.error('Failed to fetch summary', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void loadSummary();
+    return () => { active = false; };
+  }, [selectedGroupId, user]);
+
   const refreshData = () => {
-    if (selectedGroupId) fetchSummary(selectedGroupId);
+    if (selectedGroupId) {
+      setLoading(true);
+      return fetchSummary(selectedGroupId);
+    }
+    return Promise.resolve();
+  };
+
+  const refreshSavings = () => {
+    if (selectedGroupId) {
+      setLoading(true);
+      return fetchSavings(selectedGroupId);
+    }
+    return Promise.resolve();
   };
 
   const renderTabContent = () => {
@@ -118,6 +176,7 @@ export function DashboardPage() {
               totalBudget={summary.totalBudget}
               totalSpent={summary.totalSpent}
               members={summary.members}
+              recentExpenses={summary.recentExpenses}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <ExpenseForm categories={categories} onSuccess={refreshData} />
@@ -135,11 +194,18 @@ export function DashboardPage() {
         return (
           <div className="space-y-8 animate-in fade-in duration-500">
             <CategoryList 
-              categories={categories.map(c => ({
-                ...c,
-                spent: 0 // In real app, this should be fetched or calculated
-              }))} 
+              categories={categories} 
+              onSelectCategory={(id) => { setSelectedCategoryId(id); }}
             />
+            
+            {selectedCategoryId && (
+              <CategoryExpenseList 
+                groupId={selectedGroupId}
+                categoryId={selectedCategoryId}
+                categoryName={categories.find(c => c.id === selectedCategoryId)?.name ?? ''}
+              />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <CategoryForm groupId={selectedGroupId} onSuccess={refreshData} />
               {categories.length > 0 && (
@@ -147,7 +213,7 @@ export function DashboardPage() {
                   categoryId={categories[0].id}
                   categoryName={categories[0].name}
                   members={summary.members}
-                  currentMemberId={user!.id}
+                  currentMemberId={user?.id ?? ''}
                   isOwner={isOwner}
                   onSuccess={refreshData}
                 />
@@ -160,13 +226,9 @@ export function DashboardPage() {
           <div className="space-y-8 animate-in fade-in duration-500">
             <SavingsGoalList 
               goals={savingsGoals}
-              memberShares={summary.members.map((m: any) => ({
-                id: m.id,
-                name: m.name,
-                share: m.share / 100
-              }))}
+              onRefresh={refreshSavings}
             />
-            <SavingsGoalForm groupId={selectedGroupId} onSuccess={refreshData} />
+            <SavingsGoalForm groupId={selectedGroupId} onSuccess={refreshSavings} />
           </div>
         );
       case 'members':
@@ -178,21 +240,22 @@ export function DashboardPage() {
                 <MemberList 
                   groupId={selectedGroupId} 
                   isOwner={isOwner}
-                  currentUserId={user!.id}
-                  onEditIncome={(member) => setEditingMember(member)}
+                  currentUserId={user?.id ?? ''}
+                  onEditIncome={(member) => { setEditingMember(member); }}
                 />
               </div>
               <div className="space-y-8">
-                {(editingMember || myMemberId) && (
+                {(editingMember ?? myMemberId) && (
                   <SetIncomeForm 
-                    memberId={editingMember?.id || myMemberId!} 
-                    memberName={editingMember?.user?.name || editingMember?.user?.email}
-                    currentIncome={editingMember?.income || myCurrentIncome}
+                    key={editingMember?.id ?? myMemberId ?? 'none'}
+                    memberId={editingMember?.id ?? myMemberId ?? ''} 
+                    memberName={editingMember?.user?.name ?? editingMember?.user?.email}
+                    currentIncome={editingMember?.income ?? myCurrentIncome}
                     onUpdated={() => {
                       setEditingMember(null);
                       refreshData();
                     }}
-                    onCancel={editingMember ? () => setEditingMember(null) : undefined}
+                    onCancel={editingMember ? () => { setEditingMember(null); } : undefined}
                   />
                 )}
                 <InviteMemberForm groupId={selectedGroupId} onInvited={refreshData} />
@@ -207,7 +270,7 @@ export function DashboardPage() {
               <AdminPanel 
                 groupId={selectedGroupId}
                 members={summary.members}
-                currentOwnerId={user!.id}
+                currentOwnerId={user?.id ?? ''}
                 onSuccess={refreshData}
               />
             ) : (
@@ -235,8 +298,8 @@ export function DashboardPage() {
             <h1 className="text-2xl font-bold text-primary">Calculoides</h1>
             {groups.length > 0 && (
               <select 
-                value={selectedGroupId || ''} 
-                onChange={(e) => setSelectedGroupId(e.target.value)}
+                value={selectedGroupId ?? ''} 
+                onChange={(e) => { setSelectedGroupId(e.target.value); }}
                 className="p-2 border rounded bg-gray-50 text-sm focus:ring-2 focus:ring-primary outline-none"
               >
                 {groups.map(g => (
@@ -247,7 +310,7 @@ export function DashboardPage() {
           </div>
           <div className="flex gap-4 items-center">
             <span className="text-sm text-gray-500 hidden sm:inline">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={() => signOut()}>
+            <Button variant="outline" size="sm" onClick={() => { void signOut(); }}>
               Sign Out
             </Button>
           </div>
@@ -258,7 +321,7 @@ export function DashboardPage() {
             {(['overview', 'budget', 'savings', 'members', 'admin'] as Tab[]).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => { setActiveTab(tab); }}
                 className={cn(
                   "py-4 px-1 border-b-2 font-medium text-sm transition-colors",
                   activeTab === tab 
@@ -274,13 +337,13 @@ export function DashboardPage() {
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        <InvitationList onAction={fetchGroups} />
+        <InvitationList onAction={() => { void fetchGroups(); }} />
         {!selectedGroupId ? (
           <div className="h-full flex items-center justify-center">
             <div className="bg-white p-12 rounded-lg shadow-xl text-center max-w-md w-full">
               <h2 className="text-2xl font-bold mb-4">Welcome to Calculoides</h2>
               <p className="text-gray-500 mb-8">Create your first group to start managing your shared household budget.</p>
-              <CreateGroupForm onCreated={fetchGroups} />
+              <CreateGroupForm onCreated={() => { void fetchGroups(); }} />
             </div>
           </div>
         ) : (

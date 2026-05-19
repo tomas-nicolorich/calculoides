@@ -15,7 +15,7 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -30,8 +30,9 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
       setDescription('');
       setAmount('');
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to log expense');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to log expense';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -43,13 +44,13 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
         <CardTitle>Log Expense</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Category</label>
             <select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={(e) => { setCategoryId(e.target.value); }}
               required
             >
               {categories.map((cat) => (
@@ -65,7 +66,7 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
             <Input
               placeholder="Groceries, Rent, etc."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => { setDescription(e.target.value); }}
               required
             />
           </div>
@@ -77,7 +78,7 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
               step="0.01"
               placeholder="0.00"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => { setAmount(e.target.value); }}
               required
             />
           </div>
@@ -87,7 +88,7 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
             <Input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => { setDate(e.target.value); }}
               required
             />
           </div>

@@ -7,7 +7,7 @@ export function InviteMemberForm({ groupId, onInvited }: { groupId: string; onIn
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -16,8 +16,9 @@ export function InviteMemberForm({ groupId, onInvited }: { groupId: string; onIn
       await apiClient.invitations.create(groupId, email);
       setEmail('');
       onInvited();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -29,11 +30,11 @@ export function InviteMemberForm({ groupId, onInvited }: { groupId: string; onIn
         <CardTitle>Invite Member</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="flex gap-2">
           <Input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); }}
             placeholder="member@example.com"
             required
             disabled={isLoading}

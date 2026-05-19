@@ -1,21 +1,11 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   ReactNode,
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../../shared/api/supabase";
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from "./AuthContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -37,24 +27,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 5000);
 
     // Get initial session
-    supabase.auth
+    void supabase.auth
       .getSession()
-      .then(({ data: { session }, error }) => {
+      .then(({ data: { session: initialSession }, error }) => {
         clearTimeout(timeoutId);
         if (error) {
           console.error("AuthProvider: Error getting session:", error);
         } else {
           console.log(
             "AuthProvider: Session retrieved successfully:",
-            session ? "User logged in" : "No active session",
+            initialSession ? "User logged in" : "No active session",
           );
         }
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
         setLoading(false);
       })
-      .catch((e) => {
-        console.log(e);
+      .catch((e: unknown) => {
+        console.error("AuthProvider: Uncaught initialization error:", e);
       });
 
     // Listen for auth changes
@@ -81,12 +71,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {!loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }

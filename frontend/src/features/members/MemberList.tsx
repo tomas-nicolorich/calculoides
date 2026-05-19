@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../shared/api/client';
 import { UserDisplay, Button } from '../../shared/ui';
-
-interface Member {
-  id: string;
-  userId: string;
-  income: number;
-  joinedAt: string;
-  user?: {
-    name: string | null;
-    email: string;
-  }
-}
+import { Member } from '../../shared/api/types';
 
 export function MemberList({ 
   groupId, 
@@ -27,20 +17,22 @@ export function MemberList({
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchMembers = async () => {
-    setLoading(true);
-    try {
-      const data = await apiClient.members.list(groupId);
-      setMembers(data);
-    } catch (err) {
-      console.error('Failed to fetch members', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchMembers();
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await apiClient.members.list(groupId);
+        if (!active) return;
+        setMembers(data);
+      } catch (err) {
+        console.error('Failed to fetch members', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
   }, [groupId]);
 
   if (loading) return <div className="p-4 text-center">Loading members...</div>;
@@ -57,14 +49,14 @@ export function MemberList({
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="font-semibold">€{Number(member.income).toLocaleString()}</p>
+              <p className="font-semibold">€{member.income.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">Monthly Income</p>
             </div>
             {(isOwner || member.userId === currentUserId) && (
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => onEditIncome(member)}
+                onClick={() => { onEditIncome(member); }}
               >
                 Edit
               </Button>

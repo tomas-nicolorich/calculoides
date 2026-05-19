@@ -25,8 +25,8 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
         body: JSON.stringify({ groupId }),
       });
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to archive expenses');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to archive expenses');
     } finally {
       setLoading(false);
     }
@@ -44,8 +44,8 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
         body: JSON.stringify({ newOwnerId }),
       });
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to transfer ownership');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to transfer ownership');
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
           </p>
           <Button 
             variant="destructive" 
-            onClick={handleArchive} 
+            onClick={() => { void handleArchive(); }} 
             disabled={loading}
           >
             {loading ? 'Processing...' : 'Archive Current Month'}
@@ -81,7 +81,7 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
             <select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={newOwnerId}
-              onChange={(e) => setNewOwnerId(e.target.value)}
+              onChange={(e) => { setNewOwnerId(e.target.value); }}
             >
               <option value="">Select a member...</option>
               {members.filter(m => m.id !== currentOwnerId).map((m) => (
@@ -93,7 +93,7 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
           </div>
           <Button 
             variant="outline" 
-            onClick={handleTransferOwnership} 
+            onClick={() => { void handleTransferOwnership(); }} 
             disabled={loading || !newOwnerId}
           >
             {loading ? 'Transferring...' : 'Transfer Ownership'}
