@@ -31,21 +31,21 @@ export function withAuth(handler: AuthenticatedHandler): Handler {
       const token = extractTokenFromHeader(authHeader);
       
       if (!token) {
-        return res.status(401).json({ error: 'Unauthorized: Missing token' });
+        res.status(401).json({ error: 'Unauthorized: Missing token' }); return;
       }
 
       const user = await getUserFromSession(token);
       if (!user) {
-        return res.status(401).json({ error: 'Unauthorized: Invalid session' });
+        res.status(401).json({ error: 'Unauthorized: Invalid session' }); return;
       }
 
       const authReq = req as AuthenticatedRequest;
       authReq.user = user;
       
-      return await handler(authReq, res, user);
+      await handler(authReq, res, user); return;
     } catch (error: unknown) {
       console.error('Auth Middleware Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal Server Error' }); return;
     }
   };
 }
@@ -55,7 +55,7 @@ export function withAuth(handler: AuthenticatedHandler): Handler {
  */
 export function withErrorHandling(handler: Handler | AuthenticatedHandler): Handler {
   return async (req, res) => {
-    const vercelRes = res as ApiResponse;
+    const vercelRes = res;
     
     // Polyfill Vercel-like helpers if missing
     if (typeof vercelRes.status !== 'function') {
@@ -74,7 +74,7 @@ export function withErrorHandling(handler: Handler | AuthenticatedHandler): Hand
 
     try {
       // We cast to Handler because we've ensured the request/response are handled correctly
-      return await (handler as Handler)(req, vercelRes);
+      await (handler as Handler)(req, vercelRes); return;
     } catch (error: unknown) {
       console.error('API Error:', error);
       

@@ -15,53 +15,53 @@ export default withErrorHandling(
         validatedGroupId,
         validatedBody.name,
         validatedBody.monthlyBudget,
-        validatedBody.icon || undefined,
+        validatedBody.icon ?? undefined,
         validatedBody.memberIds
-      );
-      return res.status(201).json(category);
-    }
+        );
+        res.status(201).json(category); return;
+        }
 
-    if (req.method === 'GET') {
-      // For listing, we need member shares to calculate balances
-      // Verify group visibility before listing
-      const groups = await GroupService.getGroupsForUser(req.user.id);
-      const group = groups.find((g) => g.id === validatedGroupId);
+        if (req.method === 'GET') {
+        // For listing, we need member shares to calculate balances
+        // Verify group visibility before listing
+        const groups = await GroupService.getGroupsForUser(req.user.id);
+        const group = groups.find((g) => g.id === validatedGroupId);
 
-      if (!group) {
-        return res.status(403).json({ error: 'Access denied to this group' });
-      }
+        if (!group) {
+        res.status(403).json({ error: 'Access denied to this group' }); return;
+        }
 
-      const categories = await BudgetService.listCategoriesWithBalances(validatedGroupId);
-      return res.status(200).json(categories);
-    }
+        const categories = await BudgetService.listCategoriesWithBalances(validatedGroupId);
+        res.status(200).json(categories); return;
+        }
 
-    if (req.method === 'DELETE') {
-      const { id } = req.query;
-      const validatedId = IdSchema.parse(id);
+        if (req.method === 'DELETE') {
+        const { id } = req.query;
+        const validatedId = IdSchema.parse(id);
 
-      const category = await prisma.category.findUnique({
+        const category = await prisma.category.findUnique({
         where: { id: validatedId },
-      });
+        });
 
-      if (!category) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
+        if (!category) {
+        res.status(404).json({ error: 'Category not found' }); return;
+        }
 
-      // Verify group ownership before deletion
-      const isOwner = await GroupService.isOwner(category.groupId, req.user.id);
-      
-      if (!isOwner) {
-        return res.status(403).json({ error: 'Only group owners can delete categories' });
-      }
+        // Verify group ownership before deletion
+        const isOwner = await GroupService.isOwner(category.groupId, req.user.id);
 
-      await prisma.category.delete({
+        if (!isOwner) {
+        res.status(403).json({ error: 'Only group owners can delete categories' }); return;
+        }
+
+        await prisma.category.delete({
         where: { id: validatedId },
-      });
+        });
 
-      return res.status(204).end();
-    }
+        return res.status(204).end();
+        }
 
-    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
-  })
-);
+        res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
+        res.status(405).json({ error: `Method ${String(req.method)} Not Allowed` });
+        })
+        );

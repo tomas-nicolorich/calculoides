@@ -1,22 +1,24 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GroupService } from '../../src/services/group';
 import { prisma } from '../../src/utils/prisma';
-import { Group, GroupMember } from '@prisma/client';
+import { Group, GroupMember, Prisma } from '@prisma/client';
 
 // Mock Prisma
 vi.mock('../../src/utils/prisma', () => ({
   prisma: {
-    $transaction: vi.fn((cb) => cb({
+    $transaction: vi.fn((cb: (tx: Prisma.TransactionClient) => Promise<unknown>) => cb({
       group: {
-        create: vi.fn().mockResolvedValue({ id: 'group-1', name: 'Household', ownerId: 'user-1' } as Group),
+        create: vi.fn().mockResolvedValue({ id: 'group-1', name: 'Household', ownerId: 'user-1' }),
       },
       groupMember: {
-        create: vi.fn().mockResolvedValue({ id: 'member-1' } as GroupMember),
+        create: vi.fn().mockResolvedValue({ id: 'member-1' }),
       },
-    })),
+    } as unknown as Prisma.TransactionClient)),
     group: {
       findMany: vi.fn(),
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
     groupMember: {
       findFirst: vi.fn(),
@@ -49,10 +51,10 @@ describe('GroupService Integration', () => {
 
     const result = await GroupService.transferOwnership(groupId, newOwnerId);
 
-    expect(prisma.group.update).toHaveBeenCalledWith({
+    expect(vi.mocked(prisma.group.update)).toHaveBeenCalledWith({
       where: { id: groupId },
       data: { ownerId: newOwnerId },
     });
-    expect(result?.ownerId).toBe(newOwnerId);
+    expect(result.ownerId).toBe(newOwnerId);
   });
 });

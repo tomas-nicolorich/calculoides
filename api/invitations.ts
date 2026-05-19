@@ -7,7 +7,7 @@ export default withErrorHandling(
     if (req.method === 'POST') {
       const { groupId } = req.query;
       if (!groupId || typeof groupId !== 'string') {
-        return res.status(400).json({ error: 'Missing groupId query parameter' });
+        res.status(400).json({ error: 'Missing groupId query parameter' }); return;
       }
 
       const validatedBody = CreateInvitationSchema.parse(req.body);
@@ -16,19 +16,19 @@ export default withErrorHandling(
         req.user.id,
         validatedBody.email
       );
-      return res.status(201).json(invitation);
+      res.status(201).json(invitation); return;
     }
 
     if (req.method === 'GET') {
       const { email } = req.user;
       if (!email) {
-        return res.status(400).json({ error: 'User email not found in session' });
+        res.status(400).json({ error: 'User email not found in session' }); return;
       }
       const invitations = await InvitationService.getPendingInvitationsForUser(email);
-      return res.status(200).json(invitations);
+      res.status(200).json(invitations); return;
     }
 
     res.setHeader('Allow', ['GET', 'POST']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${req.method ?? ''} Not Allowed` });
   })
 );

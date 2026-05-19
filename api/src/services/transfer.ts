@@ -1,10 +1,10 @@
 import { prisma } from '../utils/prisma';
 
-export class TransferService {
+export const TransferService = {
   /**
    * Creates a budget transfer between two members within a category.
    */
-  static async createTransfer(
+  async createTransfer(
     categoryId: string,
     fromMemberId: string,
     toMemberId: string,
@@ -19,13 +19,13 @@ export class TransferService {
         date: new Date(),
       },
     });
-  }
+  },
 
   /**
    * Retrieves all transfers for a category.
    * Mandated by BUG-014 to include fromMember and toMember user names.
    */
-  static async getTransfersForCategory(categoryId: string) {
+  async getTransfersForCategory(categoryId: string) {
     return await prisma.transfer.findMany({
       where: { categoryId },
       include: {
@@ -43,4 +43,4 @@ export class TransferService {
       orderBy: { date: 'desc' },
     });
   }
-}
+};

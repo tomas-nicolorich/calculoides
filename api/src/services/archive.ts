@@ -1,12 +1,12 @@
 import { prisma } from '../utils/prisma';
 import { GroupService } from './group';
 
-export class ArchiveService {
+export const ArchiveService = {
   /**
    * Archives all non-archived expenses for a group.
    * Resets the spent balance conceptually by marking expenses as archived.
    */
-  static async archiveExpenses(groupId: string, userId: string) {
+  async archiveExpenses(groupId: string, userId: string) {
     const isOwner = await GroupService.isOwner(groupId, userId);
     
     if (!isOwner) {
@@ -23,4 +23,4 @@ export class ArchiveService {
 
     return true;
   }
-}
+};

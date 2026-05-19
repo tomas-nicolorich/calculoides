@@ -20,17 +20,17 @@ export default withErrorHandling(
         validatedBody.toMemberId,
         validatedBody.amount
       );
-      return res.status(201).json(transfer);
+      res.status(201).json(transfer); return;
     }
 
     if (req.method === 'GET') {
       const { categoryId } = req.query;
       const validatedCategoryId = IdSchema.parse(categoryId);
       const transfers = await TransferService.getTransfersForCategory(validatedCategoryId);
-      return res.status(200).json(transfers);
+      res.status(200).json(transfers); return;
     }
 
     res.setHeader('Allow', ['GET', 'POST']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${req.method ?? ''} Not Allowed` });
   })
 );

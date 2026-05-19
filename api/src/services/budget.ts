@@ -1,5 +1,5 @@
 import { prisma } from '../utils/prisma';
-import { calculateCategoryBalances, calculateIncomeShares } from './calculation';
+import { calculateCategoryBalances, calculateIncomeShares, IncomeShare } from './calculation';
 
 export interface CategoryBalance {
   memberId: string;
@@ -8,12 +8,12 @@ export interface CategoryBalance {
   remainingQuota: number;
 }
 
-export class BudgetService {
+export const BudgetService = {
   /**
    * Retrieves all categories for a group with calculated member balances.
    * Mandated by BUG-019.
    */
-  static async listCategoriesWithBalances(groupId: string) {
+  async listCategoriesWithBalances(groupId: string) {
     // 1. Fetch group members with user details
     const members = await prisma.groupMember.findMany({
       where: { groupId },
@@ -44,10 +44,18 @@ export class BudgetService {
 
     // 3. Calculate balances for each category
     return categories.map((category) => {
-      // Filter members if category is restricted via memberLinks
-      const relevantShares = category.memberLinks.length > 0
-        ? incomeShares.filter((s) => category.memberLinks.some((ml) => ml.memberId === s.id))
-        : incomeShares;
+      // BUG-029: Recalculate income shares if category is restricted to a subset of members
+      let relevantShares: IncomeShare[];
+      
+      if (category.memberLinks.length > 0) {
+        const subsetMembers = members
+          .filter((m) => category.memberLinks.some((ml) => ml.memberId === m.id))
+          .map((m) => ({ id: m.id, income: Number(m.income) }));
+        
+        relevantShares = calculateIncomeShares(subsetMembers);
+      } else {
+        relevantShares = incomeShares;
+      }
 
       const balances = calculateCategoryBalances(
         { monthlyBudget: Number(category.monthlyBudget) },
@@ -63,10 +71,12 @@ export class BudgetService {
       // Join member user info into balances
       const enrichedBalances = balances.map((b) => {
         const member = members.find((m) => m.id === b.memberId);
+        const shareData = relevantShares.find((rs) => rs.id === b.memberId);
         return {
           ...b,
           user: member?.user,
-          share: relevantShares.find((rs) => rs.id === b.memberId)?.share || 0,
+          share: shareData?.share ?? 0,
+          percentage: shareData?.percentage ?? 0,
         };
       });
 
@@ -76,9 +86,9 @@ export class BudgetService {
         totalSpent: enrichedBalances.reduce((acc, b) => acc + b.spent, 0),
       };
     });
-  }
+  },
 
-  static async createCategory(groupId: string, name: string, monthlyBudget: number, icon?: string, memberIds?: string[]) {
+  async createCategory(groupId: string, name: string, monthlyBudget: number, icon?: string, memberIds?: string[]) {
     return await prisma.$transaction(async (tx) => {
       const category = await tx.category.create({
         data: {
@@ -101,9 +111,9 @@ export class BudgetService {
 
       return category;
     });
-  }
+  },
 
-  static async listCategories(groupId: string) {
+  async listCategories(groupId: string) {
     return await prisma.category.findMany({
       where: { groupId },
       include: {

@@ -32,17 +32,15 @@ describe('Local API Server Integration', () => {
   }, 15000);
 
   afterAll(() => {
-    if (serverProcess) {
-      console.log('Stopping test server...');
-      serverProcess.kill();
-    }
+    console.log('Stopping test server...');
+    serverProcess.kill();
   });
 
   it('should be reachable at /api/health', async () => {
     try {
-      const response = await fetch(`http://localhost:${port}/api/health`);
+      const response = await fetch(`http://localhost:${port.toString()}/api/health`);
       expect(response.status).toBe(200);
-      const data: any = await response.json();
+      const data = (await response.json()) as Record<string, unknown>;
       expect(data).toHaveProperty('status');
     } catch (err) {
       console.error('Fetch failed:', err);
@@ -51,7 +49,7 @@ describe('Local API Server Integration', () => {
   });
 
   it('should return 404 for unknown routes', async () => {
-    const response = await fetch(`http://localhost:${port}/api/nonexistent-route-for-testing`);
+    const response = await fetch(`http://localhost:${port.toString()}/api/nonexistent-route-for-testing`);
     expect(response.status).toBe(404);
   });
 });

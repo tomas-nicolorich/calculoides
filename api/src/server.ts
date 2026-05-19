@@ -10,10 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT ?? '3001';
 
 // 1. Environment Configuration
-const env = process.env.CALC_ENVIRONMENT || 'local';
+const env = process.env.CALC_ENVIRONMENT ?? 'local';
 
 app.use(cors());
 app.use(express.json());
@@ -31,7 +31,7 @@ const checkSupabase = async () => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { error } = await supabase.auth.getSession();
     return !error;
-  } catch (e) {
+  } catch (e: unknown) {
     console.error('Supabase health check failed:', e);
     return false;
   }
@@ -92,7 +92,7 @@ const start = async () => {
   });
 };
 
-start().catch(err => {
+start().catch((err: unknown) => {
   console.error('Failed to start server:', err);
   process.exit(1);
 });

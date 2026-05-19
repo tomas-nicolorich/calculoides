@@ -11,7 +11,7 @@ export default withErrorHandling(
     if (req.method === 'PATCH') {
       const { id } = req.query;
       if (!id || typeof id !== 'string') {
-        return res.status(400).json({ error: 'Missing member id' });
+        res.status(400).json({ error: 'Missing member id' }); return;
       }
 
       const { income } = UpdateIncomeSchema.parse(req.body);
@@ -19,10 +19,10 @@ export default withErrorHandling(
       // Verification: User can only update their own income unless they are the owner
       // RLS handles the DB part, but we can add service logic here
       const result = await GroupService.updateMemberIncome(id, income);
-      return res.status(200).json(result);
+      res.status(200).json(result); return;
     }
 
     res.setHeader('Allow', ['PATCH']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${req.method ?? ''} Not Allowed` });
   })
 );

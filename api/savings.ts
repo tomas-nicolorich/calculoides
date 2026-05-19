@@ -31,9 +31,25 @@ export default withErrorHandling(
         validatedGroupId,
         validatedBody.name,
         validatedBody.targetAmount,
-        validatedBody.targetDate
+        validatedBody.targetDate,
+        validatedBody.startingAmount
       );
       res.status(201).json(goal);
+      return;
+    }
+
+    if (req.method === 'PATCH') {
+      const validatedGoalId = IdSchema.parse(goalId);
+      const validatedBody = CreateSavingsGoalSchema.parse(req.body);
+      
+      const goal = await SavingsService.updateGoal(
+        validatedGoalId,
+        validatedBody.name,
+        validatedBody.targetAmount,
+        validatedBody.targetDate,
+        validatedBody.startingAmount
+      );
+      res.status(200).json(goal);
       return;
     }
 
@@ -59,7 +75,7 @@ export default withErrorHandling(
       return;
     }
 
-    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
-    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE']);
+    res.status(405).json({ error: `Method ${req.method ?? ''} Not Allowed` });
   })
 );

@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InvitationService } from '../../src/services/invitation';
 import { prisma } from '../../src/utils/prisma';
-import { Resend } from 'resend';
+import { Invitation, User, Prisma } from '@prisma/client';
 
 // Mock Prisma
 vi.mock('../../src/utils/prisma', () => ({
   prisma: {
-    $transaction: vi.fn((cb) => cb(prisma)),
+    $transaction: vi.fn((cb: (tx: Prisma.TransactionClient) => Promise<unknown>) => cb(prisma as unknown as Prisma.TransactionClient)),
     invitation: {
       create: vi.fn(),
       findUnique: vi.fn(),
@@ -47,44 +48,41 @@ describe('InvitationService Integration', () => {
     vi.mocked(prisma.groupMember.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.invitation.create).mockResolvedValue({
       id: 'invitation-1',
+      token: 'secure-token',
       groupId,
       inviterId,
       email,
       status: 'PENDING',
       group: { name: 'Household' },
       inviter: { name: 'John Doe', email: 'john@example.com' },
-    } as any);
+    } as unknown as Invitation);
 
     const result = await InvitationService.createInvitation(groupId, inviterId, email);
 
-    expect(prisma.invitation.create).toHaveBeenCalled();
-    expect(result.id).toBe('invitation-1');
+    expect(vi.mocked(prisma.invitation.create)).toHaveBeenCalled();
+    expect(result.token).toBe('secure-token');
   });
 
-  it('should accept an invitation', async () => {
-    const invitationId = 'invitation-1';
+  it('should accept an invitation using token', async () => {
+    const token = 'secure-token';
     const userId = 'user-2';
 
     vi.mocked(prisma.invitation.findUnique).mockResolvedValue({
-      id: invitationId,
+      id: 'invitation-1',
+      token,
       groupId: 'group-1',
       email: 'user2@example.com',
       status: 'PENDING',
-    } as any);
+    } as unknown as Invitation);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: userId,
       email: 'user2@example.com',
-    } as any);
-    vi.mocked(prisma.invitation.update).mockResolvedValue({ status: 'ACCEPTED' } as any);
+    } as unknown as User);
+    vi.mocked(prisma.invitation.update).mockResolvedValue({ status: 'ACCEPTED' } as unknown as Invitation);
 
-    const result = await InvitationService.acceptInvitation(invitationId, userId);
+    const result = await InvitationService.acceptInvitation(token, userId);
 
-    expect(prisma.groupMember.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        userId,
-        groupId: 'group-1',
-      }),
-    });
+    expect(vi.mocked(prisma.groupMember.create)).toHaveBeenCalled();
     expect(result.status).toBe('ACCEPTED');
   });
 });

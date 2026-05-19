@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi } from 'vitest';
 import { ArchiveService } from '../../src/services/archive';
 import { GroupService } from '../../src/services/group';
@@ -23,7 +24,7 @@ vi.mock('../../src/services/group', () => ({
 describe('Archive Integration', () => {
   it('should allow owner to archive expenses', async () => {
     vi.mocked(GroupService.isOwner).mockResolvedValue(true);
-    vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 5 } as any);
+    vi.mocked(prisma.expense.updateMany).mockResolvedValue({ count: 5 });
 
     const result = await ArchiveService.archiveExpenses('group-1', 'owner-1');
     

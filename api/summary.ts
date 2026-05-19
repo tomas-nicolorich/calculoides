@@ -7,7 +7,7 @@ export default withErrorHandling(
     const { groupId } = req.query;
 
     if (!groupId || typeof groupId !== 'string') {
-      return res.status(400).json({ error: 'Missing groupId' });
+      res.status(400).json({ error: 'Missing groupId' }); return;
     }
 
     // 1. Get Group and Members
@@ -23,13 +23,13 @@ export default withErrorHandling(
     });
 
     if (!group) {
-      return res.status(404).json({ error: 'Group not found' });
+      res.status(404).json({ error: 'Group not found' }); return;
     }
 
     // Verify user is in group
     const isMember = group.members.some(m => m.userId === user.id);
     if (!isMember && group.ownerId !== user.id) {
-      return res.status(403).json({ error: 'Forbidden' });
+      res.status(403).json({ error: 'Forbidden' }); return;
     }
 
     // 2. Get Categories, Expenses, and Transfers
@@ -74,6 +74,10 @@ export default withErrorHandling(
     const membersSummary = group.members.map(m => {
       const share = shares.find(s => s.id === m.id);
       
+      const memberExpensesTotal = expenses
+        .filter(e => e.payerId === m.id)
+        .reduce((acc, e) => acc + Number(e.amount), 0);
+
       // Calculate remaining quota across all categories
       let totalRemainingQuota = 0;
       categories.forEach(cat => {
@@ -105,19 +109,33 @@ export default withErrorHandling(
 
       return {
         id: m.id,
-        name: m.user?.name || m.user?.email || 'Unknown',
+        name: m.user.name ?? m.user.email,
         income: Number(m.income),
-        share: share?.percentage || 0,
+        share: share?.percentage ?? 0,
+        spent: memberExpensesTotal,
         remainingQuota: totalRemainingQuota
       };
     });
+
+    const recentExpenses = expenses
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5)
+      .map(e => ({
+        id: e.id,
+        description: e.description,
+        amount: Number(e.amount),
+        date: e.date,
+        categoryName: categories.find(c => c.id === e.categoryId)?.name ?? 'Unknown',
+        payerName: group.members.find(m => m.id === e.payerId)?.user.name ?? 'Unknown'
+      }));
 
     res.status(200).json({
       groupName: group.name,
       totalIncome,
       totalBudget,
       totalSpent,
-      members: membersSummary
+      members: membersSummary,
+      recentExpenses
     });
   })
 );

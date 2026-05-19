@@ -60,7 +60,7 @@ describe('Income Share Calculation', () => {
       shares.map(s => ({ id: s.id, share: s.share })),
       expenses
     );
-    expect(balances.find((b: any) => b.memberId === '1')?.remainingQuota).toBe(100); // 200 - 100
+    expect(balances.find((b) => b.memberId === '1')?.remainingQuota).toBe(100); // 200 - 100
 
     // Mid-month update: member 1 income increases
     const updatedMembers: MemberIncome[] = [
@@ -76,7 +76,7 @@ describe('Income Share Calculation', () => {
       shares.map(s => ({ id: s.id, share: s.share })),
       expenses
     );
-    expect(balances.find((b: any) => b.memberId === '1')?.remainingQuota).toBe(200); // 300 - 100
-    expect(balances.find((b: any) => b.memberId === '2')?.remainingQuota).toBe(0); // 100 - 100
+    expect(balances.find((b) => b.memberId === '1')?.remainingQuota).toBe(200); // 300 - 100
+    expect(balances.find((b) => b.memberId === '2')?.remainingQuota).toBe(0); // 100 - 100
   });
 });

@@ -14,6 +14,6 @@ export default withErrorHandling(
     }
 
     res.setHeader('Allow', ['POST']);
-    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${String(req.method)} Not Allowed` });
   })
 );

@@ -11,7 +11,7 @@ export default withErrorHandling(
   withAuth(async (req, res) => {
     if (req.method !== 'POST') {
       res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+      res.status(405).json({ error: `Method ${req.method ?? ''} Not Allowed` }); return;
     }
 
     const { groupId } = req.query;
@@ -20,10 +20,10 @@ export default withErrorHandling(
 
     const isOwner = await GroupService.isOwner(validatedGroupId, req.user.id);
     if (!isOwner) {
-      return res.status(403).json({ error: 'Only the group owner can transfer ownership' });
+      res.status(403).json({ error: 'Only the group owner can transfer ownership' }); return;
     }
 
     await GroupService.transferOwnership(validatedGroupId, validatedBody.newOwnerId);
-    return res.status(200).json({ success: true });
+    res.status(200).json({ success: true });
   })
 );

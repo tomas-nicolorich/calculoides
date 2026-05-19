@@ -7,7 +7,7 @@ export default withErrorHandling(
     if (req.method === 'POST') {
       const validatedBody = CreateGroupSchema.parse(req.body);
       const group = await GroupService.createGroup(req.user.id, validatedBody.name);
-      return res.status(201).json(group);
+      res.status(201).json(group); return;
     }
 
     if (req.method === 'GET') {
@@ -15,14 +15,14 @@ export default withErrorHandling(
       if (id && typeof id === 'string') {
         const groups = await GroupService.getGroupsForUser(req.user.id);
         const group = groups.find(g => g.id === id);
-        if (!group) return res.status(404).json({ error: 'Group not found' });
-        return res.status(200).json(group);
+        if (!group) { res.status(404).json({ error: 'Group not found' }); return; }
+        res.status(200).json(group); return;
       }
       const groups = await GroupService.getGroupsForUser(req.user.id);
-      return res.status(200).json(groups);
+      res.status(200).json(groups); return;
     }
 
     res.setHeader('Allow', ['GET', 'POST']);
-    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${String(req.method)} Not Allowed` });
   })
 );

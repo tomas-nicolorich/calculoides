@@ -8,7 +8,7 @@ describe('Transfer Logic', () => {
       { id: '1', share: 0.5 }, // €500 quota
       { id: '2', share: 0.5 }, // €500 quota
     ];
-    const expenses: any[] = [];
+    const expenses: { payerId: string; amount: number }[] = [];
     const transfers = [
       { fromMemberId: '1', toMemberId: '2', amount: 100 },
     ];
@@ -28,7 +28,7 @@ describe('Transfer Logic', () => {
       { id: '1', share: 0.5 },
       { id: '2', share: 0.5 },
     ];
-    const expenses: any[] = [];
+    const expenses: { payerId: string; amount: number }[] = [];
     const transfers = [
       { fromMemberId: '1', toMemberId: '2', amount: 100 },
       { fromMemberId: '2', toMemberId: '1', amount: 50 },

@@ -79,6 +79,6 @@ export default withErrorHandling(
     }
 
     res.setHeader('Allow', ['GET', 'PATCH', 'DELETE']);
-    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    res.status(405).json({ error: `Method ${req.method ?? ''} Not Allowed` });
   })
 );

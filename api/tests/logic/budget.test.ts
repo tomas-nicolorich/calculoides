@@ -15,7 +15,7 @@ describe('Category Balance Calculation', () => {
       { payerId: 'm2', amount: 50 },
     ];
 
-    const balances = calculateCategoryBalances(category as any, members as any, expenses as any);
+    const balances = calculateCategoryBalances(category, members, expenses);
 
     // m1 quota: 1000 * 0.67 = 670. spent: 100. balance: 570
     // m2 quota: 1000 * 0.33 = 330. spent: 50. balance: 280
@@ -27,7 +27,7 @@ describe('Category Balance Calculation', () => {
   it('should handle zero expenses', () => {
     const members = [{ id: 'm1', share: 1.0 }];
     const category = { monthlyBudget: 500 };
-    const balances = calculateCategoryBalances(category as any, members as any, []);
+    const balances = calculateCategoryBalances(category, members, []);
 
     expect(balances[0].remainingQuota).toBe(500);
     expect(balances[0].spent).toBe(0);
@@ -44,7 +44,7 @@ describe('Category Balance Calculation', () => {
       { fromMemberId: 'm1', toMemberId: 'm2', amount: 50 },
     ];
 
-    const balances = calculateCategoryBalances(category as any, members as any, [], transfers as any);
+    const balances = calculateCategoryBalances(category, members, [], transfers);
 
     // m1 quota: 500 - 50 = 450
     // m2 quota: 500 + 50 = 550

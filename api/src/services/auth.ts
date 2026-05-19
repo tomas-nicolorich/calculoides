@@ -14,7 +14,7 @@ const customFetch = (input: string | URL | Request, init?: RequestInit) => {
     // For environments where it might not, or for more granular control:
     return fetch(input, {
       ...init,
-      // @ts-ignore - node-fetch or undici might support this or we rely on the global env var
+      // @ts-expect-error - node-fetch or undici might support this or we rely on the global env var
       rejectUnauthorized: false, 
     });
   }
@@ -31,7 +31,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: false,
   },
   global: {
-    fetch: customFetch as any, // Use any to bypass slight signature differences in library types
+    fetch: customFetch, // Standardize fetch signature
   },
 });
 
@@ -49,7 +49,7 @@ export async function getUserFromSession(token: string): Promise<User | null> {
 }
 
 export function extractTokenFromHeader(authHeader?: string): string | null {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return null;
   }
   return authHeader.split(' ')[1];

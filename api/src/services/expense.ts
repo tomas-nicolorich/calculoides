@@ -1,17 +1,18 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../utils/prisma';
 
-export class ExpenseService {
+export const ExpenseService = {
   /**
    * Logs a new expense.
    * Mandated by BUG-015 to resolve GroupMember ID from User ID and Category's Group.
    */
-  static async logExpense(
+  async logExpense(
     categoryId: string,
     payerIdOrUserId: string,
     description: string,
     amount: number,
     date: Date = new Date()
-  ) {
+  ): Promise<Prisma.ExpenseGetPayload<Record<string, never>>> {
     // Check if payerIdOrUserId is already a GroupMember ID or a User ID
     // We first try to find the category to get the groupId
     const category = await prisma.category.findUnique({
@@ -20,9 +21,6 @@ export class ExpenseService {
     });
 
     if (!category) throw new Error('Category not found');
-
-    // Resolve the GroupMember ID
-    let finalPayerId = payerIdOrUserId;
 
     // Try to find if payerIdOrUserId is a userId in this group
     const membership = await prisma.groupMember.findFirst({
@@ -40,7 +38,7 @@ export class ExpenseService {
       throw new Error('Payer is not a member of this group');
     }
 
-    finalPayerId = membership.id;
+    const finalPayerId = membership.id;
 
     return await prisma.expense.create({
       data: {
@@ -51,13 +49,13 @@ export class ExpenseService {
         date,
       },
     });
-  }
+  },
 
   /**
    * Retrieves expenses for a category.
    * Mandated by BUG-014 to include payer user names.
    */
-  static async getExpensesByCategory(categoryId: string) {
+  async getExpensesByCategory(categoryId: string) {
     return await prisma.expense.findMany({
       where: {
         categoryId,
@@ -76,21 +74,61 @@ export class ExpenseService {
         date: 'desc',
       },
     });
-  }
+  },
+
+  /**
+   * Lists expenses for a group with pagination and optional category filtering.
+   */
+  async listExpenses(groupId: string, categoryId?: string, limit = 20, offset = 0) {
+    const where: Prisma.ExpenseWhereInput = {
+      category: {
+        groupId
+      },
+      isArchived: false
+    };
+
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    const [expenses, total] = await prisma.$transaction([
+      prisma.expense.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: limit,
+        skip: offset,
+        include: {
+          category: {
+            select: { name: true, icon: true }
+          },
+          payer: {
+            include: {
+              user: {
+                select: { name: true, email: true }
+              }
+            }
+          }
+        }
+      }),
+      prisma.expense.count({ where })
+    ]);
+
+    return { expenses, total };
+  },
 
   /**
    * Deletes an expense (Permanent deletion per specification).
    */
-  static async deleteExpense(expenseId: string) {
+  async deleteExpense(expenseId: string) {
     return await prisma.expense.delete({
       where: { id: expenseId },
     });
-  }
+  },
 
   /**
    * Archives all expenses in a group (for end-of-month reset).
    */
-  static async archiveGroupExpenses(groupId: string) {
+  async archiveGroupExpenses(groupId: string) {
     // Find all categories in the group
     const categories = await prisma.category.findMany({
       where: { groupId },
@@ -107,4 +145,4 @@ export class ExpenseService {
       },
     });
   }
-}
+};
