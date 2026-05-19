@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-local-server-testing`  
 **Created**: 2024-05-22  
-**Status**: Draft  
+**Status**: Completed  
 **Input**: User description: "I'd like to be able to test Calculoides without connecting to vercel, with a local server."
 
 ## Clarifications

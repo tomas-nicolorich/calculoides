@@ -20,7 +20,7 @@
 - [x] T001 Create project structure (frontend/, api/, prisma/) per plan.md
 - [x] T002 Initialize monorepo dependencies (Vite 8, React 19, Prisma 7, Vitest 4)
 - [x] T003 [P] Configure Tailwind CSS 4 and Shadcn/UI in frontend/
-- [x] T004 [P] Configure ESLint and Prettier for strict TypeScript 6.0.3
+- [x] T004 [P] Configure ESLint and Prettier for strict TypeScript 6.0.3 (reopened — BUG-038)
 
 ---
 
@@ -57,7 +57,7 @@
 - [x] T013 [P] [US1] Update prisma/schema.prisma with GroupMember and Invitation models (reopened — BUG-008, BUG-016)
 - [x] T014 [US1] Implement income share calculation logic (Calculation on Read) with retroactive month-to-date handling in api/src/services/calculation.ts
 - [x] T015 [US1] Create GroupService for CRUD and member management in api/src/services/group.ts
-- [x] T016 [US1] Create InvitationService with email logic in api/src/services/invitation.ts (reopened — BUG-021)
+- [x] T016 [US1] Implement InvitationService with email logic in api/src/services/invitation.ts (reopened — BUG-021)
 - [x] T017 [US1] Implement POST /api/groups and POST /api/invitations endpoints
 - [x] T018 [US1] Create Group creation and Income setting features in frontend/src/features/groups/
 - [x] T019 [US1] Implement Group Member list and Invitation UI in frontend/src/features/members/ (reopened — BUG-011, BUG-014)
@@ -81,10 +81,10 @@
 
 - [x] T022 [P] [US2] Add Category, CategoryMember, and Expense models to prisma/schema.prisma
 - [x] T023 [US2] Implement BudgetService for balance tracking in api/src/services/budget.ts (reopened — BUG-019)
-- [x] T024 [US2] Implement ExpenseService for logging and validation in api/src/services/expense.ts (reopened — BUG-012, BUG-015, BUG-018)
+- [x] T024 [US2] Implement ExpenseService for logging and validation in api/src/services/expense.ts (reopened — BUG-012, BUG-015, BUG-018, BUG-024)
 - [x] T025 [US2] Create Category management and Expense logging endpoints in api/src/ (Verify permanent/non-soft deletions) (reopened — BUG-008, BUG-009, BUG-012, BUG-015, BUG-017, BUG-018)
-- [x] T026 [US2] Implement Dashboard Summary widget in frontend/src/widgets/dashboard/ (reopened — BUG-014, BUG-019)
-- [x] T027 [US2] Create Category list and Expense entry UI in frontend/src/features/budget/ (reopened — BUG-009, BUG-014, BUG-017, BUG-019)
+- [x] T026 [US2] Implement Dashboard Summary widget in frontend/src/widgets/dashboard/ (reopened — BUG-014, BUG-019, BUG-025, BUG-027)
+- [x] T027 [US2] Create Category list and Expense entry UI in frontend/src/features/budget/ (reopened — BUG-009, BUG-014, BUG-017, BUG-019, BUG-025)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -103,9 +103,9 @@
 ### Implementation for User Story 3
 
 - [x] T029 [P] [US3] Add SavingsGoal and SavingsGoalContribution models to prisma/schema.prisma
-- [x] T030 [US3] Implement SavingsService with dynamic deadline logic in api/src/services/savings.ts
-- [x] T031 [US3] Create Savings Goal CRUD and override endpoints in api/src/ (reopened — BUG-020)
-- [x] T032 [US3] Implement Savings Goal widget in frontend/src/features/savings/ (reopened — BUG-010, BUG-014, BUG-020)
+- [x] T030 [US3] Implement SavingsService with dynamic deadline logic in api/src/services/savings.ts (reopened — BUG-033, BUG-035, BUG-036)
+- [x] T031 [US3] Create Savings Goal CRUD and override endpoints in api/src/ (reopened — BUG-020, BUG-022, BUG-023, BUG-033, BUG-036)
+- [x] T032 [US3] Implement Savings Goal widget in frontend/src/features/savings/ (reopened — BUG-010, BUG-014, BUG-020, BUG-023, BUG-033, BUG-035, BUG-036)
 
 **Checkpoint**: User Stories 1, 2, and 3 should now be independently functional
 
@@ -148,7 +148,7 @@
 - [x] T047 [SC-001] Manual QA: Perform timed walkthrough of Group Setup to verify <3 min flow
 - [x] T048 [P] Setup React Router and basic routing structure in frontend/src/app/
 - [x] T049 Create Auth feature (Login/Signup forms) in frontend/src/features/auth/ (reopened — BUG-002)
-- [x] T050 Create Page components (Dashboard, Login, Settings) in frontend/src/pages/ (reopened — BUG-003)
+- [x] T050 Create Page components (Dashboard, Login, Settings) in frontend/src/pages/ (reopened — BUG-003, BUG-027)
 - [x] T051 Implement Auth guarded routes and integrate features into pages (reopened — BUG-002, BUG-003, BUG-005, BUG-007)
 - [x] T052 Configure Vite to load environment variables from the root directory (`envDir: '../'`) in frontend/vite.config.ts (reopened — BUG-003)
 - [x] T053 Verify Supabase client initialization in AuthProvider.tsx with logs or tests (reopened — BUG-002, BUG-006)
@@ -176,7 +176,7 @@
 - [x] T074 [US1] Update `GroupService` to allow owners to modify incomes of other members (BUG-013)
 - [x] T075 [US1] Update Frontend Income setting UI to allow owners to edit other members' values (BUG-013)
 - [x] T076 [P] [US1] Create a shared MemberName or UserDisplay component in frontend/src/shared/ui/ (BUG-014)
-- [x] T077 [US1] Update API responses to ensure name is always included in member/user relations for hydration (BUG-014)
+- [x] T077 [US1] Update API responses to ensure name is always included in member/user relations for hydration (BUG-014) (reopened — BUG-023)
 - [x] T078 [P] [US2] Implement GroupMember resolution logic in ExpenseService.logExpense to map Auth User ID to GroupMember ID (BUG-015) (reopened — BUG-018)
 - [x] T079 [US2] Update Expense logging endpoint to fetch groupId from categoryId before logging (BUG-015) (reopened — BUG-018)
 
@@ -184,14 +184,38 @@
 - [x] T081 [US1] Verify invitation flow with InvitationStatus enum (BUG-016)
 - [x] T082 [P] [US2] Update `BudgetService.createCategory` to handle nested `memberLinks` for optional member subsets in api/src/services/budget.ts (BUG-017)
 - [x] T083 [US2] Implement multi-select member component in the Category creation form in frontend/src/features/budget/ (BUG-017)
-- [x] T084 [US2] Verify and align ID types (UUID vs TEXT) between schema.prisma and migrations to resolve Null constraint violations (BUG-018)
-- [x] T085 [US2] Update `BudgetService` to return per-member spending and quota breakdown for each category (BUG-019)
+- [x] T084 [US2] Verify and align ID types (UUID vs TEXT) between schema.prisma and migrations to resolve Null constraint violations (BUG-018, reopened — BUG-024)
+- [x] T085 [US2] Update `BudgetService` to return per-member spending and quota breakdown for each category (BUG-019) (reopened — BUG-029)
 - [x] T086 [US2] Enhance Category card UI to display a list of members with their share, spent amount, and remaining balance (BUG-019)
-- [x] T087 [US3] Implement interactive contribution overrides in `SavingsGoalList` UI (BUG-020)
-- [x] T088 [US3] Display projected completion date variance and updated deadline in `SavingsGoalList` (BUG-020)
+- [x] T087 [US3] Implement interactive contribution overrides in `SavingsGoalList` UI (reopened — BUG-020, BUG-022, BUG-026, BUG-031)
+- [x] T088 [US3] Display projected completion date variance and updated deadline in `SavingsGoalList` (reopened — BUG-020, BUG-035)
+- [x] T115 [US3] Add regression test for Epoch date handling in savings projections in `api/tests/logic/savings.test.ts` (BUG-035)
 - [x] T089 [P] [US1] Integrate Resend SDK in `api/` and configure API keys in `.env` (BUG-021)
 - [x] T090 [US1] Implement secure, single-use token generation for invitations in `InvitationService` (BUG-021)
 - [x] T091 [US1] Implement HTML email template for group invitations and integrate with Resend (BUG-021)
+- [x] T092 [P] [US3] Implement defensive validation for goalId and memberId in `SavingsService.upsertContribution` (BUG-022)
+- [x] T093 [US3] Add integration test for `upsertContribution` with invalid goalId to verify 404/400 response (BUG-022)
+- [x] T094 [P] [US3] Ensure `SavingsService` includes `member.user.name` in goal and contribution queries (BUG-023)
+- [x] T095 [US3] Update `SavingsGoalList` and related components to use the `name` property for display (BUG-023)
+- [x] T096 [P] [US2] Audit schema.prisma to remove incorrect defaults from foreign keys and ensure primary key UUID defaults (BUG-024)
+- [x] T097 [US2] Sync database with corrected schema and regenerate Prisma client (BUG-024)
+- [x] T098 [US2] Implement CategoryExpenseList component to show entries for a specific category (BUG-025) (reopened — BUG-030)
+- [x] T099 [US2] Update Dashboard widget to include a 'Recent Expenses' feed as per FR-004 (BUG-025)
+- [x] T100 [US2] Create API endpoint GET /api/expenses to fetch paginated/filtered expense history (BUG-025)
+- [x] T101 [US3] Implement loading and error feedback for savings goal contribution updates (reopened — BUG-026, BUG-039)
+- [x] T102 [US3] Verify Zod schema coercion for contribution override payloads in the frontend client (BUG-026)
+- [x] T103 [P] [US1] Create a shared utility for percentage rounding and remainder absorption in shared/logic/rounding.ts (reopened — BUG-028)
+- [x] T104 [US2] Update DashboardSummary widget to use the shared rounding utility for consistent share display (reopened — BUG-028)
+- [x] T105 [P] [US1] Audit `shared/logic/rounding.ts` for edge case handling (equal incomes, multiple members) (BUG-028)
+- [x] T106 [US2] Update category share calculation logic in backend functions to use the shared rounding utility (BUG-028) (reopened — BUG-029)
+- [x] T107 [US3] Verify savings goal contribution calculations apply remainder absorption (BUG-028)
+- [x] T108 [US2] Refactor `BudgetService.listCategoriesWithBalances` to trigger `calculateIncomeShares` per category when a subset is present (BUG-029)
+- [x] T109 [US2] Verify integration of CategoryExpenseList in DashboardPage.tsx and add missing import (BUG-030)
+- [x] T110 [US3] Implement UI state synchronization for savings goals in the contribution update mutation (reopened — BUG-032, BUG-034, BUG-039)
+- [x] T111 [US3] Add an automated UI test to verify that savings goal projections update immediately after a contribution change without a reload (reopened — BUG-032, BUG-034)
+- [x] T112 [US3] Update `SavingsGoal` model in prisma/schema.prisma to include `startingAmount` and migrate (BUG-033)
+- [x] T113 [US3] Update `SavingsService` calculation logic to subtract `startingAmount` from `targetAmount` before dividing by months (reopened — BUG-036)
+- [x] T114 [US3] Update `SavingsGoalForm` and widget in `frontend/src/features/savings/` to support `startingAmount` input and editing (reopened — BUG-036, BUG-037)
 
 **Status Update**: 2026-05-14 — Bugfix cycle completed. All bugs BUG-001 through BUG-011 resolved and verified. Final Prisma client regenerated and RLS policies updated.
 **Status Update**: 2026-05-15 — BUG-012 patched. Reopened T021, T024, T025 and added T071, T072 for date validation fix.
@@ -204,3 +228,30 @@
 **Status Update**: 2026-05-15 — BUG-019 patched. Reopened T023, T026, T027 and added T085, T086 for detailed category breakdown fix.
 **Status Update**: 2026-05-15 — BUG-020 patched. Reopened T031, T032 and added T087, T088 for interactive savings goal overrides fix.
 **Status Update**: 2026-05-15 — BUG-021 patched. Reopened T016 and added T089, T090, T091 for invitation email fix.
+**Status Update**: 2026-05-15 — BUG-022 patched. Reopened T031, T087 and added T092, T093 for foreign key violation fix.
+**Status Update**: 2026-05-15 — BUG-023 patched. Reopened T031, T032, T077 and added T094, T095 for consistent name display in savings goals.
+**Status Update**: 2026-05-15 — BUG-024 patched. Reopened T024, T084 and added T096, T097 to fix schema defaults and persistent null constraint violations.
+**Status Update**: 2026-05-25 — BUG-025 patched. Reopened T026, T027 and added T098, T099, T100 for expense history visibility.
+**Status Update**: 2026-05-26 — BUG-026 patched. Reopened T087 and added T101, T102 for visual feedback and terminal resolution in savings goal overrides.
+**Status Update**: 2026-05-27 — BUG-027 patched. Reopened T026, T050 and added T103, T104 for consistent percentage rounding.
+**Status Update**: 2026-05-28 — BUG-028 patched. Added T103, T104, T105, T106, T107 for comprehensive remainder absorption audit.
+**Status Update**: 2026-05-28 — BUG-029 patched. Reopened T085, T106 and added T108 for category subset share recalculation.
+**Status Update**: 2026-05-29 — BUG-030 patched. Reopened T098 and added T109 for missing import fix.
+**Status Update**: 2026-05-30 — BUG-031 patched. Reopened T087 and added T110, T111 for UI state synchronization fix.
+**Status Update**: 2026-05-31 — BUG-032 patched. Reopened T110, T111 to fix regression in UI reactivity for savings goals.
+**Status Update**: 2026-06-01 — BUG-033 patched. Reopened T030, T031, T032 and added T112, T113, T114 for starting amount support.
+**Status Update**: 2026-06-02 — BUG-034 patched. Reopened T110, T111 to fix reactivity regression in savings goal contribution updates.
+**Status Update**: 2026-06-03 — BUG-035 reported. Reopened T030, T032, T088 and added T115 to fix Epoch date in projections.
+- [x] T116 [US3] Add regression test for startingAmount = 0 serialization in api/tests/integration/savings.test.ts (BUG-036)
+- [x] T117 [US3] Add regression test for null projected date in SavingsService in api/tests/logic/savings.test.ts (BUG-036)
+
+**Status Update**: 2026-06-03 — BUG-036 patched. Reopened T030, T031, T113, T114 and added T116, T117 for startingAmount serialization and projection fix.
+**Status Update**: 2026-06-04 — BUG-037 patched. Reopened T114 and added T118, T119 for missing API client update method.
+- [x] T118 [US3] Add `update` method to `apiClient.savings` in `frontend/src/shared/api/client.ts` (BUG-037)
+- [x] T119 [US3] Update `api/savings.ts` to include `PATCH` in the `Allow` header (BUG-037)
+- [x] T120 [P] Define proper mock types for Prisma transactions and services in `api/tests/` to eliminate `any` usage (BUG-038)
+- [x] T121 [P] Refactor all API integration and unit tests to remove `any` and resolve all linting errors (BUG-038)
+- [x] T122 [US3] Verify terminal loading state resolution for all savings goal mutations (BUG-039)
+
+**Status Update**: 2026-06-05 — BUG-038 patched. Reopened T004 and added T120, T121 for lint error fix. All 121 tasks complete.
+**Status Update**: 2026-06-06 — BUG-039 patched. Reopened T101, T110 and added T122 for terminal loading state fix.

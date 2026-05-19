@@ -49,8 +49,10 @@ As a group member, I want to set a savings goal for a future purchase (like a ne
 
 **Acceptance Scenarios**:
 
-1. **Given** a group, **When** a member creates a "New Sofa" goal for €1200 with a 6-month deadline, **Then** the app should show each member's monthly contribution (e.g., if A has 60% share, they save €120/month).
+1. **Given** a group, **When** a member creates a "New Sofa" goal for €1200 with a 6-month deadline and an optional €200 starting amount, **Then** the app should show the remaining €1000 divided by members' monthly contribution (e.g., if A has 60% share, they save €100/month).
 2. **Given** an active savings goal, **When** a member overrides their contribution amount, **Then** the app must recalculate and display the new projected completion date.
+
+**Bugfix**: 2026-06-01 — [BUG-033] Added requirement for starting amount and its modification for savings goals.
 
 ---
 
@@ -117,7 +119,7 @@ As a user, I want to securely log in to the application and navigate between the
 - **FR-003**: System MUST allow members to log expenses with description, amount, date, and payer. Deletions of expenses MUST be permanent and irreversible. When logging an expense, the system MUST resolve the authenticated `User ID` to the specific `GroupMember ID` for the group containing the target category (BUG-015). **The implementation MUST ensure that all non-nullable fields are correctly populated and that ID types are consistent between the Prisma schema and database migrations to prevent null constraint violations (BUG-018).**
 - **FR-004**: System MUST display a dashboard showing income overview, remaining balance per user, recent expenses, transfers, and category status. All categories MUST be visible to all members of the group. Deletions of budget categories MUST be permanent and irreversible.
 - **FR-005**: System MUST allow budget transfers between members within a group, restricted to moving quota within the same budget category.
-- **FR-006**: System MUST calculate monthly savings contributions based on target amount, target date, and income percentages. Any group member MUST be able to override their own or any other member's contribution. If contributions are overridden, the system MUST recalculate the projected date and display the variance from the original target date.
+- **FR-006**: System MUST calculate monthly savings contributions based on target amount, target date, and income percentages. Any group member MUST be able to override their own or any other member's contribution. If contributions are overridden, the system MUST recalculate the projected date and display the variance from the original target date. **System MUST provide explicit visual feedback (e.g., loading spinners, success toasts, or error messages) for all contribution override actions to ensure terminal state resolution for the user (BUG-026).**
 - **FR-007**: System MUST allow group owners to archive expenses for specific date ranges; archived records MUST be moved to an immutable historical view. This view MUST preserve individual expense records while also displaying the final total monthly settlement amount per user. Upon archiving, the spent balance of the affected budget categories MUST reset to 0.
 - **FR-008**: System MUST support a single-owner model per group. The creator is the initial owner, and ownership can be transferred to any other active group member. Owners have exclusive permissions to invite/remove members, transfer budgets for all members, modify the monthly income of any group member, and archive expenses. If an owner leaves without transferring, ownership MUST automatically transfer to the member with the longest tenure.
 - **FR-009**: System MUST implement a routing architecture with protected routes for authenticated users and public routes for login/signup.
@@ -128,6 +130,8 @@ As a user, I want to securely log in to the application and navigate between the
 - **FR-014**: System MUST ensure that initial session verification and data hydration reach a terminal state (success, error, or redirect) within a reasonable timeout (e.g., 5s) to avoid persistent loading states.
 - **FR-015**: System MUST ensure that users are consistently displayed by their `name` property across all views in the UI. Identifiers such as ID or email MUST NOT be used for user display purposes.
 - **FR-016**: System MUST display a detailed breakdown for each budget category showing each member's proportional share (percentage and currency amount), their current spent amount, and their remaining balance.
+- **FR-017**: System MUST provide a way for users to view a list of all individual expense entries for any given category or the entire group (BUG-025).
+- **FR-018**: System MUST apply a consistent percentage rounding strategy (2 decimal places with Remainder Absorption by the highest earner) across all views, including Budget categories, Savings goals, and Dashboard Overview (BUG-027).
 
 **Bugfix**: 2026-05-13 — [BUG-001] Added missing requirements for Routing and Frontend Auth UI.
 **Bugfix**: 2026-05-14 — [BUG-002] Added requirement for environment configuration for Supabase initialization.
@@ -143,9 +147,12 @@ As a user, I want to securely log in to the application and navigate between the
 **Bugfix**: 2026-05-15 — [BUG-012] Added SC-007 to mandate correct coercion of ISO date strings in API requests.
 **Bugfix**: 2026-05-15 — [BUG-013] Updated FR-008 to grant group owners the permission to modify monthly incomes for any member in their group.
 **Bugfix**: 2026-05-15 — [BUG-014] Added FR-015 to enforce consistent user display across the UI using the `name` property exclusively.
-**Bugfix**: 2026-05-15 — [BUG-017] Clarified that category creation MUST support selecting an optional subset of members, requiring explicit join logic for CategoryMember.
-**Bugfix**: 2026-05-15 — [BUG-019] Added FR-016 to mandate detailed per-member breakdown in category views.
-**Bugfix**: 2026-05-15 — [BUG-020] Clarified requirement for interactive savings goal contribution overrides and variance display in FR-006.
+**Bugfix**: 2026-05-17 — [BUG-017] Clarified that category creation MUST support selecting an optional subset of members, requiring explicit join logic for CategoryMember.
+**Bugfix**: 2026-05-19 — [BUG-019] Added FR-016 to mandate detailed per-member breakdown in category views.
+**Bugfix**: 2026-05-20 — [BUG-020] Clarified requirement for interactive savings goal contribution overrides and variance display in FR-006.
+**Bugfix**: 2026-05-25 — [BUG-025] Added FR-017 to mandate visible expense history.
+**Bugfix**: 2026-05-28 — [BUG-029] Clarified that category subset shares MUST be recalculated based only on subset members' incomes.
+**Bugfix**: 2026-05-31 — [BUG-032] Re-verified requirement for immediate UI reactivity after savings goal contribution overrides (SC-011).
 
 ### Key Entities
 
@@ -163,12 +170,19 @@ As a user, I want to securely log in to the application and navigate between the
 
 - **SC-001**: Users can create a group and invite 4 housemates in under 3 minutes.
 - **SC-002**: Proportional shares are recalculated and updated on the dashboard within 500ms of an income or category change.
-- **SC-003**: 100% of expense entries are correctly reflected in the "Remaining Balance" sections of the dashboard.
+- **SC-003**: 100% of expense entries are correctly reflected in the "Remaining Balance" sections of the dashboard and ARE VISIBLE in the history view (BUG-025).
 - **SC-004**: System maintains data isolation such that no user can see data from a group they do not belong to.
 - **SC-005**: The application NEVER remains in a persistent loading state for more than 5 seconds without user feedback or an automated fallback.
 - **SC-006**: Savings goals are immediately visible on the dashboard/savings tab after successful creation.
 - **SC-007**: API endpoints MUST correctly handle ISO 8601 date strings in JSON request bodies by coercing them into JavaScript Date objects during validation.
 - **SC-008**: Expense creation correctly resolves the payer's GroupMember identity from their session (BUG-015).
+- **SC-009**: Savings goal contribution overrides MUST validate that both the target goal and member exist before performing the update to prevent foreign key violations (BUG-022).
+- **SC-010**: Users can view a chronological list of recent expenses on the dashboard and a full history within each category view (BUG-025).
+- **SC-011**: Savings goal projections and contribution values MUST be updated in the UI within 500ms of a successful contribution override without requiring a page reload (BUG-031).
+- SC-012**: Savings goals MUST support an optional `startingAmount` (default 0) that is subtracted from the `targetAmount` before calculating monthly contributions. (BUG-033)
+- **SC-013**: System MUST support updating existing savings goal metadata (name, targetAmount, targetDate, startingAmount) via the UI and API client (BUG-037).
+- **SC-014**: The application MUST maintain zero lint errors across both `api/` and `frontend/` directories, with strict enforcement against the use of `any` in both implementation and test code (BUG-038).
+- **SC-015**: Savings goal updates MUST correctly resolve the loading state in all terminal scenarios (success, error, or settlement) to ensure the loading spinner is dismissed without a page reload (BUG-039).
 
 ## Assumptions
 
@@ -184,3 +198,16 @@ As a user, I want to securely log in to the application and navigate between the
 **Bugfix**: 2026-05-15 — [BUG-016] Clarified that Invitation status uses a custom InvitationStatus enum instead of a generic string.
 **Bugfix**: 2026-05-15 — [BUG-018] Mandated ID type consistency and population of non-nullable fields for expense creation.
 **Bugfix**: 2026-05-15 — [BUG-021] Clarified email delivery requirements using Resend and secure join links.
+**Bugfix**: 2026-05-15 — [BUG-022] Added requirement for ID validation and graceful error handling in savings goal contribution overrides.
+**Bugfix**: 2026-05-15 — [BUG-023] Clarified requirement for consistent name display in savings goals feature (US3) in compliance with FR-015.
+**Bugfix**: 2026-05-15 — [BUG-024] Clarified requirement to ensure primary key UUID defaults and remove incorrect defaults from foreign keys in prisma/schema.prisma to resolve persistent null constraint violations.
+**Bugfix**: 2026-05-26 — [BUG-026] Added requirement for explicit visual feedback and terminal resolution in savings goal contribution overrides.
+**Bugfix**: 2026-05-27 — [BUG-027] Mandated consistent percentage rounding strategy across all views including Dashboard and Categories.
+**Bugfix**: 2026-05-28 — [BUG-028] Clarified that Remainder Absorption MUST be applied to all proportional financial calculations, including categories and savings goals.
+**Bugfix**: 2026-05-29 — [BUG-030] Patched missing CategoryExpenseList import in DashboardPage.tsx.
+**Bugfix**: 2026-05-30 — [BUG-031] Added SC-011 to mandate immediate UI updates after savings goal contribution overrides.
+**Bugfix**: 2026-06-02 — [BUG-034] Re-verified requirement for immediate UI reactivity after savings goal contribution overrides (SC-011).
+**Bugfix**: 2026-06-03 — [BUG-035] Clarified requirement for robust date calculation in savings projections.
+**Bugfix**: 2026-06-03 — [BUG-036] Clarified requirement for explicit inclusion of startingAmount (initialAmount) even if 0, and non-null projections.
+**Bugfix**: 2026-06-06 — [BUG-039] Added SC-015 to mandate terminal loading state resolution for savings goals.
+

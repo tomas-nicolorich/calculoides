@@ -40,7 +40,7 @@ This document defines the database schema and entity relationships for the Calcu
 
 ### SavingsGoal
 - A target financial objective for the group.
-- Calculates contributions based on `targetAmount` and `targetDate`.
+- Calculates contributions based on `targetAmount`, `startingAmount`, and `targetDate`.
 - Individual member contributions can be overridden via `SavingsGoalContribution`.
 
 ### SavingsGoalContribution (Join Table: GroupMember <-> SavingsGoal)
@@ -184,12 +184,13 @@ model Transfer {
 }
 
 model SavingsGoal {
-  id           String   @id @default(uuid())
-  groupId      String
-  group        Group    @relation(fields: [groupId], references: [id])
-  name         String
-  targetAmount Decimal  @db.Decimal(12, 2)
-  targetDate   DateTime
+  id             String   @id @default(uuid())
+  groupId        String
+  group          Group    @relation(fields: [groupId], references: [id])
+  name           String
+  targetAmount   Decimal  @db.Decimal(12, 2)
+  startingAmount Decimal  @default(0) @db.Decimal(12, 2)
+  targetDate     DateTime
   
   contributions SavingsGoalContribution[]
 
