@@ -23,6 +23,7 @@
 - `npx prisma migrate dev`: Apply database migrations.
 
 ## Recent Changes
+- **Constitution v1.1.0**: Updated core principles to include singular Prisma naming, service object patterns, "Calculation on Read", "Remainder Absorption", and formalized local server testing. [2024-05-22]
 - **002-local-server-testing**: Implemented local Express-based API server, environment-aware Vite proxy, and `CALC_ENVIRONMENT` toggle for offline-compatible development. [2024-05-23]
 - **001-calculoides-core-app**: Initial implementation of household budget management, proportional expense sharing, savings goals, and budget transfers. [2026-06-06]
 
