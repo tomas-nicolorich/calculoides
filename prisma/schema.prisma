@@ -86,7 +86,6 @@ model Group {
   members       GroupMember[]
   owner         User                      @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   invitations   Invitation[]
-  contributions SavingsGoalContribution[]
   savingsGoals  SavingsGoal[]
 
   @@map("groups")
@@ -112,7 +111,7 @@ model GroupMember {
 
 model Category {
   id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  groupId       String           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId       String           @db.Uuid
   name          String
   icon          String?
   monthlyBudget Decimal          @db.Decimal(12, 2)
@@ -129,8 +128,8 @@ model Category {
 
 model CategoryMember {
   id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  categoryId    String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  memberId      String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId    String      @db.Uuid
+  memberId      String      @db.Uuid
   category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   member        GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
   transfersFrom Transfer[]  @relation("FromMember")
@@ -142,9 +141,9 @@ model CategoryMember {
 }
 
 model Expense {
-  id          String      @id @db.Uuid
-  categoryId  String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  payerId     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId  String      @db.Uuid
+  payerId     String      @db.Uuid
   description String
   amount      Decimal     @db.Decimal(12, 2)
   date        DateTime    @default(now())
@@ -159,9 +158,9 @@ model Expense {
 
 model Transfer {
   id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  categoryId   String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fromMemberId String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  toMemberId   String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId   String         @db.Uuid
+  fromMemberId String         @db.Uuid
+  toMemberId   String         @db.Uuid
   amount       Decimal        @db.Decimal(12, 2)
   date         DateTime       @default(now())
   category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -173,14 +172,16 @@ model Transfer {
 }
 
 model SavingsGoal {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  groupId      String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String
-  targetAmount Decimal  @db.Decimal(12, 2)
-  targetDate   DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  id             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId        String                    @db.Uuid
+  name           String
+  targetAmount   Decimal                   @db.Decimal(12, 2)
+  startingAmount Decimal                   @default(0) @db.Decimal(12, 2)
+  targetDate     DateTime
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  group          Group                     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  contributions  SavingsGoalContribution[]
 
   @@map("savings_goals")
   @@schema("calculoides")
@@ -188,10 +189,10 @@ model SavingsGoal {
 
 model SavingsGoalContribution {
   id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  goalId       String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  memberId     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  goalId       String      @db.Uuid
+  memberId     String      @db.Uuid
   customAmount Decimal     @db.Decimal(12, 2)
-  goal         Group       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal         SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
   member       GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([goalId, memberId])
@@ -201,10 +202,11 @@ model SavingsGoalContribution {
 
 model Invitation {
   id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  groupId   String           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId   String           @db.Uuid
   email     String
+  token     String?          @unique
   status    InvitationStatus @default(PENDING)
-  inviterId String           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inviterId String           @db.Uuid
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   group     Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)

@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 // Base ID Schema
-export const IdSchema = z.string().uuid();
+export const IdSchema = z.uuid();
 
 // User
 export const UserSchema = z.object({
   id: IdSchema,
-  email: z.string().email(),
+  email: z.email(),
   name: z.string().nullable().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -78,6 +78,7 @@ export const SavingsGoalSchema = z.object({
   groupId: IdSchema,
   name: z.string().min(1, 'Goal name is required'),
   targetAmount: z.number().positive('Target amount must be positive'),
+  startingAmount: z.number().nonnegative().default(0),
   targetDate: z.coerce.date(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -86,6 +87,7 @@ export const SavingsGoalSchema = z.object({
 export const CreateSavingsGoalSchema = SavingsGoalSchema.pick({
   name: true,
   targetAmount: true,
+  startingAmount: true,
   targetDate: true,
 });
 
@@ -99,7 +101,7 @@ export const InvitationStatusEnum = z.enum(['PENDING', 'ACCEPTED', 'DECLINED']);
 export const InvitationSchema = z.object({
   id: IdSchema,
   groupId: IdSchema,
-  email: z.string().email(),
+  email: z.email(),
   status: InvitationStatusEnum,
   inviterId: IdSchema,
   createdAt: z.coerce.date(),
@@ -107,7 +109,7 @@ export const InvitationSchema = z.object({
 });
 
 export const CreateInvitationSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 
 // Transfer
