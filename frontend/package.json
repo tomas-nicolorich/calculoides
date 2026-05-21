@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run api:generate-categories --prefix ../api",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",

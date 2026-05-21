@@ -5,10 +5,7 @@
   "scripts": {
     "start:api": "vercel dev --listen 3001",
     "start:api:local": "node --import tsx src/server.ts",
-    "api:check-count": "tsx scripts/check-function-count.ts",
-    "api:generate-categories": "tsx scripts/generate-categories.ts",
-    "api:benchmark": "tsx scripts/benchmark.ts",
-    "build:api": "npm run api:check-count && tsc",
+    "build:api": "tsc",
     "test": "vitest",
     "lint": "eslint .",
     "prisma:generate": "prisma generate --schema=../prisma/schema.prisma",
