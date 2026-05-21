@@ -64,7 +64,7 @@ describe("Groups Handler - Invitations Regression (BUG-005)", () => {
       headers: { authorization: "Bearer token" },
     };
 
-    await groupsHandler(req as Request, res as Response);
+    await groupsHandler(req as any, res as any);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mockInvitations);
@@ -86,7 +86,7 @@ describe("Groups Handler - Invitations Regression (BUG-005)", () => {
       headers: { authorization: "Bearer token" },
     };
 
-    await groupsHandler(req as Request, res as Response);
+    await groupsHandler(req as any, res as any);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mockGroups);

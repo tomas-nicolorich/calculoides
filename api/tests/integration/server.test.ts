@@ -14,8 +14,8 @@ describe("Local API Server Integration", () => {
     console.log("Starting test server...");
     const apiRoot = path.resolve(__dirname, "../../");
 
-    // Use spawn to have more control and handle shell on Windows
-    serverProcess = spawn("npm", ["run", "start:api:local"], {
+    // Use npx tsx directly to avoid npm shell wrapper issues on Windows
+    serverProcess = spawn("npx", ["tsx", "src/server.ts"], {
       cwd: apiRoot,
       env: {
         ...process.env,
@@ -27,9 +27,9 @@ describe("Local API Server Integration", () => {
       stdio: "inherit",
     });
 
-    // Give the server time to start and mount routes
-    await new Promise((resolve) => setTimeout(resolve, 8000));
-  }, 15000);
+    // Give the server more time to start especially in CI/Turbo environments
+    await new Promise((resolve) => setTimeout(resolve, 12000));
+  }, 20000);
 
   afterAll(() => {
     console.log("Stopping test server...");
