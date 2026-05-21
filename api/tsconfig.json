@@ -8,5 +8,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "*.ts", "tests/**/*.ts", "src/types/**/*.d.ts", "members/**/*.ts", "groups/**/*.ts"]
+  "include": ["src/**/*.ts", "*.ts", "scripts/**/*.ts", "tests/**/*.ts", "src/types/**/*.d.ts", "members/**/*.ts", "groups/**/*.ts"]
 }
