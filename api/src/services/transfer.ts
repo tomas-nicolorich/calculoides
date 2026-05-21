@@ -1,4 +1,4 @@
-import { prisma } from '../utils/prisma';
+import { prisma } from "../utils/prisma";
 
 export const TransferService = {
   /**
@@ -8,7 +8,7 @@ export const TransferService = {
     categoryId: string,
     fromMemberId: string,
     toMemberId: string,
-    amount: number
+    amount: number,
   ) {
     return await prisma.transfer.create({
       data: {
@@ -31,16 +31,24 @@ export const TransferService = {
       include: {
         fromMember: {
           include: {
-            user: { select: { name: true, email: true } },
+            member: {
+              include: {
+                user: { select: { name: true, email: true } },
+              },
+            },
           },
         },
         toMember: {
           include: {
-            user: { select: { name: true, email: true } },
+            member: {
+              include: {
+                user: { select: { name: true, email: true } },
+              },
+            },
           },
         },
       },
-      orderBy: { date: 'desc' },
+      orderBy: { date: "desc" },
     });
-  }
+  },
 };
