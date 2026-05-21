@@ -1,19 +1,19 @@
-import './env';
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
-import { createClient } from '@supabase/supabase-js';
-import { fileURLToPath } from 'url';
+import "./env";
+import express from "express";
+import cors from "cors";
+import path from "path";
+import fs from "fs";
+import { createClient } from "@supabase/supabase-js";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT ?? '3001';
+const port = process.env.PORT ?? "3001";
 
 // 1. Environment Configuration
-const env = process.env.CALC_ENVIRONMENT ?? 'local';
+const env = process.env.CALC_ENVIRONMENT ?? "local";
 
 app.use(cors());
 app.use(express.json());
@@ -24,7 +24,7 @@ const checkSupabase = async () => {
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Missing Supabase environment variables');
+    console.warn("Missing Supabase environment variables");
     return false;
   }
   try {
@@ -32,60 +32,167 @@ const checkSupabase = async () => {
     const { error } = await supabase.auth.getSession();
     return !error;
   } catch (e: unknown) {
-    console.error('Supabase health check failed:', e);
+    console.error("Supabase health check failed:", e);
     return false;
   }
 };
 
-app.get('/api/health', async (_req, res) => {
+app.get("/api/health", async (_req, res) => {
   const isUp = await checkSupabase();
   if (isUp) {
-    res.status(200).json({ status: 'OK', database: 'connected' });
+    res.status(200).json({ status: "OK", database: "connected" });
   } else {
-    res.status(503).json({ status: 'Service Unavailable', database: 'disconnected' });
+    res
+      .status(503)
+      .json({ status: "Service Unavailable", database: "disconnected" });
   }
 });
 
-// 3. Dynamic Route Loading
-const loadRoutes = async () => {
-  const apiDir = path.resolve(__dirname, '..');
-  const files = fs.readdirSync(apiDir);
+// 3. Recursive Route Loading
+const routeHandlers = new Map<
+  string,
+  (req: express.Request, res: express.Response) => Promise<void>
+>();
+
+const loadRoutes = async (dir: string, baseRoute = "/api") => {
+  if (!fs.existsSync(dir)) return;
+
+  const files = fs.readdirSync(dir);
 
   for (const file of files) {
-    // Only mount root-level .ts files that are not server.ts or in subdirectories
-    const filePath = path.join(apiDir, file);
-    if (file.endsWith('.ts') && !fs.lstatSync(filePath).isDirectory()) {
-      const routeName = file.replace('.ts', '');
-      
+    const filePath = path.join(dir, file);
+    const stat = fs.lstatSync(filePath);
+
+    if (stat.isDirectory()) {
+      // Skip special directories
+      if (
+        ["src", "scripts", "tests", "node_modules", ".turbo"].includes(file) &&
+        baseRoute === "/api"
+      ) {
+        continue;
+      }
+
+      // Handle dynamic segments in directories e.g. [id] -> :id
+      const segment =
+        file.startsWith("[") && file.endsWith("]")
+          ? `:${file.slice(1, -1)}`
+          : file;
+      await loadRoutes(filePath, `${baseRoute}/${segment}`);
+    } else if (file.endsWith(".ts") && !file.endsWith(".d.ts")) {
+      const routeName = file.replace(".ts", "");
+
+      // Handle dynamic segments in filenames e.g. [id].ts -> :id
+      const segment =
+        routeName.startsWith("[") && routeName.endsWith("]")
+          ? `:${routeName.slice(1, -1)}`
+          : routeName;
+
+      const fullRoute =
+        segment === "index" ? baseRoute : `${baseRoute}/${segment}`;
+
       try {
-        // Use relative path for import to ensure proper module caching
-        const handlerModule = await import(`../${file}`) as { default: unknown };
+        // Use absolute path for import
+        const handlerModule = (await import(`file://${filePath}`)) as {
+          default: unknown;
+        };
         const handler = handlerModule.default;
-        
-        if (typeof handler === 'function') {
-          app.all(`/api/${routeName}`, async (req, res) => {
+
+        if (typeof handler === "function") {
+          const typedHandler = handler as (
+            req: express.Request,
+            res: express.Response,
+          ) => Promise<void>;
+          routeHandlers.set(fullRoute, typedHandler);
+
+          app.all(fullRoute, async (req, res) => {
             try {
-              // Express req/res are compatible enough for our polyfilled handler
-              // withErrorHandling middleware in the handlers will handle status/json
-              await (handler as (req: express.Request, res: express.Response) => Promise<void>)(req, res);
+              await typedHandler(req, res);
             } catch (err) {
-              console.error(`Error handling route /api/${routeName}:`, err);
+              console.error(`Error handling route ${fullRoute}:`, err);
               if (!res.headersSent) {
-                res.status(500).json({ error: 'Internal Server Error' });
+                res.status(500).json({ error: "Internal Server Error" });
               }
             }
           });
-          console.log(`Mounted route: /api/${routeName}`);
+          console.log(`Mounted route: ${fullRoute}`);
         }
       } catch (err) {
-        console.error(`Failed to load route ${file}:`, err);
+        console.error(`Failed to load route ${file} at ${fullRoute}:`, err);
       }
     }
   }
 };
 
+const applyRewrites = () => {
+  const vercelConfigPath = path.resolve(__dirname, "../../vercel.json");
+  if (!fs.existsSync(vercelConfigPath)) return;
+
+  try {
+    const config = JSON.parse(fs.readFileSync(vercelConfigPath, "utf-8")) as {
+      rewrites?: { source: string; destination: string }[];
+    };
+    if (!config.rewrites) return;
+
+    for (const rewrite of config.rewrites) {
+      app.all(rewrite.source, async (req, res) => {
+        let destination = rewrite.destination;
+
+        // Replace dynamic segments in destination e.g. :id
+        Object.entries(req.params).forEach(([key, value]) => {
+          destination = destination.replace(`:${key}`, value as string);
+        });
+
+        const url = new URL(
+          destination,
+          `http://${req.headers.host ?? "localhost"}`,
+        );
+        const targetPath = url.pathname;
+        const targetHandler = routeHandlers.get(targetPath);
+
+        if (targetHandler) {
+          // Merge query params from rewrite destination into req.query
+          // Note: We use Object.defineProperty because req.query is often a read-only getter in Express
+          const newQuery = { ...req.query };
+          url.searchParams.forEach((value, key) => {
+            newQuery[key] = value;
+          });
+
+          Object.defineProperty(req, "query", {
+            value: newQuery,
+            writable: true,
+            configurable: true,
+          });
+
+          try {
+            await targetHandler(req, res);
+          } catch (err) {
+            console.error(`Error in rewritten handler ${targetPath}:`, err);
+            if (!res.headersSent) {
+              res.status(500).json({ error: "Internal Server Error" });
+            }
+          }
+        } else {
+          res.status(404).json({ error: "Not Found" });
+        }
+      });
+      console.log(
+        `Applied rewrite: ${rewrite.source} -> ${rewrite.destination}`,
+      );
+    }
+  } catch (err) {
+    console.error("Failed to parse vercel.json for rewrites:", err);
+  }
+};
+
 const start = async () => {
-  await loadRoutes();
+  const handlersDir = path.resolve(__dirname, "handlers");
+
+  // Load new consolidated handlers from handlers/ directory
+  await loadRoutes(handlersDir);
+
+  // Apply rewrites after all handlers are loaded to map logical legacy routes
+  applyRewrites();
+
   app.listen(port, () => {
     console.log(`Local API server running on http://localhost:${port}`);
     console.log(`Environment: ${env}`);
@@ -93,6 +200,6 @@ const start = async () => {
 };
 
 start().catch((err: unknown) => {
-  console.error('Failed to start server:', err);
+  console.error("Failed to start server:", err);
   process.exit(1);
 });
