@@ -46,7 +46,6 @@
       "source": "/api/members/:id/income",
       "destination": "/api/members?action=update-income&id=:id"
     },
-    { "handle": "filesystem" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
