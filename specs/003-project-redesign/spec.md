@@ -7,6 +7,15 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
+## Clarifications
+
+### Session 2025-05-15
+- Q: Which specific forms should be included in the modal redesign? → A: Maximum scope: Every form in the app, including User Profile and Settings.
+- Q: How should the system handle a user attempting to close a modal with unsaved changes? → A: Prompt for confirmation if the form is "dirty" (has unsaved changes).
+- Q: How much screen height should mobile drawers occupy by default? → A: Dynamic height based on content, up to a maximum (e.g., 90% height) where it becomes scrollable.
+- Q: Where should the budget transfer triggers be placed in the member row? → A: Placed on the far right of the member row, distinct from the member name.
+- Q: How should navigation within a multi-section form be handled inside a modal/drawer? → A: Use vertical accordions to expand/collapse form sections within the same modal.
+
 ### User Story 1 - Responsive Financial Overview (Priority: P1)
 
 As a user on a mobile device, I want to see a clean and condensed overview of my finances so that I can quickly understand my budget status without excessive scrolling or horizontal panning.
@@ -56,17 +65,19 @@ As a user in the Categories section, I want to trigger a budget transfer directl
 
 - **Large Form in Modal**: Modals containing long forms (e.g., Savings Goal with many parameters) must be scrollable internally on small screens to prevent being cut off.
 - **Back Button Handling**: On mobile, hitting the hardware "back" button should close the open modal rather than navigating away from the page.
+- **Unsaved Changes**: If a user attempts to close a modal (via ESC, backdrop click, or Cancel) and the form is "dirty", the system MUST prompt for confirmation before discarding changes.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: System MUST implement a mobile-first, responsive layout using a flexible grid system.
-- **FR-002**: System MUST transition all standalone input cards (Expenses, New Category, Edit Category, Savings Goals) into triggered Modals/Dialogs.
+- **FR-002**: System MUST transition ALL input forms (Expenses, Categories, Savings Goals, Income, User Profile, Settings, etc.) into triggered Modals/Dialogs.
 - **FR-003**: System MUST provide a consistent "Floating Action Button" (FAB) or prominent "Add" button on mobile for primary actions (New Expense).
-- **FR-004**: System MUST implement budget transfer triggers (bidirectional arrows) as inline UI elements next to member entries in the Categories view.
+- **FR-004**: System MUST implement budget transfer triggers (bidirectional arrows) as inline UI elements placed on the far right of member entries in the Categories view.
 - **FR-005**: Modals MUST support "click-outside-to-close" and "ESC-to-close" behavior on desktop, and easy swipe/close gestures on mobile.
 - **FR-006**: Input forms inside modals MUST be optimized for mobile input (correct keyboard types for numbers, large tap targets).
+- **FR-007**: Multi-section forms (e.g., Settings) MUST use vertical accordions to expand/collapse sections within the same modal context to avoid nested navigation.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -85,5 +96,5 @@ As a user in the Categories section, I want to trigger a budget transfer directl
 ## Assumptions
 
 - **A-001**: The redesign will leverage the existing Tailwind CSS and Shadcn/UI stack.
-- **A-002**: Modals on mobile MUST utilize a "Drawer" (bottom-sheet) pattern for better thumb-reachability and consistency with mobile OS patterns, while remaining standard centered dialogs on desktop.
+- **A-002**: Modals on mobile MUST utilize a "Drawer" (bottom-sheet) pattern for better thumb-reachability and consistency with mobile OS patterns. Drawers MUST have dynamic height based on content, capping at 90% of screen height before becoming scrollable. On desktop, they remain centered dialogs.
 - **A-003**: Visual direction will follow a "Balanced/Hybrid" aesthetic, combining clean minimalist layouts with informative visual cues such as icons, progress bars, and subtle depth effects to ensure both clarity and information density.

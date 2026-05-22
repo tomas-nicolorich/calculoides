@@ -87,3 +87,10 @@
 **Issue:** Projected completion dates showing 1/1/1970 (Epoch).
 **Root Cause:** Improper handling of empty or zero contribution overrides.
 **Prevention Rule:** Ensure `startingAmount` is explicitly handled and projections are recalculated with terminal loading state resolution.
+
+<!-- SPECKIT START -->
+## Implementation Plan
+**Active Plan**: [specs/003-project-redesign/plan.md](./specs/003-project-redesign/plan.md)
+**Status**: Research & Design Phase Complete.
+<!-- SPECKIT END -->
+
