@@ -2,6 +2,25 @@
 
 ## Merged Features Log
 
+### Reduce Vercel Serverless Functions — 2026-06-07
+**Branch:** `002-reduce-vercel-functions`
+**Spec:** `specs/002-reduce-vercel-functions`
+
+**What was added:**
+- Consolidated 16 logical endpoints into 3 physical domain handlers (Groups, Transactions, Members) to stay within Vercel's 12-function limit.
+- Implemented build-time function count validation script to prevent plan limit regressions.
+- Migrated static metadata (Categories) to Build-time Static Site Generation (SSG).
+- Added method-aware routing for consolidated handlers.
+- Established local dev parity for Vercel rewrite rules.
+
+**New Components:**
+- `api/src/utils/dispatcher.ts`: Action-based request router.
+- `api/src/handlers/`: Domain-specific API handlers.
+- `api/scripts/check-function-count.ts`: Build gate for function limits.
+- `api/scripts/generate-categories.ts`: SSG generation script.
+
+**Tasks Completed:** 28/28 tasks
+
 ### Local Server Testing — 2024-05-23
 **Branch:** `002-local-server-testing`
 **Spec:** specs/002-local-server-testing

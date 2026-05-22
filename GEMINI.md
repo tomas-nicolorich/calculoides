@@ -7,7 +7,9 @@
 - **Testing**: Vitest 4.1.6
 
 ## Project Structure
-- `api/`: Vercel serverless functions (financial logic, API endpoints).
+- `api/`: Vercel serverless functions (consolidated handlers, financial logic).
+- `api/src/handlers/`: Consolidated domain handlers (Groups, Transactions, Members).
+- `api/scripts/`: Build gates and SSG generation scripts.
 - `frontend/`: React application (FSD architecture).
 - `prisma/`: Database schema and migrations.
 - `shared/`: Shared validation logic and types.
@@ -16,6 +18,7 @@
 ## Commands
 - `npm run dev`: Start both frontend and api (using Vercel CLI).
 - `npm run dev:local`: Start both frontend and local api server (using `CALC_ENVIRONMENT=local`).
+- `npm run build:api`: Verify serverless function count is within limits (max 12).
 - `npm run start:api:local`: Start the local Express-based API server.
 - `npm run test`: Run Vitest test suite.
 - `npm run test:local`: Run tests against the local server.
@@ -23,11 +26,27 @@
 - `npx prisma migrate dev`: Apply database migrations.
 
 ## Recent Changes
+- **002-reduce-vercel-functions**: Consolidated API endpoints into domain-based handlers to stay within Vercel's 12-function limit. Implemented build-time function count validation and SSG for metadata. [2026-06-07]
 - **Constitution v1.1.0**: Updated core principles to include singular Prisma naming, service object patterns, "Calculation on Read", "Remainder Absorption", and formalized local server testing. [2024-05-22]
 - **002-local-server-testing**: Implemented local Express-based API server, environment-aware Vite proxy, and `CALC_ENVIRONMENT` toggle for offline-compatible development. [2024-05-23]
 - **001-calculoides-core-app**: Initial implementation of household budget management, proportional expense sharing, savings goals, and budget transfers. [2026-06-06]
 
 ## Known Issues & Gotchas
+
+### ⚠️ Serverless Function Limits
+**Issue:** Deployment failure due to "Serverless Function Limit Exceeded".
+**Root Cause:** Vercel Hobby plan has a hard limit of 12 physical functions.
+**Prevention Rule:** Always run `npm run build:api` before deployment to verify count (SC-007).
+
+### ⚠️ Function Bundle Size
+**Issue:** Deployment failure if a consolidated function exceeds Vercel's size limits.
+**Root Cause:** Merging too many dependencies or logical paths into one file.
+**Prevention Rule:** Consolidated handlers MUST NOT exceed a **40MB** bundle size. If approaching the limit, split into smaller sub-resource handlers (FR-025).
+
+### ⚠️ Local Rewrite Parity
+**Issue:** Local 404s for URLs defined only in `vercel.json` rewrites.
+**Root Cause:** Local Express server not aware of Vercel rewrite rules.
+**Prevention Rule:** Local server MUST use the rewrite engine to map logical paths to consolidated handlers (FR-030).
 
 ### ⚠️ Supabase Connection Feedback
 **Issue:** Frontend might show generic error when local server can't reach Supabase.

@@ -3,6 +3,7 @@
 **Status**: Active
 **Initial Feature**: `001-calculoides-core-app`
 **Revision**: 2026-06-06 | Initial archival of Calculoides Core App
+**Revision**: 2026-06-07 | Archival of Vercel Serverless Function Reduction feature [Source: specs/002-reduce-vercel-functions]
 
 ## User Scenarios & Testing
 
@@ -111,6 +112,50 @@ As a tester, I want to run the test suite against a stable local server connecte
 
 1. **Given** the test environment is active, **When** tests are executed, **Then** they use the local server as the application backend.
 
+---
+
+### User Story 8 - Consolidate Related Functions (Priority: P1) [Source: specs/002-reduce-vercel-functions]
+
+As a developer, I want to merge related API endpoints into a single serverless function so that I can stay within Vercel's Hobby plan limits while maintaining all site functionality.
+
+**Why this priority**: Directly addresses the primary constraint of the Vercel Hobby plan (12 function limit).
+
+**Independent Test**: Identify two or more related functions, combine them into one with a routing mechanism, and verify that all original endpoints still work correctly.
+
+**Acceptance Scenarios**:
+
+1. **Given** multiple API routes (e.g., `/api/user/get`, `/api/user/update`), **When** they are merged into a single function (e.g., `/api/user/[...action]`), **Then** both `GET` and `POST` requests to the original logical paths return expected results.
+2. **Given** a consolidated function, **When** it is deployed, **Then** Vercel counts it as only one serverless function.
+
+---
+
+### User Story 9 - Remove or Migrate Unused/Low-Impact Functions (Priority: P2) [Source: specs/002-reduce-vercel-functions]
+
+As a developer, I want to identify functions that can be converted to static generation or removed if they are redundant, further reducing the total count.
+
+**Why this priority**: Simplifies the codebase and optimizes resource usage.
+
+**Independent Test**: Delete a function or convert it to a static prop fetcher and verify the page still loads correctly.
+
+**Acceptance Scenarios**:
+
+1. **Given** a function that only fetches static data, **When** it is replaced by build-time data fetching (static generation), **Then** the function is removed from the Vercel deployment and the page remains functional.
+
+---
+
+### User Story 10 - Compliance Verification (Priority: P3) [Source: specs/002-reduce-vercel-functions]
+
+As a maintainer, I want a way to verify that the total function count is 12 or fewer before a deployment is finalized.
+
+**Why this priority**: Prevents future regressions where adding new features exceeds the deployment limit.
+
+**Independent Test**: Run a check during the build process that counts the generated functions.
+
+**Acceptance Scenarios**:
+
+1. **Given** a build output, **When** the number of serverless functions is 12 or fewer, **Then** the build passes.
+2. **Given** a build output, **When** the number of serverless functions exceeds 12, **Then** the build fails with a descriptive error.
+
 ## Requirements
 
 ### Functional Requirements [Source: specs/001-calculoides-core-app]
@@ -142,57 +187,60 @@ As a tester, I want to run the test suite against a stable local server connecte
 - **FR-022**: System MUST provide a mechanism to launch the local application server independently of Vercel.
 - **FR-023**: System MUST provide clear feedback if the local server is reachable but the connection to Supabase fails. Feedback MUST be provided as a `503 Service Unavailable` HTTP status with a JSON payload: `{ "error": "Supabase Connection Failed", "details": "..." }`.
 
-## Key Entities [Source: specs/001-calculoides-core-app]
+### Functional Requirements: Serverless Function Reduction [Source: specs/002-reduce-vercel-functions]
 
-- **User**: Individual account holder.
-- **Group**: Container for shared budgeting, with a name and a collection of Members.
-- **Member**: A User within the context of a specific Group, having a specific monthly income, an ownership status, and a `joinedAt` timestamp.
-- **Budget Quota**: The specific portion of a category's budget allocated to a member based on their income share or transfer adjustments.
-- **Expense**: A specific transaction tied to a Budget Category, recorded by a Member.
-- **Transfer**: A budget adjustment between two Members.
-- **Savings Goal**: A target amount and date with calculated monthly contributions.
+- **FR-024**: System MUST be configured to deploy no more than 12 serverless functions to Vercel.
+- **FR-025**: Related API routes MUST be consolidated into shared handler functions (e.g., using dynamic routing or a central dispatcher).
+- **FR-026**: The build process MUST report the current number of serverless functions and fail if the count exceeds 12.
+- **FR-027**: All public-facing API endpoints MUST maintain their original behavior and response format.
+- **FR-028**: Infrastructure-as-Code (vercel.json) MUST be used to explicitly manage function grouping and route mapping.
+- **FR-029**: Consolidated handlers MUST preserve "Calculation on Read" and "Remainder Absorption" patterns for all financial logic (Constitution III).
+- **FR-030**: The local development server MUST achieve parity with Vercel's rewrite engine by correctly mapping logical paths defined in `vercel.json` to their consolidated handlers.
+- **FR-031**: Consolidated handlers MUST support method-aware dispatching (GET/POST/PATCH/DELETE) when multiple logical endpoints are merged into a single action-based route.
 
-## Key Entities: Local Server Testing [Source: specs/002-local-server-testing]
+## Key Entities
 
-- **Local Server**: A local process hosting the Calculoides application logic.
-- **Supabase**: The remote backend-as-a-service used for data persistence and authentication.
-- **CALC_ENVIRONMENT**: The environment variable used to select the active application configuration.
+- **User**: Individual account holder. [Source: specs/001-calculoides-core-app]
+- **Group**: Container for shared budgeting, with a name and a collection of Members. [Source: specs/001-calculoides-core-app]
+- **Member**: A User within the context of a specific Group, having a specific monthly income, an ownership status, and a `joinedAt` timestamp. [Source: specs/001-calculoides-core-app]
+- **Budget Quota**: The specific portion of a category's budget allocated to a member based on their income share or transfer adjustments. [Source: specs/001-calculoides-core-app]
+- **Expense**: A specific transaction tied to a Budget Category, recorded by a Member. [Source: specs/001-calculoides-core-app]
+- **Transfer**: A budget adjustment between two Members. [Source: specs/001-calculoides-core-app]
+- **Savings Goal**: A target amount and date with calculated monthly contributions. [Source: specs/001-calculoides-core-app]
+- **Local Server**: A local process hosting the Calculoides application logic. [Source: specs/002-local-server-testing]
+- **Supabase**: The remote backend-as-a-service used for data persistence and authentication. [Source: specs/002-local-server-testing]
+- **Serverless Function**: A physical deployment unit in Vercel. [Source: specs/002-reduce-vercel-functions]
+- **Logical Endpoint**: A URL path that the application exposes (e.g., `/api/v1/resource`). [Source: specs/002-reduce-vercel-functions]
+- **Endpoint Inventory**: The list of existing logical endpoints that must maintain parity. [Source: specs/002-reduce-vercel-functions]
 
-## Success Criteria [Source: specs/001-calculoides-core-app]
+## Edge Cases & Error Handling
+
+- **Floating Point Precision**: Handled via `shared/logic/rounding.ts` (Remainder Absorption). [Source: specs/001-calculoides-core-app]
+- **Network Failure**: Frontend MUST handle Supabase and Vercel timeouts gracefully with retry logic for read operations. [Source: specs/001-calculoides-core-app]
+- **Invalid Invitation**: Invitations that are expired or already used MUST redirect to `/groups` with an error message. [Source: specs/001-calculoides-core-app]
+- **Zero-Income Member**: Members with 0 income are excluded from proportional share calculations for shared categories but can still log individual expenses. [Source: specs/001-calculoides-core-app]
+- **Supabase Unreachable (Local Mode)**: Local server MUST return `503 Service Unavailable` if connection to Supabase fails. [Source: specs/002-local-server-testing]
+- **Function Size Limits**: If consolidated functions approach a **40MB bundle size threshold**, they will be split into smaller grouped functions. [Source: specs/002-reduce-vercel-functions]
+- **Cold Starts**: Latency degradation up to 20% is accepted as a tradeoff for staying within function limits. [Source: specs/002-reduce-vercel-functions]
+
+## Success Criteria
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can create a group and invite 4 housemates in under 3 minutes.
-- **SC-002**: Proportional shares are recalculated and updated on the dashboard within 500ms of an income or category change.
-- **SC-003**: 100% of expense entries are correctly reflected in the "Remaining Balance" sections of the dashboard and ARE VISIBLE in the history view.
-- **SC-004**: System maintains data isolation such that no user can see data from a group they do not belong to.
-- **SC-005**: The application NEVER remains in a persistent loading state for more than 5 seconds without user feedback or an automated fallback.
-- **SC-006**: Savings goals are immediately visible on the dashboard/savings tab after successful creation.
-- **SC-007**: API endpoints MUST correctly handle ISO 8601 date strings in JSON request bodies by coercing them into JavaScript Date objects during validation.
-- **SC-008**: Expense creation correctly resolves the payer's GroupMember identity from their session.
-- **SC-009**: Savings goal contribution overrides MUST validate that both the target goal and member exist before performing the update.
-- **SC-010**: Users can view a chronological list of recent expenses on the dashboard and a full history within each category view.
-- **SC-011**: Savings goal projections and contribution values MUST be updated in the UI within 500ms of a successful contribution override without requiring a page reload.
-- **SC-012**: Savings goals MUST support an optional `startingAmount` (default 0) that is subtracted from the `targetAmount` before calculating monthly contributions.
-- **SC-013**: System MUST support updating existing savings goal metadata (name, targetAmount, targetDate, startingAmount) via the UI and API client.
-- **SC-014**: The application MUST maintain zero lint errors across both `api/` and `frontend/` directories, with strict enforcement against the use of `any` in both implementation and test code.
-- **SC-015**: Savings goal updates MUST correctly resolve the loading state in all terminal scenarios.
+- **SC-001**: Users can create a group and invite 4 housemates in under 3 minutes. [Source: specs/001-calculoides-core-app]
+- **SC-002**: Proportional shares are recalculated and updated on the dashboard within 500ms of an income or category change. [Source: specs/001-calculoides-core-app]
+- **SC-003**: 100% of expense entries are correctly reflected in the dashboard and history view. [Source: specs/001-calculoides-core-app]
+- **SC-004**: System maintains strict data isolation between groups. [Source: specs/001-calculoides-core-app]
+- **SC-005**: 100% of unit and integration tests pass in all environments. [Source: specs/001-calculoides-core-app, specs/002-local-server-testing]
+- **SC-006**: A developer can switch to local mode and connect in under 10 seconds. [Source: specs/002-local-server-testing]
+- **SC-007**: The total number of unique physical serverless functions deployed to Vercel is 12 or fewer. [Source: specs/002-reduce-vercel-functions]
+- **SC-008**: 100% of existing application features remain functional after function consolidation. [Source: specs/002-reduce-vercel-functions]
+- **SC-009**: No logical endpoint experiences a latency increase of more than 20% due to consolidation. [Source: specs/002-reduce-vercel-functions]
+- **SC-010**: 100% of logical endpoints defined in `vercel.json` are functional in the local development environment. [Source: specs/002-reduce-vercel-functions]
 
-### Measurable Outcomes: Local Server Testing [Source: specs/002-local-server-testing]
+## Assumptions
 
-- **SC-016**: A developer can switch the app to local mode and see a successful connection to Supabase in under 10 seconds.
-- **SC-017**: 100% of existing unit and integration tests pass when executed using the local server and a test Supabase project.
-- **SC-018**: The application logic (non-database features) functions fully without any external dependencies other than Supabase.
-
-## Edge Cases: Local Server Testing [Source: specs/002-local-server-testing]
-
-- **Supabase Unreachable**: What happens when the app is in local mode but the internet connection to Supabase is lost?
-- **Environment Variable Mismatch**: How does the system handle a local server configured with incorrect Supabase credentials or an unsupported `CALC_ENVIRONMENT` value?
-
-## Assumptions [Source: specs/001-calculoides-core-app]
-
-- **Currency**: The system defaults to a single currency per group (e.g., Euro).
-- **Manual Reset**: Budgets do not auto-reset; they rely on the owner's archive action to clear spent balances.
-- **Invite Logic**: Invitations are sent via email using Resend, and the system handles the delivery and acceptance flow via secure, single-use tokens.
-- **Device**: The initial implementation is a responsive web application suitable for both desktop and mobile browsers with a mobile-first design.
-- **Security**: Basic authentication (email/password) is required for all users.
+- **Currency**: The system defaults to a single currency per group (e.g., Euro). [Source: specs/001-calculoides-core-app]
+- **Manual Reset**: Budgets do not auto-reset; they rely on the owner's archive action. [Source: specs/001-calculoides-core-app]
+- **Vercel Hobby Plan**: The system is constrained by the 12-function limit of the Hobby plan. [Source: specs/002-reduce-vercel-functions]
+- **Supabase Persistence**: External data storage and authentication are managed by Supabase. [Source: specs/001-calculoides-core-app]
