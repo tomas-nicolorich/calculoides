@@ -3,7 +3,15 @@
 **Feature Branch**: `004-modern-ui-redesign`  
 **Created**: 2026-05-25  
 **Status**: Draft  
-**Input**: User description: "redesign the app. The app should have a bit of color, icons and cards. It should feel modern and give trust. Reference images provided."
+Input: User description: "redesign the app. The app should have a bit of color, icons and cards. It should feel modern and give trust. Reference images provided."
+
+## Clarifications
+
+### Session 2026-05-25
+- Q: Responsiveness Strategy → A: Stack cards vertically on small screens (Single column)
+- Q: Navigation Layout → A: Sidebar Navigation (Collapsible, vertical on the left)
+- Q: Interactive Feedback → A: Scale up (1.02x) and deepen shadow ONLY on interactive cards (on hover)
+- Q: Status Indicator Style → A: Rounded capsules (pills) with semantic background and text colors
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -72,6 +80,10 @@ As a user, I want a professional and balanced color palette so that the app feel
 
 - **FR-006**: System MUST support both Light and Dark modes, with a theme toggle accessible to the user.
 - **FR-007**: Icons MUST be sourced from the Lucide React icon library.
+- **FR-008**: The card layout MUST stack vertically into a single column on viewport widths below 768px (standard tablet/mobile breakpoint).
+- **FR-009**: System MUST implement a sidebar navigation menu that is fixed to the left side and collapsible to an icon-only view on desktop viewports.
+- **FR-010**: Interactive cards MUST implement a hover state that scales the component to 1.02x and deepens the drop shadow; non-interactive cards MUST NOT have hover effects.
+- **FR-011**: Status indicators MUST be rendered as rounded capsules (pills) using semantic background and text colors (e.g., green for success, red for error).
 
 ### Key Entities *(include if feature involves data)*
 
