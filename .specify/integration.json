@@ -2,14 +2,14 @@
   "version": "0.8.7",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "gemini"
+    "pi"
   ],
   "integration_settings": {
-    "gemini": {
+    "pi": {
       "script": "ps",
       "invoke_separator": "."
     }
   },
-  "integration": "gemini",
-  "default_integration": "gemini"
+  "integration": "pi",
+  "default_integration": "pi"
 }
