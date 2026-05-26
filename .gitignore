@@ -162,3 +162,9 @@ sketch
 .gemini
 .turbo
 .superpowers
+
+# Build and distribution
+dist/
+build/
+
+.pi
