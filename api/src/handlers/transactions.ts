@@ -8,6 +8,7 @@ import {
   withAuth,
   withErrorHandling,
   AuthenticatedRequest,
+  ApiRequest,
   ApiResponse,
 } from "../middleware/handler";
 import {
@@ -23,7 +24,6 @@ import {
   calculateIncomeShares,
   calculateCategoryBalances,
 } from "../services/calculation";
-import { Request, Response } from "express";
 
 const CreateTransferSchema = z.object({
   categoryId: IdSchema,
@@ -32,14 +32,23 @@ const CreateTransferSchema = z.object({
   amount: z.number().positive(),
 });
 
+interface ExpenseListItem {
+  id: string;
+  categoryId: string;
+  payerId: string;
+  description: string;
+  amount: { toString(): string } | number | string;
+  date: Date;
+  category: { name: string };
+  payer: { user: { name: string | null; email: string } };
+}
+
 const routes: RouteConfig = {
   // Expenses
-  "expenses-list": async (req: Request, res: Response) => {
+  "expenses-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId, categoryId, limit = "20", offset = "0" } = req.query;
     if (!groupId || typeof groupId !== "string") {
-      (res as unknown as ApiResponse)
-        .status(400)
-        .json({ error: "Missing groupId" });
+      res.status(400).json({ error: "Missing groupId" });
       return;
     }
     const parsedLimit = parseInt(limit as string, 10);
@@ -51,24 +60,26 @@ const routes: RouteConfig = {
       parsedOffset,
     );
 
-    const mappedExpenses = expenses.map((e: any) => ({
-      id: e.id,
-      categoryId: e.categoryId,
-      payerId: e.payerId,
-      description: e.description,
-      amount: Number(e.amount),
-      date: e.date,
-      categoryName: e.category.name,
-      payerName: e.payer.user.name ?? e.payer.user.email,
-    }));
+    const mappedExpenses = (expenses as unknown as ExpenseListItem[]).map(
+      (e) => ({
+        id: e.id,
+        categoryId: e.categoryId,
+        payerId: e.payerId,
+        description: e.description,
+        amount: Number(e.amount.toString()),
+        date: e.date,
+        categoryName: e.category.name,
+        payerName: e.payer.user.name ?? e.payer.user.email,
+      }),
+    );
 
-    (res as unknown as ApiResponse).status(200).json({
+    res.status(200).json({
       expenses: mappedExpenses,
       pagination: { total, limit: parsedLimit, offset: parsedOffset },
     });
   },
-  "expense-create": async (req: Request, res: Response) => {
-    const authReq = req as unknown as AuthenticatedRequest;
+  "expense-create": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const validatedBody = CreateExpenseSchema.parse(req.body);
     const expense = await ExpenseService.logExpense(
       validatedBody.categoryId,
@@ -77,17 +88,19 @@ const routes: RouteConfig = {
       validatedBody.amount,
       validatedBody.date,
     );
-    (res as unknown as ApiResponse).status(201).json(expense);
+    res.status(201).json(expense);
   },
-  "expense-delete": async (req: Request, res: Response) => {
-    const id = req.query.id ?? req.params.id;
+  "expense-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const id =
+      req.query.id ??
+      (req as ApiRequest & { params?: Record<string, string> }).params?.id;
     const validatedId = IdSchema.parse(id);
     await ExpenseService.deleteExpense(validatedId);
-    (res as unknown as ApiResponse).status(204).end();
+    res.status(204).end();
   },
 
   // Transfers
-  "transfer-create": async (req: Request, res: Response) => {
+  "transfer-create": async (req: ApiRequest, res: ApiResponse) => {
     const validatedBody = CreateTransferSchema.parse(req.body);
     const transfer = await TransferService.createTransfer(
       validatedBody.categoryId,
@@ -95,21 +108,19 @@ const routes: RouteConfig = {
       validatedBody.toMemberId,
       validatedBody.amount,
     );
-    (res as unknown as ApiResponse).status(201).json(transfer);
+    res.status(201).json(transfer);
   },
-  "transfers-by-category": async (req: Request, res: Response) => {
+  "transfers-by-category": async (req: ApiRequest, res: ApiResponse) => {
     const { categoryId } = req.query;
     const validatedCategoryId = IdSchema.parse(categoryId);
     const transfers =
       await TransferService.getTransfersForCategory(validatedCategoryId);
-    (res as unknown as ApiResponse).status(200).json(transfers);
+    res.status(200).json(transfers);
   },
-  "transfers-list": async (req: Request, res: Response) => {
+  "transfers-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId, limit = "20", offset = "0" } = req.query;
     if (!groupId || typeof groupId !== "string") {
-      (res as unknown as ApiResponse)
-        .status(400)
-        .json({ error: "Missing groupId" });
+      res.status(400).json({ error: "Missing groupId" });
       return;
     }
     const parsedLimit = parseInt(limit as string, 10);
@@ -119,14 +130,14 @@ const routes: RouteConfig = {
       parsedLimit,
       parsedOffset,
     );
-    (res as unknown as ApiResponse).status(200).json({
+    res.status(200).json({
       transfers,
       pagination: { total, limit: parsedLimit, offset: parsedOffset },
     });
   },
 
   // Categories
-  "category-create": async (req: Request, res: Response) => {
+  "category-create": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
     const validatedGroupId = IdSchema.parse(groupId);
     const validatedBody = CreateCategorySchema.parse(req.body);
@@ -137,25 +148,23 @@ const routes: RouteConfig = {
       validatedBody.icon ?? undefined,
       validatedBody.memberIds,
     );
-    (res as unknown as ApiResponse).status(201).json(category);
+    res.status(201).json(category);
   },
-  "categories-list": async (req: Request, res: Response) => {
+  "categories-list": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
     const validatedGroupId = IdSchema.parse(groupId);
     const groups = await GroupService.getGroupsForUser(authReq.user.id);
     const group = groups.find((g) => g.id === validatedGroupId);
     if (!group) {
-      (res as unknown as ApiResponse)
-        .status(403)
-        .json({ error: "Access denied to this group" });
+      res.status(403).json({ error: "Access denied to this group" });
       return;
     }
     const categories =
       await BudgetService.listCategoriesWithBalances(validatedGroupId);
-    (res as unknown as ApiResponse).status(200).json(categories);
+    res.status(200).json(categories);
   },
-  "category-delete": async (req: Request, res: Response) => {
+  "category-delete": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const { id } = req.query;
     const validatedId = IdSchema.parse(id);
@@ -163,9 +172,7 @@ const routes: RouteConfig = {
       where: { id: validatedId },
     });
     if (!category) {
-      (res as unknown as ApiResponse)
-        .status(404)
-        .json({ error: "Category not found" });
+      res.status(404).json({ error: "Category not found" });
       return;
     }
     const isOwner = await GroupService.isOwner(
@@ -173,18 +180,22 @@ const routes: RouteConfig = {
       authReq.user.id,
     );
     if (!isOwner) {
-      (res as unknown as ApiResponse)
+      res
         .status(403)
         .json({ error: "Only group owners can delete categories" });
       return;
     }
     await prisma.category.delete({ where: { id: validatedId } });
-    (res as unknown as ApiResponse).status(204).end();
+    res.status(204).end();
   },
 
   // Savings
-  "savings-goal-create": async (req: Request, res: Response) => {
+  "savings-goal-create": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
+    if (!groupId || typeof groupId !== "string") {
+      res.status(400).json({ error: "Missing groupId" });
+      return;
+    }
     const validatedGroupId = IdSchema.parse(groupId);
     const validatedBody = CreateSavingsGoalSchema.parse(req.body);
     const goal = await SavingsService.createGoal(
@@ -194,10 +205,46 @@ const routes: RouteConfig = {
       validatedBody.targetDate,
       validatedBody.startingAmount,
     );
-    (res as unknown as ApiResponse).status(201).json(goal);
+    res.status(201).json(goal);
   },
-  "savings-contribution-upsert": async (req: Request, res: Response) => {
+  "savings-goal-update": async (req: ApiRequest, res: ApiResponse) => {
+    const { goalId } = req.query;
+    if (!goalId || typeof goalId !== "string") {
+      res.status(400).json({ error: "Missing goalId" });
+      return;
+    }
+    const validatedGoalId = IdSchema.parse(goalId);
+    const validatedBody = CreateSavingsGoalSchema.parse(req.body);
+    const goal = await SavingsService.updateGoal(
+      validatedGoalId,
+      validatedBody.name,
+      validatedBody.targetAmount,
+      validatedBody.targetDate,
+      validatedBody.startingAmount,
+    );
+    res.status(200).json(goal);
+  },
+  "savings-goal-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const { goalId } = req.query;
+    if (!goalId || typeof goalId !== "string") {
+      res.status(400).json({ error: "Missing goalId" });
+      return;
+    }
+    const validatedGoalId = IdSchema.parse(goalId);
+    await SavingsService.deleteGoal(validatedGoalId);
+    res.status(204).end();
+  },
+  "savings-contribution-upsert": async (req: ApiRequest, res: ApiResponse) => {
     const { goalId, memberId } = req.query;
+    if (
+      !goalId ||
+      typeof goalId !== "string" ||
+      !memberId ||
+      typeof memberId !== "string"
+    ) {
+      res.status(400).json({ error: "Missing goalId or memberId" });
+      return;
+    }
     const validatedGoalId = IdSchema.parse(goalId);
     const validatedMemberId = IdSchema.parse(memberId);
     const validatedBody = UpsertContributionSchema.parse(req.body);
@@ -206,24 +253,26 @@ const routes: RouteConfig = {
       validatedMemberId,
       validatedBody.amount,
     );
-    (res as unknown as ApiResponse).status(200).json(contribution);
+    res.status(200).json(contribution);
   },
-  "savings-goals-list": async (req: Request, res: Response) => {
+  "savings-goals-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
+    if (!groupId || typeof groupId !== "string") {
+      res.status(400).json({ error: "Missing groupId" });
+      return;
+    }
     const validatedGroupId = IdSchema.parse(groupId);
     const goals = await SavingsService.getGoalsForGroup(validatedGroupId);
-    (res as unknown as ApiResponse).status(200).json(goals);
+    res.status(200).json(goals);
   },
 
   // Summary
-  summary: async (req: Request, res: Response) => {
+  summary: async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
 
     if (!groupId || typeof groupId !== "string") {
-      (res as unknown as ApiResponse)
-        .status(400)
-        .json({ error: "Missing groupId" });
+      res.status(400).json({ error: "Missing groupId" });
       return;
     }
 
@@ -240,16 +289,14 @@ const routes: RouteConfig = {
     });
 
     if (!group) {
-      (res as unknown as ApiResponse)
-        .status(404)
-        .json({ error: "Group not found" });
+      res.status(404).json({ error: "Group not found" });
       return;
     }
 
     // Verify user is in group
     const isMember = group.members.some((m) => m.userId === authReq.user.id);
     if (!isMember && group.ownerId !== authReq.user.id) {
-      (res as unknown as ApiResponse).status(403).json({ error: "Forbidden" });
+      res.status(403).json({ error: "Forbidden" });
       return;
     }
 
@@ -384,7 +431,7 @@ const routes: RouteConfig = {
         date: t.date,
       }));
 
-    (res as unknown as ApiResponse).status(200).json({
+    res.status(200).json({
       groupName: group.name,
       ownerId: group.ownerId,
       totalIncome,
@@ -397,13 +444,10 @@ const routes: RouteConfig = {
   },
 };
 
-export default withErrorHandling(
+export const transactionsHandler = withErrorHandling(
   withAuth(async (req, res) => {
-    return dispatch(
-      req as unknown as Request,
-      res as unknown as Response,
-      routes,
-      "summary",
-    );
+    return dispatch(req, res, routes, "summary");
   }),
 );
+
+export default transactionsHandler;

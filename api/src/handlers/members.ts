@@ -1,28 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { dispatch, RouteConfig } from "../utils/dispatcher";
 import { GroupService } from "../services/group";
 import {
   withAuth,
   withErrorHandling,
   AuthenticatedRequest,
+  ApiRequest,
   ApiResponse,
 } from "../middleware/handler";
 import { prisma } from "../utils/prisma";
 import { z } from "zod";
-import { Request, Response } from "express";
 
 const UpdateIncomeSchema = z.object({
   income: z.number().nonnegative(),
 });
 
 const routes: RouteConfig = {
-  list: async (req: Request, res: Response) => {
-    const authReq = req as unknown as AuthenticatedRequest;
+  list: async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { groupId } = req.query;
     if (!groupId || typeof groupId !== "string") {
-      (res as unknown as ApiResponse)
-        .status(400)
-        .json({ error: "Missing groupId" });
+      res.status(400).json({ error: "Missing groupId" });
       return;
     }
 
@@ -33,22 +30,19 @@ const routes: RouteConfig = {
     const isOwner = await GroupService.isOwner(groupId, authReq.user.id);
 
     if (!isMember && !isOwner) {
-      (res as unknown as ApiResponse)
-        .status(403)
-        .json({ error: "Unauthorized access to group members" });
+      res.status(403).json({ error: "Unauthorized access to group members" });
       return;
     }
 
     const members = await GroupService.getGroupMembers(groupId);
-    (res as unknown as ApiResponse).status(200).json(members);
+    res.status(200).json(members);
   },
-  "update-income": async (req: Request, res: Response) => {
-    const authReq = req as unknown as AuthenticatedRequest;
-    const id = (req.query.id as string) || (req.body.memberId as string);
+  "update-income": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
+    const id =
+      (req.query.id as string) || (req.body as { memberId?: string }).memberId;
     if (!id || typeof id !== "string") {
-      (res as unknown as ApiResponse)
-        .status(400)
-        .json({ error: "Missing memberId" });
+      res.status(400).json({ error: "Missing memberId" });
       return;
     }
     const { income } = UpdateIncomeSchema.parse(req.body);
@@ -59,10 +53,10 @@ const routes: RouteConfig = {
       id,
       income,
     );
-    (res as unknown as ApiResponse).status(200).json(updatedMember);
+    res.status(200).json(updatedMember);
   },
-  "remove-member": async (req: Request, res: Response) => {
-    const authReq = req as unknown as AuthenticatedRequest;
+  "remove-member": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { id, groupId } = req.query;
     if (
       !id ||
@@ -70,9 +64,7 @@ const routes: RouteConfig = {
       !groupId ||
       typeof groupId !== "string"
     ) {
-      (res as unknown as ApiResponse)
-        .status(400)
-        .json({ error: "Missing memberId or groupId" });
+      res.status(400).json({ error: "Missing memberId or groupId" });
       return;
     }
 
@@ -81,9 +73,7 @@ const routes: RouteConfig = {
     });
 
     if (!member) {
-      (res as unknown as ApiResponse)
-        .status(404)
-        .json({ error: "Member not found" });
+      res.status(404).json({ error: "Member not found" });
       return;
     }
 
@@ -91,24 +81,21 @@ const routes: RouteConfig = {
     const isSelf = member.userId === authReq.user.id;
 
     if (!isOwner && !isSelf) {
-      (res as unknown as ApiResponse)
+      res
         .status(403)
         .json({ error: "Only the owner can remove other members" });
       return;
     }
 
     await GroupService.removeMember(groupId, id);
-    (res as unknown as ApiResponse).status(204).end();
+    res.status(204).end();
   },
 };
 
-export default withErrorHandling(
+export const membersHandler = withErrorHandling(
   withAuth(async (req, res) => {
-    return dispatch(
-      req as unknown as Request,
-      res as unknown as Response,
-      routes,
-      "list",
-    );
+    return dispatch(req, res, routes, "list");
   }),
 );
+
+export default membersHandler;

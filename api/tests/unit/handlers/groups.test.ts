@@ -1,13 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
-import { Request, Response } from "express";
-import groupsHandler from "../../../src/handlers/groups";
+import { groupsHandler } from "../../../src/handlers/groups";
 import { RouteConfig } from "../../../src/utils/dispatcher";
+import { ApiRequest, ApiResponse } from "../../../src/middleware/handler";
 
 vi.mock("../../../src/utils/dispatcher", () => ({
   dispatch: vi.fn(
-    (_req: Request, res: Response, routes: RouteConfig, action: string) => {
+    (
+      req: ApiRequest,
+      res: ApiResponse,
+      routes: RouteConfig,
+      action: string,
+    ) => {
       const handler = routes[action];
-      if (handler) return handler(_req, res);
+      if (handler) return handler(req, res);
       res.status(404).json({ error: "Action not found" });
     },
   ),

@@ -1,24 +1,24 @@
-import { Request, Response } from "express";
+import { ApiRequest, ApiResponse } from "../middleware/handler";
 
 /**
  * Route configuration mapping action names to handler functions.
  */
 export type RouteConfig = Record<
   string,
-  ((req: Request, res: Response) => Promise<void> | void) | undefined
+  ((req: ApiRequest, res: ApiResponse) => Promise<void> | void) | undefined
 >;
 
 /**
  * Dispatches a request to a specific handler based on an 'action' query parameter.
  *
- * @param req - The Express Request object
- * @param res - The Express Response object
+ * @param req - The API Request object
+ * @param res - The API Response object
  * @param routes - Mapping of actions to handlers
  * @param defaultAction - The action to use if none is specified (defaults to 'list')
  */
 export async function dispatch(
-  req: Request,
-  res: Response,
+  req: ApiRequest,
+  res: ApiResponse,
   routes: RouteConfig,
   defaultAction = "list",
 ): Promise<void> {
