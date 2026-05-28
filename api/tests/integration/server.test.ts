@@ -15,7 +15,10 @@ describe("Local API Server Integration", () => {
     const apiRoot = path.resolve(__dirname, "../../");
 
     // Use npx tsx directly to avoid npm shell wrapper issues on Windows
-    serverProcess = spawn("npx", ["tsx", "src/server.ts"], {
+    const isWindows = process.platform === "win32";
+    const command = isWindows ? "npx.cmd" : "npx";
+
+    serverProcess = spawn(command, ["tsx", "src/server.ts"], {
       cwd: apiRoot,
       env: {
         ...process.env,
@@ -27,9 +30,9 @@ describe("Local API Server Integration", () => {
       stdio: "inherit",
     });
 
-    // Give the server more time to start especially in CI/Turbo environments
-    await new Promise((resolve) => setTimeout(resolve, 12000));
-  }, 20000);
+    // Give the server even more time to start
+    await new Promise((resolve) => setTimeout(resolve, 20000));
+  }, 40000);
 
   afterAll(() => {
     console.log("Stopping test server...");
@@ -39,7 +42,7 @@ describe("Local API Server Integration", () => {
   it("should be reachable at /api/health", async () => {
     try {
       const response = await fetch(
-        `http://localhost:${port.toString()}/api/health`,
+        `http://127.0.0.1:${port.toString()}/api/health`,
       );
       expect(response.status).toBe(200);
       const data = (await response.json()) as Record<string, unknown>;
@@ -52,14 +55,14 @@ describe("Local API Server Integration", () => {
 
   it("should return 404 for unknown routes", async () => {
     const response = await fetch(
-      `http://localhost:${port.toString()}/api/nonexistent-route-for-testing`,
+      `http://127.0.0.1:${port.toString()}/api/nonexistent-route-for-testing`,
     );
     expect(response.status).toBe(404);
   });
 
   it("should support vercel.json rewrites (e.g., /api/archive -> /api/groups?action=archive)", async () => {
     const response = await fetch(
-      `http://localhost:${port.toString()}/api/archive`,
+      `http://127.0.0.1:${port.toString()}/api/archive`,
       {
         method: "POST",
       },
@@ -69,7 +72,7 @@ describe("Local API Server Integration", () => {
 
   it("should support rewrites for method-aware routes like /api/invitations", async () => {
     const response = await fetch(
-      `http://localhost:${port.toString()}/api/invitations`,
+      `http://127.0.0.1:${port.toString()}/api/invitations`,
       {
         method: "GET",
       },

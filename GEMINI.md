@@ -89,8 +89,7 @@
 **Prevention Rule:** Ensure `startingAmount` is explicitly handled and projections are recalculated with terminal loading state resolution.
 
 <!-- SPECKIT START -->
-## Implementation Plan
-**Active Plan**: [specs/003-project-redesign/plan.md](./specs/003-project-redesign/plan.md)
-**Status**: Research & Design Phase Complete.
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
 <!-- SPECKIT END -->
 

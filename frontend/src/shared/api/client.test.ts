@@ -16,6 +16,7 @@ vi.stubGlobal("fetch", vi.fn());
 describe("apiClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    apiClient.clearPendingRequests();
   });
 
   it("should include Authorization header when session exists", async () => {

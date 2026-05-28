@@ -134,7 +134,15 @@ const applyRewrites = () => {
     if (!config.rewrites) return;
 
     for (const rewrite of config.rewrites) {
-      app.all(rewrite.source, async (req, res) => {
+      if (!rewrite.source.startsWith("/api")) continue;
+
+      const methods = (rewrite as any).methods as string[] | undefined;
+
+      app.all(rewrite.source, async (req, res, next) => {
+        if (methods && !methods.includes(req.method)) {
+          return next();
+        }
+
         let destination = rewrite.destination;
 
         // Replace dynamic segments in destination e.g. :id

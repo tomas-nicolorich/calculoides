@@ -8,7 +8,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.git.feature",
           "speckit.git.validate",
           "speckit.git.remote",
@@ -26,7 +26,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.version-guard.check",
           "speckit.version-guard.load",
           "speckit.version-guard.validate"
@@ -42,7 +42,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.blueprint.generate",
           "speckit.blueprint.validate"
         ]
@@ -57,7 +57,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.archive.run"
         ]
       },
@@ -71,7 +71,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.bugfix.report",
           "speckit.bugfix.patch",
           "speckit.bugfix.verify"
@@ -87,7 +87,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.fix-findings.run",
           "speckit.fix-findings"
         ]
@@ -102,7 +102,7 @@
       "enabled": true,
       "priority": 10,
       "registered_commands": {
-        "pi": [
+        "gemini": [
           "speckit.superb.check",
           "speckit.superb.tdd",
           "speckit.superb.review",

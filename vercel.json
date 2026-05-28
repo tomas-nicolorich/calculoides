@@ -21,6 +21,11 @@
     },
 
     {
+      "source": "/api/transactions/:id",
+      "destination": "/api/transactions?action=expense-delete&id=:id",
+      "methods": ["DELETE"]
+    },
+    {
       "source": "/api/expenses",
       "destination": "/api/transactions?action=expenses-list"
     },

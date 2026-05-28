@@ -1,64 +1,35 @@
-# Quickstart: Project Redesign (Mobile-First)
+# Quickstart: Project Redesign
 
-## Development Setup
-
+## Environment Setup
 1. **Install Dependencies**:
    ```bash
    npm install
+   cd frontend && npm install @base-ui/react
    ```
-
-2. **Run Local Development**:
+2. **Start Development Environment**:
    ```bash
    npm run dev
    ```
+   This will start the frontend (Vite), the API (Vercel Dev), and the local simulation server.
 
-3. **Verify Responsive Layout**:
-   - Open browser dev tools and toggle Device Toolbar (Ctrl+Shift+M).
-   - Test at 320px (iPhone SE) and 1280px (Desktop).
+## Key Development Workflows
+- **Styling**: All components use Tailwind CSS 4. Primary configuration is in `frontend/src/index.css`.
+- **FSD Structure**:
+  - Add UI primitives to `frontend/src/shared/ui/`.
+  - Add domain entities to `frontend/src/entities/`.
+  - Add interaction logic to `frontend/src/features/`.
+  - Assemble components into `frontend/src/widgets/`.
+  - Create full views in `frontend/src/pages/`.
+- **Testing**:
+  ```bash
+  npm run test
+  ```
+  Run Vitest for unit and integration tests.
 
-## Core Components to Use
+## Redesign Verification
+To verify the new card-based layout and features:
+1. **Dashboard**: Navigate to `/dashboard/:groupId` and verify all 5 cards (Income, Balance, Expenses, Transfers, Categories) are visible.
+2. **Filtering**: Go to the Expenses page and use the member/category filters to ensure the list updates.
+3. **Dark Mode**: Open the hamburger menu and toggle Dark Mode. Verify the theme persists after refresh.
+4. **Navigation**: Use the hamburger menu to navigate between My Groups, Profile, and Dashboard.
 
-### 1. `ResponsiveDialog`
-Use this for all new forms.
-```tsx
-import { ResponsiveDialog } from "@/shared/ui/responsive-dialog"
-
-function MyFeature() {
-  const [isDirty, setIsDirty] = useState(false);
-  return (
-    <ResponsiveDialog 
-      trigger={<Button>Open</Button>}
-      title="My Form"
-      isDirty={isDirty}
-    >
-      <MyForm onChange={() => setIsDirty(true)} />
-    </ResponsiveDialog>
-  )
-}
-```
-
-### 2. `BudgetTransferTrigger`
-Add this to category rows to trigger transfers.
-```tsx
-import { BudgetTransferTrigger } from "@/widgets/category-list"
-
-function CategoryRow({ member }) {
-  return (
-    <div className="flex justify-between">
-      <span>{member.name}</span>
-      <BudgetTransferTrigger memberId={member.id} />
-    </div>
-  )
-}
-```
-
-## Testing
-
-Run unit tests for UI components:
-```bash
-npm test frontend
-```
-Specifically check for:
-- `useMediaQuery` behavior.
-- `ResponsiveDialog` rendering correct component based on width.
-- `popstate` event closing mobile drawers.

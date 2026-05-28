@@ -11,14 +11,14 @@ A multi-tenant container for shared budgeting and expense tracking among a speci
 _Avoid_: Household, team, account
 
 **Member**:
-A specific **User** within the context of a **Group**, possessing a defined monthly income and ownership status.
+A specific **User** within the context of a **Group**, possessing a single defined monthly income for the current period and ownership status. Joining or leaving a group triggers an automatic, group-wide recalculation of all **Budget Quotas** for the current open month (per the **Calculation on Read** pattern).
 _Avoid_: Participant, contributor
 **User**:
 An individual account holder who can belong to multiple **Groups**.
 _Avoid_: Account, person
 
 **Owner**:
-A single **Member** with exclusive administrative permissions to invite/remove members, modify incomes, transfer any **Budget Quota**, and trigger an **Archive**.
+A single **Member** acting as the "manager" of the **Group**. They possess exclusive administrative permissions to invite/remove members, modify any member's income or **Savings Goal** contribution, initiate **Transfers** between any members, and trigger an **Archive**. This role assumes a high-trust environment where the Owner facilitates the group's organization and corrects data entry errors.
 _Avoid_: Admin, creator, manager
 
 **Invitation**:
@@ -43,7 +43,7 @@ A selection of specific **Members** within a **Budget Category** who are exclusi
 _Avoid_: Group, restricted list
 
 **Budget Quota**:
-The specific portion of a **Budget Category**'s total amount that a **Member** is responsible for, calculated based on their **Income Percentage** (or subset income).
+The specific portion of a **Budget Category**'s total amount that a **Member** is responsible for. This is calculated proportionally based on their **Income Percentage** relative to the other members responsible for that category (i.e., using a weighted relative split if a **Member Subset** is active).
 _Avoid_: Share, portion
 
 **Expense**:
@@ -51,25 +51,25 @@ A recorded transaction of actual spending tied to a **Budget Category**.
 _Avoid_: Payment, transaction, bill
 
 **Transfer**:
-A redistribution of **Budget Quota** from a transferer to a receiver within the same **Budget Category**, where the transferer's responsibility decreases and the receiver's responsibility increases.
+A redistribution of **Budget Quota** from a transferer to a receiver within the same **Budget Category** for a specific period. It is a one-time adjustment reflecting a physical cash movement (e.g., B gives A €50 for groceries) and does not persist across an **Archive** boundary; in the next period, quotas reset to their default income-proportional shares.
 _Avoid_: Adjustment, quota move
 
 **Savings Goal**:
-A target amount to be saved by a specific date, with monthly **Contributions** distributed among **Members** by their **Income Percentage**.
+A multi-month persistent target amount to be saved by a specific date. Unlike **Budget Categories**, which reset each period, Savings Goals maintain a running balance until the target is reached. Monthly **Contributions** are distributed among **Members** by their **Income Percentage**.
 _Avoid_: Goal, fund, pot
 
 **Contribution**:
-The monthly amount a **Member** saves toward a **Savings Goal**. By default, this is calculated proportionally, but it can be manually overridden, which updates the goal's projected completion date.
+The monthly amount a **Member** saves toward a **Savings Goal**. By default, this is calculated proportionally. A manual override by one member does not change the contributions of others; instead, it updates the goal's projected completion date based on the new total monthly group saving.
 
 **Starting Amount**:
 An initial sum of money already saved toward a **Savings Goal** at the time of its creation, reducing the remaining amount needed to reach the target.
 
 **Archive**:
-A group-wide event triggered by the **Owner** that moves all current **Expenses** to a historical record and resets all **Budget Category** spent balances to zero.
+A group-wide, manual event triggered by the **Owner** (typically after physical settlement) that moves all expenses for a selected month to an immutable historical record and resets all **Budget Category** spent balances to zero. Once archived, the record cannot be modified.
 _Avoid_: Reset, settlement, clearing
 
 **Settlement**:
-The final calculated amount per **Member** for a given period, preserved in the historical record after an **Archive**.
+The final calculated net balance per **Member** for a given period (calculated as total amount paid minus **Budget Quota** responsibility), preserved in the historical record after an **Archive**. A positive settlement indicates a surplus (the member is owed), while a negative settlement indicates a deficit (the member owes).
 
 ## Example Dialogue
 
@@ -88,7 +88,7 @@ The final calculated amount per **Member** for a given period, preserved in the 
 ### Patterns
 
 **Calculation on Read**:
-The strategy of calculating financial balances and shares dynamically at the time of retrieval to ensure retroactive correctness after income changes.
+The strategy of calculating financial balances and shares dynamically at the time of retrieval to ensure retroactive correctness after income changes. Within an open (non-archived) period, any change to a member's income immediately re-calculates all quotas for that entire period.
 
 **Remainder Absorption**:
-A strategy for handling rounding discrepancies in proportional shares by assigning the 0.01 difference to the **Member** with the highest **Income Percentage**.
+A strategy for handling rounding discrepancies in proportional shares by assigning the 0.01 difference to the **Member** with the highest **Income Percentage**. In the event of a tie in income, the difference is assigned to the member with the longest **Tenure**.

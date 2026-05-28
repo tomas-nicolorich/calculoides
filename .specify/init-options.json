@@ -1,9 +1,9 @@
 {
-  "ai": "pi",
+  "ai": "gemini",
   "branch_numbering": "sequential",
-  "context_file": "AGENTS.md",
+  "context_file": "GEMINI.md",
   "here": true,
-  "integration": "pi",
+  "integration": "gemini",
   "script": "ps",
-  "speckit_version": "0.8.7"
+  "speckit_version": "0.8.16"
 }

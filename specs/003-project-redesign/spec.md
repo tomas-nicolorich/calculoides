@@ -1,100 +1,121 @@
-# Feature Specification: Project Redesign (Mobile-First)
+# Feature Specification: project-redesign
 
-**Feature Branch**: `003-project-redesign`  
-**Created**: 2026-05-22  
-**Status**: Draft  
-**Input**: User description: "Redesign the project. There are examples you can use as reference (do not necesarilly copy everything) in @.superpowers/docs/ The design has to be mobile first and responsive. The idea for input forms (expenses, new or edited categories, savings goals, etc) is to have modals that popup instead of having a card there at all times. Some UI elements might also be integrated better with the overall structure, look at how in the categories section there are 2 arrows besides each member and that opens the budget transfer modal."
+**Feature Branch**: `[###-project-redesign]`  
+**Created**: 2026-05-26  
+**Status**: Verified
+**Input**: User description: "lets create the spec for 003-project-redesign. create the folder but remain on this branch. I want to redesign the app by taking big inspiration from all the images in @docs/ The design might be changed if it improves it, but if theres doubt in how to improve it just copy it from the images. As you can see its a card based layout with the following sections: Income Overview, Remaining Balance, Expenses, Budget Transfers and Budget Categories. Then theres a button that takes you to another page for the savings calculator. The design is sleek, colorful and subtle. Theres a hamburger menu on the top right with the following options: My Groups (a page with a list of all groups the user is part of and a button to create a new one), Profile (where a user can change their name and password) a dark mode toggle and an option to sign out. The expenses card shows the last 5 expenses with an option to see all in a new page with a filter by member and category"
 
 ## User Scenarios & Testing *(mandatory)*
 
-## Clarifications
+### User Story 1 - Dashboard Overview (Priority: P1)
 
-### Session 2025-05-15
-- Q: Which specific forms should be included in the modal redesign? → A: Maximum scope: Every form in the app, including User Profile and Settings.
-- Q: How should the system handle a user attempting to close a modal with unsaved changes? → A: Prompt for confirmation if the form is "dirty" (has unsaved changes).
-- Q: How much screen height should mobile drawers occupy by default? → A: Dynamic height based on content, up to a maximum (e.g., 90% height) where it becomes scrollable.
-- Q: Where should the budget transfer triggers be placed in the member row? → A: Placed on the far right of the member row, distinct from the member name.
-- Q: How should navigation within a multi-section form be handled inside a modal/drawer? → A: Use vertical accordions to expand/collapse form sections within the same modal.
+As a user, I want to view a card-based dashboard so that I can get a quick overview of my Income, Remaining Balance, Expenses, Budget Transfers, and Budget Categories.
 
-### User Story 1 - Responsive Financial Overview (Priority: P1)
+**Why this priority**: The dashboard is the core landing view of the application, providing immediate financial visibility.
 
-As a user on a mobile device, I want to see a clean and condensed overview of my finances so that I can quickly understand my budget status without excessive scrolling or horizontal panning.
-
-**Why this priority**: Mobile-first responsiveness is the core requirement of the redesign. The overview is the most frequently visited screen.
-
-**Independent Test**: Can be tested by opening the dashboard on a mobile screen (375px width) and verifying that all key metrics are visible and correctly scaled.
+**Independent Test**: Can be tested by loading the main screen and verifying the presence of all five distinct cards.
 
 **Acceptance Scenarios**:
 
-1. **Given** a user is on a mobile device, **When** they load the dashboard, **Then** all financial cards (Total Expenses, Remaining Budget, etc.) stack vertically and fit the screen width.
-2. **Given** a user is on a desktop device, **When** they resize the window, **Then** the layout transitions from a multi-column view to a single-column mobile view seamlessly.
+1. **Given** the user is logged in, **When** they load the application, **Then** they land on the "My Groups" page to select an active group.
+2. **Given** the user has selected an active group, **When** they view the main dashboard, **Then** they see cards for Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories populated with data for that specific group.
+3. **Given** the user is on the dashboard, **When** they click the Savings Goal button, **Then** they are navigated to the Savings Goal page.
 
 ---
 
-### User Story 2 - Modal-Based Expense Entry (Priority: P1)
+### User Story 2 - Expense Management (Priority: P2)
 
-As a user, I want to add a new expense through a modal popup rather than a persistent card so that the UI remains uncluttered and focused on my current task.
+As a user, I want to see my most recent expenses on the dashboard and view/filter all expenses on a separate page so that I can track where my money is going.
 
-**Why this priority**: Explicitly requested by the user to improve the "look and feel" and reduce clutter.
+**Why this priority**: Managing and tracking expenses is a primary function of a budgeting application.
 
-**Independent Test**: Can be tested by clicking the "Add Expense" button and verifying that a modal appears, allows data entry, and disappears upon saving.
+**Independent Test**: Can be tested by verifying the expenses card shows recent items, navigating to the full list, and applying filters.
 
 **Acceptance Scenarios**:
 
-1. **Given** the user is on the Expenses page, **When** they click "New Expense", **Then** a modal overlays the screen with the expense form.
-2. **Given** the modal is open, **When** the user clicks "Save" or "Cancel", **Then** the modal closes and the underlying list reflects the changes.
+1. **Given** the user is on the dashboard, **When** they look at the Expenses card, **Then** they see the 5 most recent expenses.
+2. **Given** the user is on the dashboard, **When** they choose to view all expenses, **Then** they are taken to a new page showing the full list.
+3. **Given** the user is on the full expenses page, **When** they apply a filter for a specific member or category, **Then** the list updates to show only matching expenses.
 
 ---
 
-### User Story 3 - Integrated Budget Transfer (Priority: P2)
+### User Story 3 - Global Navigation & Settings (Priority: P2)
 
-As a user in the Categories section, I want to trigger a budget transfer directly from the member list using intuitive icons (arrows) so that I can manage my group budget with minimal navigation.
+As a user, I want to access my groups, profile, and app settings through a unified hamburger menu so that I can easily manage my account and preferences.
 
-**Why this priority**: Enhances UI integration and streamlines a key user workflow.
+**Why this priority**: Access to group management, profile updates, and authentication features is necessary for full application usage.
 
-**Independent Test**: Can be tested by locating a member in the categories list, clicking the adjacent "transfer arrows", and verifying that the budget transfer modal opens with the member context pre-filled.
+**Independent Test**: Can be tested by opening the menu and interacting with the available settings and navigation options.
 
 **Acceptance Scenarios**:
 
-1. **Given** the Categories view, **When** the user clicks the "double arrows" icon next to a member name, **Then** the Budget Transfer modal opens.
-2. **Given** the Budget Transfer modal is opened via these arrows, **When** it loads, **Then** the "From/To" member field is pre-selected based on the clicked member.
+1. **Given** the user is on any main page, **When** they click the top-right hamburger menu, **Then** they see options for My Groups, Profile, Dark Mode, and Sign Out.
+2. **Given** the user opens the menu and selects My Groups, **When** they navigate to the page, **Then** they can see their groups, select a group to view its dashboard, and have an option to create a new group.
+3. **Given** the user opens the menu and selects Profile, **When** they navigate to the page, **Then** they can update their name and password.
+4. **Given** the user clicks the dark mode toggle, **When** activated, **Then** the application switches visually to a dark color scheme.
 
 ---
 
 ### Edge Cases
 
-- **Large Form in Modal**: Modals containing long forms (e.g., Savings Goal with many parameters) must be scrollable internally on small screens to prevent being cut off.
-- **Back Button Handling**: On mobile, hitting the hardware "back" button should close the open modal rather than navigating away from the page.
-- **Unsaved Changes**: If a user attempts to close a modal (via ESC, backdrop click, or Cancel) and the form is "dirty", the system MUST prompt for confirmation before discarding changes.
+- What happens when a user has zero expenses or no groups?
+- What happens if the member or category filters return no results?
+- How are Budget Categories presented when some are assigned to specific Member Subsets?
+- How does the UI gracefully handle very long group names or user names?
+- Does the dark mode preference persist across sessions?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST implement a mobile-first, responsive layout using a flexible grid system.
-- **FR-002**: System MUST transition ALL input forms (Expenses, Categories, Savings Goals, Income, User Profile, Settings, etc.) into triggered Modals/Dialogs.
-- **FR-003**: System MUST provide a consistent "Floating Action Button" (FAB) or prominent "Add" button on mobile for primary actions (New Expense).
-- **FR-004**: System MUST implement budget transfer triggers (bidirectional arrows) as inline UI elements placed on the far right of member entries in the Categories view.
-- **FR-005**: Modals MUST support "click-outside-to-close" and "ESC-to-close" behavior on desktop, and easy swipe/close gestures on mobile.
-- **FR-006**: Input forms inside modals MUST be optimized for mobile input (correct keyboard types for numbers, large tap targets).
-- **FR-007**: Multi-section forms (e.g., Settings) MUST use vertical accordions to expand/collapse sections within the same modal context to avoid nested navigation.
+- **FR-001**: System MUST display a card-based dashboard containing sections for Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories. All Budget Categories for the active Group MUST be visible to all members, regardless of Member Subset assignment.
+- **FR-002**: System MUST provide a prominent button on the dashboard that navigates to the Savings Goal page. The Savings Goal page MUST adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-003.
+- **FR-003**: System MUST display up to the 5 most recent expenses within the Expenses dashboard card.
+- **FR-004**: System MUST allow users to navigate from the Expenses card to a dedicated full expenses page.
+- **FR-005**: System MUST provide filtering controls on the full expenses page to filter by member (the individual who paid for the expense) and category.
+- **FR-006**: System MUST provide a hamburger menu anchored to the top right of the application layout.
+- **FR-007**: System MUST provide a "My Groups" page, serving as the initial landing page after login, accessible via the menu, listing the user's groups (allowing selection to change the active dashboard context) with a button to create a new one.
+- **FR-008**: System MUST provide a "Profile" page, accessible via the menu, where users can update their name and password.
+- **FR-009**: System MUST include a toggle switch for Dark Mode within the hamburger menu.
+- **FR-010**: System MUST include a functional Sign Out option within the hamburger menu.
+- **FR-011**: The "Income Overview" card MUST display each member's individual income and their calculated Income Percentage, the total combined Group income, and a horizontal stacked bar chart visually representing the distribution of Income Percentages across members.
+- **FR-012**: The "Remaining Balance" card MUST display the "Total Combined Remaining" for the group, as well as a per-member breakdown showing each member's individual remaining balance alongside their Income and Total Budget Quota ("Budgeted").
+- **FR-013**: The "Budget Transfers" card MUST display a log of the most recent transfers (similar to the Expenses card) and include a "View All" button navigating to a dedicated transfers page with filtering by member and category. The card MUST NOT include a button to create new transfers.
+- **FR-014**: The "Budget Categories" card MUST list all categories, showing their total target amount and a breakdown of each member's Budget Quota, Spent amount, and remaining amount ("left"). It MUST include an "+ Add" button that allows any member to create a new category.
+- **FR-015**: Within the "Budget Categories" card, each member's breakdown row MUST include a button to initiate a new Transfer for that specific category.
+- **FR-016**: The "Budget Categories" card MUST provide Edit and Delete actions for each category. Any member MUST be able to edit a category, but only the Owner MUST be able to delete a category.
 
-### Key Entities *(include if feature involves data)*
+### Key Entities
 
-- **UI Component Library**: The set of redesigned components (Modals, Nav, Cards) following the new aesthetic.
-- **Budget Transfer Interaction**: The data flow between the inline category arrows and the transfer modal.
+- **Expense**: Contains details such as amount, date, category, and member.
+- **Group**: A collaborative unit that users can be part of, containing a name and associated members.
+- **User Profile**: Contains the user's display name, authentication credentials (password), and preferences (theme).
+- **Remaining Balance**: A derived UI concept representing a Member's unallocated funds, calculated as their Income minus the sum of their Budget Quotas across all categories.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of input forms specified in the request are migrated from persistent cards to modals.
-- **SC-002**: Mobile Lighthouse "Best Practices" and "Accessibility" scores are above 90.
-- **SC-003**: Average time to initiate an expense entry on mobile is reduced by 20% due to better button placement.
-- **SC-004**: Zero horizontal scrolling on screens as narrow as 320px width.
+- **SC-001**: Dashboard renders all five required cards and populates them with initial data in under 2 seconds.
+- **SC-002**: Users can successfully filter expenses, with the UI reflecting the filtered list instantaneously.
+- **SC-003**: 100% of the UI follows the "sleek, colorful, and subtle" card-based design pattern inspired by the provided mockups.
+- **SC-004**: Users can toggle dark mode and see immediate, application-wide visual changes.
+- SC-005: System MUST deduplicate identical backend requests occurring within a 100ms window to ensure performance and prevent redundant server load.
+- SC-006: System MUST NOT use browser default `alert()` or `confirm()` dialogs. All user feedback and confirmations MUST use custom UI components following the design pattern established in SC-003.
 
 ## Assumptions
 
-- **A-001**: The redesign will leverage the existing Tailwind CSS and Shadcn/UI stack.
-- **A-002**: Modals on mobile MUST utilize a "Drawer" (bottom-sheet) pattern for better thumb-reachability and consistency with mobile OS patterns. Drawers MUST have dynamic height based on content, capping at 90% of screen height before becoming scrollable. On desktop, they remain centered dialogs.
-- **A-003**: Visual direction will follow a "Balanced/Hybrid" aesthetic, combining clean minimalist layouts with informative visual cues such as icons, progress bars, and subtle depth effects to ensure both clarity and information density.
+- The underlying data architecture and APIs to fetch income, balance, expenses, transfers, categories, and groups already exist. The frontend MUST use the logical paths defined in the system's URL rewrites (e.g., `/api/summary`, `/api/categories`, `DELETE /api/transactions/:id`) rather than direct nested transaction paths.
+- Authentication mechanisms (sign out, change password) are supported by the existing backend.
+- Dark mode user preference will be stored locally (e.g., localStorage) unless a backend preference API is provided.
+- The Savings Goal page already exists or will be implemented independently of this specific UI redesign.
+
+**Bugfix**: 2026-06-02 — BUG-009 Corrected Base UI package name in implementation plan to fix dialog import error.
+**Bugfix**: 2026-06-01 — BUG-008 Added SC-006 to explicitly forbid browser default alerts in favor of custom UI dialogs.
+**Bugfix**: 2026-05-27 — BUG-001 Added edge case for defensive rendering of malformed group data.
+**Bugfix**: 2026-05-28 — BUG-002 Clarified that frontend MUST use logical API paths (rewrites) for transactions.
+**Bugfix**: 2026-05-29 — BUG-003 Added SC-005 for request deduplication to prevent duplicate backend calls.
+**Bugfix**: 2026-05-31 — BUG-007 Fixed misrouted category deletion by ensuring distinct logical paths for categories.
+**Bugfix**: 2026-05-30 — BUG-006 Updated FR-002 to include visual design requirements for the Savings Goal page.
+**Bugfix**: 2026-05-30 — BUG-005 Defined logical path `DELETE /api/transactions/:id` for expense deletion.
+**Bugfix**: 2026-05-28 — BUG-004 Clarified redirection requirement for Savings Goal navigation button.

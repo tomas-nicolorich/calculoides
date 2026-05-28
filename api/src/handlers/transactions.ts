@@ -50,8 +50,20 @@ const routes: RouteConfig = {
       parsedLimit,
       parsedOffset,
     );
+
+    const mappedExpenses = expenses.map((e: any) => ({
+      id: e.id,
+      categoryId: e.categoryId,
+      payerId: e.payerId,
+      description: e.description,
+      amount: Number(e.amount),
+      date: e.date,
+      categoryName: e.category.name,
+      payerName: e.payer.user.name ?? e.payer.user.email,
+    }));
+
     (res as unknown as ApiResponse).status(200).json({
-      expenses,
+      expenses: mappedExpenses,
       pagination: { total, limit: parsedLimit, offset: parsedOffset },
     });
   },
@@ -68,7 +80,7 @@ const routes: RouteConfig = {
     (res as unknown as ApiResponse).status(201).json(expense);
   },
   "expense-delete": async (req: Request, res: Response) => {
-    const { id } = req.query;
+    const id = req.query.id ?? req.params.id;
     const validatedId = IdSchema.parse(id);
     await ExpenseService.deleteExpense(validatedId);
     (res as unknown as ApiResponse).status(204).end();
@@ -91,6 +103,26 @@ const routes: RouteConfig = {
     const transfers =
       await TransferService.getTransfersForCategory(validatedCategoryId);
     (res as unknown as ApiResponse).status(200).json(transfers);
+  },
+  "transfers-list": async (req: Request, res: Response) => {
+    const { groupId, limit = "20", offset = "0" } = req.query;
+    if (!groupId || typeof groupId !== "string") {
+      (res as unknown as ApiResponse)
+        .status(400)
+        .json({ error: "Missing groupId" });
+      return;
+    }
+    const parsedLimit = parseInt(limit as string, 10);
+    const parsedOffset = parseInt(offset as string, 10);
+    const { transfers, total } = await TransferService.listTransfers(
+      groupId,
+      parsedLimit,
+      parsedOffset,
+    );
+    (res as unknown as ApiResponse).status(200).json({
+      transfers,
+      pagination: { total, limit: parsedLimit, offset: parsedOffset },
+    });
   },
 
   // Categories
@@ -335,13 +367,32 @@ const routes: RouteConfig = {
           group.members.find((m) => m.id === e.payerId)?.user.name ?? "Unknown",
       }));
 
+    const recentTransfers = transfers
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5)
+      .map((t) => ({
+        id: t.id,
+        categoryName:
+          categories.find((c) => c.id === t.categoryId)?.name ?? "Unknown",
+        fromMemberName:
+          group.members.find((m) => m.id === t.fromMemberId)?.user.name ??
+          "Unknown",
+        toMemberName:
+          group.members.find((m) => m.id === t.toMemberId)?.user.name ??
+          "Unknown",
+        amount: Number(t.amount),
+        date: t.date,
+      }));
+
     (res as unknown as ApiResponse).status(200).json({
       groupName: group.name,
+      ownerId: group.ownerId,
       totalIncome,
       totalBudget,
       totalSpent,
       members: membersSummary,
       recentExpenses,
+      recentTransfers,
     });
   },
 };

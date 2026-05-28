@@ -15,7 +15,7 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
   const [error, setError] = useState<string | null>(null);
 
   const handleArchive = async () => {
-    if (!confirm('Are you sure you want to archive all current expenses? This will reset budget spent balances.')) return;
+    // Removed confirm to comply with SC-006
     
     setLoading(true);
     setError(null);
@@ -34,7 +34,7 @@ export function AdminPanel({ groupId, members, currentOwnerId, onSuccess }: Admi
 
   const handleTransferOwnership = async () => {
     if (!newOwnerId) return;
-    if (!confirm('Are you sure you want to transfer ownership? You will lose admin permissions.')) return;
+    // Removed confirm to comply with SC-006
 
     setLoading(true);
     setError(null);

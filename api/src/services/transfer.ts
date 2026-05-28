@@ -21,10 +21,6 @@ export const TransferService = {
     });
   },
 
-  /**
-   * Retrieves all transfers for a category.
-   * Mandated by BUG-014 to include fromMember and toMember user names.
-   */
   async getTransfersForCategory(categoryId: string) {
     return await prisma.transfer.findMany({
       where: { categoryId },
@@ -50,5 +46,46 @@ export const TransferService = {
       },
       orderBy: { date: "desc" },
     });
+  },
+
+  /**
+   * Retrieves all transfers for a group.
+   */
+  async listTransfers(groupId: string, limit = 20, offset = 0) {
+    const categories = await prisma.category.findMany({
+      where: { groupId },
+      select: { id: true }
+    });
+    
+    const categoryIds = categories.map(c => c.id);
+    
+    const [transfers, total] = await Promise.all([
+      prisma.transfer.findMany({
+        where: { categoryId: { in: categoryIds } },
+        include: {
+          category: { select: { name: true } },
+          fromMember: { include: { member: { include: { user: { select: { name: true, email: true } } } } } },
+          toMember: { include: { member: { include: { user: { select: { name: true, email: true } } } } } }
+        },
+        orderBy: { date: "desc" },
+        take: limit,
+        skip: offset
+      }),
+      prisma.transfer.count({
+        where: { categoryId: { in: categoryIds } }
+      })
+    ]);
+    
+    return {
+      transfers: transfers.map(t => ({
+        id: t.id,
+        categoryName: t.category.name,
+        fromMemberName: t.fromMember.member.user.name ?? t.fromMember.member.user.email,
+        toMemberName: t.toMember.member.user.name ?? t.toMember.member.user.email,
+        amount: Number(t.amount),
+        date: t.date
+      })),
+      total
+    };
   },
 };

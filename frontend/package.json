@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@base-ui/react": "^1.5.0",
     "@supabase/supabase-js": "^2.105.4",
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
