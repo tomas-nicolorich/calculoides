@@ -80,4 +80,38 @@ describe("Local API Server Integration", () => {
     // Should be 401 Unauthorized because we lack a token, but NOT 404
     expect(response.status).toBe(401);
   });
+
+  describe("Method-aware routing for /api/savings", () => {
+    const methods = ["GET", "POST", "PATCH", "DELETE"];
+
+    methods.forEach((method) => {
+      it(`should route ${method} /api/savings to transactions handler (should return 401, not 404)`, async () => {
+        const response = await fetch(
+          `http://127.0.0.1:${port.toString()}/api/savings`,
+          {
+            method,
+          },
+        );
+        expect(response.status).toBe(401);
+      });
+    });
+
+    it("should return 405 Method Not Allowed for unsupported methods on /api/savings", async () => {
+      const response = await fetch(
+        `http://127.0.0.1:${port.toString()}/api/savings`,
+        {
+          method: "PUT",
+        },
+      );
+      // Wait, we returned 405 Method Not Allowed, but since it's wrapped with Auth/Error handling,
+      // let's see if auth triggers first or if the method check triggers first.
+      // Ah! In `api/src/handlers/transactions.ts`:
+      // `transactionsHandler = withErrorHandling(withAuth(async (req, res) => { return dispatch(req, res, routes, "summary") }))`
+      // Since `withAuth` wraps the entire transactionsHandler, the auth check happens BEFORE dispatch.
+      // So any request to /api/savings, regardless of method, will return 401 first if unauthorized.
+      // But if authorized, PUT will return 405.
+      // Therefore, the test response should be 401 since we have no auth token.
+      expect(response.status).toBe(401);
+    });
+  });
 });

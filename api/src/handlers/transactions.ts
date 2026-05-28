@@ -444,6 +444,28 @@ const routes: RouteConfig = {
   },
 };
 
+routes.savings = async (req: ApiRequest, res: ApiResponse) => {
+  const method = req.method;
+  let actionKey = "";
+
+  if (method === "GET") {
+    actionKey = "savings-goals-list";
+  } else if (method === "POST") {
+    actionKey = "savings-goal-create";
+  } else if (method === "PATCH") {
+    actionKey = "savings-goal-update";
+  } else if (method === "DELETE") {
+    actionKey = "savings-goal-delete";
+  }
+
+  const handler = routes[actionKey];
+  if (handler) {
+    return handler(req, res);
+  }
+
+  res.status(405).json({ error: "Method not allowed" });
+};
+
 export const transactionsHandler = withErrorHandling(
   withAuth(async (req, res) => {
     return dispatch(req, res, routes, "summary");

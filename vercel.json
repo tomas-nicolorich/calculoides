@@ -22,8 +22,7 @@
 
     {
       "source": "/api/transactions/:id",
-      "destination": "/api/transactions?action=expense-delete&id=:id",
-      "methods": ["DELETE"]
+      "destination": "/api/transactions?action=expense-delete&id=:id"
     },
     {
       "source": "/api/expenses",
@@ -39,28 +38,11 @@
     },
     {
       "source": "/api/savings",
-      "destination": "/api/transactions?action=savings-goals-list",
-      "methods": ["GET"]
-    },
-    {
-      "source": "/api/savings",
-      "destination": "/api/transactions?action=savings-goal-create",
-      "methods": ["POST"]
-    },
-    {
-      "source": "/api/savings",
-      "destination": "/api/transactions?action=savings-goal-update",
-      "methods": ["PATCH"]
-    },
-    {
-      "source": "/api/savings",
-      "destination": "/api/transactions?action=savings-goal-delete",
-      "methods": ["DELETE"]
+      "destination": "/api/transactions?action=savings"
     },
     {
       "source": "/api/savings/contribution",
-      "destination": "/api/transactions?action=savings-contribution-upsert",
-      "methods": ["POST"]
+      "destination": "/api/transactions?action=savings-contribution-upsert"
     },
     {
       "source": "/api/categories",
