@@ -39,7 +39,28 @@
     },
     {
       "source": "/api/savings",
-      "destination": "/api/transactions?action=savings-goals-list"
+      "destination": "/api/transactions?action=savings-goals-list",
+      "methods": ["GET"]
+    },
+    {
+      "source": "/api/savings",
+      "destination": "/api/transactions?action=savings-goal-create",
+      "methods": ["POST"]
+    },
+    {
+      "source": "/api/savings",
+      "destination": "/api/transactions?action=savings-goal-update",
+      "methods": ["PATCH"]
+    },
+    {
+      "source": "/api/savings",
+      "destination": "/api/transactions?action=savings-goal-delete",
+      "methods": ["DELETE"]
+    },
+    {
+      "source": "/api/savings/contribution",
+      "destination": "/api/transactions?action=savings-contribution-upsert",
+      "methods": ["POST"]
     },
     {
       "source": "/api/categories",

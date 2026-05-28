@@ -129,18 +129,19 @@ const applyRewrites = () => {
 
   try {
     const config = JSON.parse(fs.readFileSync(vercelConfigPath, "utf-8")) as {
-      rewrites?: { source: string; destination: string }[];
+      rewrites?: { source: string; destination: string; methods?: string[] }[];
     };
     if (!config.rewrites) return;
 
     for (const rewrite of config.rewrites) {
       if (!rewrite.source.startsWith("/api")) continue;
 
-      const methods = (rewrite as any).methods as string[] | undefined;
+      const methods = rewrite.methods;
 
       app.all(rewrite.source, async (req, res, next) => {
         if (methods && !methods.includes(req.method)) {
-          return next();
+          next();
+          return;
         }
 
         let destination = rewrite.destination;
@@ -201,7 +202,7 @@ const start = async () => {
   // Apply rewrites after all handlers are loaded to map logical legacy routes
   applyRewrites();
 
-  app.listen(port, () => {
+  app.listen(Number(port), "0.0.0.0", () => {
     console.log(`Local API server running on http://localhost:${port}`);
     console.log(`Environment: ${env}`);
   });
