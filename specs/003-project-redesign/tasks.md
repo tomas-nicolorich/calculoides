@@ -116,6 +116,7 @@
 - [X] T025 [US3] Create My Groups landing page with group selection and creation logic (Fixed BUG-001: added defensive rendering for group.role)
 - [X] T026 [US3] Create Profile page for name and password updates in `frontend/src/pages/profile/ui/ProfilePage.tsx`
 
+**Bugfix**: 2026-05-29 — BUG-011 Updated from bugfix patch to resolve Prisma Client Vercel compilation issue.
 **Bugfix**: 2026-06-02 — BUG-009 Reopened dialog-related tasks due to dependency resolution error.
 **Bugfix**: 2026-06-01 — BUG-008 Updated from bugfix patch to address browser alerts.
 **Bugfix**: 2026-05-31 — BUG-007 Updated from bugfix patch
@@ -123,9 +124,13 @@
 **Bugfix**: 2026-05-27 — BUG-001 Updated from bugfix patch
 **Bugfix**: 2026-05-28 — BUG-002 Updated from bugfix patch
 **Bugfix**: 2026-05-30 — BUG-005 Updated from bugfix patch to address transaction deletion 404.
+**Bugfix**: 2026-05-29 — BUG-010 Updated from bugfix patch to include Login Screen redesign.
 **Bugfix**: 2026-05-28 — BUG-004 Updated from bugfix patch to correct Savings Goal navigation.
 - [X] T027 [US3] Implement Theme Toggle feature for Dark Mode in `frontend/src/features/theme-toggle/ui/ThemeToggle.tsx`
 - [X] T028 [US3] Integrate Sign Out and navigation links into the Hamburger Menu in `frontend/src/widgets/navigation/ui/HamburgerMenu.tsx`
+- [X] T041 [US3] Create redesign component test for the Login screen in `frontend/tests/pages/login.test.tsx`
+- [X] T042 [US3] Redesign `frontend/src/pages/LoginPage.tsx` using the new global Tailwind 4 color variables and card-based layout.
+- [X] T043 [US3] Redesign `frontend/src/features/auth/ui/LoginForm.tsx` using the custom `Card` primitive and modern inputs to match the new visual guidelines.
 
 **Checkpoint**: All navigation and account management features should now be independently functional.
 
@@ -139,6 +144,8 @@
 - [X] T030 Optimize dashboard rendering and data pre-fetching in `frontend/src/pages/dashboard/ui/DashboardPage.tsx`
 - [X] T031 [P] Update `quickstart.md` with new redesign verification and setup steps
 - [X] T032 Final UI review for "sleek, colorful, and subtle" aesthetic consistency across all cards
+- [X] T044 Configure `postinstall` script in the root `package.json` to trigger Prisma Client generation on Vercel deployment (`"postinstall": "npm run prisma:generate -w api"`)
+- [X] T045 Verify production build pipeline successfully triggers client generation locally by executing root installation and build process
 
 ---
 

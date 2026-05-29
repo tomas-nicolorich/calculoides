@@ -84,6 +84,7 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 - **FR-014**: The "Budget Categories" card MUST list all categories, showing their total target amount and a breakdown of each member's Budget Quota, Spent amount, and remaining amount ("left"). It MUST include an "+ Add" button that allows any member to create a new category.
 - **FR-015**: Within the "Budget Categories" card, each member's breakdown row MUST include a button to initiate a new Transfer for that specific category.
 - **FR-016**: The "Budget Categories" card MUST provide Edit and Delete actions for each category. Any member MUST be able to edit a category, but only the Owner MUST be able to delete a category.
+- **FR-017**: The login and registration screen (`LoginPage.tsx` and `LoginForm.tsx`) MUST be updated to adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-003 and use the global Tailwind 4 color variables.
 
 ### Key Entities
 
@@ -106,10 +107,12 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 ## Assumptions
 
 - The underlying data architecture and APIs to fetch income, balance, expenses, transfers, categories, and groups already exist. The frontend MUST use the logical paths defined in the system's URL rewrites (e.g., `/api/summary`, `/api/categories`, `DELETE /api/transactions/:id`) rather than direct nested transaction paths.
+- The Prisma Client must be generated during Vercel's build phase using a root-level `postinstall` script to ensure that the required generated client modules are compiled and available in the serverless functions runtime.
 - Authentication mechanisms (sign out, change password) are supported by the existing backend.
 - Dark mode user preference will be stored locally (e.g., localStorage) unless a backend preference API is provided.
 - The Savings Goal page already exists or will be implemented independently of this specific UI redesign.
 
+**Bugfix**: 2026-05-29 — BUG-011 Specified root build script / postinstall requirement for Vercel Prisma compilation.
 **Bugfix**: 2026-06-02 — BUG-009 Corrected Base UI package name in implementation plan to fix dialog import error.
 **Bugfix**: 2026-06-01 — BUG-008 Added SC-006 to explicitly forbid browser default alerts in favor of custom UI dialogs.
 **Bugfix**: 2026-05-27 — BUG-001 Added edge case for defensive rendering of malformed group data.
@@ -118,4 +121,5 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 **Bugfix**: 2026-05-31 — BUG-007 Fixed misrouted category deletion by ensuring distinct logical paths for categories.
 **Bugfix**: 2026-05-30 — BUG-006 Updated FR-002 to include visual design requirements for the Savings Goal page.
 **Bugfix**: 2026-05-30 — BUG-005 Defined logical path `DELETE /api/transactions/:id` for expense deletion.
+**Bugfix**: 2026-05-29 — BUG-010 Added FR-017 to include visual design requirements for the Login/Registration screens.
 **Bugfix**: 2026-05-28 — BUG-004 Clarified redirection requirement for Savings Goal navigation button.

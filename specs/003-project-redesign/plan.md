@@ -7,7 +7,7 @@
 
 ## Summary
 
-Redesign the application using a card-based layout inspired by the provided mockups. The design will be implemented using BaseUI components and Tailwind CSS for a sleek, colorful, and subtle aesthetic. The core of the redesign includes a comprehensive dashboard (Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories), a new Expenses page with filtering, the Savings Goal page, and a global hamburger menu for navigation and settings.
+Redesign the application using a card-based layout inspired by the provided mockups. The design will be implemented using BaseUI components and Tailwind CSS for a sleek, colorful, and subtle aesthetic. The core of the redesign includes a comprehensive dashboard (Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories), a new Expenses page with filtering, the Savings Goal page, and a global hamburger menu for navigation and settings. Additionally, the Login screen and authentication forms will be visually redesigned to ensure aesthetic consistency from the application's initial entry point.
 
 ## Technical Context
 
@@ -19,7 +19,7 @@ Redesign the application using a card-based layout inspired by the provided mock
 **Project Type**: Web application  
 **Performance Goals**: Dashboard renders in < 2 seconds  
 **Constraints**: FSD architecture, strict multi-tenancy, server-side financial logic  
-**Scale/Scope**: ~5 main dashboard sections, ~4 dedicated sub-pages (Expenses, Transfers, Savings, My Groups), global navigation menu
+**Scale/Scope**: ~5 main dashboard sections, ~5 dedicated sub-pages (Expenses, Transfers, Savings, My Groups, Login), global navigation menu
 
 ## Constitution Check
 
@@ -94,7 +94,10 @@ shared/
 | **[BUG-005]** Transaction Deletion | Frontend uses incorrect paths/methods (GET category-delete) for expenses and categories. | Enforced logical `DELETE /api/transactions/:id` and `/api/categories/:id` paths via rewrites. |
 | **[BUG-006]** Design Drift | Savings Goal page missed in redesign scope, causing visual inconsistency. | Explicitly added Savings Goal page and its components to the redesign task list. |
 | **[BUG-008]** Browser Alerts | Standard browser `confirm()` breaks design immersion. | Replace all browser dialogs with custom `@base-ui-components/react` primitives. |
+| **[BUG-010]** Login Screen Redesign | Login screen was missed, causing design inconsistency. | Visual redesign of LoginPage and LoginForm to match the card-based layout and styles. |
+| **[BUG-011]** Prisma Vercel Generation | Missing Prisma Client generation during Vercel builds prevents serverless handlers from executing. | Manual generation commands (rejected as they don't solve automated CI/CD deployments). |
 
+**Bugfix**: 2026-05-29 — BUG-011 Updated from bugfix patch to specify Prisma Client generation during Vercel builds.
 **Bugfix**: 2026-06-02 — BUG-009 Corrected @base-ui/react dependency name to fix import resolution.
 **Bugfix**: 2026-06-01 — BUG-008 Updated from bugfix patch to address browser alert implementation drift.
 **Bugfix**: 2026-05-31 — BUG-007 Updated from bugfix patch to fix category deletion misrouting.
@@ -104,3 +107,4 @@ shared/
 **Bugfix**: 2026-05-29 — BUG-003 Updated from bugfix patch to address duplicate backend calls.
 **Bugfix**: 2026-05-28 — BUG-004 Updated from bugfix patch to correct Savings Goal navigation.
 **Bugfix**: 2026-05-30 — BUG-005 Updated from bugfix patch to enforce logical transaction deletion path.
+**Bugfix**: 2026-05-29 — BUG-010 Updated from bugfix patch to include Login Screen redesign.
