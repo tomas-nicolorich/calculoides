@@ -7,6 +7,7 @@ export const DashboardMemberSchema = z.object({
   share: z.number().min(0).max(100),
   spent: z.number().nonnegative(),
   remainingQuota: z.number(),
+  budgeted: z.number().nonnegative(),
 });
 
 export const RecentExpenseSchema = z.object({
