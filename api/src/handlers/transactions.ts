@@ -118,7 +118,13 @@ const routes: RouteConfig = {
     res.status(200).json(transfers);
   },
   "transfers-list": async (req: ApiRequest, res: ApiResponse) => {
-    const { groupId, limit = "20", offset = "0" } = req.query;
+    const {
+      groupId,
+      categoryId,
+      memberId,
+      limit = "20",
+      offset = "0",
+    } = req.query;
     if (!groupId || typeof groupId !== "string") {
       res.status(400).json({ error: "Missing groupId" });
       return;
@@ -127,6 +133,8 @@ const routes: RouteConfig = {
     const parsedOffset = parseInt(offset as string, 10);
     const { transfers, total } = await TransferService.listTransfers(
       groupId,
+      categoryId as string | undefined,
+      memberId as string | undefined,
       parsedLimit,
       parsedOffset,
     );
@@ -149,6 +157,19 @@ const routes: RouteConfig = {
       validatedBody.memberIds,
     );
     res.status(201).json(category);
+  },
+  "category-update": async (req: ApiRequest, res: ApiResponse) => {
+    const { id } = req.query;
+    const validatedId = IdSchema.parse(id);
+    const validatedBody = CreateCategorySchema.parse(req.body);
+    const category = await BudgetService.updateCategory(
+      validatedId,
+      validatedBody.name,
+      validatedBody.monthlyBudget,
+      validatedBody.icon ?? undefined,
+      validatedBody.memberIds,
+    );
+    res.status(200).json(category);
   },
   "categories-list": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
@@ -351,6 +372,7 @@ const routes: RouteConfig = {
 
       // Calculate remaining quota across all categories
       let totalRemainingQuota = 0;
+      let totalBudgetedQuota = 0;
       categories.forEach((cat) => {
         // Filter members if category is restricted
         const isRestricted = cat.memberLinks.length > 0;
@@ -387,6 +409,7 @@ const routes: RouteConfig = {
         const memberBalance = balances.find((b) => b.memberId === m.id);
         if (memberBalance) {
           totalRemainingQuota += memberBalance.remainingQuota;
+          totalBudgetedQuota += memberBalance.totalQuota;
         }
       });
 
@@ -397,6 +420,7 @@ const routes: RouteConfig = {
         share: share?.percentage ?? 0,
         spent: memberExpensesTotal,
         remainingQuota: totalRemainingQuota,
+        budgeted: Number(totalBudgetedQuota.toFixed(2)),
       };
     });
 

@@ -1,4 +1,8 @@
-import { calculateRoundedShares, MemberWithIncome, RoundedShare } from '../../../shared/logic/rounding';
+import {
+  calculateRoundedShares,
+  MemberWithIncome,
+  RoundedShare,
+} from "../../../shared/logic/rounding";
 
 export type MemberIncome = MemberWithIncome;
 export type IncomeShare = RoundedShare;
@@ -12,6 +16,7 @@ export function calculateIncomeShares(members: MemberIncome[]): IncomeShare[] {
 
 export interface CategoryBalance {
   memberId: string;
+  quota: number;
   totalQuota: number;
   spent: number;
   remainingQuota: number;
@@ -25,7 +30,11 @@ export function calculateCategoryBalances(
   category: { monthlyBudget: number },
   members: { id: string; share: number }[],
   expenses: { payerId: string; amount: number }[],
-  transfers: { fromMemberId: string; toMemberId: string; amount: number }[] = []
+  transfers: {
+    fromMemberId: string;
+    toMemberId: string;
+    amount: number;
+  }[] = [],
 ): CategoryBalance[] {
   return members.map((m) => {
     const baseQuota = category.monthlyBudget * m.share;
@@ -45,6 +54,7 @@ export function calculateCategoryBalances(
 
     return {
       memberId: m.id,
+      quota: Number(adjustedQuota.toFixed(2)),
       totalQuota: Number(adjustedQuota.toFixed(2)),
       spent: Number(memberExpenses.toFixed(2)),
       remainingQuota: Number((adjustedQuota - memberExpenses).toFixed(2)),

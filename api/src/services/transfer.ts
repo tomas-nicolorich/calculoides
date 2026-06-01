@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { Prisma } from "@prisma/client";
 
 export const TransferService = {
   /**
@@ -49,43 +50,78 @@ export const TransferService = {
   },
 
   /**
-   * Retrieves all transfers for a group.
+   * Retrieves all transfers for a group with optional filtering.
    */
-  async listTransfers(groupId: string, limit = 20, offset = 0) {
+  async listTransfers(
+    groupId: string,
+    categoryId?: string,
+    memberId?: string,
+    limit = 20,
+    offset = 0,
+  ) {
     const categories = await prisma.category.findMany({
       where: { groupId },
-      select: { id: true }
+      select: { id: true },
     });
-    
-    const categoryIds = categories.map(c => c.id);
-    
+
+    const categoryIds = categories.map((c) => c.id);
+
+    const whereClause: Prisma.TransferWhereInput = {
+      categoryId: { in: categoryIds },
+    };
+
+    if (categoryId) {
+      whereClause.categoryId = categoryId;
+    }
+
+    if (memberId) {
+      whereClause.OR = [
+        { fromMember: { memberId } },
+        { toMember: { memberId } },
+      ];
+    }
+
     const [transfers, total] = await Promise.all([
       prisma.transfer.findMany({
-        where: { categoryId: { in: categoryIds } },
+        where: whereClause,
         include: {
           category: { select: { name: true } },
-          fromMember: { include: { member: { include: { user: { select: { name: true, email: true } } } } } },
-          toMember: { include: { member: { include: { user: { select: { name: true, email: true } } } } } }
+          fromMember: {
+            include: {
+              member: {
+                include: { user: { select: { name: true, email: true } } },
+              },
+            },
+          },
+          toMember: {
+            include: {
+              member: {
+                include: { user: { select: { name: true, email: true } } },
+              },
+            },
+          },
         },
         orderBy: { date: "desc" },
         take: limit,
-        skip: offset
+        skip: offset,
       }),
       prisma.transfer.count({
-        where: { categoryId: { in: categoryIds } }
-      })
+        where: whereClause,
+      }),
     ]);
-    
+
     return {
-      transfers: transfers.map(t => ({
+      transfers: transfers.map((t) => ({
         id: t.id,
         categoryName: t.category.name,
-        fromMemberName: t.fromMember.member.user.name ?? t.fromMember.member.user.email,
-        toMemberName: t.toMember.member.user.name ?? t.toMember.member.user.email,
+        fromMemberName:
+          t.fromMember.member.user.name ?? t.fromMember.member.user.email,
+        toMemberName:
+          t.toMember.member.user.name ?? t.toMember.member.user.email,
         amount: Number(t.amount),
-        date: t.date
+        date: t.date,
       })),
-      total
+      total,
     };
   },
 };

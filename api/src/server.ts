@@ -6,8 +6,10 @@ import fs from "fs";
 import { createClient } from "@supabase/supabase-js";
 import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const resolvedDirname =
+  typeof __dirname !== "undefined"
+    ? __dirname
+    : path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = process.env.PORT ?? "3001";
@@ -124,7 +126,7 @@ const loadRoutes = async (dir: string, baseRoute = "/api") => {
 };
 
 const applyRewrites = () => {
-  const vercelConfigPath = path.resolve(__dirname, "../../vercel.json");
+  const vercelConfigPath = path.resolve(resolvedDirname, "../../vercel.json");
   if (!fs.existsSync(vercelConfigPath)) return;
 
   try {
@@ -194,7 +196,7 @@ const applyRewrites = () => {
 };
 
 const start = async () => {
-  const handlersDir = path.resolve(__dirname, "handlers");
+  const handlersDir = path.resolve(resolvedDirname, "handlers");
 
   // Load new consolidated handlers from handlers/ directory
   await loadRoutes(handlersDir);
