@@ -6,10 +6,7 @@ import fs from "fs";
 import { createClient } from "@supabase/supabase-js";
 import { fileURLToPath } from "url";
 
-const resolvedDirname =
-  typeof __dirname !== "undefined"
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+const resolvedDirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = process.env.PORT ?? "3001";

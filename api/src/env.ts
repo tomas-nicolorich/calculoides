@@ -3,10 +3,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
-const resolvedDirname =
-  typeof __dirname !== "undefined"
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+const resolvedDirname = path.dirname(fileURLToPath(import.meta.url));
 
 const env = process.env.CALC_ENVIRONMENT ?? "local";
 const rootDir = path.resolve(resolvedDirname, "../../");
