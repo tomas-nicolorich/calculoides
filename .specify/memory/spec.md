@@ -2,8 +2,9 @@
 
 **Status**: Active
 **Initial Feature**: `001-calculoides-core-app`
-**Revision**: 2026-06-06 | Initial archival of Calculoides Core App
+**Revision**: 2026-06-01 | Archival of Project Redesign feature [Source: specs/003-project-redesign]
 **Revision**: 2026-06-07 | Archival of Vercel Serverless Function Reduction feature [Source: specs/002-reduce-vercel-functions]
+**Revision**: 2026-06-06 | Initial archival of Calculoides Core App
 
 ## User Scenarios & Testing
 
@@ -156,6 +157,55 @@ As a maintainer, I want a way to verify that the total function count is 12 or f
 1. **Given** a build output, **When** the number of serverless functions is 12 or fewer, **Then** the build passes.
 2. **Given** a build output, **When** the number of serverless functions exceeds 12, **Then** the build fails with a descriptive error.
 
+---
+
+### User Story 11 - Dashboard Overview (Priority: P1) [Source: specs/003-project-redesign]
+
+As a user, I want to view a card-based dashboard so that I can get a quick overview of my Income, Remaining Balance, Expenses, Budget Transfers, and Budget Categories.
+
+**Why this priority**: The dashboard is the core landing view of the application, providing immediate financial visibility.
+
+**Independent Test**: Can be tested by loading the main screen and verifying the presence of all five distinct cards.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user is logged in, **When** they load the application, **Then** they land on the "My Groups" page to select an active group.
+2. **Given** the user has selected an active group, **When** they view the main dashboard, **Then** they see cards for Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories populated with data for that specific group.
+3. **Given** the user is on the dashboard, **When** they click the Savings Goal button, **Then** they are navigated to the Savings Goal page.
+
+---
+
+### User Story 12 - Expense Management (Priority: P2) [Source: specs/003-project-redesign]
+
+As a user, I want to see my most recent expenses on the dashboard and view/filter all expenses on a separate page so that I can track where my money is going.
+
+**Why this priority**: Managing and tracking expenses is a primary function of a budgeting application.
+
+**Independent Test**: Can be tested by verifying the expenses card shows recent items, navigating to the full list, and applying filters.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user is on the dashboard, **When** they look at the Expenses card, **Then** they see the 5 most recent expenses.
+2. **Given** the user is on the dashboard, **When** they choose to view all expenses, **Then** they are taken to a new page showing the full list.
+3. **Given** the user is on the full expenses page, **When** they apply a filter for a specific member or category, **Then** the list updates to show only matching expenses.
+
+---
+
+### User Story 13 - Global Navigation & Settings (Priority: P2) [Source: specs/003-project-redesign]
+
+As a user, I want to access my groups, profile, and app settings through a unified hamburger menu so that I can easily manage my account and preferences.
+
+**Why this priority**: Access to group management, profile updates, and authentication features is necessary for full application usage.
+
+**Independent Test**: Can be tested by opening the menu and interacting with the available settings and navigation options.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user is on any main page, **When** they click the top-right hamburger menu, **Then** they see options for My Groups, Profile, Dark Mode, and Sign Out.
+2. **Given** the user opens the menu and selects My Groups, **When** they navigate to the page, **Then** they can see their groups, select a group to view its dashboard, and have an option to create a new group.
+3. **Given** the user opens the menu and selects Profile, **When** they navigate to the page, **Then** they can update their name and password.
+4. **Given** the user clicks the dark mode toggle, **When** activated, **Then** the application switches visually to a dark color scheme.
+
 ## Requirements
 
 ### Functional Requirements [Source: specs/001-calculoides-core-app]
@@ -198,6 +248,27 @@ As a maintainer, I want a way to verify that the total function count is 12 or f
 - **FR-030**: The local development server MUST achieve parity with Vercel's rewrite engine by correctly mapping logical paths defined in `vercel.json` to their consolidated handlers.
 - **FR-031**: Consolidated handlers MUST support method-aware dispatching (GET/POST/PATCH/DELETE) when multiple logical endpoints are merged into a single action-based route.
 
+### Functional Requirements: Project Redesign [Source: specs/003-project-redesign]
+
+- **FR-032**: System MUST display a card-based dashboard containing sections for Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories. All Budget Categories for the active Group MUST be visible to all members, regardless of Member Subset assignment. [Source: specs/003-project-redesign]
+- **FR-033**: System MUST provide a prominent button on the dashboard that navigates to the Savings Goal page. The Savings Goal page MUST adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-013. All cards and elements on the Savings Goal page, including status badges, labels, forms, projected dates, and state-specific backgrounds (e.g. success card background), MUST support full dark-mode compatibility with sufficient text-to-background contrast (minimum 4.5:1 ratio) to ensure visual legibility under both Light and Dark themes. [Source: specs/003-project-redesign]
+- **FR-034**: System MUST display up to the 5 most recent expenses within the Expenses dashboard card. [Source: specs/003-project-redesign]
+- **FR-035**: System MUST allow users to navigate from the Expenses card to a dedicated full expenses page. [Source: specs/003-project-redesign]
+- **FR-036**: System MUST provide filtering controls on the full expenses page to filter by member (the individual who paid for the expense) and category. [Source: specs/003-project-redesign]
+- **FR-037**: System MUST provide a hamburger menu anchored to the top right of the application layout. [Source: specs/003-project-redesign]
+- **FR-038**: System MUST provide a "My Groups" page, serving as the initial landing page after login, accessible via the menu, listing the user's groups (allowing selection to change the active dashboard context) with a button to create a new one. [Source: specs/003-project-redesign]
+- **FR-039**: System MUST provide a "Profile" page, accessible via the menu, where users can update their name and password. [Source: specs/003-project-redesign]
+- **FR-040**: System MUST include a toggle switch for Dark Mode within the hamburger menu. [Source: specs/003-project-redesign]
+- **FR-041**: System MUST include a functional Sign Out option within the hamburger menu. [Source: specs/003-project-redesign]
+- **FR-042**: The "Income Overview" card MUST display each member's individual income and their calculated Income Percentage, the total combined Group income, and a horizontal stacked bar chart visually representing the distribution of Income Percentages across members. Each member's bar segment MUST be visually distinct (using a dynamic, rotating color palette) to prevent adjacent segments from merging, and a matching color-coded visual indicator/dot MUST be displayed next to each member's name in the below-chart breakdown to serve as a legend. [Source: specs/003-project-redesign]
+- **FR-043**: The "Remaining Balance" card MUST display the "Total Combined Remaining" for the group, as well as a per-member breakdown showing each member's individual remaining balance alongside their Income and Total Budget Quota ("Budgeted"). [Source: specs/003-project-redesign]
+- **FR-044**: The "Budget Transfers" card MUST display a log of the most recent transfers and include a "View All" button navigating to a dedicated transfers page with filtering by member and category. The card MUST NOT include a button to create new transfers. [Source: specs/003-project-redesign]
+- **FR-045**: The "Budget Categories" card MUST list all categories, showing their total target amount and a breakdown of each member's Budget Quota, Spent amount, and remaining amount ("left"). It MUST include an "+ Add" button that allows any member to create a new category. [Source: specs/003-project-redesign]
+- **FR-046**: Within the "Budget Categories" card, each member's breakdown row MUST include a button to initiate a new Transfer for that specific category. [Source: specs/003-project-redesign]
+- **FR-047**: The "Budget Categories" card MUST provide Edit and Delete actions for each category. Any member MUST be able to edit a category, but only the Owner MUST be able to delete a category. [Source: specs/003-project-redesign]
+- **FR-048**: The login and registration screen (`LoginPage.tsx` and `LoginForm.tsx`) MUST be updated to adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-013 and use the global Tailwind 4 color variables. [Source: specs/003-project-redesign]
+- **FR-049**: System MUST ensure all interactive form inputs (such as `<input>`, `<select>`, `<option>`, and `<textarea>`) are styled with explicit background, border, text, and placeholder colors under both Light and Dark themes to maintain sufficient visual contrast (minimum 4.5:1 ratio) and prevent browser default user-agent styles from displaying unreadable text in dark mode. [Source: specs/003-project-redesign]
+
 ## Key Entities
 
 - **User**: Individual account holder. [Source: specs/001-calculoides-core-app]
@@ -212,6 +283,8 @@ As a maintainer, I want a way to verify that the total function count is 12 or f
 - **Serverless Function**: A physical deployment unit in Vercel. [Source: specs/002-reduce-vercel-functions]
 - **Logical Endpoint**: A URL path that the application exposes (e.g., `/api/v1/resource`). [Source: specs/002-reduce-vercel-functions]
 - **Endpoint Inventory**: The list of existing logical endpoints that must maintain parity. [Source: specs/002-reduce-vercel-functions]
+- **User Profile**: Contains the user's display name, authentication credentials (password), and preferences (theme). [Source: specs/003-project-redesign]
+- **Remaining Balance**: A derived UI concept representing a Member's unallocated funds, calculated as their Income minus the sum of their Budget Quotas across all categories. [Source: specs/003-project-redesign]
 
 ## Edge Cases & Error Handling
 
@@ -222,6 +295,11 @@ As a maintainer, I want a way to verify that the total function count is 12 or f
 - **Supabase Unreachable (Local Mode)**: Local server MUST return `503 Service Unavailable` if connection to Supabase fails. [Source: specs/002-local-server-testing]
 - **Function Size Limits**: If consolidated functions approach a **40MB bundle size threshold**, they will be split into smaller grouped functions. [Source: specs/002-reduce-vercel-functions]
 - **Cold Starts**: Latency degradation up to 20% is accepted as a tradeoff for staying within function limits. [Source: specs/002-reduce-vercel-functions]
+- **Zero Expenses/Groups**: UI MUST render friendly empty states with actions to create a group or add expenses. [Source: specs/003-project-redesign]
+- **Empty Filter Results**: Filter views MUST display a custom empty state message rather than a blank screen. [Source: specs/003-project-redesign]
+- **Member Subset Categories**: All budget categories are visible to all members on the dashboard regardless of subsets, but quotas and spent calculations only apply to subset members. [Source: specs/003-project-redesign]
+- **Overflow Text**: UI elements MUST use CSS truncation (`truncate`, `text-ellipsis`) to gracefully handle extremely long group names or member names. [Source: specs/003-project-redesign]
+- **Persistent Preferences**: Theme choice (Light/Dark Mode) MUST persist locally in `localStorage` across sessions. [Source: specs/003-project-redesign]
 
 ## Success Criteria
 
@@ -237,6 +315,12 @@ As a maintainer, I want a way to verify that the total function count is 12 or f
 - **SC-008**: 100% of existing application features remain functional after function consolidation. [Source: specs/002-reduce-vercel-functions]
 - **SC-009**: No logical endpoint experiences a latency increase of more than 20% due to consolidation. [Source: specs/002-reduce-vercel-functions]
 - **SC-010**: 100% of logical endpoints defined in `vercel.json` are functional in the local development environment. [Source: specs/002-reduce-vercel-functions]
+- **SC-011**: Dashboard renders all five required cards and populates them with initial data in under 2 seconds. [Source: specs/003-project-redesign]
+- **SC-012**: Users can successfully filter expenses, with the UI reflecting the filtered list instantaneously. [Source: specs/003-project-redesign]
+- **SC-013**: 100% of the UI follows the "sleek, colorful, and subtle" card-based design pattern inspired by the provided mockups. [Source: specs/003-project-redesign]
+- **SC-014**: Users can toggle dark mode and see immediate, application-wide visual changes. [Source: specs/003-project-redesign]
+- **SC-015**: System MUST deduplicate identical backend requests occurring within a 100ms window to ensure performance and prevent redundant server load. [Source: specs/003-project-redesign]
+- **SC-016**: System MUST NOT use browser default `alert()` or `confirm()` dialogs. All user feedback and confirmations MUST use custom UI components following the design pattern established in SC-013. [Source: specs/003-project-redesign]
 
 ## Assumptions
 
@@ -244,3 +328,6 @@ As a maintainer, I want a way to verify that the total function count is 12 or f
 - **Manual Reset**: Budgets do not auto-reset; they rely on the owner's archive action. [Source: specs/001-calculoides-core-app]
 - **Vercel Hobby Plan**: The system is constrained by the 12-function limit of the Hobby plan. [Source: specs/002-reduce-vercel-functions]
 - **Supabase Persistence**: External data storage and authentication are managed by Supabase. [Source: specs/001-calculoides-core-app]
+- **Logical API Paths**: The frontend MUST interact with the backend via logical routes (e.g., `/api/summary`, `/api/categories`, `DELETE /api/transactions/:id`) configured via rewrites in `vercel.json`. [Source: specs/003-project-redesign]
+- **Prisma Vercel Compilation**: Prisma Client MUST be generated on Vercel during the build phase using a root-level `postinstall` script. [Source: specs/003-project-redesign]
+- **CJS/ESM Environment Compatibility**: Backend files (such as `api/src/env.ts`) MUST be compatible with both the CommonJS environment of Vercel Serverless Functions and local ESM execution. [Source: specs/003-project-redesign]

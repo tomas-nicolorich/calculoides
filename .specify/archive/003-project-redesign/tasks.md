@@ -55,7 +55,7 @@
 ### Implementation for User Story 1
 
 - [X] T010 [P] [US1] Create reusable Dashboard Card primitive using Base UI in `frontend/src/shared/ui/Card.tsx`
-- [X] T011 [US1] Implement Income Overview widget with horizontal stacked bar chart in `frontend/src/widgets/dashboard/ui/IncomeOverview.tsx`
+- [X] T011 [US1] ⚠️ Reopened: Implement Income Overview widget with horizontal stacked bar chart in `frontend/src/widgets/dashboard/ui/IncomeOverview.tsx` (reopened — BUG-014)
 - [X] T012 [US1] Implement Remaining Balance widget with per-member breakdown in `frontend/src/widgets/dashboard/ui/RemainingBalance.tsx`
 - [X] T013a [US1] Implement Budget Categories list with per-member breakdown in `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`
 - [X] T013b [US1] Implement "Add Category" and "Edit Category" dialogs in `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`
@@ -67,9 +67,11 @@
 - [X] T015b [US1] Add prominent "Savings Goal" navigation button to Dashboard in `frontend/src/pages/dashboard/ui/DashboardPage.tsx` [R02]
 - [X] T036 [US1] Create redesign test for Savings Goal page in `frontend/tests/pages/savings.test.tsx`
 - [X] T037 [US1] Redesign Savings Goal page using `Card` primitives and Tailwind 4 color variables in `frontend/src/pages/savings/ui/SavingsPage.tsx` [BUG-006]
-- [X] T038 [US1] Update Savings Goal widgets (List and Form) to match the new aesthetic in `frontend/src/features/savings/` [BUG-006]
+- [X] T038 [US1] ⚠️ Reopened: Update Savings Goal widgets (List and Form) to match the new aesthetic in `frontend/src/features/savings/` (reopened — BUG-015)
 - [X] T039 [US1] Create a custom Alert/Dialog primitive using Base UI in `frontend/src/shared/ui/Dialog.tsx`
 - [X] T040 [US1] Replace browser `confirm()` in `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx` with the new custom Dialog component.
+- [X] T048 [US1] [BUG-014] Refactor `IncomeOverview.tsx` to use a dynamic/rotating multi-color palette for any number of members, add clean borders/gaps or distinct color boundaries to prevent visual merging, and add a matching circular color indicator next to each member's name in the below-chart breakdown to serve as a key.
+- [X] T049 [US1] [BUG-015] Refactor Savings Goal widgets (`SavingsGoalList.tsx` and `SavingsGoalForm.tsx`) to support proper Dark Mode backgrounds and text contrast. Apply theme-aware classes to success card backgrounds (`bg-emerald-50/30 dark:bg-emerald-950/20`), "On Track" status badges (`bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/50`), and the projected date text (`text-emerald-600 dark:text-emerald-400`).
 
 **Checkpoint**: At this point, the core dashboard should be fully functional and testable independently.
 
@@ -116,6 +118,8 @@
 - [X] T025 [US3] Create My Groups landing page with group selection and creation logic (Fixed BUG-001: added defensive rendering for group.role)
 - [X] T026 [US3] Create Profile page for name and password updates in `frontend/src/pages/profile/ui/ProfilePage.tsx`
 
+**Bugfix**: 2026-05-29 — BUG-014 Reopened T011 and added T048 to address color-merging and missing legend in Income Overview.
+**Bugfix**: 2026-05-29 — BUG-012 Updated from bugfix patch to resolve ESM/CJS transpilation/redeclaration syntax error.
 **Bugfix**: 2026-05-29 — BUG-011 Updated from bugfix patch to resolve Prisma Client Vercel compilation issue.
 **Bugfix**: 2026-06-02 — BUG-009 Reopened dialog-related tasks due to dependency resolution error.
 **Bugfix**: 2026-06-01 — BUG-008 Updated from bugfix patch to address browser alerts.
@@ -126,11 +130,15 @@
 **Bugfix**: 2026-05-30 — BUG-005 Updated from bugfix patch to address transaction deletion 404.
 **Bugfix**: 2026-05-29 — BUG-010 Updated from bugfix patch to include Login Screen redesign.
 **Bugfix**: 2026-05-28 — BUG-004 Updated from bugfix patch to correct Savings Goal navigation.
-- [X] T027 [US3] Implement Theme Toggle feature for Dark Mode in `frontend/src/features/theme-toggle/ui/ThemeToggle.tsx`
+**Bugfix**: 2026-05-29 — BUG-015 Reopened T038 and added T049 to address card backgrounds and text contrasts for Savings Goals in Dark Mode.
+**Bugfix**: 2026-05-29 — BUG-016 Reopened T047 and added T050 to address dropdown select/option contrast using Base UI.
+- [X] T027 [US3] ⚠️ Reopened: Implement Theme Toggle feature for Dark Mode in `frontend/src/features/theme-toggle/ui/ThemeToggle.tsx` (reopened — BUG-013)
 - [X] T028 [US3] Integrate Sign Out and navigation links into the Hamburger Menu in `frontend/src/widgets/navigation/ui/HamburgerMenu.tsx`
 - [X] T041 [US3] Create redesign component test for the Login screen in `frontend/tests/pages/login.test.tsx`
 - [X] T042 [US3] Redesign `frontend/src/pages/LoginPage.tsx` using the new global Tailwind 4 color variables and card-based layout.
 - [X] T043 [US3] Redesign `frontend/src/features/auth/ui/LoginForm.tsx` using the custom `Card` primitive and modern inputs to match the new visual guidelines.
+- [X] T047 [US3] [BUG-013] ⚠️ Reopened: Refactor and style all application forms and inputs for Dark Mode. Add explicit text, background, border, and hover colors (`text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800`) to the custom `Input` component in `shared/ui/index.tsx`, as well as standard select, textarea, and option elements. Restore missing card and input theme tokens in `frontend/src/app/index.css`. (reopened — BUG-016)
+- [X] T050 [US3] [BUG-016]: Create a reusable `<Select>` component using Base UI in `frontend/src/shared/ui/index.tsx` (or `Select.tsx`) styled with explicit theme-aware text, background, and border classes, and replace all raw HTML `<select>` elements with this component in `ExpenseForm.tsx`, `TransferForm.tsx`, `BudgetCategories.tsx`, `ExpenseFilter.tsx`, and `AdminPanel.tsx` to ensure robust, cross-browser Dark Mode contrast.
 
 **Checkpoint**: All navigation and account management features should now be independently functional.
 
@@ -146,6 +154,7 @@
 - [X] T032 Final UI review for "sleek, colorful, and subtle" aesthetic consistency across all cards
 - [X] T044 Configure `postinstall` script in the root `package.json` to trigger Prisma Client generation on Vercel deployment (`"postinstall": "npm run prisma:generate -w api"`)
 - [X] T045 Verify production build pipeline successfully triggers client generation locally by executing root installation and build process
+- [X] T046 [P] Refactor `api/src/env.ts` to ensure compatibility with Vercel's Node.js CommonJS environment (e.g. avoid declaring `__filename` and `__dirname` if they already exist globally, or dynamically fall back) [BUG-012]
 
 ---
 

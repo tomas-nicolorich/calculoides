@@ -2,6 +2,7 @@
 
 **Status**: Active
 **Initial Feature**: `001-calculoides-core-app`
+**Revision**: 2026-06-01 | Archival of Project Redesign feature [Source: specs/003-project-redesign]
 **Revision**: 2024-05-23 | Archival of Local Server Testing feature
 **Revision**: 2026-06-07 | Archival of Vercel Serverless Function Reduction feature [Source: specs/002-reduce-vercel-functions]
 
@@ -10,7 +11,7 @@
 Calculoides is a shared household budget management platform designed to automate proportional expense sharing based on individual income. Users organize into groups, set their group-specific incomes, and manage shared categories.
 
 The technical approach leverages a modern, type-safe stack:
-- **Frontend**: React 19 (Vite 8) with TypeScript 6.0.3, styled with Tailwind CSS 4 and Shadcn/UI, following Feature-Sliced Design (FSD).
+- **Frontend**: React 19 (Vite 8) with TypeScript 6.0.3, styled with Tailwind CSS 4, utilizing `@base-ui/react` unstyled primitives for custom sleek components, following Feature-Sliced Design (FSD). [Source: specs/003-project-redesign]
 - **Backend**: Vercel Serverless Functions for all financial computations. API endpoints are consolidated into domain-based handlers to stay within plan limits [Source: specs/002-reduce-vercel-functions].
 - **Local Development**: A custom Express-based local server simulates Vercel environments and rewrite rules for faster iteration [Source: specs/002-local-server-testing, specs/002-reduce-vercel-functions].
 - **Data/Auth**: Supabase for authentication and PostgreSQL database via Prisma ORM.
@@ -19,7 +20,7 @@ The technical approach leverages a modern, type-safe stack:
 ## Technical Context [Source: specs/001-calculoides-core-app]
 
 **Language/Version**: TypeScript 6.0.3 (Strict Mode)
-**Primary Dependencies**: React 19.2.6, Vite 8.0.12, Tailwind CSS 4.3.0, Prisma 7.8.0, Zod 4.4.3, @supabase/supabase-js 2.105.4, resend 3.0.0, Express 4.19.2 (local only) [Source: specs/002-local-server-testing]
+**Primary Dependencies**: React 19.2.6, Vite 8.0.12, Tailwind CSS 4.3.0, @base-ui/react 1.0.0-alpha.0 (Base UI), @tailwindcss/vite 4.0.0, Prisma 7.8.0, Zod 4.4.3, @supabase/supabase-js 2.105.4, resend 3.0.0, Express 4.19.2 (local only) [Source: specs/002-local-server-testing, specs/003-project-redesign]
 **Storage**: PostgreSQL (Supabase) via Prisma ORM
 **Testing**: Vitest 4.1.6
 **Target Platform**: Web (Mobile-first, responsive) deployed on Vercel
@@ -31,25 +32,24 @@ The technical approach leverages a modern, type-safe stack:
 
 ```text
 api/               # Backend (Vercel Serverless)
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ src/
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ handlers/      # [NEW] Consolidated domain handlers [Source: specs/002-reduce-vercel-functions]
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ services/      # Financial logic, auth, and database access
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ middleware/    # Auth and error handling
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ utils/         # Dispatcher and shared utilities [Source: specs/002-reduce-vercel-functions]
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ server.ts      # Local Express server entry point (supports rewrites)
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ scripts/         # [NEW] Build gates and SSG generation scripts [Source: specs/002-reduce-vercel-functions]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ tests/           # Vitest unit and integration tests
-```
+├── src/
+│   ├── handlers/      # [NEW] Consolidated domain handlers [Source: specs/002-reduce-vercel-functions]
+│   ├── services/      # Financial logic, auth, and database access
+│   ├── middleware/    # Auth and error handling
+│   ├── utils/         # Dispatcher and shared utilities [Source: specs/002-reduce-vercel-functions]
+│   └── server.ts      # Local Express server entry point (supports rewrites)
+├── scripts/         # [NEW] Build gates and SSG generation scripts [Source: specs/002-reduce-vercel-functions]
+└── tests/           # Vitest unit and integration tests
 
 frontend/          # React Vite application (Frontend)
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ app/           # App initialization, providers, and global styles
-â”‚   â”œâ”€â”€ pages/         # Page components (Dashboard, Login, etc.)
-â”‚   â”œâ”€â”€ widgets/       # Complex UI components composed of features/entities
-â”‚   â”œâ”€â”€ features/      # Business logic and interactive components
-â”‚   â”œâ”€â”€ entities/      # Business entities and their domain logic
-â”‚   â””â”€â”€ shared/        # Reusable UI components, API client, and utilities
-â””â”€â”€ tests/           # Frontend component and integration tests
+├── src/
+│   ├── app/           # App initialization, providers, and global styles
+│   ├── pages/         # Page components (Dashboard, Login, Expenses, Profile, etc.) [Source: specs/003-project-redesign]
+│   ├── widgets/       # Complex UI components composed of features/entities
+│   ├── features/      # Business logic and interactive components
+│   ├── entities/      # Business entities and their domain logic
+│   └── shared/        # Reusable UI components, API client, and utilities
+└── tests/           # Frontend component and integration tests
 
 prisma/            # Shared database schema and migrations
 shared/            # Shared types and validation logic

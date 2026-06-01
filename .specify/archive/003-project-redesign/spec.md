@@ -69,7 +69,7 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 ### Functional Requirements
 
 - **FR-001**: System MUST display a card-based dashboard containing sections for Income Overview, Remaining Balance, Expenses, Budget Transfers, and Budget Categories. All Budget Categories for the active Group MUST be visible to all members, regardless of Member Subset assignment.
-- **FR-002**: System MUST provide a prominent button on the dashboard that navigates to the Savings Goal page. The Savings Goal page MUST adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-003.
+- **FR-002**: System MUST provide a prominent button on the dashboard that navigates to the Savings Goal page. The Savings Goal page MUST adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-003. All cards and elements on the Savings Goal page, including status badges, labels, forms, projected dates, and state-specific backgrounds (e.g. success card background), MUST support full dark-mode compatibility with sufficient text-to-background contrast (minimum 4.5:1 ratio) to ensure visual legibility under both Light and Dark themes. (Clarified to specify dark mode compatibility and contrast requirements — BUG-015)
 - **FR-003**: System MUST display up to the 5 most recent expenses within the Expenses dashboard card.
 - **FR-004**: System MUST allow users to navigate from the Expenses card to a dedicated full expenses page.
 - **FR-005**: System MUST provide filtering controls on the full expenses page to filter by member (the individual who paid for the expense) and category.
@@ -78,13 +78,14 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 - **FR-008**: System MUST provide a "Profile" page, accessible via the menu, where users can update their name and password.
 - **FR-009**: System MUST include a toggle switch for Dark Mode within the hamburger menu.
 - **FR-010**: System MUST include a functional Sign Out option within the hamburger menu.
-- **FR-011**: The "Income Overview" card MUST display each member's individual income and their calculated Income Percentage, the total combined Group income, and a horizontal stacked bar chart visually representing the distribution of Income Percentages across members.
+- **FR-011**: ~~The "Income Overview" card MUST display each member's individual income and their calculated Income Percentage, the total combined Group income, and a horizontal stacked bar chart visually representing the distribution of Income Percentages across members.~~ The "Income Overview" card MUST display each member's individual income and their calculated Income Percentage, the total combined Group income, and a horizontal stacked bar chart visually representing the distribution of Income Percentages across members. Each member's bar segment MUST be visually distinct (using a dynamic, rotating color palette) to prevent adjacent segments from merging, and a matching color-coded visual indicator/dot MUST be displayed next to each member's name in the below-chart breakdown to serve as a legend. (Clarified to prevent adjacent segment color merging and add visual legend — BUG-014)
 - **FR-012**: The "Remaining Balance" card MUST display the "Total Combined Remaining" for the group, as well as a per-member breakdown showing each member's individual remaining balance alongside their Income and Total Budget Quota ("Budgeted").
 - **FR-013**: The "Budget Transfers" card MUST display a log of the most recent transfers (similar to the Expenses card) and include a "View All" button navigating to a dedicated transfers page with filtering by member and category. The card MUST NOT include a button to create new transfers.
 - **FR-014**: The "Budget Categories" card MUST list all categories, showing their total target amount and a breakdown of each member's Budget Quota, Spent amount, and remaining amount ("left"). It MUST include an "+ Add" button that allows any member to create a new category.
 - **FR-015**: Within the "Budget Categories" card, each member's breakdown row MUST include a button to initiate a new Transfer for that specific category.
 - **FR-016**: The "Budget Categories" card MUST provide Edit and Delete actions for each category. Any member MUST be able to edit a category, but only the Owner MUST be able to delete a category.
 - **FR-017**: The login and registration screen (`LoginPage.tsx` and `LoginForm.tsx`) MUST be updated to adhere to the "sleek, colorful, and subtle" card-based design pattern established in SC-003 and use the global Tailwind 4 color variables.
+- **FR-018**: System MUST ensure all interactive form inputs (such as `<input>`, `<select>`, `<option>`, and `<textarea>`) are styled with explicit background, border, text, and placeholder colors under both Light and Dark themes to maintain sufficient visual contrast (minimum 4.5:1 ratio) and prevent browser default user-agent styles from displaying unreadable text in dark mode.
 
 ### Key Entities
 
@@ -108,10 +109,14 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 
 - The underlying data architecture and APIs to fetch income, balance, expenses, transfers, categories, and groups already exist. The frontend MUST use the logical paths defined in the system's URL rewrites (e.g., `/api/summary`, `/api/categories`, `DELETE /api/transactions/:id`) rather than direct nested transaction paths.
 - The Prisma Client must be generated during Vercel's build phase using a root-level `postinstall` script to ensure that the required generated client modules are compiled and available in the serverless functions runtime.
+- The backend API files (such as `api/src/env.ts`) MUST be compatible with both the CommonJS environment of Vercel Serverless Functions and local ESM execution, avoiding runtime redeclaration of system globals like `__filename` and `__dirname`.
 - Authentication mechanisms (sign out, change password) are supported by the existing backend.
 - Dark mode user preference will be stored locally (e.g., localStorage) unless a backend preference API is provided.
 - The Savings Goal page already exists or will be implemented independently of this specific UI redesign.
 
+**Bugfix**: 2026-05-29 — BUG-014 Clarified FR-011 to require distinct segment colors and color legend indicators in Income Overview.
+**Bugfix**: 2026-05-29 — BUG-013 Added FR-018 to ensure proper contrast for form controls in dark mode.
+**Bugfix**: 2026-05-29 — BUG-012 Added ESM/CJS compatibility assumption for environment configuration in Vercel.
 **Bugfix**: 2026-05-29 — BUG-011 Specified root build script / postinstall requirement for Vercel Prisma compilation.
 **Bugfix**: 2026-06-02 — BUG-009 Corrected Base UI package name in implementation plan to fix dialog import error.
 **Bugfix**: 2026-06-01 — BUG-008 Added SC-006 to explicitly forbid browser default alerts in favor of custom UI dialogs.
@@ -123,3 +128,5 @@ As a user, I want to access my groups, profile, and app settings through a unifi
 **Bugfix**: 2026-05-30 — BUG-005 Defined logical path `DELETE /api/transactions/:id` for expense deletion.
 **Bugfix**: 2026-05-29 — BUG-010 Added FR-017 to include visual design requirements for the Login/Registration screens.
 **Bugfix**: 2026-05-28 — BUG-004 Clarified redirection requirement for Savings Goal navigation button.
+**Bugfix**: 2026-05-29 — BUG-015 Updated FR-002 to specify proper theme-aware styling, contrasts, and state classes on the Savings Goal page.
+**Bugfix**: 2026-05-29 — BUG-016 Clarified component-level styling and contrast requirements for form select/option dropdowns to guarantee FR-018.

@@ -96,7 +96,14 @@ shared/
 | **[BUG-008]** Browser Alerts | Standard browser `confirm()` breaks design immersion. | Replace all browser dialogs with custom `@base-ui-components/react` primitives. |
 | **[BUG-010]** Login Screen Redesign | Login screen was missed, causing design inconsistency. | Visual redesign of LoginPage and LoginForm to match the card-based layout and styles. |
 | **[BUG-011]** Prisma Vercel Generation | Missing Prisma Client generation during Vercel builds prevents serverless handlers from executing. | Manual generation commands (rejected as they don't solve automated CI/CD deployments). |
+| **[BUG-012]** ESM/CJS Conflict | Vercel Serverless Functions wrap code in CJS where `__filename`/`__dirname` are already declared, crashing if explicitly declared. | Disabling ESM features globally (rejected as it breaks local ESM tools and dev environments). |
+| **[BUG-014]** Bar Chart Color Merging | Bar chart segment colors merge for index >= 2, and no visual legend identifies members. | Hardcoded color mappings (rejected as they don't support arbitrary member counts cleanly). |
+| **[BUG-015]** Theme Override Spill | Success state styling (`bg-emerald-50/30`) overrides theme card backgrounds and lacks dark variants, rendering cards white in dark mode. | Static CSS color mappings (rejected as it fails to dynamically adapt across visual themes). |
+| **[BUG-016]** Dropdown Low Contrast | Dropdown selects and options are illegible in dark mode because inline styles override the base stylesheet. | Global base tag overrides (rejected because local component-level inline classes override base CSS). |
 
+**Bugfix**: 2026-05-29 — BUG-014 Updated from bugfix patch to address Income Overview segment color merging and missing legend.
+**Bugfix**: 2026-05-29 — BUG-013 Updated from bugfix patch to address dark mode form input contrast.
+**Bugfix**: 2026-05-29 — BUG-012 Updated from bugfix patch to address ESM/CJS compatibility in env.ts.
 **Bugfix**: 2026-05-29 — BUG-011 Updated from bugfix patch to specify Prisma Client generation during Vercel builds.
 **Bugfix**: 2026-06-02 — BUG-009 Corrected @base-ui/react dependency name to fix import resolution.
 **Bugfix**: 2026-06-01 — BUG-008 Updated from bugfix patch to address browser alert implementation drift.
@@ -108,3 +115,5 @@ shared/
 **Bugfix**: 2026-05-28 — BUG-004 Updated from bugfix patch to correct Savings Goal navigation.
 **Bugfix**: 2026-05-30 — BUG-005 Updated from bugfix patch to enforce logical transaction deletion path.
 **Bugfix**: 2026-05-29 — BUG-010 Updated from bugfix patch to include Login Screen redesign.
+**Bugfix**: 2026-05-29 — BUG-015 Updated from bugfix patch to address Savings Goals dark mode card and status badge contrast.
+**Bugfix**: 2026-05-29 — BUG-016 Updated from bugfix patch to address persistent dropdown select and option contrast.

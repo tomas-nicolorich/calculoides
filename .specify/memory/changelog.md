@@ -2,6 +2,29 @@
 
 ## Merged Features Log
 
+### Project Redesign — 2026-06-01
+**Branch:** `003-project-redesign`
+**Spec:** `specs/003-project-redesign`
+
+**What was added:**
+- Responsive card-based redesign of the core dashboard (Income Overview, Remaining Balance, Expenses, Budget Transfers, Budget Categories) and Savings Goal page.
+- Beautiful dynamic horizontal stacked bar chart in Income Overview showing proportional income distributions with individual legend indicators.
+- Global navigation drawer (Hamburger Menu) containing My Groups landing list, Profile management, and Dark Mode theme toggling.
+- Dark mode compatibility for the entire application including form controls, custom selects, and status badges.
+- Custom accessible Alert and Dialog modals to completely replace browser default `alert()` and `confirm()` prompts.
+- Client-side network request deduplication within a 100ms window to reduce backend server load and prevent race conditions.
+- Consolidated production build pipeline including root `postinstall` script for Vercel Prisma Client compilation.
+
+**New Components:**
+- `frontend/src/shared/ui/Card.tsx`: Reusable Dashboard Card primitive.
+- `frontend/src/shared/ui/Dialog.tsx`: Custom accessible alert and confirmation modal using Base UI.
+- `frontend/src/shared/ui/Select.tsx`: Reusable accessible `<Select>` component with proper theme-aware classes.
+- `frontend/src/widgets/navigation/ui/HamburgerMenu.tsx`: Interactive navigation menu.
+- `frontend/src/widgets/dashboard/ui/`: New modular card widgets (IncomeOverview, RemainingBalance, RecentExpenses, BudgetTransfers, BudgetCategories).
+- `frontend/src/pages/`: Redesigned page views (DashboardPage, LoginPage, ExpensesPage, TransfersPage, ProfilePage, SavingsPage).
+
+**Tasks Completed:** 57/57 tasks
+
 ### Reduce Vercel Serverless Functions — 2026-06-07
 **Branch:** `002-reduce-vercel-functions`
 **Spec:** `specs/002-reduce-vercel-functions`
