@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "build": {
+    "env": {
+      "VERCEL_EXPERIMENTAL_BACKENDS": "1"
+    }
+  },
   "rewrites": [
     { "source": "/api/groups", "destination": "/api/groups?action=list" },
     { "source": "/api/archive", "destination": "/api/groups?action=archive" },
