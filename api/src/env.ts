@@ -1,9 +1,8 @@
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 
-const resolvedDirname = path.dirname(fileURLToPath(import.meta.url));
+const resolvedDirname = __dirname;
 
 const env = process.env.CALC_ENVIRONMENT ?? "local";
 const rootDir = path.resolve(resolvedDirname, "../../");

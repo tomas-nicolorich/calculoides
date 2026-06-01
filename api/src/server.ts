@@ -4,9 +4,8 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { createClient } from "@supabase/supabase-js";
-import { fileURLToPath } from "url";
 
-const resolvedDirname = path.dirname(fileURLToPath(import.meta.url));
+const resolvedDirname = __dirname;
 
 const app = express();
 const port = process.env.PORT ?? "3001";

@@ -2,7 +2,6 @@
   "name": "api",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "start:api": "vercel dev --listen 3001",
     "start:api:local": "node --import tsx src/server.ts",
