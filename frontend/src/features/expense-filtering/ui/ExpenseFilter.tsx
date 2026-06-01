@@ -1,5 +1,6 @@
-import { Filter } from 'lucide-react';
-import { useState } from 'react';
+import { Filter } from "lucide-react";
+import { useState } from "react";
+import { Select } from "../../../shared/ui";
 
 interface ExpenseFilterProps {
   onFilterChange: (filters: { memberId?: string; categoryId?: string }) => void;
@@ -7,8 +8,15 @@ interface ExpenseFilterProps {
   categories: { id: string; name: string }[];
 }
 
-export function ExpenseFilter({ onFilterChange, members, categories }: ExpenseFilterProps) {
-  const [localFilters, setLocalFilters] = useState<{ memberId?: string; categoryId?: string }>({});
+export function ExpenseFilter({
+  onFilterChange,
+  members,
+  categories,
+}: ExpenseFilterProps) {
+  const [localFilters, setLocalFilters] = useState<{
+    memberId?: string;
+    categoryId?: string;
+  }>({});
 
   const handleMemberChange = (id: string) => {
     const next = { ...localFilters, memberId: id || undefined };
@@ -28,24 +36,26 @@ export function ExpenseFilter({ onFilterChange, members, categories }: ExpenseFi
         <Filter size={18} />
         <span className="text-sm font-medium">Filter by:</span>
       </div>
-      
-      <select 
-        value={localFilters.memberId ?? ''}
-        onChange={(e) => { handleMemberChange(e.target.value); }}
-        className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-brand-balance outline-none transition-all"
-      >
-        <option value="">All Members</option>
-        {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-      </select>
 
-      <select 
-        value={localFilters.categoryId ?? ''}
-        onChange={(e) => { handleCategoryChange(e.target.value); }}
-        className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border-none text-sm focus:ring-2 focus:ring-brand-balance outline-none transition-all"
-      >
-        <option value="">All Categories</option>
-        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </select>
+      <Select
+        value={localFilters.memberId ?? ""}
+        onValueChange={handleMemberChange}
+        options={[
+          { value: "", label: "All Members" },
+          ...members.map((m) => ({ value: m.id, label: m.name })),
+        ]}
+        className="min-w-[160px] border-none"
+      />
+
+      <Select
+        value={localFilters.categoryId ?? ""}
+        onValueChange={handleCategoryChange}
+        options={[
+          { value: "", label: "All Categories" },
+          ...categories.map((c) => ({ value: c.id, label: c.name })),
+        ]}
+        className="min-w-[160px] border-none"
+      />
     </div>
   );
 }

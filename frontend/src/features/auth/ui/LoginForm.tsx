@@ -24,7 +24,7 @@ export function LoginForm() {
     if (error) {
       setError(error.message);
     } else {
-      void navigate("/dashboard");
+      void navigate("/groups");
     }
     setLoading(false);
   };

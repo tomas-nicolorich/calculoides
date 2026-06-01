@@ -4,30 +4,31 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { apiClient } from "../../../shared/api/client";
 import { Group } from "../../../shared/api/types";
+import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
+import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
 
 export function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+
+  const fetchGroups = async () => {
+    try {
+      const data = await apiClient.groups.list();
+      setGroups(data);
+    } catch (err: unknown) {
+      console.error(
+        "Failed to fetch groups",
+        err instanceof Error ? err.message : String(err),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchGroups = async () => {
-      try {
-        const data = await apiClient.groups.list();
-        if (isMounted) setGroups(data);
-      } catch (err: unknown) {
-        console.error(
-          "Failed to fetch groups",
-          err instanceof Error ? err.message : String(err),
-        );
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchGroups();
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   return (
@@ -44,15 +45,30 @@ export function GroupsPage() {
 
         <button
           onClick={() => {
-            console.log("Group creation logic will be implemented in a future task.");
+            setIsCreatingGroup(true);
           }}
-
           className="flex items-center gap-2 px-4 py-2 bg-brand-income text-white rounded-xl hover:opacity-90 transition-opacity font-semibold"
         >
           <Plus size={18} />
           <span>New Group</span>
         </button>
       </header>
+
+      <ResponsiveDialog
+        open={isCreatingGroup}
+        onOpenChange={setIsCreatingGroup}
+        title="Create New Group"
+        description="Establish a new collaborative budgeting group."
+      >
+        <div className="flex justify-center p-4">
+          <CreateGroupForm
+            onCreated={() => {
+              setIsCreatingGroup(false);
+              void fetchGroups();
+            }}
+          />
+        </div>
+      </ResponsiveDialog>
 
       {loading ? (
         <div className="py-20 flex justify-center">
@@ -88,7 +104,12 @@ export function GroupsPage() {
               <p className="text-slate-500 mb-6">
                 You are not part of any groups yet.
               </p>
-              <button className="px-6 py-2 bg-brand-balance text-white rounded-xl font-semibold">
+              <button
+                onClick={() => {
+                  setIsCreatingGroup(true);
+                }}
+                className="px-6 py-2 bg-brand-balance text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              >
                 Create your first group
               </button>
             </Card>

@@ -9,6 +9,7 @@ import { Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
 import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
+import { Select, Input } from "../../../shared/ui";
 
 interface MemberBasic {
   id: string;
@@ -33,6 +34,8 @@ export function BudgetCategories({
   onRefresh,
 }: BudgetCategoriesProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingCategory, setEditingCategory] =
+    useState<CategoryWithBalances | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<{
     id: string;
     name: string;
@@ -81,6 +84,39 @@ export function BudgetCategories({
     } catch (err) {
       setFormError(
         err instanceof Error ? err.message : "Failed to create category",
+      );
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      await apiClient.fetch(
+        `/transactions?action=category-update&id=${editingCategory.id}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            name,
+            monthlyBudget: Number(monthlyBudget),
+            icon,
+            memberIds:
+              selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
+          }),
+        },
+      );
+      setEditingCategory(null);
+      setName("");
+      setMonthlyBudget("");
+      setSelectedMemberIds([]);
+      onRefresh();
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Failed to update category",
       );
     } finally {
       setFormLoading(false);
@@ -152,8 +188,7 @@ export function BudgetCategories({
           <form onSubmit={(e) => void handleAddSubmit(e)} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Category Name</label>
-              <input
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800"
+              <Input
                 placeholder="e.g. Rent, Groceries"
                 value={name}
                 onChange={(e) => {
@@ -164,10 +199,9 @@ export function BudgetCategories({
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Monthly Budget (€)</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800"
                 placeholder="0.00"
                 value={monthlyBudget}
                 onChange={(e) => {
@@ -178,8 +212,7 @@ export function BudgetCategories({
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Icon (Emoji)</label>
-              <input
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800"
+              <Input
                 placeholder="💰"
                 value={icon}
                 onChange={(e) => {
@@ -224,6 +257,96 @@ export function BudgetCategories({
           </form>
         </ResponsiveDialog>
 
+        {/* Edit Category Dialog */}
+        <ResponsiveDialog
+          open={editingCategory !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingCategory(null);
+              setName("");
+              setMonthlyBudget("");
+              setSelectedMemberIds([]);
+              setFormError(null);
+            }
+          }}
+          title="Edit Category"
+          description="Update details for this budget category."
+        >
+          <form
+            onSubmit={(e) => void handleEditSubmit(e)}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category Name</label>
+              <Input
+                placeholder="e.g. Rent, Groceries"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Monthly Budget (€)</label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={monthlyBudget}
+                onChange={(e) => {
+                  setMonthlyBudget(e.target.value);
+                }}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Icon (Emoji)</label>
+              <Input
+                placeholder="💰"
+                value={icon}
+                onChange={(e) => {
+                  setIcon(e.target.value);
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Assign to Members (Optional)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {members.map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => {
+                      toggleMember(member.id);
+                    }}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedMemberIds.includes(member.id)
+                        ? "bg-brand-balance text-white"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    {member.name}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500">
+                If none selected, category applies to everyone.
+              </p>
+            </div>
+            {formError && <p className="text-sm text-red-500">{formError}</p>}
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="w-full p-3 mt-4 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
+            >
+              {formLoading ? "Saving..." : "Save Changes"}
+            </button>
+          </form>
+        </ResponsiveDialog>
+
         {/* Transfer Dialog */}
         <ResponsiveDialog
           open={transferCategory !== null}
@@ -239,52 +362,38 @@ export function BudgetCategories({
           >
             <div className="space-y-2">
               <label className="text-sm font-medium">From</label>
-              <select
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800"
+              <Select
                 value={transferFromMemberId}
-                onChange={(e) => {
-                  setTransferFromMemberId(e.target.value);
+                onValueChange={(val) => {
+                  setTransferFromMemberId(val);
                 }}
                 disabled={!isOwner}
-                required
-              >
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                options={members.map((m) => ({
+                  value: m.id,
+                  label: m.name,
+                }))}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">To</label>
-              <select
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800"
+              <Select
                 value={transferToMemberId}
-                onChange={(e) => {
-                  setTransferToMemberId(e.target.value);
+                onValueChange={(val) => {
+                  setTransferToMemberId(val);
                 }}
-                required
-              >
-                <option value="" disabled>
-                  Select recipient
-                </option>
-                {members.map((m) => (
-                  <option
-                    key={m.id}
-                    value={m.id}
-                    disabled={m.id === transferFromMemberId}
-                  >
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select recipient"
+                options={members.map((m) => ({
+                  value: m.id,
+                  label: m.name,
+                  disabled: m.id === transferFromMemberId,
+                }))}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Amount (€)</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
-                className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800"
                 placeholder="0.00"
                 value={transferAmount}
                 onChange={(e) => {
@@ -322,8 +431,17 @@ export function BudgetCategories({
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      // Mocking Edit click for now, full edit will be implemented later
-                      console.log("Edit category coming soon");
+                      setEditingCategory(category);
+                      setName(category.name);
+                      setMonthlyBudget(category.monthlyBudget.toString());
+                      setIcon(category.icon ?? "💰");
+                      const assignedMemberIds = category.balances.map(
+                        (b) => b.memberId,
+                      );
+                      const isSubset =
+                        assignedMemberIds.length < members.length;
+                      setSelectedMemberIds(isSubset ? assignedMemberIds : []);
+                      setFormError(null);
                     }}
                     className="p-2 text-slate-400 hover:text-brand-balance transition-colors"
                     aria-label="Edit"

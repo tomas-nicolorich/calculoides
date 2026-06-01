@@ -1,6 +1,14 @@
-import { useState } from 'react';
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '../../shared/ui';
-import { apiClient } from '../../shared/api/client';
+import { useState } from "react";
+import {
+  Button,
+  Input,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Select,
+} from "../../shared/ui";
+import { apiClient } from "../../shared/api/client";
 
 interface TransferFormProps {
   categoryId: string;
@@ -20,8 +28,10 @@ export function TransferForm({
   onSuccess,
 }: TransferFormProps) {
   const [fromMemberId, setFromMemberId] = useState(currentMemberId);
-  const [toMemberId, setToMemberId] = useState(members.find(m => m.id !== currentMemberId)?.id ?? '');
-  const [amount, setAmount] = useState('');
+  const [toMemberId, setToMemberId] = useState(
+    members.find((m) => m.id !== currentMemberId)?.id ?? "",
+  );
+  const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +41,8 @@ export function TransferForm({
     setError(null);
 
     try {
-      await apiClient.fetch('/transfers', {
-        method: 'POST',
+      await apiClient.fetch("/transfers", {
+        method: "POST",
         body: JSON.stringify({
           categoryId,
           fromMemberId,
@@ -40,10 +50,11 @@ export function TransferForm({
           amount: Number(amount),
         }),
       });
-      setAmount('');
+      setAmount("");
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to transfer budget';
+      const message =
+        err instanceof Error ? err.message : "Failed to transfer budget";
       setError(message);
     } finally {
       setLoading(false);
@@ -56,38 +67,43 @@ export function TransferForm({
         <CardTitle>Transfer Budget ({categoryName})</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <label className="text-sm font-medium">From</label>
-            <select
+            <Select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={fromMemberId}
-              onChange={(e) => { setFromMemberId(e.target.value); }}
+              onValueChange={(val) => {
+                setFromMemberId(val);
+              }}
               disabled={!isOwner}
-              required
-            >
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} {m.id === currentMemberId ? '(You)' : ''}
-                </option>
-              ))}
-            </select>
+              options={members.map((m) => ({
+                value: m.id,
+                label: `${m.name}${m.id === currentMemberId ? " (You)" : ""}`,
+              }))}
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">To</label>
-            <select
+            <Select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={toMemberId}
-              onChange={(e) => { setToMemberId(e.target.value); }}
-              required
-            >
-              {members.map((m) => (
-                <option key={m.id} value={m.id} disabled={m.id === fromMemberId}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={(val) => {
+                setToMemberId(val);
+              }}
+              options={members
+                .filter((m) => m.id !== fromMemberId)
+                .map((m) => ({
+                  value: m.id,
+                  label: m.name,
+                }))}
+            />
           </div>
 
           <div className="space-y-2">
@@ -97,15 +113,21 @@ export function TransferForm({
               step="0.01"
               placeholder="0.00"
               value={amount}
-              onChange={(e) => { setAmount(e.target.value); }}
+              onChange={(e) => {
+                setAmount(e.target.value);
+              }}
               required
             />
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading || fromMemberId === toMemberId}>
-            {loading ? 'Transferring...' : 'Transfer Budget'}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || fromMemberId === toMemberId}
+          >
+            {loading ? "Transferring..." : "Transfer Budget"}
           </Button>
         </form>
       </CardContent>
