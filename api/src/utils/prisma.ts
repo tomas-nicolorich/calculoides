@@ -9,7 +9,7 @@ if (!globalForPrisma.prisma) {
   const connectionString = process.env.DATABASE_URL;
   const url = new URL(connectionString);
   url.searchParams.set("sslcert", ensureCert());
-  url.searchParams.set("sslmode", "verify-ca");
+  url.searchParams.set("sslmode", "verify-full");
 
   const pool = new pg.Pool({
     connectionString: url.toString(),
