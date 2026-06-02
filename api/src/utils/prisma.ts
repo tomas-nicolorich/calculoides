@@ -1,22 +1,18 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { ensureCert } from "./cert";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 if (!globalForPrisma.prisma) {
   const connectionString = process.env.DATABASE_URL;
-  const dbCa = process.env.DATABASE_CA;
-  const cert = dbCa ? Buffer.from(dbCa, "base64").toString("utf-8") : undefined;
+  const url = new URL(connectionString);
+  url.searchParams.set("sslcert", ensureCert());
+  url.searchParams.set("sslmode", "verify-ca");
 
   const pool = new pg.Pool({
-    connectionString,
-    ssl: cert
-      ? {
-          rejectUnauthorized: true,
-          ca: cert,
-        }
-      : { rejectUnauthorized: false },
+    connectionString: url.toString(),
   });
   const adapter = new PrismaPg(pool);
 
