@@ -6,14 +6,17 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 if (!globalForPrisma.prisma) {
   const connectionString = process.env.DATABASE_URL;
-  const cert = Buffer.from(process.env.DATABASE_CA, "base64").toString("utf-8");
+  const dbCa = process.env.DATABASE_CA;
+  const cert = dbCa ? Buffer.from(dbCa, "base64").toString("utf-8") : undefined;
 
   const pool = new pg.Pool({
     connectionString,
-    ssl: {
-      rejectUnauthorized: true,
-      ca: cert,
-    },
+    ssl: cert
+      ? {
+          rejectUnauthorized: true,
+          ca: cert,
+        }
+      : { rejectUnauthorized: false },
   });
   const adapter = new PrismaPg(pool);
 
