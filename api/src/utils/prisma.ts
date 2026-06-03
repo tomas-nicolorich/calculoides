@@ -5,14 +5,8 @@ import pg from "pg";
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 if (!globalForPrisma.prisma) {
-  // pg-connection-string parses sslmode=require as ssl:{} (empty object, cert verification ON),
-  // which overwrites the explicit ssl option below. Strip it so our option is authoritative.
-  const rawUrl = process.env.DATABASE_URL ?? "";
-  const url = new URL(rawUrl);
-  url.searchParams.delete("sslmode");
-
   const pool = new pg.Pool({
-    connectionString: url.toString(),
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
   });
   const adapter = new PrismaPg(pool);
