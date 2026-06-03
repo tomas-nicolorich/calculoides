@@ -1,6 +1,8 @@
-# Calculoides
+# Calculoides — Shared Domain
 
 Calculoides is a shared expense and budget management application for household groups, where costs are distributed proportionally based on individual incomes.
+
+This package contains the core domain types, Zod schemas, and financial logic shared between `api/` and `frontend/`.
 
 ## Language
 
@@ -13,6 +15,7 @@ _Avoid_: Household, team, account
 **Member**:
 A specific **User** within the context of a **Group**, possessing a single defined monthly income for the current period and ownership status. Joining or leaving a group triggers an automatic, group-wide recalculation of all **Budget Quotas** for the current open month (per the **Calculation on Read** pattern).
 _Avoid_: Participant, contributor
+
 **User**:
 An individual account holder who can belong to multiple **Groups**.
 _Avoid_: Account, person
@@ -84,11 +87,3 @@ The final calculated net balance per **Member** for a given period (calculated a
 **Developer**: And when the month ends?
 
 **Domain Expert**: The **Owner** triggers an **Archive**. We move all those **Expenses** to history, calculate the final **Settlement**, and reset the spent balances so everyone starts fresh for the next period.
-
-### Patterns
-
-**Calculation on Read**:
-The strategy of calculating financial balances and shares dynamically at the time of retrieval to ensure retroactive correctness after income changes. Within an open (non-archived) period, any change to a member's income immediately re-calculates all quotas for that entire period.
-
-**Remainder Absorption**:
-A strategy for handling rounding discrepancies in proportional shares by assigning the 0.01 difference to the **Member** with the highest **Income Percentage**. In the event of a tie in income, the difference is assigned to the member with the longest **Tenure**.
