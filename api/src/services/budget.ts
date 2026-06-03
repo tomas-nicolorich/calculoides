@@ -1,8 +1,14 @@
-import { prisma } from '../utils/prisma';
-import { calculateCategoryBalances, calculateIncomeShares, IncomeShare } from './calculation';
+import { prisma } from "../utils/prisma";
+import { Category } from "@prisma/client";
+import {
+  calculateCategoryBalances,
+  calculateIncomeShares,
+  IncomeShare,
+} from "./calculation";
 
 export interface CategoryBalance {
   memberId: string;
+  quota: number;
   totalQuota: number;
   spent: number;
   remainingQuota: number;
@@ -25,7 +31,7 @@ export const BudgetService = {
     });
 
     const incomeShares = calculateIncomeShares(
-      members.map((m) => ({ id: m.id, income: Number(m.income) }))
+      members.map((m) => ({ id: m.id, income: Number(m.income) })),
     );
 
     // 2. Fetch all categories for the group
@@ -46,12 +52,14 @@ export const BudgetService = {
     return categories.map((category) => {
       // BUG-029: Recalculate income shares if category is restricted to a subset of members
       let relevantShares: IncomeShare[];
-      
+
       if (category.memberLinks.length > 0) {
         const subsetMembers = members
-          .filter((m) => category.memberLinks.some((ml) => ml.memberId === m.id))
+          .filter((m) =>
+            category.memberLinks.some((ml) => ml.memberId === m.id),
+          )
           .map((m) => ({ id: m.id, income: Number(m.income) }));
-        
+
         relevantShares = calculateIncomeShares(subsetMembers);
       } else {
         relevantShares = incomeShares;
@@ -60,12 +68,15 @@ export const BudgetService = {
       const balances = calculateCategoryBalances(
         { monthlyBudget: Number(category.monthlyBudget) },
         relevantShares,
-        category.expenses.map((e) => ({ payerId: e.payerId, amount: Number(e.amount) })),
+        category.expenses.map((e) => ({
+          payerId: e.payerId,
+          amount: Number(e.amount),
+        })),
         category.transfers.map((t) => ({
           fromMemberId: t.fromMemberId,
           toMemberId: t.toMemberId,
           amount: Number(t.amount),
-        }))
+        })),
       );
 
       // Join member user info into balances
@@ -88,7 +99,13 @@ export const BudgetService = {
     });
   },
 
-  async createCategory(groupId: string, name: string, monthlyBudget: number, icon?: string, memberIds?: string[]) {
+  async createCategory(
+    groupId: string,
+    name: string,
+    monthlyBudget: number,
+    icon?: string,
+    memberIds?: string[],
+  ) {
     return await prisma.$transaction(async (tx) => {
       const category = await tx.category.create({
         data: {
@@ -113,6 +130,41 @@ export const BudgetService = {
     });
   },
 
+  async updateCategory(
+    categoryId: string,
+    name: string,
+    monthlyBudget: number,
+    icon?: string,
+    memberIds?: string[],
+  ): Promise<Category> {
+    return await prisma.$transaction(async (tx) => {
+      const category = await tx.category.update({
+        where: { id: categoryId },
+        data: {
+          name,
+          monthlyBudget,
+          icon,
+          updatedAt: new Date(),
+        },
+      });
+
+      await tx.categoryMember.deleteMany({
+        where: { categoryId },
+      });
+
+      if (memberIds && memberIds.length > 0) {
+        await tx.categoryMember.createMany({
+          data: memberIds.map((memberId) => ({
+            categoryId,
+            memberId,
+          })),
+        });
+      }
+
+      return category;
+    });
+  },
+
   async listCategories(groupId: string) {
     return await prisma.category.findMany({
       where: { groupId },
@@ -123,5 +175,5 @@ export const BudgetService = {
         transfers: true,
       },
     });
-  }
-}
+  },
+};

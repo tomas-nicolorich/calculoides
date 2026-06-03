@@ -32,7 +32,7 @@ export const GroupService = {
    * Mandated by BUG-014 to include user names in member relations.
    */
   async getGroupsForUser(userId: string) {
-    return await prisma.group.findMany({
+    const groups = await prisma.group.findMany({
       where: {
         OR: [{ ownerId: userId }, { members: { some: { userId } } }],
       },
@@ -50,6 +50,11 @@ export const GroupService = {
         },
       },
     });
+
+    return groups.map((group) => ({
+      ...group,
+      role: group.ownerId === userId ? "OWNER" : "MEMBER",
+    }));
   },
 
   /**

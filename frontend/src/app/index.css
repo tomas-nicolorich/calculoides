@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-income: var(--color-emerald-500);
+  --color-brand-balance: var(--color-blue-500);
+  --color-brand-expense: var(--color-red-500);
+  --color-brand-transfer: var(--color-amber-500);
+  --color-brand-category: var(--color-violet-500);
+
+  --color-background: var(--color-slate-50);
+  --color-foreground: var(--color-slate-900);
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-slate-900);
+  --color-input: var(--color-slate-200);
+}
+
+.dark {
+  --color-background: var(--color-slate-950);
+  --color-foreground: var(--color-slate-50);
+  --color-card: var(--color-slate-900);
+  --color-card-foreground: var(--color-white);
+  --color-input: var(--color-slate-800);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  input, select, textarea, option {
+    @apply text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-500 transition-colors;
+  }
+
+  option {
+    @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+  }
+
+  /* Autofill styling override for high-contrast readability */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important; /* slate-900 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover, 
+  .dark input:-webkit-autofill:focus, 
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important; /* slate-900 */
+    -webkit-text-fill-color: #f1f5f9 !important; /* slate-100 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}

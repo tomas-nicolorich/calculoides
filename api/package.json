@@ -5,6 +5,8 @@
   "scripts": {
     "start:api": "vercel dev --listen 3001",
     "start:api:local": "node --import tsx src/server.ts",
+    "build:api": "tsc",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "lint": "eslint .",
     "prisma:generate": "prisma generate --schema=../prisma/schema.prisma",

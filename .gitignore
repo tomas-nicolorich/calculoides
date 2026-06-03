@@ -162,3 +162,13 @@ sketch
 .gemini
 .turbo
 .superpowers
+.claude
+.agents
+.serena
+
+# Build and distribution
+dist/
+build/
+
+.pi
+.env*

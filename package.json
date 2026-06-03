@@ -16,7 +16,8 @@
     "test:local": "cross-env CALC_ENVIRONMENT=test-local turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "npm run prisma:generate -w api"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

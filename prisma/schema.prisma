@@ -84,7 +84,7 @@ model Group {
   updatedAt     DateTime                  @updatedAt
   categories    Category[]
   members       GroupMember[]
-  owner         User                      @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  owner         User                      @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   invitations   Invitation[]
   savingsGoals  SavingsGoal[]
 
@@ -100,8 +100,8 @@ model GroupMember {
   joinedAt          DateTime                  @default(now())
   categoryLinks     CategoryMember[]
   paidExpenses      Expense[]
-  group             Group                     @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  user              User                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  group             Group                     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   goalContributions SavingsGoalContribution[]
 
   @@unique([userId, groupId])
@@ -149,8 +149,8 @@ model Expense {
   date        DateTime    @default(now())
   isArchived  Boolean     @default(false)
   createdAt   DateTime    @default(now())
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  payer       GroupMember @relation(fields: [payerId], references: [id], onDelete: SetNull)
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  payer       GroupMember @relation(fields: [payerId], references: [id], onDelete: Cascade)
 
   @@map("expenses")
   @@schema("calculoides")

@@ -1,2 +1,4 @@
 echo "Running pre-push tests..."
+npm run lint
 npm run test
+npm run build

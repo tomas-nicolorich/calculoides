@@ -1,4 +1,5 @@
-installed: []
+installed:
+- agent-context
 settings:
   auto_execute_hooks: true
 hooks:
@@ -6,7 +7,7 @@ hooks:
   - extension: git
     command: speckit.git.initialize
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.git.initialize?
     description: Initialize Git repository before constitution setup
     condition: null
@@ -14,7 +15,7 @@ hooks:
   - extension: git
     command: speckit.git.feature
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.git.feature?
     description: Create feature branch before specification
     condition: null
@@ -37,7 +38,7 @@ hooks:
   - extension: version-guard
     command: speckit.version-guard.check
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.version-guard.check?
     description: Verify tech stack versions and write constraints before planning
     condition: null
@@ -52,7 +53,7 @@ hooks:
   - extension: version-guard
     command: speckit.version-guard.load
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.version-guard.load?
     description: Load version guard constraints into context before task generation
     condition: null
@@ -67,14 +68,14 @@ hooks:
   - extension: version-guard
     command: speckit.version-guard.load
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.version-guard.load?
     description: Load version guard constraints into context before code generation
     condition: null
   - extension: superb
     command: speckit.superb.tdd
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.superb.tdd?
     description: 'Mandatory TDD gate. Bridges an installed superpowers test-driven-development
       skill into the spec-kit task structure before any code is written.
@@ -121,6 +122,13 @@ hooks:
     prompt: Commit specification changes?
     description: Auto-commit after specification
     condition: null
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: true
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after specification
+    condition: null
   after_clarify:
   - extension: git
     command: speckit.git.commit
@@ -136,6 +144,13 @@ hooks:
     optional: true
     prompt: Commit plan changes?
     description: Auto-commit after implementation planning
+    condition: null
+  - extension: agent-context
+    command: speckit.agent-context.update
+    enabled: true
+    optional: true
+    prompt: Execute speckit.agent-context.update?
+    description: Refresh agent context after planning
     condition: null
   after_tasks:
   - extension: git
@@ -173,7 +188,7 @@ hooks:
   - extension: version-guard
     command: speckit.version-guard.validate
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.version-guard.validate?
     description: Scan generated code for version-incompatible API patterns
     condition: null
@@ -194,7 +209,7 @@ hooks:
   - extension: superb
     command: speckit.superb.verify
     enabled: true
-    optional: false
+    optional: true
     prompt: Execute speckit.superb.verify?
     description: 'Mandatory completion gate. Bridges an installed superpowers verification-before-completion
       skill and extends it with spec-kit spec-coverage checks. Prevents false completions.

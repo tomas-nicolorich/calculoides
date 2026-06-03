@@ -9,6 +9,7 @@ export interface Group {
   name: string;
   ownerId: string;
   members: Member[];
+  role: 'OWNER' | 'MEMBER';
 }
 
 export interface Member {
