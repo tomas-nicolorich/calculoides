@@ -1,6 +1,7 @@
 echo "Running pre-commit checks..."
 npx lint-staged
 npm run typecheck
+
 command -v fallow >/dev/null 2>&1 || exit 0
 UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
 if [ -n "$UPSTREAM" ]; then
