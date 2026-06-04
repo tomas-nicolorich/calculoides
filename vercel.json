@@ -8,6 +8,7 @@
   "rewrites": [
     { "source": "/api/groups", "destination": "/api/groups?action=list" },
     { "source": "/api/archive", "destination": "/api/groups?action=archive" },
+    { "source": "/api/undo-archive", "destination": "/api/groups?action=undo-archive" },
     {
       "source": "/api/groups/:id/transfer-ownership",
       "destination": "/api/groups?action=transfer&groupId=:id"
