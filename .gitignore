@@ -162,7 +162,11 @@ sketch
 .gemini
 .turbo
 .superpowers
-.claude
+# Ignore local Claude state but allow shared project config
+.claude/**
+!.claude/settings.json
+!.claude/hooks
+!.claude/hooks/**
 .agents
 .serena
 
@@ -172,3 +176,4 @@ build/
 
 .pi
 .env*
+.fallow/
