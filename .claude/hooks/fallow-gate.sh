@@ -63,7 +63,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if "${RUNNER[@]}" audit --format json --quiet --explain >"$TMP_JSON" 2>"$TMP_ERR"; then
+# Resolve base ref from upstream tracking branch so worktrees and feature
+# branches compare against their merge target, not always main.
+UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+if [ -n "$UPSTREAM" ]; then
+  BASE_ARGS=(--base "$UPSTREAM")
+else
+  BASE_ARGS=()
+fi
+
+if "${RUNNER[@]}" audit "${BASE_ARGS[@]}" --format json --quiet --explain >"$TMP_JSON" 2>"$TMP_ERR"; then
   STATUS=0
 else
   STATUS=$?
