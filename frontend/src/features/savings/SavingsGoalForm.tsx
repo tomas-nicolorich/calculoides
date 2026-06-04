@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../shared/ui";
-import { apiClient } from "../../shared/api/client";
+import { savingsGoalApi } from "../../entities/savings-goal";
 import { cn } from "../../shared/lib/utils";
 
 interface SavingsGoal {
@@ -54,14 +54,14 @@ export function SavingsGoalForm({
 
     try {
       if (isEditing) {
-        await apiClient.savings.update(goal.id, {
+        await savingsGoalApi.update(goal.id, {
           name,
           targetAmount: Number(targetAmount),
           startingAmount: Number(startingAmount),
           targetDate: new Date(targetDate).toISOString(),
         });
       } else {
-        await apiClient.savings.create(groupId, {
+        await savingsGoalApi.create(groupId, {
           name,
           targetAmount: Number(targetAmount),
           startingAmount: Number(startingAmount),

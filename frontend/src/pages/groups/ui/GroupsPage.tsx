@@ -2,8 +2,7 @@ import { Card } from "../../../shared/ui/Card";
 import { Plus, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { apiClient } from "../../../shared/api/client";
-import { Group } from "../../../shared/api/types";
+import { groupApi, type Group } from "../../../entities/group";
 import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
 
@@ -14,7 +13,7 @@ export function GroupsPage() {
 
   const fetchGroups = async () => {
     try {
-      const data = await apiClient.groups.list();
+      const data = await groupApi.list();
       setGroups(data);
     } catch (err: unknown) {
       console.error(

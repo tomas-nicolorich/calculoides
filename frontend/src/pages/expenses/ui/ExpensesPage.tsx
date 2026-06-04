@@ -9,7 +9,7 @@ import {
 import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFilter";
 import { useParams } from "react-router-dom";
 import { Receipt, Trash2 } from "lucide-react";
-import { apiClient } from "../../../shared/api/client";
+import { expenseApi } from "../../../entities/expense";
 import { Button } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 
@@ -21,9 +21,15 @@ export function ExpensesPage() {
   }>({});
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
 
-  const { data: summary, refresh: refreshSummary } = useDashboardSummary(groupId ?? null);
+  const { data: summary, refresh: refreshSummary } = useDashboardSummary(
+    groupId ?? null,
+  );
   const { data: categories } = useCategoriesList(groupId ?? null);
-  const { data: expensesList, loading, refresh: refreshExpenses } = useExpensesList(
+  const {
+    data: expensesList,
+    loading,
+    refresh: refreshExpenses,
+  } = useExpensesList(
     groupId ?? null,
     filters.categoryId,
     filters.memberId,
@@ -32,7 +38,7 @@ export function ExpensesPage() {
 
   const handleDeleteExpense = async (id: string) => {
     try {
-      await apiClient.expenses.delete(id);
+      await expenseApi.delete(id);
       refreshExpenses();
       refreshSummary();
       setExpenseToDelete(null);
@@ -91,7 +97,9 @@ export function ExpensesPage() {
                           variant="ghost"
                           size="sm"
                           className="text-slate-400 hover:text-destructive p-2 h-auto"
-                          onClick={() => { setExpenseToDelete(expense.id); }}
+                          onClick={() => {
+                            setExpenseToDelete(expense.id);
+                          }}
                         >
                           <Trash2 size={16} />
                         </Button>
@@ -99,7 +107,9 @@ export function ExpensesPage() {
                     </div>
                     <div className="flex justify-between text-sm text-slate-500">
                       <span>{new Date(expense.date).toLocaleDateString()}</span>
-                      <span>Member: {expense.payerName} • {expense.categoryName}</span>
+                      <span>
+                        Member: {expense.payerName} • {expense.categoryName}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -111,20 +121,26 @@ export function ExpensesPage() {
 
       <Dialog
         open={expenseToDelete !== null}
-        onOpenChange={(open) => { if (!open) setExpenseToDelete(null); }}
+        onOpenChange={(open) => {
+          if (!open) setExpenseToDelete(null);
+        }}
         title="Delete Expense"
         description="Are you sure you want to delete this expense? This action cannot be undone."
       >
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => { setExpenseToDelete(null); }}
+            onClick={() => {
+              setExpenseToDelete(null);
+            }}
           >
             Cancel
           </Button>
           <Button
             className="bg-brand-expense hover:opacity-90"
-            onClick={() => { if (expenseToDelete) void handleDeleteExpense(expenseToDelete); }}
+            onClick={() => {
+              if (expenseToDelete) void handleDeleteExpense(expenseToDelete);
+            }}
           >
             Delete Expense
           </Button>

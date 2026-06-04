@@ -8,7 +8,7 @@ import {
   CardTitle,
   Select,
 } from "../../shared/ui";
-import { apiClient } from "../../shared/api/client";
+import { transferApi } from "../../entities/transfer";
 
 interface TransferFormProps {
   categoryId: string;
@@ -41,14 +41,11 @@ export function TransferForm({
     setError(null);
 
     try {
-      await apiClient.fetch("/transfers", {
-        method: "POST",
-        body: JSON.stringify({
-          categoryId,
-          fromMemberId,
-          toMemberId,
-          amount: Number(amount),
-        }),
+      await transferApi.create({
+        categoryId,
+        fromMemberId,
+        toMemberId,
+        amount: Number(amount),
       });
       setAmount("");
       onSuccess?.();
