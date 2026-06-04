@@ -62,10 +62,19 @@ A multi-month persistent target amount to be saved by a specific date. Unlike **
 _Avoid_: Goal, fund, pot
 
 **Contribution**:
-The monthly amount a **Member** saves toward a **Savings Goal**. By default, this is calculated proportionally. A manual override by one member does not change the contributions of others; instead, it updates the goal's projected completion date based on the new total monthly group saving.
+The monthly amount a **Member** saves toward a **Savings Goal**. By default, this is proportional to the member's **Income Percentage**. A manual override by one member does not change the contributions of others; instead, it updates the **Projected Date** based on the new total monthly group saving.
+_Avoid_: Allocation, payment
 
 **Starting Amount**:
 An initial sum of money already saved toward a **Savings Goal** at the time of its creation, reducing the remaining amount needed to reach the target.
+
+**Target Date**:
+The user-defined date by which a **Savings Goal** is intended to be fully funded.
+_Avoid_: Due date, deadline
+
+**Projected Date**:
+The computed date by which a **Savings Goal** will actually be reached, given the current total of all members' **Contributions**. May be earlier or later than the **Target Date**. Stored on the server after save; mirrored in the browser during live editing.
+_Avoid_: Estimated date, completion date, forecast date
 
 **Archive**:
 A group-wide, manual event triggered by the **Owner** (typically after physical settlement) that moves all expenses for a selected month to an immutable historical record and resets all **Budget Category** spent balances to zero. Once archived, the record cannot be modified.
