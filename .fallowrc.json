@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "ignorePatterns": [
+    "**/prisma/client/**",
+    "frontend/dist/**",
+    "api/dist/**"
+  ],
+  "duplicates": {
+    "minOccurrences": 3
+  },
+  "rules": {
+    "unused-files": "warn",
+    "unused-exports": "warn",
+    "unused-types": "warn",
+    "unused-dependencies": "warn",
+    "unused-dev-dependencies": "warn",
+    "circular-dependencies": "error"
+  }
+}
