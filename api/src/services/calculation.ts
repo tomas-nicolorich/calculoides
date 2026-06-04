@@ -1,8 +1,4 @@
-import {
-  calculateRoundedShares,
-  MemberWithIncome,
-  RoundedShare,
-} from "../../../shared/logic/rounding";
+import { calculateRoundedShares, MemberWithIncome, RoundedShare } from "shared";
 
 export type MemberIncome = MemberWithIncome;
 export type IncomeShare = RoundedShare;
