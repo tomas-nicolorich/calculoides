@@ -9,7 +9,7 @@ import {
   UserDisplay,
 } from "../../shared/ui";
 import { cn } from "../../shared/lib/utils";
-import { apiClient } from "../../shared/api/client";
+import { savingsGoalApi } from "../../entities/savings-goal";
 import { SavingsGoalForm } from "./SavingsGoalForm";
 
 interface ContributionBreakdown {
@@ -67,7 +67,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               "Please enter valid numeric amounts for all members",
             );
           }
-          return apiClient.savings.upsertContribution(
+          return savingsGoalApi.upsertContribution(
             goalId,
             memberId,
             Number(amount),

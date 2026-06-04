@@ -17,7 +17,7 @@ import {
   CreateCategorySchema,
   CreateSavingsGoalSchema,
   UpsertContributionSchema,
-} from "../../../shared/validation";
+} from "shared";
 import { z } from "zod";
 import { prisma } from "../utils/prisma";
 import {

@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
-import { apiClient } from '../../shared/api/client';
+import { useState } from "react";
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../shared/ui";
+import { groupApi } from "../../entities/group";
 
 export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,11 +20,11 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
     setError(null);
 
     try {
-      await apiClient.groups.create(name);
-      setName('');
+      await groupApi.create(name);
+      setName("");
       onCreated();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
+      const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -30,7 +37,12 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
         <CardTitle>Create New Group</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium">
               Group Name
@@ -38,7 +50,9 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
             <Input
               id="name"
               value={name}
-              onChange={(e) => { setName(e.target.value); }}
+              onChange={(e) => {
+                setName(e.target.value);
+              }}
               placeholder="e.g. My Household"
               required
               disabled={isLoading}
@@ -46,7 +60,7 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Creating...' : 'Create Group'}
+            {isLoading ? "Creating..." : "Create Group"}
           </Button>
         </form>
       </CardContent>

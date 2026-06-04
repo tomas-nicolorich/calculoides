@@ -87,6 +87,7 @@ model Group {
   owner         User                      @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   invitations   Invitation[]
   savingsGoals  SavingsGoal[]
+  settlements   Settlement[]
 
   @@map("groups")
   @@schema("calculoides")
@@ -103,6 +104,7 @@ model GroupMember {
   group             Group                     @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   goalContributions SavingsGoalContribution[]
+  settlements       Settlement[]
 
   @@unique([userId, groupId])
   @@map("group_members")
@@ -146,11 +148,12 @@ model Expense {
   payerId     String      @db.Uuid
   description String
   amount      Decimal     @db.Decimal(12, 2)
-  date        DateTime    @default(now())
-  isArchived  Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  payer       GroupMember @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  date           DateTime    @default(now())
+  isArchived     Boolean     @default(false)
+  archivedPeriod String?
+  createdAt      DateTime    @default(now())
+  category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  payer          GroupMember @relation(fields: [payerId], references: [id], onDelete: Cascade)
 
   @@map("expenses")
   @@schema("calculoides")
@@ -161,9 +164,10 @@ model Transfer {
   categoryId   String         @db.Uuid
   fromMemberId String         @db.Uuid
   toMemberId   String         @db.Uuid
-  amount       Decimal        @db.Decimal(12, 2)
-  date         DateTime       @default(now())
-  category     Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amount         Decimal        @db.Decimal(12, 2)
+  date           DateTime       @default(now())
+  archivedPeriod String?
+  category       Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   fromMember   CategoryMember @relation("FromMember", fields: [fromMemberId], references: [id], onDelete: Cascade)
   toMember     CategoryMember @relation("ToMember", fields: [toMemberId], references: [id], onDelete: Cascade)
 
@@ -197,6 +201,24 @@ model SavingsGoalContribution {
 
   @@unique([goalId, memberId])
   @@map("savings_goal_contributions")
+  @@schema("calculoides")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Settlement {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId     String      @db.Uuid
+  memberId    String      @db.Uuid
+  periodMonth String
+  totalPaid   Decimal     @db.Decimal(12, 2)
+  totalQuota  Decimal     @db.Decimal(12, 2)
+  netAmount   Decimal     @db.Decimal(12, 2)
+  archivedAt  DateTime    @default(now())
+  group       Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  member      GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, memberId, periodMonth])
+  @@map("settlements")
   @@schema("calculoides")
 }
 

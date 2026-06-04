@@ -12,8 +12,8 @@ import {
 import {
   CreateGroupSchema,
   CreateInvitationSchema,
-  IdSchema,
-} from "../../../shared/validation";
+  ArchiveBodySchema,
+} from "shared";
 import { z } from "zod";
 
 const RespondInvitationSchema = z.object({
@@ -49,9 +49,18 @@ const routes: RouteConfig = {
   },
   archive: async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as AuthenticatedRequest;
-    const { groupId } = req.body as { groupId: string };
-    const validatedGroupId = IdSchema.parse(groupId);
-    await ArchiveService.archiveExpenses(validatedGroupId, authReq.user.id);
+    const { groupId, periodMonth } = ArchiveBodySchema.parse(req.body);
+    const result = await ArchiveService.archiveMonth(
+      groupId,
+      authReq.user.id,
+      periodMonth,
+    );
+    res.status(200).json(result);
+  },
+  "undo-archive": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
+    const { groupId, periodMonth } = ArchiveBodySchema.parse(req.body);
+    await ArchiveService.undoArchive(groupId, authReq.user.id, periodMonth);
     res.status(200).json({ success: true });
   },
   transfer: async (req: ApiRequest, res: ApiResponse) => {

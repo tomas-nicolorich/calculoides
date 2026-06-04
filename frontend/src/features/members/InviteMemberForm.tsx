@@ -1,9 +1,22 @@
-import { useState } from 'react';
-import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
-import { apiClient } from '../../shared/api/client';
+import { useState } from "react";
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../shared/ui";
+import { groupApi } from "../../entities/group";
 
-export function InviteMemberForm({ groupId, onInvited }: { groupId: string; onInvited: () => void }) {
-  const [email, setEmail] = useState('');
+export function InviteMemberForm({
+  groupId,
+  onInvited,
+}: {
+  groupId: string;
+  onInvited: () => void;
+}) {
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,11 +26,11 @@ export function InviteMemberForm({ groupId, onInvited }: { groupId: string; onIn
     setError(null);
 
     try {
-      await apiClient.invitations.create(groupId, email);
-      setEmail('');
+      await groupApi.invitations.create(groupId, email);
+      setEmail("");
       onInvited();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
+      const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -30,17 +43,24 @@ export function InviteMemberForm({ groupId, onInvited }: { groupId: string; onIn
         <CardTitle>Invite Member</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={(e) => { void handleSubmit(e); }} className="flex gap-2">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="flex gap-2"
+        >
           <Input
             type="email"
             value={email}
-            onChange={(e) => { setEmail(e.target.value); }}
+            onChange={(e) => {
+              setEmail(e.target.value);
+            }}
             placeholder="member@example.com"
             required
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Inviting...' : 'Invite'}
+            {isLoading ? "Inviting..." : "Invite"}
           </Button>
         </form>
         {error && <p className="text-sm text-destructive mt-2">{error}</p>}

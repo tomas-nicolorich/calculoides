@@ -36,7 +36,7 @@ describe("apiClient", () => {
       json: () => Promise.resolve({ data: "success" }),
     } as Response);
 
-    await apiClient.groups.list();
+    await apiClient.fetch("/groups");
 
     expect(fetchMock).toHaveBeenCalled();
     const lastCall = fetchMock.mock.calls[0];
@@ -63,7 +63,7 @@ describe("apiClient", () => {
       json: () => Promise.resolve({ data: "success" }),
     } as Response);
 
-    await apiClient.groups.list();
+    await apiClient.fetch("/groups");
 
     expect(fetchMock).toHaveBeenCalled();
     const lastCall = fetchMock.mock.calls[0];

@@ -8,7 +8,7 @@ import {
   CardTitle,
   Select,
 } from "../../shared/ui";
-import { apiClient } from "../../shared/api/client";
+import { expenseApi } from "../../entities/expense";
 
 interface ExpenseFormProps {
   categories: { id: string; name: string }[];
@@ -29,7 +29,7 @@ export function ExpenseForm({ categories, onSuccess }: ExpenseFormProps) {
     setError(null);
 
     try {
-      await apiClient.expenses.log({
+      await expenseApi.log({
         categoryId,
         description,
         amount: Number(amount),

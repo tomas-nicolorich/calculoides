@@ -101,6 +101,18 @@ FOR SELECT USING (
   )
 );
 
+-- Settlement access: group members can read their group's settlements
+ALTER TABLE "settlements" ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Member settlements" ON "settlements";
+CREATE POLICY "Member settlements" ON "settlements"
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM "group_members"
+    WHERE "group_members"."groupId" = "settlements"."groupId"
+    AND "group_members"."userId" = auth.uid()
+  )
+);
+
 -- Invitation access: inviter or user with same email
 CREATE POLICY "Inviter/Invitee invitations" ON "invitations"
 FOR SELECT USING (

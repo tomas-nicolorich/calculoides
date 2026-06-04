@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Base ID Schema
 export const IdSchema = z.uuid();
@@ -15,7 +15,7 @@ export const UserSchema = z.object({
 // Group
 export const GroupSchema = z.object({
   id: IdSchema,
-  name: z.string().min(1, 'Group name is required'),
+  name: z.string().min(1, "Group name is required"),
   ownerId: IdSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -36,9 +36,9 @@ export const GroupMemberSchema = z.object({
 export const CategorySchema = z.object({
   id: IdSchema,
   groupId: IdSchema,
-  name: z.string().min(1, 'Category name is required'),
+  name: z.string().min(1, "Category name is required"),
   icon: z.string().nullable().optional(),
-  monthlyBudget: z.number().nonnegative('Budget must be positive'),
+  monthlyBudget: z.number().nonnegative("Budget must be positive"),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -56,8 +56,8 @@ export const ExpenseSchema = z.object({
   id: IdSchema,
   categoryId: IdSchema,
   payerId: IdSchema,
-  description: z.string().min(1, 'Description is required'),
-  amount: z.number().positive('Amount must be positive'),
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive("Amount must be positive"),
   date: z.coerce.date(),
   isArchived: z.boolean().default(false),
   createdAt: z.coerce.date(),
@@ -76,8 +76,8 @@ export const CreateExpenseSchema = ExpenseSchema.pick({
 export const SavingsGoalSchema = z.object({
   id: IdSchema,
   groupId: IdSchema,
-  name: z.string().min(1, 'Goal name is required'),
-  targetAmount: z.number().positive('Target amount must be positive'),
+  name: z.string().min(1, "Goal name is required"),
+  targetAmount: z.number().positive("Target amount must be positive"),
   startingAmount: z.number().nonnegative().default(0),
   targetDate: z.coerce.date(),
   createdAt: z.coerce.date(),
@@ -96,7 +96,7 @@ export const UpsertContributionSchema = z.object({
 });
 
 // Invitation
-export const InvitationStatusEnum = z.enum(['PENDING', 'ACCEPTED', 'DECLINED']);
+export const InvitationStatusEnum = z.enum(["PENDING", "ACCEPTED", "DECLINED"]);
 
 export const InvitationSchema = z.object({
   id: IdSchema,
@@ -110,6 +110,16 @@ export const InvitationSchema = z.object({
 
 export const CreateInvitationSchema = z.object({
   email: z.email(),
+});
+
+// Archive
+export const ArchivePeriodSchema = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Period must be in YYYY-MM format");
+
+export const ArchiveBodySchema = z.object({
+  groupId: IdSchema,
+  periodMonth: ArchivePeriodSchema,
 });
 
 // Transfer

@@ -1,7 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
-import { apiClient } from '../../shared/api/client';
-import { Button, Card, CardHeader, CardTitle, CardContent } from '../../shared/ui';
-import { Invitation } from '../../shared/api/types';
+import { useEffect, useState, useCallback } from "react";
+import { groupApi, type Invitation } from "../../entities/group";
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../shared/ui";
 
 export function InvitationList({ onAction }: { onAction?: () => void }) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -9,10 +14,10 @@ export function InvitationList({ onAction }: { onAction?: () => void }) {
 
   const fetchInvitations = useCallback(async () => {
     try {
-      const data = await apiClient.invitations.list();
+      const data = await groupApi.invitations.list();
       setInvitations(data);
     } catch (err) {
-      console.error('Failed to fetch invitations', err);
+      console.error("Failed to fetch invitations", err);
     } finally {
       setLoading(false);
     }
@@ -23,22 +28,24 @@ export function InvitationList({ onAction }: { onAction?: () => void }) {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await apiClient.invitations.list();
+        const data = await groupApi.invitations.list();
         if (!active) return;
         setInvitations(data);
       } catch (err) {
-        console.error('Failed to fetch invitations', err);
+        console.error("Failed to fetch invitations", err);
       } finally {
         if (active) setLoading(false);
       }
     };
     void load();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const handleAction = async (token: string, action: 'ACCEPT' | 'REJECT') => {
+  const handleAction = async (token: string, action: "ACCEPT" | "REJECT") => {
     try {
-      await apiClient.invitations.respond(token, action);
+      await groupApi.invitations.respond(token, action);
       void fetchInvitations();
       onAction?.();
     } catch (err) {
@@ -56,16 +63,29 @@ export function InvitationList({ onAction }: { onAction?: () => void }) {
         {invitations.map((invitation) => (
           <Card key={invitation.id} className="border-primary/50 bg-primary/5">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Invite to {invitation.group.name}</CardTitle>
+              <CardTitle className="text-lg">
+                Invite to {invitation.group.name}
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
                 From: {invitation.inviter.name ?? invitation.inviter.email}
               </p>
             </CardHeader>
             <CardContent className="flex gap-2">
-              <Button size="sm" onClick={() => { void handleAction(invitation.token, 'ACCEPT'); }}>
+              <Button
+                size="sm"
+                onClick={() => {
+                  void handleAction(invitation.token, "ACCEPT");
+                }}
+              >
                 Accept
               </Button>
-              <Button size="sm" variant="outline" onClick={() => { void handleAction(invitation.token, 'REJECT'); }}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  void handleAction(invitation.token, "REJECT");
+                }}
+              >
                 Decline
               </Button>
             </CardContent>
