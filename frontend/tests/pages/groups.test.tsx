@@ -2,14 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { GroupsPage } from "@/pages/groups/ui/GroupsPage";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { apiClient } from "@/shared/api/client";
-import { Group } from "@/shared/api/types";
+import { groupApi, type Group } from "@/entities/group";
 
-vi.mock("@/shared/api/client", () => ({
-  apiClient: {
-    groups: {
-      list: vi.fn(),
-    },
+vi.mock("@/entities/group", () => ({
+  groupApi: {
+    list: vi.fn(),
   },
 }));
 
@@ -18,7 +15,7 @@ describe("Groups Page", () => {
     const mockGroups = [
       { id: "1", name: "Broken Group", role: "MEMBER" },
     ] as unknown as Group[];
-    vi.mocked(apiClient.groups.list).mockResolvedValueOnce(mockGroups);
+    vi.mocked(groupApi.list).mockResolvedValueOnce(mockGroups);
 
     render(
       <MemoryRouter>

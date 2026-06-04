@@ -1,14 +1,11 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SavingsGoalList } from "./SavingsGoalList";
-import { apiClient } from "../../shared/api/client";
+import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect } from "vitest";
 
-// Mock the API client
-vi.mock("../../shared/api/client", () => ({
-  apiClient: {
-    savings: {
-      upsertContribution: vi.fn().mockResolvedValue({}),
-    },
+vi.mock("../../entities/savings-goal", () => ({
+  savingsGoalApi: {
+    upsertContribution: vi.fn().mockResolvedValue({}),
   },
 }));
 
@@ -65,7 +62,7 @@ describe("SavingsGoalList", () => {
     fireEvent.click(saveButton);
 
     // Verify API call was made correctly
-    expect(apiClient.savings.upsertContribution).toHaveBeenCalledWith(
+    expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
       "goal-1",
       "member-1",
       150,
