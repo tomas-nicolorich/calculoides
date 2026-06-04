@@ -9,31 +9,8 @@ import {
   UserDisplay,
 } from "../../shared/ui";
 import { cn } from "../../shared/lib/utils";
-import { savingsGoalApi } from "../../entities/savings-goal";
+import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { SavingsGoalForm } from "./SavingsGoalForm";
-
-interface ContributionBreakdown {
-  memberId: string;
-  proportionalAmount: number;
-  actualAmount: number;
-  isOverridden: boolean;
-  user?: {
-    name: string | null;
-    email: string;
-  };
-}
-
-interface SavingsGoal {
-  id: string;
-  groupId: string;
-  name: string;
-  targetAmount: number;
-  startingAmount: number;
-  targetDate: string;
-  projectedDate: string;
-  varianceMonths: number;
-  breakdown: ContributionBreakdown[];
-}
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];

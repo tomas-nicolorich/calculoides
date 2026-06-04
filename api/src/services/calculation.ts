@@ -19,6 +19,22 @@ export interface CategoryBalance {
 }
 
 /**
+ * Returns income shares for all or a subset of members based on memberLinks.
+ * Used when a category is restricted to specific members.
+ */
+export function resolveRelevantShares(
+  members: { id: string; income: number }[],
+  memberLinks: { memberId: string }[],
+  baseShares: IncomeShare[],
+): IncomeShare[] {
+  if (memberLinks.length === 0) return baseShares;
+  const subsetMembers = members
+    .filter((m) => memberLinks.some((ml) => ml.memberId === m.id))
+    .map((m) => ({ id: m.id, income: m.income }));
+  return calculateIncomeShares(subsetMembers);
+}
+
+/**
  * Calculates member-specific balances for a category.
  * Integrates proportional shares, expenses, and transfers.
  */

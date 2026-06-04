@@ -38,7 +38,7 @@ const mockGoals = [
         proportionalAmount: 100,
         actualAmount: 100,
         isOverridden: false,
-        user: { name: "Alice", email: "alice@example.com" },
+        user: { id: "user-1", name: "Alice", email: "alice@example.com" },
       },
     ],
   },

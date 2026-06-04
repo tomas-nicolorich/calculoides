@@ -3,7 +3,7 @@ import { IncomeOverview } from "@/widgets/dashboard/ui/IncomeOverview";
 import { describe, it, expect, vi } from "vitest";
 
 // Mock Card component
-vi.mock("../../../shared/ui/Card", () => ({
+vi.mock("@/shared/ui/Card", () => ({
   Card: ({ children, title }: { children: React.ReactNode; title: string }) => (
     <div data-testid="card-container">
       <h2>{title}</h2>

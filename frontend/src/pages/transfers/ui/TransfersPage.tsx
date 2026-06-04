@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card } from "../../../shared/ui/Card";
+import { LoadingCard } from "../../../shared/ui/LoadingCard";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import { ArrowRightLeft } from "lucide-react";
 import {
@@ -43,50 +43,38 @@ export function TransfersPage() {
         categories={categories}
       />
 
-      <Card>
-        {loading ? (
-          <div className="py-20 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-balance"></div>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {transfersList?.transfers.length === 0 ? (
-              <div className="py-20 text-center text-slate-500">
-                No transfers found.
+      <LoadingCard
+        loading={loading}
+        isEmpty={!transfersList?.transfers.length}
+        emptyMessage="No transfers found."
+      >
+        {transfersList?.transfers.map((transfer) => (
+          <div
+            key={transfer.id}
+            className="py-4 flex items-center gap-4 first:pt-0 last:pb-0"
+          >
+            <div className="p-3 bg-brand-transfer/10 text-brand-transfer rounded-xl">
+              <ArrowRightLeft size={20} />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {transfer.categoryName}
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {formatCurrency(transfer.amount)}
+                </span>
               </div>
-            ) : (
-              transfersList?.transfers.map((transfer) => (
-                <div
-                  key={transfer.id}
-                  className="py-4 flex items-center gap-4 first:pt-0 last:pb-0"
-                >
-                  <div className="p-3 bg-brand-transfer/10 text-brand-transfer rounded-xl">
-                    <ArrowRightLeft size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {transfer.categoryName}
-                      </span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(transfer.amount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm text-slate-500">
-                      <span>
-                        {transfer.fromMemberName} → {transfer.toMemberName}
-                      </span>
-                      <span>
-                        {new Date(transfer.date).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+              <div className="flex justify-between text-sm text-slate-500">
+                <span>
+                  {transfer.fromMemberName} → {transfer.toMemberName}
+                </span>
+                <span>{new Date(transfer.date).toLocaleDateString()}</span>
+              </div>
+            </div>
           </div>
-        )}
-      </Card>
+        ))}
+      </LoadingCard>
     </div>
   );
 }

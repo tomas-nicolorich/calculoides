@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const DashboardMemberSchema = z.object({
+const DashboardMemberSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   income: z.number().nonnegative(),
@@ -19,7 +19,7 @@ export const RecentExpenseSchema = z.object({
   payerName: z.string(),
 });
 
-export const TransferSchema = z.object({
+const TransferSchema = z.object({
   id: z.uuid(),
   categoryName: z.string(),
   fromMemberName: z.string(),

@@ -5,7 +5,8 @@ import { prisma } from "../../src/utils/prisma";
 import { getUserFromSession } from "../../src/services/auth";
 import { User } from "@supabase/supabase-js";
 import { Prisma } from "@prisma/client";
-import { ApiRequest, ApiResponse } from "../../src/middleware/handler";
+import { ApiRequest } from "../../src/middleware/handler";
+import { createMockResponse } from "../helpers";
 
 // Mock Prisma
 vi.mock("../../src/utils/prisma", () => ({
@@ -51,13 +52,7 @@ describe("API Date Coercion (BUG-012)", () => {
       query: { action: "expense-create" },
     } as unknown as ApiRequest;
 
-    const res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-      setHeader: vi.fn().mockReturnThis(),
-      end: vi.fn().mockReturnThis(),
-      headersSent: false,
-    } as unknown as ApiResponse;
+    const res = createMockResponse();
 
     vi.mocked(prisma.expense.create).mockResolvedValue({
       id: "exp-1",

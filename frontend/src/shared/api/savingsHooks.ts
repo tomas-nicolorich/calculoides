@@ -1,67 +1,11 @@
-import { useState, useEffect } from "react";
-import { savingsGoalApi } from "../../entities/savings-goal";
-
-interface ContributionBreakdown {
-  memberId: string;
-  proportionalAmount: number;
-  actualAmount: number;
-  isOverridden: boolean;
-  user?: {
-    name: string | null;
-    email: string;
-  };
-}
-
-interface SavingsGoal {
-  id: string;
-  groupId: string;
-  name: string;
-  targetAmount: number;
-  startingAmount: number;
-  targetDate: string;
-  projectedDate: string;
-  varianceMonths: number;
-  breakdown: ContributionBreakdown[];
-}
+import { useCallback } from "react";
+import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
+import { useApiQuery } from "./useApiQuery";
 
 export function useSavingsGoals(groupId: string | null) {
-  const [data, setData] = useState<SavingsGoal[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshCount, setRefreshCount] = useState(0);
-
-  const refresh = () => {
-    setRefreshCount((c) => c + 1);
-  };
-
-  useEffect(() => {
-    if (!groupId) return;
-
-    const controller = new AbortController();
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await savingsGoalApi.list(groupId);
-        // Note: apiClient.savings.list currently doesn't take signal,
-        // but we'll use it if we update apiClient later.
-        // For now, it uses apiClient.fetch which does take signal.
-        setData(result);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === "AbortError") return;
-        setError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchData();
-
-    return () => {
-      controller.abort();
-    };
-  }, [groupId, refreshCount]);
-
-  return { data, loading, error, refresh };
+  const fetcher = useCallback(
+    (gId: string, _signal: AbortSignal) => savingsGoalApi.list(gId),
+    [],
+  );
+  return useApiQuery<SavingsGoal[]>(groupId, fetcher, []);
 }

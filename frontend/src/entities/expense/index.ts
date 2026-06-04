@@ -1,7 +1,7 @@
 import type { User } from "../../shared/api/types";
 import { apiClient } from "../../shared/api/client";
 
-export interface Expense {
+interface Expense {
   id: string;
   description: string;
   amount: number;

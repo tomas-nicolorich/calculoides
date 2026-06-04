@@ -7,16 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "../../shared/ui";
-import { savingsGoalApi } from "../../entities/savings-goal";
+import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { cn } from "../../shared/lib/utils";
-
-interface SavingsGoal {
-  id: string;
-  name: string;
-  targetAmount: number;
-  startingAmount: number;
-  targetDate: string;
-}
 
 interface SavingsGoalFormProps {
   groupId: string;

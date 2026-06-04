@@ -3,6 +3,7 @@ import { GroupService } from "./group";
 import {
   calculateIncomeShares,
   calculateCategoryBalances,
+  resolveRelevantShares,
 } from "./calculation";
 
 const UNDO_WINDOW_SECONDS = 10;
@@ -48,15 +49,11 @@ export const ArchiveService = {
     );
 
     for (const category of categories) {
-      let relevantShares = incomeShares;
-      if (category.memberLinks.length > 0) {
-        const subsetMembers = members
-          .filter((m) =>
-            category.memberLinks.some((ml) => ml.memberId === m.id),
-          )
-          .map((m) => ({ id: m.id, income: Number(m.income) }));
-        relevantShares = calculateIncomeShares(subsetMembers);
-      }
+      const relevantShares = resolveRelevantShares(
+        members.map((m) => ({ id: m.id, income: Number(m.income) })),
+        category.memberLinks,
+        incomeShares,
+      );
 
       const balances = calculateCategoryBalances(
         { monthlyBudget: Number(category.monthlyBudget) },
