@@ -19,5 +19,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["frontend/src", "api/src", "shared"]
+  "include": ["frontend/src", "api/src", "shared", "prisma.config.ts"]
 }
