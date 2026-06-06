@@ -1,8 +1,8 @@
-# Dashboard uses a two-column max grid layout
+# Dashboard uses a two-column grid on desktop, three columns on extra-large screens
 
 ## Status
 
-Accepted
+Accepted (amended 2026-06-05)
 
 ## Context
 
@@ -30,6 +30,10 @@ The income stacked bar chart and per-member breakdown inside Income Overview and
 - Budget Categories will render wider than in v2, giving its nested rows more breathing room.
 - On narrow viewports the grid already collapses to single column; this decision has no effect on mobile layout.
 
+## Amendment (2026-06-05)
+
+Three-column layout is reinstated at `xl` viewports and above. The two original objections are resolved at this breakpoint: `align-items: start` eliminates height stretching, and at `xl` widths the additional breathing room reduces the visual-hierarchy concern. Two columns remains the default at `md`–`lg`. At `xl`+ the arrangement becomes: Row 1 → Income Overview, Remaining Balance, Recent Expenses; Row 2 → Budget Categories (full width); Row 3 → Budget Transfers.
+
 ## Rejected alternative
 
-Three columns was rejected because of the empty-space artifact and because it flattened the visual hierarchy between primary summaries and detail widgets.
+Three columns at `md`/`lg` desktop was rejected because of the empty-space artifact and because it flattened the visual hierarchy between primary summaries and detail widgets.
