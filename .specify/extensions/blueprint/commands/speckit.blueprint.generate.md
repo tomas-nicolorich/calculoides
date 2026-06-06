@@ -243,7 +243,7 @@ Output a summary:
 - **Configuration completeness**: When generated content references environment variables, config keys, or external service endpoints, the blueprint MUST include a corresponding configuration file change listing every new variable with a placeholder value and a comment explaining its purpose.
 - **Migration/schema rules**: For tasks involving schema or state changes (database migrations, API version bumps, protocol changes, etc.), include both the forward change and the rollback/revert strategy where applicable. Preserve the project's naming conventions for versioned files.
 - Output filename is always `blueprint.md` (lowercase)
-- Follow the project's constitution and GEMINI.md architecture rules
+- Follow the project's constitution and CLAUDE.md architecture rules
 - Match existing patterns — read reference files before generating
 - All content blocks must be complete and valid — a developer can copy-paste and it works
 - Every task from `tasks.md` must appear in the blueprint — no omissions (either as a heading or in the Pre-completed table)
