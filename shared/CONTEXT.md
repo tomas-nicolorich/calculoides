@@ -65,6 +65,10 @@ _Avoid_: Goal, fund, pot
 The monthly amount a **Member** saves toward a **Savings Goal**. By default, this is proportional to the member's **Income Percentage**. A manual override by one member does not change the contributions of others; instead, it updates the **Projected Date** based on the new total monthly group saving.
 _Avoid_: Allocation, payment
 
+**Income Split**:
+The default state of **Contributions** for a **Savings Goal** in which every member's monthly amount is distributed proportionally by their **Income Percentage**. No overrides are active. Serves as the canonical reset target when a member wants to discard custom **Contribution** values.
+_Avoid_: Auto-split, default allocation, proportional split
+
 **Starting Amount**:
 An initial sum of money already saved toward a **Savings Goal** at the time of its creation, reducing the remaining amount needed to reach the target.
 

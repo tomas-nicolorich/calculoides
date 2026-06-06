@@ -21,10 +21,18 @@ Add frontend-specific display conventions here as they emerge (e.g. how **Settle
 The full-page detail view for creating or editing a single **Savings Goal**. Accepts goal parameters (name, target amount, target date, starting amount) and a per-member **Contribution** table. Computes the **Projected Date** live in the browser as values change; writes to the server only on explicit Save. Cancel discards all local changes.
 _Avoid_: Savings form, goal editor
 
+**Contribution Session**:
+The transient client-side state that begins when a user opens the per-member contribution adjustment panel inside the **Savings Calculator** and ends when they confirm via Save or discard via Cancel. No server writes occur during an active **Contribution Session**. The **Projected Date** is recomputed locally on every contribution change throughout the session.
+_Avoid_: Edit session, adjustment mode
+
+**Reset to Income Split**:
+A UI action within the **Contribution Session** that overwrites all current draft **Contribution** values with the **Income Split** defaults. Before overwriting, the session captures a **Pre-Reset Snapshot** of the current values to enable a single-level Undo.
+_Avoid_: Reset to default, revert contributions
+
 **Plan**:
 The intended outcome panel in the **Savings Calculator**, displaying the **Target Date**. Always shown in neutral colour.
 _Avoid_: Goal panel, target panel
 
 **Forecast**:
-The live-computed outcome panel in the **Savings Calculator**, displaying the **Projected Date**. Coloured green when the **Projected Date** is on or before the **Target Date**, amber when it is after.
+The outcome panel in the **Savings Calculator** that displays the **Projected Date**. Always visible. At rest (no active **Contribution Session**) it shows the server-returned value. During an active **Contribution Session** it switches to a locally-computed value and updates on every contribution change. When the session ends (Save or Cancel) it reverts to the server-returned value. Coloured green when the **Projected Date** is on or before the **Target Date**, amber when it is after.
 _Avoid_: Reality panel, projected panel
