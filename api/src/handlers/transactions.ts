@@ -25,6 +25,26 @@ import {
   calculateCategoryBalances,
 } from "../services/calculation";
 
+function requireStringParam(
+  value: unknown,
+  name: string,
+  res: ApiResponse,
+): value is string {
+  if (!value || typeof value !== "string") {
+    res.status(400).json({ error: `Missing ${name}` });
+    return false;
+  }
+  return true;
+}
+
+function parsePagination(query: Record<string, unknown>) {
+  const { limit = "20", offset = "0" } = query;
+  return {
+    parsedLimit: parseInt(limit as string, 10),
+    parsedOffset: parseInt(offset as string, 10),
+  };
+}
+
 const CreateTransferSchema = z.object({
   categoryId: IdSchema,
   fromMemberId: IdSchema,
@@ -46,13 +66,9 @@ interface ExpenseListItem {
 const routes: RouteConfig = {
   // Expenses
   "expenses-list": async (req: ApiRequest, res: ApiResponse) => {
-    const { groupId, categoryId, limit = "20", offset = "0" } = req.query;
-    if (!groupId || typeof groupId !== "string") {
-      res.status(400).json({ error: "Missing groupId" });
-      return;
-    }
-    const parsedLimit = parseInt(limit as string, 10);
-    const parsedOffset = parseInt(offset as string, 10);
+    const { groupId, categoryId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const { parsedLimit, parsedOffset } = parsePagination(req.query);
     const { expenses, total } = await ExpenseService.listExpenses(
       groupId,
       categoryId as string | undefined,
@@ -118,19 +134,9 @@ const routes: RouteConfig = {
     res.status(200).json(transfers);
   },
   "transfers-list": async (req: ApiRequest, res: ApiResponse) => {
-    const {
-      groupId,
-      categoryId,
-      memberId,
-      limit = "20",
-      offset = "0",
-    } = req.query;
-    if (!groupId || typeof groupId !== "string") {
-      res.status(400).json({ error: "Missing groupId" });
-      return;
-    }
-    const parsedLimit = parseInt(limit as string, 10);
-    const parsedOffset = parseInt(offset as string, 10);
+    const { groupId, categoryId, memberId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const { parsedLimit, parsedOffset } = parsePagination(req.query);
     const { transfers, total } = await TransferService.listTransfers(
       groupId,
       categoryId as string | undefined,
@@ -213,10 +219,7 @@ const routes: RouteConfig = {
   // Savings
   "savings-goal-create": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
-    if (!groupId || typeof groupId !== "string") {
-      res.status(400).json({ error: "Missing groupId" });
-      return;
-    }
+    if (!requireStringParam(groupId, "groupId", res)) return;
     const validatedGroupId = IdSchema.parse(groupId);
     const validatedBody = CreateSavingsGoalSchema.parse(req.body);
     const goal = await SavingsService.createGoal(
@@ -230,10 +233,7 @@ const routes: RouteConfig = {
   },
   "savings-goal-update": async (req: ApiRequest, res: ApiResponse) => {
     const { goalId } = req.query;
-    if (!goalId || typeof goalId !== "string") {
-      res.status(400).json({ error: "Missing goalId" });
-      return;
-    }
+    if (!requireStringParam(goalId, "goalId", res)) return;
     const validatedGoalId = IdSchema.parse(goalId);
     const validatedBody = CreateSavingsGoalSchema.parse(req.body);
     const goal = await SavingsService.updateGoal(
@@ -247,10 +247,7 @@ const routes: RouteConfig = {
   },
   "savings-goal-delete": async (req: ApiRequest, res: ApiResponse) => {
     const { goalId } = req.query;
-    if (!goalId || typeof goalId !== "string") {
-      res.status(400).json({ error: "Missing goalId" });
-      return;
-    }
+    if (!requireStringParam(goalId, "goalId", res)) return;
     const validatedGoalId = IdSchema.parse(goalId);
     await SavingsService.deleteGoal(validatedGoalId);
     res.status(204).end();
@@ -278,10 +275,7 @@ const routes: RouteConfig = {
   },
   "savings-goals-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
-    if (!groupId || typeof groupId !== "string") {
-      res.status(400).json({ error: "Missing groupId" });
-      return;
-    }
+    if (!requireStringParam(groupId, "groupId", res)) return;
     const validatedGroupId = IdSchema.parse(groupId);
     const goals = await SavingsService.getGoalsForGroup(validatedGroupId);
     res.status(200).json(goals);

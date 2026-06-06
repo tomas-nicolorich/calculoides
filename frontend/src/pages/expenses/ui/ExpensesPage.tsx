@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card } from "../../../shared/ui/Card";
+import { LoadingCard } from "../../../shared/ui/LoadingCard";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import {
   useExpensesList,
@@ -64,60 +64,50 @@ export function ExpensesPage() {
         categories={categories}
       />
 
-      <Card>
-        {loading ? (
-          <div className="py-20 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-balance"></div>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {expensesList === null || expensesList.expenses.length === 0 ? (
-              <div className="py-20 text-center text-slate-500">
-                No expenses found matching filters.
-              </div>
-            ) : (
-              expensesList.expenses.map((expense) => (
-                <div
-                  key={expense.id}
-                  className="py-4 flex items-center gap-4 first:pt-0 last:pb-0"
-                >
-                  <div className="p-3 bg-brand-expense/10 text-brand-expense rounded-xl">
-                    <Receipt size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {expense.description}
-                      </span>
-                      <div className="flex items-center gap-4">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          {formatCurrency(expense.amount)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-slate-400 hover:text-destructive p-2 h-auto"
-                          onClick={() => {
-                            setExpenseToDelete(expense.id);
-                          }}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-sm text-slate-500">
-                      <span>{new Date(expense.date).toLocaleDateString()}</span>
-                      <span>
-                        Member: {expense.payerName} • {expense.categoryName}
-                      </span>
-                    </div>
-                  </div>
+      <LoadingCard
+        loading={loading}
+        isEmpty={expensesList === null || expensesList.expenses.length === 0}
+        emptyMessage="No expenses found matching filters."
+      >
+        {expensesList?.expenses.map((expense) => (
+          <div
+            key={expense.id}
+            className="py-4 flex items-center gap-4 first:pt-0 last:pb-0"
+          >
+            <div className="p-3 bg-brand-expense/10 text-brand-expense rounded-xl">
+              <Receipt size={20} />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {expense.description}
+                </span>
+                <div className="flex items-center gap-4">
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {formatCurrency(expense.amount)}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-400 hover:text-destructive p-2 h-auto"
+                    onClick={() => {
+                      setExpenseToDelete(expense.id);
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
-              ))
-            )}
+              </div>
+              <div className="flex justify-between text-sm text-slate-500">
+                <span>{new Date(expense.date).toLocaleDateString()}</span>
+                <span>
+                  Member: {expense.payerName} • {expense.categoryName}
+                </span>
+              </div>
+            </div>
           </div>
-        )}
-      </Card>
+        ))}
+      </LoadingCard>
 
       <Dialog
         open={expenseToDelete !== null}

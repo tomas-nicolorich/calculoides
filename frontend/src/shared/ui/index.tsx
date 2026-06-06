@@ -101,4 +101,3 @@ export function CardContent({
 
 export { UserDisplay } from "./UserDisplay";
 export { Select } from "./Select";
-export type { SelectOption } from "./Select";

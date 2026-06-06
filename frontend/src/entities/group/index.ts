@@ -9,7 +9,7 @@ export interface Group {
   role: "OWNER" | "MEMBER";
 }
 
-export interface Invitation {
+interface Invitation {
   id: string;
   token: string;
   groupId: string;

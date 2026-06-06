@@ -1,6 +1,7 @@
-import * as React from 'react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+// fallow-ignore-file
+import * as React from "react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,7 +16,7 @@ export function Card({ title, children, className, ...props }: CardProps) {
     <div
       className={cn(
         "bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 transition-all duration-200 hover:shadow-md",
-        className
+        className,
       )}
       {...props}
     >

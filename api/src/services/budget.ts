@@ -3,16 +3,8 @@ import { Category } from "@prisma/client";
 import {
   calculateCategoryBalances,
   calculateIncomeShares,
-  IncomeShare,
+  resolveRelevantShares,
 } from "./calculation";
-
-export interface CategoryBalance {
-  memberId: string;
-  quota: number;
-  totalQuota: number;
-  spent: number;
-  remainingQuota: number;
-}
 
 export const BudgetService = {
   /**
@@ -51,19 +43,11 @@ export const BudgetService = {
     // 3. Calculate balances for each category
     return categories.map((category) => {
       // BUG-029: Recalculate income shares if category is restricted to a subset of members
-      let relevantShares: IncomeShare[];
-
-      if (category.memberLinks.length > 0) {
-        const subsetMembers = members
-          .filter((m) =>
-            category.memberLinks.some((ml) => ml.memberId === m.id),
-          )
-          .map((m) => ({ id: m.id, income: Number(m.income) }));
-
-        relevantShares = calculateIncomeShares(subsetMembers);
-      } else {
-        relevantShares = incomeShares;
-      }
+      const relevantShares = resolveRelevantShares(
+        members.map((m) => ({ id: m.id, income: Number(m.income) })),
+        category.memberLinks,
+        incomeShares,
+      );
 
       const balances = calculateCategoryBalances(
         { monthlyBudget: Number(category.monthlyBudget) },

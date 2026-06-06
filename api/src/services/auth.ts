@@ -35,7 +35,7 @@ if (
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
   },

@@ -13,6 +13,14 @@ vi.mock("./supabase", () => ({
 
 vi.stubGlobal("fetch", vi.fn());
 
+function mockFetchSuccess() {
+  vi.mocked(fetch).mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ data: "success" }),
+  } as Response);
+}
+
 describe("apiClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -29,17 +37,12 @@ describe("apiClient", () => {
       error: null,
     });
 
-    const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ data: "success" }),
-    } as Response);
+    mockFetchSuccess();
 
     await apiClient.fetch("/groups");
 
-    expect(fetchMock).toHaveBeenCalled();
-    const lastCall = fetchMock.mock.calls[0];
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    const lastCall = vi.mocked(fetch).mock.calls[0];
     expect(lastCall[0]).toBe("/api/groups");
     const options = lastCall[1] ?? {};
     const headers = options.headers as Record<string, string>;
@@ -56,17 +59,12 @@ describe("apiClient", () => {
       error: null,
     });
 
-    const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ data: "success" }),
-    } as Response);
+    mockFetchSuccess();
 
     await apiClient.fetch("/groups");
 
-    expect(fetchMock).toHaveBeenCalled();
-    const lastCall = fetchMock.mock.calls[0];
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    const lastCall = vi.mocked(fetch).mock.calls[0];
     expect(lastCall[0]).toBe("/api/groups");
     const options = lastCall[1] ?? {};
     const headers = options.headers as Record<string, string>;

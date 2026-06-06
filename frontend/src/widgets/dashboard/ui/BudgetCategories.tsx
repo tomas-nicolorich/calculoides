@@ -16,6 +16,109 @@ interface MemberBasic {
   name: string;
 }
 
+interface CategoryFormFieldsProps {
+  name: string;
+  setName: (v: string) => void;
+  monthlyBudget: string;
+  setMonthlyBudget: (v: string) => void;
+  icon: string;
+  setIcon: (v: string) => void;
+  members: MemberBasic[];
+  selectedMemberIds: string[];
+  toggleMember: (id: string) => void;
+  formError: string | null;
+  formLoading: boolean;
+  submitLabel: string;
+}
+
+function CategoryFormFields({
+  name,
+  setName,
+  monthlyBudget,
+  setMonthlyBudget,
+  icon,
+  setIcon,
+  members,
+  selectedMemberIds,
+  toggleMember,
+  formError,
+  formLoading,
+  submitLabel,
+}: CategoryFormFieldsProps) {
+  return (
+    <>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Category Name</label>
+        <Input
+          placeholder="e.g. Rent, Groceries"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Monthly Budget (€)</label>
+        <Input
+          type="number"
+          step="0.01"
+          placeholder="0.00"
+          value={monthlyBudget}
+          onChange={(e) => {
+            setMonthlyBudget(e.target.value);
+          }}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Icon (Emoji)</label>
+        <Input
+          placeholder="💰"
+          value={icon}
+          onChange={(e) => {
+            setIcon(e.target.value);
+          }}
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">
+          Assign to Members (Optional)
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {members.map((member) => (
+            <button
+              key={member.id}
+              type="button"
+              onClick={() => {
+                toggleMember(member.id);
+              }}
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                selectedMemberIds.includes(member.id)
+                  ? "bg-brand-balance text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              }`}
+            >
+              {member.name}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-slate-500">
+          If none selected, category applies to everyone.
+        </p>
+      </div>
+      {formError && <p className="text-sm text-red-500">{formError}</p>}
+      <button
+        type="submit"
+        disabled={formLoading}
+        className="w-full p-3 mt-4 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
+      >
+        {formLoading ? "Saving..." : submitLabel}
+      </button>
+    </>
+  );
+}
+
 interface BudgetCategoriesProps {
   categories: CategoryWithBalances[];
   isOwner: boolean;
@@ -186,74 +289,20 @@ export function BudgetCategories({
           description="Create a new budget category for your group."
         >
           <form onSubmit={(e) => void handleAddSubmit(e)} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Category Name</label>
-              <Input
-                placeholder="e.g. Rent, Groceries"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Monthly Budget (€)</label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={monthlyBudget}
-                onChange={(e) => {
-                  setMonthlyBudget(e.target.value);
-                }}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Icon (Emoji)</label>
-              <Input
-                placeholder="💰"
-                value={icon}
-                onChange={(e) => {
-                  setIcon(e.target.value);
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Assign to Members (Optional)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {members.map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => {
-                      toggleMember(member.id);
-                    }}
-                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedMemberIds.includes(member.id)
-                        ? "bg-brand-balance text-white"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                    }`}
-                  >
-                    {member.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500">
-                If none selected, category applies to everyone.
-              </p>
-            </div>
-            {formError && <p className="text-sm text-red-500">{formError}</p>}
-            <button
-              type="submit"
-              disabled={formLoading}
-              className="w-full p-3 mt-4 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
-            >
-              {formLoading ? "Saving..." : "Save Category"}
-            </button>
+            <CategoryFormFields
+              name={name}
+              setName={setName}
+              monthlyBudget={monthlyBudget}
+              setMonthlyBudget={setMonthlyBudget}
+              icon={icon}
+              setIcon={setIcon}
+              members={members}
+              selectedMemberIds={selectedMemberIds}
+              toggleMember={toggleMember}
+              formError={formError}
+              formLoading={formLoading}
+              submitLabel="Save Category"
+            />
           </form>
         </ResponsiveDialog>
 
@@ -276,74 +325,20 @@ export function BudgetCategories({
             onSubmit={(e) => void handleEditSubmit(e)}
             className="space-y-4"
           >
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Category Name</label>
-              <Input
-                placeholder="e.g. Rent, Groceries"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                }}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Monthly Budget (€)</label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={monthlyBudget}
-                onChange={(e) => {
-                  setMonthlyBudget(e.target.value);
-                }}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Icon (Emoji)</label>
-              <Input
-                placeholder="💰"
-                value={icon}
-                onChange={(e) => {
-                  setIcon(e.target.value);
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Assign to Members (Optional)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {members.map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => {
-                      toggleMember(member.id);
-                    }}
-                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedMemberIds.includes(member.id)
-                        ? "bg-brand-balance text-white"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                    }`}
-                  >
-                    {member.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500">
-                If none selected, category applies to everyone.
-              </p>
-            </div>
-            {formError && <p className="text-sm text-red-500">{formError}</p>}
-            <button
-              type="submit"
-              disabled={formLoading}
-              className="w-full p-3 mt-4 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
-            >
-              {formLoading ? "Saving..." : "Save Changes"}
-            </button>
+            <CategoryFormFields
+              name={name}
+              setName={setName}
+              monthlyBudget={monthlyBudget}
+              setMonthlyBudget={setMonthlyBudget}
+              icon={icon}
+              setIcon={setIcon}
+              members={members}
+              selectedMemberIds={selectedMemberIds}
+              toggleMember={toggleMember}
+              formError={formError}
+              formLoading={formLoading}
+              submitLabel="Save Changes"
+            />
           </form>
         </ResponsiveDialog>
 
