@@ -26,13 +26,17 @@ The transient client-side state that begins when a user opens the per-member con
 _Avoid_: Edit session, adjustment mode
 
 **Reset to Income Split**:
-A UI action within the **Contribution Session** that overwrites all current draft **Contribution** values with the **Income Split** defaults. Before overwriting, the session captures a **Pre-Reset Snapshot** of the current values to enable a single-level Undo.
+A UI action within the **Contribution Session** that overwrites all current draft **Contribution** values with the **Income Split** defaults. Clears all overrides; the **Forecast** immediately recalculates from proportional amounts. Cancelling the session afterward restores the server-saved overrides (from the **Pre-Reset Snapshot**), not the pre-reset draft values.
 _Avoid_: Reset to default, revert contributions
+
+**Pre-Reset Snapshot**:
+A snapshot of the server-saved override amounts, captured at the moment a **Contribution Session** opens. Stored as `memberId → actualAmount` for members whose contribution is currently overridden. Used by Cancel to restore the session to its at-rest server state. Distinct from the current draft overrides, which change as the user edits.
+_Avoid_: Undo buffer, edit history
 
 **Plan**:
 The intended outcome panel in the **Savings Calculator**, displaying the **Target Date**. Always shown in neutral colour.
 _Avoid_: Goal panel, target panel
 
 **Forecast**:
-The outcome panel in the **Savings Calculator** that displays the **Projected Date**. Always visible. At rest (no active **Contribution Session**) it shows the server-returned value. During an active **Contribution Session** it switches to a locally-computed value and updates on every contribution change. When the session ends (Save or Cancel) it reverts to the server-returned value. Coloured green when the **Projected Date** is on or before the **Target Date**, amber when it is after.
+The outcome panel in the **Savings Calculator** that displays the **Projected Date**. Always visible. At rest (no active **Contribution Session**) it shows the server-returned value. During an active **Contribution Session** it switches to a locally-computed value and updates on every contribution change. When the session ends (Save or Cancel) it reverts to the server-returned value. Colour: green when the **Projected Date** is on or before the **Target Date**; amber when it is after (but finite); red with the label "Never" when the total monthly **Contribution** reaches zero (Infinity result).
 _Avoid_: Reality panel, projected panel
