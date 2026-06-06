@@ -1,7 +1,7 @@
 installed:
 - agent-context
-- superb
 - bugfix
+- superb
 - version-guard
 settings:
   auto_execute_hooks: true
@@ -10,58 +10,35 @@ hooks:
   - extension: version-guard
     command: speckit.version-guard.check
     enabled: true
-    optional: true
-    prompt: Execute speckit.version-guard.check?
+    optional: false
     description: Verify tech stack versions and write constraints before planning
-    condition: null
-  before_tasks:
-  - extension: version-guard
-    command: speckit.version-guard.load
-    enabled: true
-    optional: true
-    prompt: Execute speckit.version-guard.load?
-    description: Load version guard constraints into context before task generation
     condition: null
   before_implement:
   - extension: version-guard
     command: speckit.version-guard.load
     enabled: true
-    optional: true
-    prompt: Execute speckit.version-guard.load?
+    optional: false
     description: Load version guard constraints into context before code generation
-    condition: null
-  - extension: superb
-    command: speckit.superb.tdd
-    enabled: true
-    optional: true
-    prompt: Execute speckit.superb.tdd?
-    description: 'Mandatory TDD gate. Bridges an installed superpowers test-driven-development
-      skill into the spec-kit task structure before any code is written.
-
-      '
     condition: null
   after_specify:
   - extension: agent-context
     command: speckit.agent-context.update
     enabled: true
-    optional: true
-    prompt: Execute speckit.agent-context.update?
+    optional: false
     description: Refresh agent context after specification
     condition: null
   after_plan:
   - extension: agent-context
     command: speckit.agent-context.update
     enabled: true
-    optional: true
-    prompt: Execute speckit.agent-context.update?
+    optional: false
     description: Refresh agent context after planning
     condition: null
   after_tasks:
   - extension: superb
     command: speckit.superb.review
     enabled: true
-    optional: true
-    prompt: Review tasks.md for coverage and TDD-readiness before implementation?
+    optional: false
     description: 'Catches missing or under-specified tasks at planning time. Produces
       a requirement coverage and TDD-readiness report. Bridge-native logic.
 
@@ -71,22 +48,13 @@ hooks:
   - extension: version-guard
     command: speckit.version-guard.validate
     enabled: true
-    optional: true
-    prompt: Execute speckit.version-guard.validate?
+    optional: false
     description: Scan generated code for version-incompatible API patterns
-    condition: null
-  - extension: bugfix
-    command: speckit.bugfix.verify
-    enabled: true
-    optional: true
-    prompt: Run bugfix consistency check after implementation?
-    description: Verify spec artifact consistency after implementation completes
     condition: null
   - extension: superb
     command: speckit.superb.verify
     enabled: true
-    optional: true
-    prompt: Execute speckit.superb.verify?
+    optional: false
     description: 'Mandatory completion gate. Bridges an installed superpowers verification-before-completion
       skill and extends it with spec-kit spec-coverage checks. Prevents false completions.
 
