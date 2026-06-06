@@ -30,22 +30,22 @@ provides:
 hooks:
   before_plan:
     command: "speckit.version-guard.check"
-    optional: true
+    optional: false
     description: "Verify tech stack versions and write constraints before planning"
 
   before_implement:
     command: "speckit.version-guard.load"
-    optional: true
+    optional: false
     description: "Load version guard constraints into context before code generation"
 
   before_tasks:
     command: "speckit.version-guard.load"
-    optional: true
+    optional: false
     description: "Load version guard constraints into context before task generation"
 
   after_implement:
     command: "speckit.version-guard.validate"
-    optional: true
+    optional: false
     description: "Scan generated code for version-incompatible API patterns"
 
 tags:
