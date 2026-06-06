@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-05
 
-**Status**: Draft
+**Status**: Tasked
 
 **Input**: Derived from `docs/adr/0001`, `docs/adr/0002`, `docs/adr/0003`
 
