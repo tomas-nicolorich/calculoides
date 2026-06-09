@@ -24,12 +24,17 @@ export function RemainingBalance({
           <div className="text-sm text-slate-500 dark:text-slate-400">
             Total Group Remaining
           </div>
-          <div className="text-3xl font-bold text-brand-balance">
+          <div className="text-3xl font-semibold text-brand-balance">
             {formatCurrency(totalRemaining)}
           </div>
         </div>
 
         <div className="space-y-4">
+          {members.length === 0 && (
+            <p className="text-center py-8 text-slate-400 text-sm">
+              No members yet
+            </p>
+          )}
           {members.map((member) => (
             <div
               key={member.id}
