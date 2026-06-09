@@ -165,6 +165,20 @@ describe("SavingsGoalList — Contribution Session", () => {
     });
   });
 
+  it("Save button is disabled when all contributions are zero (FR-DS-014)", async () => {
+    await clickAdjustAndWaitForForecast(zeroContribGoal);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /^save$/i })).toBeDisabled();
+    });
+  });
+
+  it("Save button remains enabled on already-funded goal (FR-DS-018)", async () => {
+    render(<SavingsGoalList goals={[alreadyFundedGoal]} />);
+    fireEvent.click(screen.getByRole("button", { name: /adjust/i }));
+    await waitFor(() => screen.getByTestId("forecast-projected-date"));
+    expect(screen.getByRole("button", { name: /^save$/i })).not.toBeDisabled();
+  });
+
   it('shows "Already reached" on already-funded goal', async () => {
     render(<SavingsGoalList goals={[alreadyFundedGoal]} />);
 
