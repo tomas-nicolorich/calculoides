@@ -35,7 +35,7 @@ export function BudgetTransfers({ transfers }: BudgetTransfersProps) {
             <div className="text-center py-8 text-slate-400 text-sm">No recent transfers</div>
           ) : (
             transfers.map((transfer) => (
-              <div key={transfer.id} className="flex items-center gap-4">
+              <div key={transfer.id} data-testid="transfer-row" className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/30 border-l-2 border-slate-200 dark:border-slate-700 p-2 rounded-lg">
                 <div className="p-2 bg-brand-transfer/10 text-brand-transfer rounded-lg">
                   <ArrowRightLeft size={18} />
                 </div>
