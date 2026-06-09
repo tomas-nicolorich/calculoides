@@ -36,7 +36,7 @@ describe("BudgetTransfers Widget", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("Budget Transfers")).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("BudgetTransfers Widget", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("Groceries")).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe("BudgetTransfers Widget", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={[]} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("No recent transfers")).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe("BudgetTransfers Widget", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const rows = screen.getAllByTestId("transfer-row");
@@ -81,7 +81,7 @@ describe("BudgetTransfers Widget", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const rows = screen.getAllByTestId("transfer-row");

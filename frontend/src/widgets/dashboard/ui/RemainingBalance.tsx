@@ -44,7 +44,7 @@ export function RemainingBalance({
                 <span className="font-semibold text-slate-900 dark:text-white">
                   {member.name}
                 </span>
-                <span className="font-bold text-brand-balance">
+                <span className="font-semibold text-brand-balance">
                   {formatCurrency(member.income - member.budgeted)}
                 </span>
               </div>

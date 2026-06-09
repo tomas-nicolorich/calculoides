@@ -43,6 +43,19 @@ describe("IncomeOverview Widget", () => {
     expect(screen.getByText(/1,000\.00/i)).toBeInTheDocument();
   });
 
+  it("primary figure has font-semibold class", () => {
+    render(<IncomeOverview totalIncome={6000} members={mockMembers} />);
+
+    const primaryFigure = screen.getByText(/6,000\.00/i);
+    expect(primaryFigure).toHaveClass("font-semibold");
+  });
+
+  it("shows empty state message when members is empty", () => {
+    render(<IncomeOverview totalIncome={0} members={[]} />);
+
+    expect(screen.getByText("No members yet")).toBeInTheDocument();
+  });
+
   it("assigns unique rotating color classes to each member segment and matching color indicators", () => {
     render(<IncomeOverview totalIncome={6000} members={mockMembers} />);
 
