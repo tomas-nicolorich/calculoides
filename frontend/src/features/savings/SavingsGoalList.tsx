@@ -240,7 +240,10 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                       size="sm"
                       className={`h-8 text-xs ${FOCUS_RING}`}
                       onClick={() => void handleSave()}
-                      disabled={session.phase === "saving"}
+                      disabled={
+                        session.phase === "saving" ||
+                        session.forecastColor === "red"
+                      }
                     >
                       {session.phase === "saving" ? "Saving..." : "Save"}
                     </Button>
