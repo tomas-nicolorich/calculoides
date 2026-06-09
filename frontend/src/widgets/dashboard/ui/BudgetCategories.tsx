@@ -264,7 +264,7 @@ export function BudgetCategories({
   };
 
   return (
-    <Card title="Budget Categories" className="md:col-span-2">
+    <Card title="Budget Categories" className="md:col-span-2 xl:col-span-3">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div className="text-sm text-slate-500">
@@ -408,6 +408,12 @@ export function BudgetCategories({
           </form>
         </ResponsiveDialog>
 
+        {categories.length === 0 && (
+          <p className="text-center py-8 text-slate-400 text-sm">
+            No categories yet
+          </p>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {categories.map((category) => (
             <div
@@ -464,7 +470,7 @@ export function BudgetCategories({
                 {category.balances.map((balance: CategoryBalance) => (
                   <div
                     key={balance.memberId}
-                    className="flex justify-between items-center text-sm p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50"
+                    className="flex justify-between items-center text-sm p-2 rounded-lg bg-slate-50 dark:bg-slate-800/30 border-l-2 border-slate-200 dark:border-slate-700"
                   >
                     <div className="flex items-center gap-3">
                       <button
@@ -478,7 +484,7 @@ export function BudgetCategories({
                           setTransferAmount("");
                           setFormError(null);
                         }}
-                        className="p-1.5 text-brand-transfer bg-white dark:bg-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all"
+                        className="p-1.5 text-brand-transfer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded transition-all"
                         title="Initiate Transfer"
                       >
                         <ArrowRightLeft size={14} />

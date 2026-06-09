@@ -1,19 +1,32 @@
-import { useDashboardSummary, useCategoriesList } from '../../../shared/api/dashboardHooks';
-import { IncomeOverview } from '../../../widgets/dashboard/ui/IncomeOverview';
-import { RemainingBalance } from '../../../widgets/dashboard/ui/RemainingBalance';
-import { BudgetCategories } from '../../../widgets/dashboard/ui/BudgetCategories';
-import { BudgetTransfers } from '../../../widgets/dashboard/ui/BudgetTransfers';
-import { RecentExpenses } from '../../../widgets/dashboard/ui/RecentExpenses';
-import { Link, useParams } from 'react-router-dom';
-import { Calculator } from 'lucide-react';
-import { useAuth } from '../../../app/providers/AuthContext';
-import { apiClient } from '../../../shared/api/client';
+import {
+  useDashboardSummary,
+  useCategoriesList,
+} from "../../../shared/api/dashboardHooks";
+import { IncomeOverview } from "../../../widgets/dashboard/ui/IncomeOverview";
+import { RemainingBalance } from "../../../widgets/dashboard/ui/RemainingBalance";
+import { BudgetCategories } from "../../../widgets/dashboard/ui/BudgetCategories";
+import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
+import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
+import { Link, useParams } from "react-router-dom";
+import { Calculator } from "lucide-react";
+import { useAuth } from "../../../app/providers/AuthContext";
+import { apiClient } from "../../../shared/api/client";
 
 export function DashboardPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
-  const { data: summary, loading: summaryLoading, error: summaryError, refresh: refreshSummary } = useDashboardSummary(groupId ?? null);
-  const { data: categories, loading: categoriesLoading, error: categoriesError, refresh: refreshCategories } = useCategoriesList(groupId ?? null);
+  const {
+    data: summary,
+    loading: summaryLoading,
+    error: summaryError,
+    refresh: refreshSummary,
+  } = useDashboardSummary(groupId ?? null);
+  const {
+    data: categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    refresh: refreshCategories,
+  } = useCategoriesList(groupId ?? null);
 
   if (summaryLoading || categoriesLoading) {
     return (
@@ -26,10 +39,17 @@ export function DashboardPage() {
   if (summaryError || categoriesError) {
     return (
       <div className="p-8 text-center space-y-4">
-        <p className="text-red-500 font-medium">Failed to load dashboard data</p>
-        <p className="text-sm text-slate-500">{summaryError ?? categoriesError}</p>
-        <button 
-          onClick={() => { refreshSummary(); refreshCategories(); }}
+        <p className="text-red-500 font-medium">
+          Failed to load dashboard data
+        </p>
+        <p className="text-sm text-slate-500">
+          {summaryError ?? categoriesError}
+        </p>
+        <button
+          onClick={() => {
+            refreshSummary();
+            refreshCategories();
+          }}
           className="px-4 py-2 bg-brand-balance text-white rounded-xl"
         >
           Retry
@@ -50,11 +70,13 @@ export function DashboardPage() {
 
   const handleDeleteCategory = async (id: string) => {
     try {
-      await apiClient.fetch(`/transactions?action=category-delete&id=${id}`, { method: 'DELETE' });
+      await apiClient.fetch(`/transactions?action=category-delete&id=${id}`, {
+        method: "DELETE",
+      });
       refreshCategories();
       refreshSummary();
     } catch (err) {
-      console.error('Failed to delete category', err);
+      console.error("Failed to delete category", err);
       // Removed alert to comply with SC-006
     }
   };
@@ -68,12 +90,14 @@ export function DashboardPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{summary.groupName}</h1>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+            {summary.groupName}
+          </h1>
           <p className="text-slate-500">Welcome back to your dashboard</p>
         </div>
-        
-        <Link 
-          to={`/savings/${groupId ?? ''}`}
+
+        <Link
+          to={`/savings/${groupId ?? ""}`}
           className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-balance text-white rounded-2xl font-semibold shadow-lg shadow-brand-balance/20 hover:scale-[1.02] transition-transform active:scale-[0.98]"
         >
           <Calculator size={20} />
@@ -81,23 +105,28 @@ export function DashboardPage() {
         </Link>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <IncomeOverview 
-          totalIncome={summary.totalIncome} 
-          members={summary.members} 
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start"
+        data-testid="dashboard-grid"
+      >
+        <IncomeOverview
+          totalIncome={summary.totalIncome}
+          members={summary.members}
         />
-        <RemainingBalance 
-          totalRemaining={summary.totalIncome - summary.totalSpent} 
-          members={summary.members} 
+        <RemainingBalance
+          totalRemaining={summary.totalIncome - summary.totalSpent}
+          members={summary.members}
         />
         <RecentExpenses expenses={summary.recentExpenses} />
-        
-        <BudgetCategories 
-          categories={categories} 
+
+        <BudgetCategories
+          categories={categories}
           isOwner={isOwner}
-          onDelete={(id) => { void handleDeleteCategory(id); }}
-          groupId={groupId ?? ''}
-          members={summary.members.map(m => ({ id: m.id, name: m.name }))}
+          onDelete={(id) => {
+            void handleDeleteCategory(id);
+          }}
+          groupId={groupId ?? ""}
+          members={summary.members.map((m) => ({ id: m.id, name: m.name }))}
           onRefresh={handleRefresh}
         />
 
