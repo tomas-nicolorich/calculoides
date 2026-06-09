@@ -32,14 +32,19 @@ Lives in `frontend/src/entities/savings-goal/index.ts` alongside the existing `S
 /** The three phases of a Contribution Session lifecycle. */
 export type ContributionSessionPhase = 'idle' | 'editing' | 'saving';
 
-/** In-memory snapshot taken at session open; used to restore on Cancel. */
-export type PreResetSnapshot = Record<string, number>; // memberId → override amount
+/** Server-side contribution values captured at session open; used by cancelSession to discard all in-session changes (FR-DS-003). */
+export type SessionStartSnapshot = Record<string, number>; // memberId → server amount
+
+/** Contribution values captured immediately before a resetToIncomeSplit; restored by undoReset. Null when no reset has occurred in this session (FR-DS-004). */
+export type PreResetSnapshot = Record<string, number> | null;
 
 export interface ContributionSessionState {
   phase: ContributionSessionPhase;
   /** memberId → override amount for this session (undefined = use proportional default) */
   overrideAmounts: Record<string, number>;
-  /** Snapshot captured on sessionStart; restored on cancelSession */
+  /** Server values captured at sessionStart; restored on cancelSession to discard all in-session changes (FR-DS-003). */
+  sessionStartSnapshot: SessionStartSnapshot;
+  /** Captured immediately before resetToIncomeSplit; restored on undoReset; null when no reset has occurred (FR-DS-004). */
   preResetSnapshot: PreResetSnapshot;
   /** Derived — updated on every override change; null when phase === 'idle' */
   localProjectedMonths: number | null;
@@ -50,11 +55,13 @@ export interface ContributionSessionState {
 
 ```typescript
 export type ContributionSessionAction =
-  | { type: 'sessionStart'; snapshot: PreResetSnapshot }
+  | { type: 'sessionStart'; snapshot: SessionStartSnapshot }
   | { type: 'overrideAmount'; memberId: string; amount: number }
   | { type: 'resetToIncomeSplit' }
+  | { type: 'undoReset' }
   | { type: 'saveStart' }
   | { type: 'saveSuccess' }
+  | { type: 'saveFailure'; error: string }
   | { type: 'cancelSession' };
 ```
 
@@ -63,9 +70,10 @@ export type ContributionSessionAction =
 ```
 idle
   └─ sessionStart(snapshot) ──────────────────────────────► editing
-                                                               │
+                                  (captures sessionStartSnapshot)          │
                                                    overrideAmount(memberId, amount)
-                                                   resetToIncomeSplit
+                                                   resetToIncomeSplit (captures preResetSnapshot)
+                                                   undoReset (restores preResetSnapshot, clears it)
                                                    (stays in editing, updates localProjectedMonths)
                                                                │
                                           ┌────────────────────┤
@@ -75,13 +83,14 @@ idle
                                           ▼                    ▼
                                        saving               idle
                                           │           (restores overrideAmounts
-                                          │            from preResetSnapshot)
-                                    saveSuccess
-                                          │
-                                          ▼
-                                        idle
-                                  (goal data refetched;
-                                   server projectedDate shown)
+                                    ┌─────┴──────┐    from sessionStartSnapshot)
+                               saveSuccess  saveFailure
+                                    │            │
+                                    ▼            ▼
+                                  idle         saving
+                            (goal data    (error set,
+                             refetched;    session active)
+                          server projectedDate shown)
 ```
 
 ## Existing Types (unchanged)

@@ -32,7 +32,7 @@ export function IncomeOverview({ totalIncome, members }: IncomeOverviewProps) {
           <div className="text-sm text-slate-500 dark:text-slate-400">
             Total Group Income
           </div>
-          <div className="text-3xl font-bold text-slate-900 dark:text-white">
+          <div className="text-3xl font-semibold text-slate-900 dark:text-white">
             {formatCurrency(totalIncome)}
           </div>
         </div>
@@ -55,6 +55,11 @@ export function IncomeOverview({ totalIncome, members }: IncomeOverviewProps) {
 
         {/* Members Breakdown with circular color indicators acting as a legend key */}
         <div className="space-y-3">
+          {members.length === 0 && (
+            <p className="text-center py-8 text-slate-400 text-sm">
+              No members yet
+            </p>
+          )}
           {members.map((member, index) => {
             const colorClass = MEMBER_COLORS[index % MEMBER_COLORS.length];
             return (

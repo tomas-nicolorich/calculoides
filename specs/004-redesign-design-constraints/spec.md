@@ -111,6 +111,7 @@ As a user on the dashboard, I want cards to be sized to their content and arrang
 - **Micro-Label**: A UI typographic pattern — `text-[10px] uppercase tracking-widest` — used for section headers and status chips throughout the component library.
 - **Left Accent**: A colored `border-l-*` strip on card or row elements that signals a status or category.
 - **Nested Row**: A member or item row rendered inside a card, requiring visual separation from siblings.
+- **targetMonths**: The number of calendar months between today and `SavingsGoal.targetDate`, computed as `(targetDate.getFullYear() - now.getFullYear()) * 12 + (targetDate.getMonth() - now.getMonth())`. Used as the `forecastColor` threshold: `green` when `localProjectedMonths ≤ targetMonths`, `amber` when over. Mirrors the server-side calendar diff in `api/src/services/savings.ts`. Computed at session open in `useContributionSession`.
 
 ## Success Criteria *(mandatory)*
 
@@ -144,3 +145,5 @@ As a user on the dashboard, I want cards to be sized to their content and arrang
 - Q: How should concurrent saves by two members on the same Savings Calculator be handled? → A: Last-write-wins; optimistic locking is out of scope for this iteration.
 - Q: What accessibility baseline applies to icon buttons and the Savings Calculator? → A: WCAG 2.1 AA keyboard navigation — all interactive elements reachable and operable via keyboard, with visible focus states. Screen reader compliance is not required.
 - Q: What should a dashboard card display when it has no data? → A: A minimal empty-state label (e.g., "No expenses yet") with an optional call-to-action link; cards remain visible in the grid and are never hidden.
+- Q: Should the Savings Calculator display a success notification after a successful Save? → A: No. Save transitions the Contribution Session to idle and triggers a refetch of the server-returned Projected Date. No success toast, flash, or highlight is shown — the updated Forecast panel confirms success implicitly.
+- Q: What does the Forecast panel display when no Contribution Session is active (`phase === 'idle'`)? → A: The panel is visible at all times (FR-DS-019). At rest it renders the server-returned Projected Date in neutral styling: no color emphasis class applied (default text color, not green/amber/red). The `forecastColor` value is `'neutral'` in this state.

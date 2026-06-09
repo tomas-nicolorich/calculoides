@@ -12,7 +12,7 @@ Deliver three user stories against the existing Savings Calculator + Dashboard U
 
    **Session architecture**: `useContributionSession(activeGoal: SavingsGoal | null)` lives at the `SavingsGoalList` level (one instance per page, not per goal). `SavingsGoalList` owns `activeGoalId: string | null` via `useState`. Only one Contribution Session can be active at a time — this is an explicit constraint enforced by the single hook instance and a single `activeGoalId`. Passing `null` resets the hook to idle.
 
-2. **US2 — Reduced Visual Weight**: Typography and border tokens are adjusted project-wide: `font-bold` → `font-semibold` on primary figures, `font-bold` → `font-medium` on micro-labels (`text-[10px] uppercase tracking-widest`), `border-l-2` left accents on nested rows, `bg-slate-50/bg-slate-800/30` fill on nested rows, hover-only icon button backgrounds.
+2. **US2 — Reduced Visual Weight**: Typography and border tokens are adjusted project-wide: `font-bold` → `font-semibold` on primary figures, `font-bold` → `font-medium` on micro-labels (`text-[10px] uppercase tracking-widest`), `border-l-2` left accents on nested rows, `bg-slate-50/bg-slate-800/30` fill on nested rows, hover-only icon button backgrounds. `SavingsGoalList.tsx` US2 changes are bundled into T011b (US1) — not a standalone Phase 4 task. `RecentExpenses.tsx` is confirmed out of scope: no icon buttons, no `font-bold` primary figures.
 
 3. **US3 — Two-Column Dashboard Layout**: Dashboard grid becomes 2-column at `md`/`lg`, 3-column at `xl+`. Current implementation has a bug (`lg:grid-cols-3` instead of `xl:grid-cols-3`) that this story corrects.
 
