@@ -81,7 +81,7 @@ export function SavingsGoalForm({
   return (
     <Card className="border-t-4 border-t-brand-balance shadow-sm">
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
+        <CardTitle className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-200">
           {isEditing ? "Update" : "New"} Savings Goal
         </CardTitle>
       </CardHeader>
@@ -93,7 +93,7 @@ export function SavingsGoalForm({
           className="space-y-5"
         >
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Goal Name
             </label>
             <Input
@@ -109,7 +109,7 @@ export function SavingsGoalForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Target (€)
               </label>
               <Input
@@ -126,7 +126,7 @@ export function SavingsGoalForm({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Initial (€)
               </label>
               <Input
@@ -143,7 +143,7 @@ export function SavingsGoalForm({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Target Date
             </label>
             <Input
