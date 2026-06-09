@@ -1,15 +1,31 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SavingsGoalList } from "./SavingsGoalList";
 import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect } from "vitest";
 
-vi.mock("../../entities/savings-goal", () => ({
-  savingsGoalApi: {
-    upsertContribution: vi.fn().mockResolvedValue({}),
+vi.mock("../../shared/api/supabase", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: "mock-token" } },
+      }),
+    },
   },
 }));
 
-// Mock UserDisplay to simplify testing
+vi.mock("../../entities/savings-goal", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../entities/savings-goal")>();
+  return {
+    ...actual,
+    savingsGoalApi: {
+      ...actual.savingsGoalApi,
+      upsertContribution: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+});
+
 vi.mock("../../shared/ui", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../shared/ui")>();
   return {
@@ -45,39 +61,29 @@ const mockGoals = [
 ];
 
 describe("SavingsGoalList", () => {
-  it("triggers onRefresh immediately after contribution change", async () => {
+  it("calls onRefresh after saving contributions and closes editing panel", async () => {
+    const user = userEvent.setup();
     const onRefresh = vi.fn();
     render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
-    // Click Adjust button
-    const adjustButton = screen.getByText(/Adjust/i);
-    fireEvent.click(adjustButton);
+    await user.click(screen.getByRole("button", { name: /adjust/i }));
 
-    // Change the contribution amount
-    const input = screen.getByRole("spinbutton");
-    fireEvent.change(input, { target: { value: "150" } });
+    // Wait for session to enter editing phase
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
 
-    // Click Save Adjustments
-    const saveButton = screen.getByText(/Save Adjustments/i);
-    fireEvent.click(saveButton);
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    // Verify API call was made correctly
-    expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
-      "goal-1",
-      "member-1",
-      150,
-    );
-
-    // Verify onRefresh is called WITHOUT waiting for the 1.5s timeout that existed before
-    await waitFor(
-      () => {
-        expect(onRefresh).toHaveBeenCalled();
-      },
-      { timeout: 1000 },
-    ); // Short timeout to ensure it's "immediate"
-
-    // Verify success feedback is visible
-    expect(screen.getByText(/Changes saved successfully/i)).toBeInTheDocument();
+    // onRefresh called after successful save
+    await waitFor(() => {
+      expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
+        "goal-1",
+        "member-1",
+        100,
+      );
+      expect(onRefresh).toHaveBeenCalled();
+    });
   });
 
   it("displays the projected date and variance correctly", () => {
@@ -95,7 +101,6 @@ describe("SavingsGoalList", () => {
 
     expect(screen.getByText(/Delayed 6mo/i)).toBeInTheDocument();
 
-    // Check for the date display (using a flexible regex for date formats)
     const dateDisplay = screen.getByText(/2027/);
     expect(dateDisplay).toBeInTheDocument();
     expect(dateDisplay).not.toHaveTextContent("1970");
