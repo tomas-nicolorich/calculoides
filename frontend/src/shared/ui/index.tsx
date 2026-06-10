@@ -28,7 +28,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
         variants[variant],
         sizes[size],
         className,
@@ -60,7 +60,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200 dark:border-slate-800 bg-card text-card-foreground shadow",
+        "rounded-2xl border border-slate-200 dark:border-slate-800 bg-card text-card-foreground shadow",
         className,
       )}
       {...props}
