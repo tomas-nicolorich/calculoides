@@ -61,8 +61,3 @@ For speckit-plan Phase 0 (research), always dispatch — it always involves mult
 - After entering a worktree, run `git rebase origin/develop && npm install --workspaces` before any work — the worktree starts from HEAD and may not be rebased or have dependencies installed.
 
 <!-- headroom:learn:end -->
-
-<!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
-<!-- SPECKIT END -->

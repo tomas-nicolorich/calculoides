@@ -177,3 +177,6 @@ build/
 .pi
 .env*
 .fallow/
+.headroom
+headroom_memory.db
+.specify
