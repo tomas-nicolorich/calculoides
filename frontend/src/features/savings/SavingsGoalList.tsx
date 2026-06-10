@@ -112,11 +112,17 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                   </span>
                 </Button>
               </div>
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                Target: €{goal.targetAmount.toLocaleString()}
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Target:{" "}
+                <span className="font-mono tnum">
+                  €{goal.targetAmount.toLocaleString()}
+                </span>
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                Starting: €{goal.startingAmount.toLocaleString()}
+                Starting:{" "}
+                <span className="font-mono tnum">
+                  €{goal.startingAmount.toLocaleString()}
+                </span>
               </p>
             </div>
             <div className="text-right">
@@ -181,7 +187,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               {goal.breakdown.map((item) => (
                 <div
                   key={item.memberId}
-                  className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-800/30 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
+                  className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
                 >
                   <UserDisplay
                     user={item.user}
@@ -208,7 +214,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                       />
                     ) : (
                       <div className="text-right">
-                        <p className="font-semibold text-slate-900 dark:text-white">
+                        <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
                           €
                           {item.actualAmount.toLocaleString(undefined, {
                             minimumFractionDigits: 2,

@@ -32,7 +32,7 @@ export function IncomeOverview({ totalIncome, members }: IncomeOverviewProps) {
           <div className="text-sm text-slate-500 dark:text-slate-400">
             Total Group Income
           </div>
-          <div className="text-3xl font-semibold text-slate-900 dark:text-white">
+          <div className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white font-mono tnum">
             {formatCurrency(totalIncome)}
           </div>
         </div>
@@ -79,10 +79,10 @@ export function IncomeOverview({ totalIncome, members }: IncomeOverviewProps) {
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="font-semibold text-slate-900 dark:text-white">
+                  <span className="font-semibold text-slate-900 dark:text-white font-mono tnum">
                     {formatCurrency(member.income)}
                   </span>
-                  <span className="ml-2 text-slate-400">
+                  <span className="ml-2 text-slate-400 font-mono tnum">
                     ({member.share.toFixed(1)}%)
                   </span>
                 </div>

@@ -42,7 +42,7 @@ export function BudgetTransfers({ transfers }: BudgetTransfersProps) {
               <div
                 key={transfer.id}
                 data-testid="transfer-row"
-                className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/30 border-l-2 border-slate-200 dark:border-slate-700 p-2 rounded-lg"
+                className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 p-2 rounded-lg"
               >
                 <div className="p-2 bg-brand-transfer/10 text-brand-transfer rounded-lg">
                   <ArrowRightLeft size={18} />
@@ -52,7 +52,7 @@ export function BudgetTransfers({ transfers }: BudgetTransfersProps) {
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                       {transfer.categoryName}
                     </p>
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum">
                       {formatCurrency(transfer.amount)}
                     </span>
                   </div>
