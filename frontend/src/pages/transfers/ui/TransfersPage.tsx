@@ -31,7 +31,9 @@ export function TransfersPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex items-center gap-4">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            void navigate(-1);
+          }}
           aria-label="Back to Dashboard"
           className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
         >
