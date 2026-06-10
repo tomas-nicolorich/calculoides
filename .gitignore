@@ -177,3 +177,7 @@ build/
 .pi
 .env*
 .fallow/
+
+# spec kit artifacts — keep local only
+.specify/
+specs/
