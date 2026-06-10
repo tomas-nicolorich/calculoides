@@ -7,14 +7,15 @@ import {
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
 import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFilter";
-import { useParams } from "react-router-dom";
-import { Receipt, Trash2 } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Receipt, Trash2 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import { Button } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 
 export function ExpensesPage() {
   const { groupId } = useParams<{ groupId: string }>();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<{
     memberId?: string;
     categoryId?: string;
@@ -49,13 +50,22 @@ export function ExpensesPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Expenses
-        </h1>
-        <p className="text-slate-500">
-          View and filter all expenses for {summary?.groupName}
-        </p>
+      <header className="flex items-center gap-4">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Back to Dashboard"
+          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <ArrowLeft size={24} className="text-brand-balance" />
+        </button>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Expenses
+          </h1>
+          <p className="text-slate-500">
+            View and filter all expenses for {summary?.groupName}
+          </p>
+        </div>
       </header>
 
       <ExpenseFilter
@@ -83,7 +93,7 @@ export function ExpensesPage() {
                   {expense.description}
                 </span>
                 <div className="flex items-center gap-4">
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="font-bold text-slate-900 dark:text-white font-mono tnum">
                     {formatCurrency(expense.amount)}
                   </span>
                   <Button

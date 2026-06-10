@@ -1,6 +1,7 @@
 import { Card } from "../../../shared/ui/Card";
 import { Input } from "../../../shared/ui";
 import {
+  ArrowLeft,
   User as UserIcon,
   Lock,
   Save,
@@ -8,11 +9,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { supabase } from "../../../shared/api/supabase";
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
@@ -80,13 +83,22 @@ export function ProfilePage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Profile
-        </h1>
-        <p className="text-slate-500">
-          Manage your personal information and security
-        </p>
+      <header className="flex items-center gap-4">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Back to Dashboard"
+          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <ArrowLeft size={24} className="text-brand-balance" />
+        </button>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Profile
+          </h1>
+          <p className="text-slate-500">
+            Manage your personal information and security
+          </p>
+        </div>
       </header>
 
       <Card title="Personal Information">
