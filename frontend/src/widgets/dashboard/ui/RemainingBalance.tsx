@@ -24,7 +24,7 @@ export function RemainingBalance({
           <div className="text-sm text-slate-500 dark:text-slate-400">
             Total Group Remaining
           </div>
-          <div className="text-3xl font-semibold text-brand-balance">
+          <div className="text-3xl font-semibold tracking-tight text-brand-balance font-mono tnum">
             {formatCurrency(totalRemaining)}
           </div>
         </div>
@@ -38,20 +38,28 @@ export function RemainingBalance({
           {members.map((member) => (
             <div
               key={member.id}
-              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50"
+              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50"
             >
               <div className="flex justify-between items-center mb-2">
                 <span className="font-semibold text-slate-900 dark:text-white">
                   {member.name}
                 </span>
-                <span className="font-semibold text-brand-balance">
+                <span className="font-semibold text-brand-balance font-mono tnum">
                   {formatCurrency(member.income - member.budgeted)}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <div>Income: {formatCurrency(member.income)}</div>
+                <div>
+                  Income:{" "}
+                  <span className="font-mono tnum">
+                    {formatCurrency(member.income)}
+                  </span>
+                </div>
                 <div className="text-right">
-                  Budgeted: {formatCurrency(member.budgeted)}
+                  Budgeted:{" "}
+                  <span className="font-mono tnum">
+                    {formatCurrency(member.budgeted)}
+                  </span>
                 </div>
               </div>
             </div>

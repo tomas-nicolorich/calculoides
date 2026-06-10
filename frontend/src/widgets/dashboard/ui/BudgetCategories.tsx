@@ -418,15 +418,18 @@ export function BudgetCategories({
           {categories.map((category) => (
             <div
               key={category.id}
-              className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-4"
+              className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 border-l-2 border-l-brand-category space-y-4"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-lg">
+                  <h4 className="font-medium text-slate-900 dark:text-white text-lg">
                     {category.icon} {category.name}
                   </h4>
                   <p className="text-sm text-slate-500">
-                    Target: {formatCurrency(category.monthlyBudget)}
+                    Target:{" "}
+                    <span className="font-mono tnum">
+                      {formatCurrency(category.monthlyBudget)}
+                    </span>
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -470,7 +473,7 @@ export function BudgetCategories({
                 {category.balances.map((balance: CategoryBalance) => (
                   <div
                     key={balance.memberId}
-                    className="flex justify-between items-center text-sm p-2 rounded-lg bg-slate-50 dark:bg-slate-800/30 border-l-2 border-slate-200 dark:border-slate-700"
+                    className="flex justify-between items-center text-sm p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700"
                   >
                     <div className="flex items-center gap-3">
                       <button
@@ -494,15 +497,21 @@ export function BudgetCategories({
                       </span>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium text-slate-900 dark:text-white">
+                      <div className="font-medium text-slate-900 dark:text-white font-mono tnum">
                         {formatCurrency(balance.remainingQuota)}{" "}
-                        <span className="text-xs text-slate-400 font-normal">
+                        <span className="text-xs text-slate-400 font-normal font-sans">
                           left
                         </span>
                       </div>
                       <div className="text-[10px] text-slate-500">
-                        Budget: {formatCurrency(balance.quota)} | Spent:{" "}
-                        {formatCurrency(balance.spent)}
+                        Budget:{" "}
+                        <span className="font-mono tnum">
+                          {formatCurrency(balance.quota)}
+                        </span>{" "}
+                        | Spent:{" "}
+                        <span className="font-mono tnum">
+                          {formatCurrency(balance.spent)}
+                        </span>
                       </div>
                     </div>
                   </div>
