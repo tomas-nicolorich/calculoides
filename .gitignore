@@ -183,3 +183,4 @@ build/
 specs/
 .headroom
 headroom_memory.db
+.knowledge
