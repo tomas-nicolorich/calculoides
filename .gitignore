@@ -180,3 +180,4 @@ build/
 .headroom
 headroom_memory.db
 .specify
+.knowledge
