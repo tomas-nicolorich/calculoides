@@ -1,0 +1,73 @@
+name: Fallow
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  audit:
+    name: Audit changed files
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run fallow audit
+        id: fallow
+        uses: fallow-rs/fallow@v2
+        with:
+          command: audit
+          format: sarif
+          fail-on-issues: 'true'
+          comment: 'true'
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.fallow.outputs.sarif }}
+          category: fallow-audit
+
+  dead-code:
+    name: Full dead code scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run fallow dead-code
+        id: fallow
+        uses: fallow-rs/fallow@v2
+        with:
+          command: dead-code
+          format: sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.fallow.outputs.sarif }}
+          category: fallow-dead-code

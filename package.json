@@ -1,0 +1,42 @@
+{
+  "name": "calculoides",
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "api",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "turbo run dev start:api",
+    "dev:local": "turbo run dev start:api:local",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:local": "cross-env CALC_ENVIRONMENT=test-local turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "prepare": "husky",
+    "postinstall": "npm run prisma:generate -w api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "dotenv": "^17.4.2",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}

@@ -160,3 +160,24 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/react,node,vercel
 
 .gemini
+.turbo
+.superpowers
+# Ignore local Claude state but allow shared project config
+.claude/**
+!.claude/settings.json
+!.claude/hooks
+!.claude/hooks/**
+.agents
+.serena
+
+# Build and distribution
+dist/
+build/
+
+.pi
+.env*
+.fallow/
+
+# spec kit artifacts — keep local only
+.specify/
+specs/

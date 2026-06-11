@@ -1,0 +1,193 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["calculoides"]
+}
+
+model User {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String        @unique
+  name        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  memberships GroupMember[]
+  ownedGroups Group[]       @relation("GroupOwner")
+  invitesSent Invitation[]  @relation("Inviter")
+
+  @@map("users")
+  @@schema("calculoides")
+}
+
+model Group {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  ownerId      String        @db.Uuid
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  categories   Category[]
+  members      GroupMember[]
+  owner        User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  invitations  Invitation[]
+  savingsGoals SavingsGoal[]
+  settlements  Settlement[]
+
+  @@map("groups")
+  @@schema("calculoides")
+}
+
+model GroupMember {
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String                    @db.Uuid
+  groupId           String                    @db.Uuid
+  income            Decimal                   @default(0) @db.Decimal(12, 2)
+  joinedAt          DateTime                  @default(now())
+  categoryLinks     CategoryMember[]
+  paidExpenses      Expense[]
+  group             Group                     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goalContributions SavingsGoalContribution[]
+  settlements       Settlement[]
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+  @@schema("calculoides")
+}
+
+model Category {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId       String           @db.Uuid
+  name          String
+  icon          String?
+  monthlyBudget Decimal          @db.Decimal(12, 2)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  group         Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  memberLinks   CategoryMember[]
+  expenses      Expense[]
+  transfers     Transfer[]
+
+  @@map("categories")
+  @@schema("calculoides")
+}
+
+model CategoryMember {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId    String      @db.Uuid
+  memberId      String      @db.Uuid
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  member        GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  transfersFrom Transfer[]  @relation("FromMember")
+  transfersTo   Transfer[]  @relation("ToMember")
+
+  @@unique([categoryId, memberId])
+  @@map("category_members")
+  @@schema("calculoides")
+}
+
+model Expense {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId     String      @db.Uuid
+  payerId        String      @db.Uuid
+  description    String
+  amount         Decimal     @db.Decimal(12, 2)
+  date           DateTime    @default(now())
+  isArchived     Boolean     @default(false)
+  archivedPeriod String?
+  createdAt      DateTime    @default(now())
+  category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  payer          GroupMember @relation(fields: [payerId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+  @@schema("calculoides")
+}
+
+model Transfer {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId     String         @db.Uuid
+  fromMemberId   String         @db.Uuid
+  toMemberId     String         @db.Uuid
+  amount         Decimal        @db.Decimal(12, 2)
+  date           DateTime       @default(now())
+  archivedPeriod String?
+  category       Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  fromMember     CategoryMember @relation("FromMember", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMember       CategoryMember @relation("ToMember", fields: [toMemberId], references: [id], onDelete: Cascade)
+
+  @@map("transfers")
+  @@schema("calculoides")
+}
+
+model SavingsGoal {
+  id             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId        String                    @db.Uuid
+  name           String
+  targetAmount   Decimal                   @db.Decimal(12, 2)
+  startingAmount Decimal                   @default(0) @db.Decimal(12, 2)
+  targetDate     DateTime
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  group          Group                     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  contributions  SavingsGoalContribution[]
+
+  @@map("savings_goals")
+  @@schema("calculoides")
+}
+
+model SavingsGoalContribution {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  goalId       String      @db.Uuid
+  memberId     String      @db.Uuid
+  customAmount Decimal     @db.Decimal(12, 2)
+  goal         SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  member       GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([goalId, memberId])
+  @@map("savings_goal_contributions")
+  @@schema("calculoides")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Settlement {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId     String      @db.Uuid
+  memberId    String      @db.Uuid
+  periodMonth String
+  totalPaid   Decimal     @db.Decimal(12, 2)
+  totalQuota  Decimal     @db.Decimal(12, 2)
+  netAmount   Decimal     @db.Decimal(12, 2)
+  archivedAt  DateTime    @default(now())
+  group       Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  member      GroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, memberId, periodMonth])
+  @@map("settlements")
+  @@schema("calculoides")
+}
+
+model Invitation {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId   String           @db.Uuid
+  email     String
+  token     String?          @unique
+  status    InvitationStatus @default(PENDING)
+  inviterId String           @db.Uuid
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  group     Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  inviter   User             @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+  @@schema("calculoides")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+
+  @@schema("calculoides")
+}

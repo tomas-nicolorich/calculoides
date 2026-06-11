@@ -1,0 +1,65 @@
+{
+  "version": 2,
+  "build": {
+    "env": {
+      "VERCEL_EXPERIMENTAL_BACKENDS": "1"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/groups", "destination": "/api/groups?action=list" },
+    { "source": "/api/archive", "destination": "/api/groups?action=archive" },
+    { "source": "/api/undo-archive", "destination": "/api/groups?action=undo-archive" },
+    {
+      "source": "/api/groups/:id/transfer-ownership",
+      "destination": "/api/groups?action=transfer&groupId=:id"
+    },
+    {
+      "source": "/api/transfer-ownership",
+      "destination": "/api/groups?action=transfer"
+    },
+    {
+      "source": "/api/invitations",
+      "destination": "/api/groups?action=invitations"
+    },
+    {
+      "source": "/api/respond-invitation",
+      "destination": "/api/groups?action=respond-invite"
+    },
+
+    {
+      "source": "/api/transactions/:id",
+      "destination": "/api/transactions?action=expense-delete&id=:id"
+    },
+    {
+      "source": "/api/expenses",
+      "destination": "/api/transactions?action=expenses-list"
+    },
+    {
+      "source": "/api/transfers",
+      "destination": "/api/transactions?action=transfers-by-category"
+    },
+    {
+      "source": "/api/summary",
+      "destination": "/api/transactions?action=summary"
+    },
+    {
+      "source": "/api/savings",
+      "destination": "/api/transactions?action=savings"
+    },
+    {
+      "source": "/api/savings/contribution",
+      "destination": "/api/transactions?action=savings-contribution-upsert"
+    },
+    {
+      "source": "/api/categories",
+      "destination": "/api/transactions?action=categories-list"
+    },
+
+    { "source": "/api/members", "destination": "/api/members?action=list" },
+    {
+      "source": "/api/members/:id/income",
+      "destination": "/api/members?action=update-income&id=:id"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
