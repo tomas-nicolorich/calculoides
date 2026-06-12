@@ -44,7 +44,7 @@ const mockGoals = [
     groupId: "group-1",
     name: "Vacation",
     targetAmount: 1200,
-    startingAmount: 0,
+    currentAmount: 0,
     targetDate: "2026-12-31T00:00:00.000Z",
     projectedDate: "2026-12-31T00:00:00.000Z",
     varianceMonths: 0,

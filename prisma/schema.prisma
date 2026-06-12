@@ -126,7 +126,7 @@ model SavingsGoal {
   groupId        String                    @db.Uuid
   name           String
   targetAmount   Decimal                   @db.Decimal(12, 2)
-  startingAmount Decimal                   @default(0) @db.Decimal(12, 2)
+  currentAmount  Decimal                   @default(0) @db.Decimal(12, 2)
   targetDate     DateTime
   createdAt      DateTime                  @default(now())
   updatedAt      DateTime                  @updatedAt

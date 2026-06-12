@@ -119,9 +119,9 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                 </span>
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                Starting:{" "}
+                Saved:{" "}
                 <span className="font-mono tnum">
-                  €{goal.startingAmount.toLocaleString()}
+                  €{goal.currentAmount.toLocaleString()}
                 </span>
               </p>
             </div>

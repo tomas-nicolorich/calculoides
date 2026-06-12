@@ -227,7 +227,7 @@ const routes: RouteConfig = {
       validatedBody.name,
       validatedBody.targetAmount,
       validatedBody.targetDate,
-      validatedBody.startingAmount,
+      validatedBody.currentAmount,
     );
     res.status(201).json(goal);
   },
@@ -241,7 +241,7 @@ const routes: RouteConfig = {
       validatedBody.name,
       validatedBody.targetAmount,
       validatedBody.targetDate,
-      validatedBody.startingAmount,
+      validatedBody.currentAmount,
     );
     res.status(200).json(goal);
   },

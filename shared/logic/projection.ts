@@ -1,9 +1,9 @@
 export function calculateProjectedMonths(
   targetAmount: number,
-  startingAmount: number,
+  currentAmount: number,
   totalMonthly: number,
 ): number {
-  const remaining = targetAmount - startingAmount;
+  const remaining = targetAmount - currentAmount;
   if (remaining <= 0) return 0;
   if (totalMonthly <= 0) return Infinity;
   return Math.ceil(remaining / totalMonthly);

@@ -12,7 +12,7 @@ vi.mock("@/shared/api/savingsHooks", () => ({
         groupId: "group-1",
         name: "New Sofa",
         targetAmount: 2000,
-        startingAmount: 500,
+        currentAmount: 500,
         targetDate: "2026-12-31T00:00:00.000Z",
         projectedDate: "2026-11-30T00:00:00.000Z",
         varianceMonths: -1,

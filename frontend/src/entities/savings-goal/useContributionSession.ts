@@ -44,7 +44,7 @@ function computeProjectedMonths(
   );
   return calculateProjectedMonths(
     goal.targetAmount,
-    goal.startingAmount,
+    goal.currentAmount,
     totalMonthly,
   );
 }

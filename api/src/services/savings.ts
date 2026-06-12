@@ -13,13 +13,13 @@ export interface MemberContribution {
  */
 export function calculateSavingsContributions(
   targetAmount: number,
-  startingAmount: number,
+  currentAmount: number,
   targetDate: Date,
   members: { id: string; share: number }[],
 ): MemberContribution[] {
   if (members.length === 0) return [];
 
-  const remainingToSave = Math.max(0, targetAmount - startingAmount);
+  const remainingToSave = Math.max(0, targetAmount - currentAmount);
   if (remainingToSave === 0) {
     return members.map((m) => ({ memberId: m.id, monthlyContribution: 0 }));
   }
@@ -78,14 +78,14 @@ export const SavingsService = {
     name: string,
     targetAmount: number,
     targetDate: Date,
-    startingAmount = 0,
+    currentAmount = 0,
   ) {
     return await prisma.savingsGoal.create({
       data: {
         groupId,
         name,
         targetAmount,
-        startingAmount,
+        currentAmount,
         targetDate,
         updatedAt: new Date(),
       },
@@ -97,14 +97,14 @@ export const SavingsService = {
     name: string,
     targetAmount: number,
     targetDate: Date,
-    startingAmount: number,
+    currentAmount: number,
   ) {
     return await prisma.savingsGoal.update({
       where: { id: goalId },
       data: {
         name,
         targetAmount,
-        startingAmount,
+        currentAmount,
         targetDate,
         updatedAt: new Date(),
       },
@@ -143,14 +143,14 @@ export const SavingsService = {
     // 3. Calculate projections for each goal
     return goals.map((goal) => {
       const targetAmount = Number(goal.targetAmount);
-      const startingAmount = Number(goal.startingAmount);
+      const currentAmount = Number(goal.currentAmount);
       const targetDate = new Date(goal.targetDate);
       const now = new Date();
 
       // Default proportional contributions
       const baseContributions = calculateSavingsContributions(
         targetAmount,
-        startingAmount,
+        currentAmount,
         targetDate,
         incomeShares,
       );
@@ -178,7 +178,7 @@ export const SavingsService = {
       );
       const months = calculateProjectedMonths(
         targetAmount,
-        startingAmount,
+        currentAmount,
         totalActual,
       );
       const projectedDate = addMonths(now, months);

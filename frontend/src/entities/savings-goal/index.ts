@@ -14,7 +14,7 @@ export interface SavingsGoal {
   groupId: string;
   name: string;
   targetAmount: number;
-  startingAmount: number;
+  currentAmount: number;
   targetDate: string;
   projectedDate: string;
   varianceMonths: number;
@@ -53,7 +53,7 @@ export const savingsGoalApi = {
     data: {
       name: string;
       targetAmount: number;
-      startingAmount?: number;
+      currentAmount?: number;
       targetDate: string;
     },
   ) =>
@@ -66,7 +66,7 @@ export const savingsGoalApi = {
     data: {
       name: string;
       targetAmount: number;
-      startingAmount?: number;
+      currentAmount?: number;
       targetDate: string;
     },
   ) =>

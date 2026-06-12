@@ -47,11 +47,11 @@ describe("Savings API Integration", () => {
   });
 
   describe("POST /api/savings", () => {
-    it("should correctly serialize startingAmount = 0 (BUG-036)", async () => {
+    it("should correctly serialize currentAmount = 0 (BUG-036)", async () => {
       const goalData = {
         name: "New Car",
         targetAmount: 5000,
-        startingAmount: 0,
+        currentAmount: 0,
         targetDate: "2027-01-01",
       };
 
@@ -71,7 +71,7 @@ describe("Savings API Integration", () => {
         id: "goal-1",
         ...goalData,
         targetAmount: 5000 as unknown as Prisma.Decimal,
-        startingAmount: 0 as unknown as Prisma.Decimal,
+        currentAmount: 0 as unknown as Prisma.Decimal,
         targetDate: new Date(goalData.targetDate),
       } as unknown as SavingsGoal);
 
@@ -81,12 +81,12 @@ describe("Savings API Integration", () => {
       expect(res.status).toHaveBeenCalledWith(201);
 
       const responseBody = vi.mocked(res.json).mock.calls[0][0] as {
-        startingAmount: number;
+        currentAmount: number;
       };
-      expect(responseBody.startingAmount).toBe(0);
+      expect(responseBody.currentAmount).toBe(0);
     });
 
-    it("should default startingAmount to 0 if missing (BUG-036)", async () => {
+    it("should default currentAmount to 0 if missing (BUG-036)", async () => {
       const goalData = {
         name: "New Car",
         targetAmount: 5000,
@@ -108,7 +108,7 @@ describe("Savings API Integration", () => {
       vi.mocked(prisma.savingsGoal.create).mockResolvedValue({
         id: "goal-1",
         ...goalData,
-        startingAmount: 0 as unknown as Prisma.Decimal,
+        currentAmount: 0 as unknown as Prisma.Decimal,
         targetAmount: 5000 as unknown as Prisma.Decimal,
         targetDate: new Date(goalData.targetDate),
       } as unknown as SavingsGoal);
