@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Badge,
   Card,
   CardContent,
   CardHeader,
@@ -123,22 +124,16 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                 <ProgressMeter
                   value={goal.currentAmount}
                   max={goal.targetAmount}
+                  state={isLate ? "behind" : "on-track"}
                 />
               </div>
             </div>
             <div className="text-right">
-              <p
-                className={cn(
-                  "text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm",
-                  isLate
-                    ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50"
-                    : "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/50",
-                )}
-              >
+              <Badge tone={isLate ? "expense" : "income"}>
                 {isLate
                   ? `Delayed ${goal.varianceMonths.toString()}mo`
                   : "On Track"}
-              </p>
+              </Badge>
             </div>
           </div>
         </CardHeader>
