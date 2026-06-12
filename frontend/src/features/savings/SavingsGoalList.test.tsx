@@ -86,6 +86,14 @@ describe("SavingsGoalList", () => {
     });
   });
 
+  it("renders a ProgressMeter for each goal with correct value and max", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    const meter = screen.getByRole("progressbar");
+    expect(meter).toBeInTheDocument();
+    expect(meter).toHaveAttribute("aria-valuenow", "0");
+    expect(meter).toHaveAttribute("aria-valuemax", "1200");
+  });
+
   it("displays the projected date and variance correctly", () => {
     const goalsWithVariance = [
       {

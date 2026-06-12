@@ -7,6 +7,7 @@ import {
   Input,
   Button,
   UserDisplay,
+  ProgressMeter,
 } from "../../shared/ui";
 import { cn } from "../../shared/lib/utils";
 import { SavingsGoal } from "../../entities/savings-goal";
@@ -118,12 +119,12 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                   €{goal.targetAmount.toLocaleString()}
                 </span>
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 italic">
-                Saved:{" "}
-                <span className="font-mono tnum">
-                  €{goal.currentAmount.toLocaleString()}
-                </span>
-              </p>
+              <div className="mt-1">
+                <ProgressMeter
+                  value={goal.currentAmount}
+                  max={goal.targetAmount}
+                />
+              </div>
             </div>
             <div className="text-right">
               <p
