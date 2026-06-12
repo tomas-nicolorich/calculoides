@@ -15,41 +15,6 @@ export function Input({
   );
 }
 
-// TODO: remove after Auth + Groups surface migration (#62) — these compound
-// wrappers are thin pass-throughs over the consolidated Card. The Card now owns
-// padding (p-6); CardHeader keeps only the header→body gap (pb-6, overridable by
-// a call-site pb-* via tailwind-merge) and CardContent is a bare container.
-export function CardHeader({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("flex flex-col space-y-1.5 pb-6", className)}
-      {...props}
-    />
-  );
-}
-
-export function CardTitle({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3
-      className={cn("font-semibold leading-none tracking-tight", className)}
-      {...props}
-    />
-  );
-}
-
-export function CardContent({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn(className)} {...props} />;
-}
-
 export { Button } from "./Button";
 export type { ButtonVariant } from "./Button";
 export { Card } from "./Card";
