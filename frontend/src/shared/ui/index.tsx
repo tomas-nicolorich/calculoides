@@ -53,6 +53,9 @@ export function CardContent({
 export { Button } from "./Button";
 export type { ButtonVariant } from "./Button";
 export { Card } from "./Card";
+export { Badge } from "./Badge";
+export { Avatar, AvatarGroup } from "./Avatar";
+export { IconButton } from "./IconButton";
 export { UserDisplay } from "./UserDisplay";
 export { Select } from "./Select";
 export { ProgressMeter } from "./money/ProgressMeter";

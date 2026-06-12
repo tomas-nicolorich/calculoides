@@ -30,6 +30,18 @@
   --color-brand-transfer: var(--color-amber-500);
   --color-brand-category: var(--color-violet-500);
 
+  /* CDS member palette — stable per-member identity colours (avatars, bars) */
+  --color-member-1: #10b981;
+  --color-member-2: #3b82f6;
+  --color-member-3: #8b5cf6;
+  --color-member-4: #f59e0b;
+  --color-member-5: #f43f5e;
+  --color-member-6: #06b6d4;
+  --color-member-7: #f97316;
+  --color-member-8: #ec4899;
+  --color-member-9: #6366f1;
+  --color-member-10: #14b8a6;
+
   --color-background: var(--color-slate-50);
   --color-foreground: var(--color-slate-900);
   --color-card: var(--color-white);
