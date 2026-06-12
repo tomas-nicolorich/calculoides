@@ -38,6 +38,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
   const renderGoalCard = (goal: SavingsGoal) => {
     const targetDate = new Date(goal.targetDate);
     const isLate = goal.varianceMonths > 0;
+    const isNever = goal.isNever;
     const isActive = activeGoalId === goal.id;
 
     if (editingGoalId === goal.id) {
@@ -63,6 +64,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
 
     const projectedLabel = (() => {
       if (!isActive || localMonths === null) {
+        if (isNever) return "Never";
         return new Date(goal.projectedDate).toLocaleDateString();
       }
       if (localMonths === Infinity) return "Never";
@@ -74,9 +76,11 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
 
     const projectedColorClass =
       !isActive || forecastColor === "neutral"
-        ? isLate
-          ? "text-brand-expense"
-          : "text-emerald-600 dark:text-emerald-400"
+        ? isNever
+          ? "text-red-500"
+          : isLate
+            ? "text-amber-500"
+            : "text-emerald-600 dark:text-emerald-400"
         : forecastColor === "green"
           ? "text-green-600"
           : forecastColor === "amber"
@@ -86,7 +90,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
     return (
       <Card
         key={goal.id}
-        accent={isLate ? "expense" : "balance"}
+        accent={isNever ? "expense" : isLate ? "transfer" : "balance"}
         hover
         className="transition-all duration-300"
       >
@@ -120,15 +124,17 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               <ProgressMeter
                 value={goal.currentAmount}
                 max={goal.targetAmount}
-                state={isLate ? "behind" : "on-track"}
+                state={isNever ? "blocked" : isLate ? "behind" : "on-track"}
               />
             </div>
           </div>
           <div className="text-right">
-            <Badge tone={isLate ? "expense" : "income"}>
-              {isLate
-                ? `Delayed ${goal.varianceMonths.toString()}mo`
-                : "On Track"}
+            <Badge tone={isNever ? "expense" : isLate ? "transfer" : "income"}>
+              {isNever
+                ? "Never"
+                : isLate
+                  ? `Delayed ${goal.varianceMonths.toString()}mo`
+                  : "On Track"}
             </Badge>
           </div>
         </div>
@@ -236,10 +242,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                     size="sm"
                     className={`h-8 text-xs ${FOCUS_RING}`}
                     onClick={() => void handleSave()}
-                    disabled={
-                      session.phase === "saving" ||
-                      session.forecastColor === "red"
-                    }
+                    disabled={session.phase === "saving"}
                   >
                     {session.phase === "saving" ? "Saving..." : "Save"}
                   </Button>
