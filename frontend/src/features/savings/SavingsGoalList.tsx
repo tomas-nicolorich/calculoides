@@ -2,15 +2,11 @@ import { useState } from "react";
 import {
   Badge,
   Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Input,
   Button,
   UserDisplay,
   ProgressMeter,
 } from "../../shared/ui";
-import { cn } from "../../shared/lib/utils";
 import { SavingsGoal } from "../../entities/savings-goal";
 import { useContributionSession } from "../../entities/savings-goal/useContributionSession";
 import { SavingsGoalForm } from "./SavingsGoalForm";
@@ -90,207 +86,204 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
     return (
       <Card
         key={goal.id}
-        className={cn(
-          "transition-all duration-300 border-l-2 hover:shadow-md",
-          isLate ? "border-l-brand-expense" : "border-l-brand-balance",
-        )}
+        accent={isLate ? "expense" : "balance"}
+        hover
+        className="transition-all duration-300"
       >
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start pb-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+                {goal.name}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-6 w-6 p-0 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 ${FOCUS_RING}`}
+                onClick={() => {
+                  setEditingGoalId(goal.id);
+                }}
+                title="Edit Goal Settings"
+              >
+                <span className="text-slate-400 hover:text-brand-balance transition-colors">
+                  ✎
+                </span>
+              </Button>
+            </div>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              Target:{" "}
+              <span className="font-mono tnum">
+                €{goal.targetAmount.toLocaleString()}
+              </span>
+            </p>
+            <div className="mt-1">
+              <ProgressMeter
+                value={goal.currentAmount}
+                max={goal.targetAmount}
+                state={isLate ? "behind" : "on-track"}
+              />
+            </div>
+          </div>
+          <div className="text-right">
+            <Badge tone={isLate ? "expense" : "income"}>
+              {isLate
+                ? `Delayed ${goal.varianceMonths.toString()}mo`
+                : "On Track"}
+            </Badge>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
             <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-lg">{goal.name}</CardTitle>
+              <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
+                Target Date
+              </p>
+              <p className="font-semibold text-slate-700 dark:text-slate-300">
+                {targetDate.toLocaleDateString()}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
+                Projected
+              </p>
+              <p
+                data-testid="forecast-projected-date"
+                className={`font-semibold ${projectedColorClass}`}
+              >
+                {projectedLabel}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-1">
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                Monthly Allocation
+              </p>
+              {!isActive ? (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-6 w-6 p-0 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 ${FOCUS_RING}`}
+                  className={`h-5 px-2 text-[9px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20 ${FOCUS_RING}`}
                   onClick={() => {
-                    setEditingGoalId(goal.id);
+                    setActiveGoalId(goal.id);
                   }}
-                  title="Edit Goal Settings"
                 >
-                  <span className="text-slate-400 hover:text-brand-balance transition-colors">
-                    ✎
-                  </span>
+                  ADJUST
                 </Button>
-              </div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                Target:{" "}
-                <span className="font-mono tnum">
-                  €{goal.targetAmount.toLocaleString()}
-                </span>
-              </p>
-              <div className="mt-1">
-                <ProgressMeter
-                  value={goal.currentAmount}
-                  max={goal.targetAmount}
-                  state={isLate ? "behind" : "on-track"}
-                />
-              </div>
-            </div>
-            <div className="text-right">
-              <Badge tone={isLate ? "expense" : "income"}>
-                {isLate
-                  ? `Delayed ${goal.varianceMonths.toString()}mo`
-                  : "On Track"}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-              <div>
-                <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
-                  Target Date
-                </p>
-                <p className="font-semibold text-slate-700 dark:text-slate-300">
-                  {targetDate.toLocaleDateString()}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
-                  Projected
-                </p>
-                <p
-                  data-testid="forecast-projected-date"
-                  className={`font-semibold ${projectedColorClass}`}
-                >
-                  {projectedLabel}
-                </p>
-              </div>
+              ) : null}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-1">
-                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                  Monthly Allocation
-                </p>
-                {!isActive ? (
+            {goal.breakdown.map((item) => (
+              <div
+                key={item.memberId}
+                className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
+              >
+                <UserDisplay
+                  user={item.user}
+                  className="font-medium text-slate-700 dark:text-slate-300"
+                />
+                <div className="flex items-center gap-2">
+                  {isActive ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
+                      className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance ${FOCUS_RING}`}
+                      disabled={session.phase === "saving"}
+                      value={
+                        session.overrideAmounts[item.memberId] ??
+                        item.proportionalAmount
+                      }
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) {
+                          session.overrideMember(item.memberId, val);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="text-right">
+                      <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
+                        €
+                        {item.actualAmount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </p>
+                      {item.isOverridden && (
+                        <p className="text-[9px] font-medium text-brand-balance bg-brand-balance/5 dark:bg-brand-balance/10 dark:text-blue-400 border border-brand-balance/10 dark:border-blue-900/30 px-1.5 rounded-full inline-block">
+                          CUSTOM
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {isActive && (
+              <div className="space-y-2 pt-2">
+                {session.saveError && (
+                  <p
+                    data-testid="session-save-error"
+                    className="text-[10px] text-destructive font-medium bg-destructive/5 dark:bg-destructive/10 dark:text-red-400 p-2 rounded border border-destructive/20 dark:border-red-900/30"
+                  >
+                    {session.saveError}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    className={`h-8 text-xs ${FOCUS_RING}`}
+                    onClick={() => void handleSave()}
+                    disabled={
+                      session.phase === "saving" ||
+                      session.forecastColor === "red"
+                    }
+                  >
+                    {session.phase === "saving" ? "Saving..." : "Save"}
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`h-5 px-2 text-[9px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20 ${FOCUS_RING}`}
+                    className={`h-8 text-xs ${FOCUS_RING}`}
                     onClick={() => {
-                      setActiveGoalId(goal.id);
+                      session.cancelSession();
+                      setActiveGoalId(null);
                     }}
+                    disabled={session.phase === "saving"}
                   >
-                    ADJUST
+                    Cancel
                   </Button>
-                ) : null}
-              </div>
-
-              {goal.breakdown.map((item) => (
-                <div
-                  key={item.memberId}
-                  className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
-                >
-                  <UserDisplay
-                    user={item.user}
-                    className="font-medium text-slate-700 dark:text-slate-300"
-                  />
-                  <div className="flex items-center gap-2">
-                    {isActive ? (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
-                        className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance ${FOCUS_RING}`}
-                        disabled={session.phase === "saving"}
-                        value={
-                          session.overrideAmounts[item.memberId] ??
-                          item.proportionalAmount
-                        }
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value);
-                          if (!isNaN(val)) {
-                            session.overrideMember(item.memberId, val);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="text-right">
-                        <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-                          €
-                          {item.actualAmount.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                          })}
-                        </p>
-                        {item.isOverridden && (
-                          <p className="text-[9px] font-medium text-brand-balance bg-brand-balance/5 dark:bg-brand-balance/10 dark:text-blue-400 border border-brand-balance/10 dark:border-blue-900/30 px-1.5 rounded-full inline-block">
-                            CUSTOM
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {isActive && (
-                <div className="space-y-2 pt-2">
-                  {session.saveError && (
-                    <p
-                      data-testid="session-save-error"
-                      className="text-[10px] text-destructive font-medium bg-destructive/5 dark:bg-destructive/10 dark:text-red-400 p-2 rounded border border-destructive/20 dark:border-red-900/30"
-                    >
-                      {session.saveError}
-                    </p>
-                  )}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      className={`h-8 text-xs ${FOCUS_RING}`}
-                      onClick={() => void handleSave()}
-                      disabled={
-                        session.phase === "saving" ||
-                        session.forecastColor === "red"
-                      }
-                    >
-                      {session.phase === "saving" ? "Saving..." : "Save"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-8 text-xs ${FOCUS_RING}`}
-                      onClick={() => {
-                        session.cancelSession();
-                        setActiveGoalId(null);
-                      }}
-                      disabled={session.phase === "saving"}
-                    >
-                      Cancel
-                    </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-8 text-xs col-span-2 ${FOCUS_RING}`}
+                    onClick={() => {
+                      session.resetToIncomeSplit();
+                    }}
+                    disabled={session.phase === "saving"}
+                  >
+                    Reset to Income Split
+                  </Button>
+                  {session.preResetSnapshot !== null && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className={`h-8 text-xs col-span-2 ${FOCUS_RING}`}
                       onClick={() => {
-                        session.resetToIncomeSplit();
+                        session.undoReset();
                       }}
                       disabled={session.phase === "saving"}
                     >
-                      Reset to Income Split
+                      Undo Reset
                     </Button>
-                    {session.preResetSnapshot !== null && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-8 text-xs col-span-2 ${FOCUS_RING}`}
-                        onClick={() => {
-                          session.undoReset();
-                        }}
-                        disabled={session.phase === "saving"}
-                      >
-                        Undo Reset
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   };
