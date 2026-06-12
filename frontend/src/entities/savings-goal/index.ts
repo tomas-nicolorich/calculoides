@@ -18,6 +18,7 @@ export interface SavingsGoal {
   targetDate: string;
   projectedDate: string;
   varianceMonths: number;
+  isNever: boolean;
   breakdown: ContributionBreakdown[];
 }
 

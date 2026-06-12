@@ -196,6 +196,7 @@ export const SavingsService = {
         ...goal,
         projectedDate,
         varianceMonths,
+        isNever: months === Infinity,
         breakdown: finalContributions,
       };
     });
