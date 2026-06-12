@@ -10,7 +10,7 @@ import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFil
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Receipt, Trash2 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
-import { Button } from "../../../shared/ui";
+import { Button, IconButton } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 
 export function ExpensesPage() {
@@ -98,16 +98,15 @@ export function ExpensesPage() {
                   <span className="font-bold text-slate-900 dark:text-white font-mono tnum">
                     {formatCurrency(expense.amount)}
                   </span>
-                  <Button
-                    variant="ghost"
+                  <IconButton
+                    hover="expense"
                     size="sm"
-                    className="text-slate-400 hover:text-destructive p-2 h-auto"
                     onClick={() => {
                       setExpenseToDelete(expense.id);
                     }}
                   >
                     <Trash2 size={16} />
-                  </Button>
+                  </IconButton>
                 </div>
               </div>
               <div className="flex justify-between text-sm text-slate-500">
@@ -139,7 +138,7 @@ export function ExpensesPage() {
             Cancel
           </Button>
           <Button
-            className="bg-brand-expense hover:opacity-90"
+            variant="expense"
             onClick={() => {
               if (expenseToDelete) void handleDeleteExpense(expenseToDelete);
             }}
