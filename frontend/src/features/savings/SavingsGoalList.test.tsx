@@ -94,7 +94,12 @@ describe("SavingsGoalList", () => {
     expect(meter).toHaveAttribute("aria-valuemax", "1200");
   });
 
-  it("displays the projected date and variance correctly", () => {
+  it("renders an on-track Badge for goals with no variance", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(screen.getByText("On Track")).toBeInTheDocument();
+  });
+
+  it("renders a delayed Badge and behind-state ProgressMeter for late goals", () => {
     const goalsWithVariance = [
       {
         ...mockGoals[0],
@@ -108,6 +113,24 @@ describe("SavingsGoalList", () => {
     render(<SavingsGoalList goals={goalsWithVariance} />);
 
     expect(screen.getByText(/Delayed 6mo/i)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "data-state",
+      "behind",
+    );
+  });
+
+  it("displays the projected date and variance correctly", () => {
+    const goalsWithVariance = [
+      {
+        ...mockGoals[0],
+        id: "goal-2",
+        name: "New Car",
+        projectedDate: "2027-06-30T00:00:00.000Z",
+        varianceMonths: 6,
+      },
+    ];
+
+    render(<SavingsGoalList goals={goalsWithVariance} />);
 
     const dateDisplay = screen.getByText(/2027/);
     expect(dateDisplay).toBeInTheDocument();
