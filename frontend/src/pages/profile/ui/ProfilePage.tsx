@@ -1,5 +1,4 @@
-import { Card } from "../../../shared/ui/Card";
-import { Input } from "../../../shared/ui";
+import { Card, Button, IconButton, Input } from "../../../shared/ui";
 import {
   ArrowLeft,
   User as UserIcon,
@@ -84,15 +83,17 @@ export function ProfilePage() {
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-8">
       <header className="flex items-center gap-4">
-        <button
+        <IconButton
+          hover="balance"
+          bordered
+          size="lg"
           onClick={() => {
             void navigate(-1);
           }}
           aria-label="Back to Dashboard"
-          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
         >
-          <ArrowLeft size={24} className="text-brand-balance" />
-        </button>
+          <ArrowLeft size={24} />
+        </IconButton>
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             Profile
@@ -139,16 +140,17 @@ export function ProfilePage() {
             </div>
           )}
 
-          <button
+          <Button
+            variant="balance"
             onClick={() => {
               void handleUpdateProfile();
             }}
             disabled={loading}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-brand-balance text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+            className="w-full gap-2"
           >
             <Save size={18} />
             <span>{loading ? "Saving..." : "Update Profile"}</span>
-          </button>
+          </Button>
         </div>
       </Card>
 
@@ -189,15 +191,16 @@ export function ProfilePage() {
             </div>
           )}
 
-          <button
+          <Button
+            variant="outline"
             onClick={() => {
               void handleChangePassword();
             }}
             disabled={loading || !password}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="w-full"
           >
-            <span>{loading ? "Changing..." : "Change Password"}</span>
-          </button>
+            {loading ? "Changing..." : "Change Password"}
+          </Button>
         </div>
       </Card>
     </div>
