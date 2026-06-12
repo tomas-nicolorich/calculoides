@@ -35,7 +35,7 @@ const mockGoal: SavingsGoal = {
   groupId: "group-1",
   name: "Vacation Fund",
   targetAmount: 10000,
-  startingAmount: 2000,
+  currentAmount: 2000,
   targetDate: new Date(Date.now() + 12 * 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0],

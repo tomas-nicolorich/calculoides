@@ -44,7 +44,7 @@ const mockGoals = [
     groupId: "group-1",
     name: "Vacation",
     targetAmount: 1200,
-    startingAmount: 0,
+    currentAmount: 0,
     targetDate: "2026-12-31T00:00:00.000Z",
     projectedDate: "2026-12-31T00:00:00.000Z",
     varianceMonths: 0,
@@ -84,6 +84,14 @@ describe("SavingsGoalList", () => {
       );
       expect(onRefresh).toHaveBeenCalled();
     });
+  });
+
+  it("renders a ProgressMeter for each goal with correct value and max", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    const meter = screen.getByRole("progressbar");
+    expect(meter).toBeInTheDocument();
+    expect(meter).toHaveAttribute("aria-valuenow", "0");
+    expect(meter).toHaveAttribute("aria-valuemax", "1200");
   });
 
   it("displays the projected date and variance correctly", () => {

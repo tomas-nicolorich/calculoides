@@ -28,8 +28,8 @@ export function SavingsGoalForm({
   const [targetAmount, setTargetAmount] = useState(
     goal?.targetAmount.toString() ?? "",
   );
-  const [startingAmount, setStartingAmount] = useState(
-    goal?.startingAmount.toString() ?? "0",
+  const [currentAmount, setCurrentAmount] = useState(
+    goal?.currentAmount.toString() ?? "0",
   );
   const [targetDate, setTargetDate] = useState(
     goal?.targetDate
@@ -49,14 +49,14 @@ export function SavingsGoalForm({
         await savingsGoalApi.update(goal.id, {
           name,
           targetAmount: Number(targetAmount),
-          startingAmount: Number(startingAmount),
+          currentAmount: Number(currentAmount),
           targetDate: new Date(targetDate).toISOString(),
         });
       } else {
         await savingsGoalApi.create(groupId, {
           name,
           targetAmount: Number(targetAmount),
-          startingAmount: Number(startingAmount),
+          currentAmount: Number(currentAmount),
           targetDate: new Date(targetDate).toISOString(),
         });
       }
@@ -64,7 +64,7 @@ export function SavingsGoalForm({
       if (!isEditing) {
         setName("");
         setTargetAmount("");
-        setStartingAmount("0");
+        setCurrentAmount("0");
         setTargetDate("");
       }
       await onSuccess?.();
@@ -127,16 +127,16 @@ export function SavingsGoalForm({
 
             <div className="space-y-2">
               <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                Initial (€)
+                Saved So Far
               </label>
               <Input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
-                value={startingAmount}
+                value={currentAmount}
                 onChange={(e) => {
-                  setStartingAmount(e.target.value);
+                  setCurrentAmount(e.target.value);
                 }}
               />
             </div>

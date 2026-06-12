@@ -81,7 +81,7 @@ describe("Savings Goal Handlers", () => {
           name: "Updated Goal",
           targetAmount: 1000,
           targetDate,
-          startingAmount: 100,
+          currentAmount: 100,
         },
       };
       const mockGoal = { id: goalId, name: "Updated Goal" };

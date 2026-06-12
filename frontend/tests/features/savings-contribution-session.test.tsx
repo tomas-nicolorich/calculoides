@@ -46,7 +46,7 @@ const underTargetGoal: SavingsGoal = {
   groupId: "group-1",
   name: "Under Target Goal",
   targetAmount: 10000,
-  startingAmount: 2000,
+  currentAmount: 2000,
   targetDate: futureTargetDate,
   projectedDate: new Date(now.getFullYear(), now.getMonth() + 8, 1)
     .toISOString()
@@ -68,7 +68,7 @@ const overTargetGoal: SavingsGoal = {
   groupId: "group-1",
   name: "Over Target Goal",
   targetAmount: 10000,
-  startingAmount: 2000,
+  currentAmount: 2000,
   targetDate: futureTargetDate,
   projectedDate: new Date(now.getFullYear(), now.getMonth() + 14, 1)
     .toISOString()
@@ -90,7 +90,7 @@ const zeroContribGoal: SavingsGoal = {
   groupId: "group-1",
   name: "Zero Contribution Goal",
   targetAmount: 10000,
-  startingAmount: 2000,
+  currentAmount: 2000,
   targetDate: futureTargetDate,
   projectedDate: new Date(now.getFullYear() + 100, now.getMonth(), 1)
     .toISOString()
@@ -112,7 +112,7 @@ const alreadyFundedGoal: SavingsGoal = {
   groupId: "group-1",
   name: "Already Funded Goal",
   targetAmount: 5000,
-  startingAmount: 6000,
+  currentAmount: 6000,
   targetDate: futureTargetDate,
   projectedDate: new Date().toISOString().split("T")[0],
   varianceMonths: -12,

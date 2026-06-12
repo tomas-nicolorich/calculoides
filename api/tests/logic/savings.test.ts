@@ -9,7 +9,7 @@ describe("Savings Logic", () => {
   describe("calculateSavingsContributions", () => {
     it("should calculate proportional monthly contributions based on income shares and starting amount", () => {
       const targetAmount = 1200;
-      const startingAmount = 200; // 1000 left to save
+      const currentAmount = 200; // 1000 left to save
       const targetDate = new Date();
       targetDate.setMonth(targetDate.getMonth() + 5); // 5 months away -> 200/month total
 
@@ -20,7 +20,7 @@ describe("Savings Logic", () => {
 
       const contributions = calculateSavingsContributions(
         targetAmount,
-        startingAmount,
+        currentAmount,
         targetDate,
         members,
       );
@@ -36,13 +36,13 @@ describe("Savings Logic", () => {
 
     it("should handle zero members", () => {
       const targetAmount = 1000;
-      const startingAmount = 0;
+      const currentAmount = 0;
       const targetDate = new Date();
       targetDate.setMonth(targetDate.getMonth() + 10);
 
       const contributions = calculateSavingsContributions(
         targetAmount,
-        startingAmount,
+        currentAmount,
         targetDate,
         [],
       );
@@ -51,13 +51,13 @@ describe("Savings Logic", () => {
 
     it("should handle goal already reached", () => {
       const targetAmount = 1000;
-      const startingAmount = 1500;
+      const currentAmount = 1500;
       const targetDate = new Date();
       targetDate.setMonth(targetDate.getMonth() + 10);
 
       const contributions = calculateSavingsContributions(
         targetAmount,
-        startingAmount,
+        currentAmount,
         targetDate,
         [{ id: "1", share: 1 }],
       );
