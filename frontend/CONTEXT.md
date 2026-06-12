@@ -10,6 +10,9 @@ See `shared/CONTEXT.md` for the core domain vocabulary used throughout this pack
 - Use Base UI primitives for interactive elements (dialogs, dropdowns, etc.) rather than building from scratch
 - Tailwind utility classes preferred over custom CSS; use `clsx` + `tailwind-merge` for conditional classes
 - Zod schemas from `shared/` are used for form validation
+- Shared UI primitives live in `shared/ui/` (Button, Card, Input, Badge, Avatar, IconButton); money-specific visualisations (`StatFigure`, `MemberBar`, `ProgressMeter`) live in `shared/ui/money/`. All are Tailwind ports of the Calculoides Design System — prefer them over inline implementations.
+- Button variants are semantic money colours: `balance` (primary blue), `income`, `expense`, `transfer`, `cta` (hero action with glow), `outline`, `ghost`. No `default` or `destructive`.
+- Badge `tone` follows the same money-colour vocabulary: `income`, `balance`, `expense`, `transfer`, `category`, `neutral`.
 
 ## Domain rendering notes
 
@@ -18,7 +21,7 @@ Add frontend-specific display conventions here as they emerge (e.g. how **Settle
 ## Savings UI
 
 **Savings Calculator**:
-The full-page detail view for creating or editing a single **Savings Goal**. Accepts goal parameters (name, target amount, target date, starting amount) and a per-member **Contribution** table. Computes the **Projected Date** live in the browser as values change; writes to the server only on explicit Save. Cancel discards all local changes.
+The full-page detail view for creating or editing a single **Savings Goal**. Accepts goal parameters (name, target amount, target date, current amount) and a per-member **Contribution** table. Computes the **Projected Date** live in the browser as values change; writes to the server only on explicit Save. Cancel discards all local changes.
 _Avoid_: Savings form, goal editor
 
 **Contribution Session**:
