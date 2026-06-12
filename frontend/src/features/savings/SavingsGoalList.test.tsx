@@ -48,6 +48,7 @@ const mockGoals = [
     targetDate: "2026-12-31T00:00:00.000Z",
     projectedDate: "2026-12-31T00:00:00.000Z",
     varianceMonths: 0,
+    isNever: false,
     breakdown: [
       {
         memberId: "member-1",
@@ -135,5 +136,44 @@ describe("SavingsGoalList", () => {
     const dateDisplay = screen.getByText(/2027/);
     expect(dateDisplay).toBeInTheDocument();
     expect(dateDisplay).not.toHaveTextContent("1970");
+  });
+
+  it("renders a Never Badge and blocked ProgressMeter for isNever goals", () => {
+    const neverGoals = [
+      {
+        ...mockGoals[0],
+        id: "goal-never",
+        name: "Impossible Dream",
+        varianceMonths: 1200,
+        isNever: true,
+      },
+    ];
+
+    render(<SavingsGoalList goals={neverGoals} />);
+
+    expect(screen.getAllByText("Never").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+  });
+
+  it("Save button is enabled even when session forecast is red (never)", async () => {
+    const user = userEvent.setup();
+    const onRefresh = vi.fn();
+    render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+
+    await user.click(screen.getByRole("button", { name: /adjust/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
+
+    const input = screen.getByRole("spinbutton");
+    await user.clear(input);
+    await user.type(input, "0");
+
+    const saveButton = screen.getByRole("button", { name: /^save$/i });
+    expect(saveButton).not.toBeDisabled();
   });
 });
