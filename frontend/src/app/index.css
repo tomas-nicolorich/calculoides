@@ -48,6 +48,8 @@
   --color-card-foreground: var(--color-slate-900);
   --color-input: var(--color-slate-200);
 
+  --breakpoint-3xl: 2048px;
+
   --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.06);
   --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);

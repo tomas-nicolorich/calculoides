@@ -106,18 +106,21 @@ export function DashboardPage() {
       </header>
 
       <div
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start"
+        className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
         data-testid="dashboard-grid"
       >
-        <IncomeOverview
-          totalIncome={summary.totalIncome}
-          members={summary.members}
-        />
-        <RemainingBalance
-          totalRemaining={summary.totalIncome - summary.totalSpent}
-          members={summary.members}
-        />
-        <RecentExpenses expenses={summary.recentExpenses} />
+        <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
+          <IncomeOverview
+            totalIncome={summary.totalIncome}
+            members={summary.members}
+          />
+          <RemainingBalance
+            totalRemaining={summary.totalIncome - summary.totalSpent}
+            members={summary.members}
+          />
+          <RecentExpenses expenses={summary.recentExpenses} />
+          <BudgetTransfers transfers={summary.recentTransfers} />
+        </div>
 
         <BudgetCategories
           categories={categories}
@@ -129,8 +132,6 @@ export function DashboardPage() {
           members={summary.members.map((m) => ({ id: m.id, name: m.name }))}
           onRefresh={handleRefresh}
         />
-
-        <BudgetTransfers transfers={summary.recentTransfers} />
       </div>
     </div>
   );
