@@ -7,8 +7,9 @@ import {
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
 import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFilter";
+import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Receipt, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, Trash2 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import { Button, IconButton } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
@@ -21,6 +22,7 @@ export function ExpensesPage() {
     categoryId?: string;
   }>({});
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: summary, refresh: refreshSummary } = useDashboardSummary(
     groupId ?? null,
@@ -60,7 +62,7 @@ export function ExpensesPage() {
         >
           <ArrowLeft size={24} className="text-brand-balance" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             Expenses
           </h1>
@@ -68,7 +70,36 @@ export function ExpensesPage() {
             View and filter all expenses for {summary?.groupName}
           </p>
         </div>
+        <Button
+          variant="expense"
+          onClick={() => {
+            setCreateOpen(true);
+          }}
+        >
+          <Plus size={16} className="mr-1" />
+          Add Expense
+        </Button>
       </header>
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="Log Expense"
+        description="Record a new expense for your group."
+      >
+        <ExpenseForm
+          groupId={groupId ?? ""}
+          categories={categories}
+          members={summary?.members ?? []}
+          onSuccess={() => {
+            setCreateOpen(false);
+            refreshExpenses();
+          }}
+          onCancel={() => {
+            setCreateOpen(false);
+          }}
+        />
+      </Dialog>
 
       <ExpenseFilter
         onFilterChange={setFilters}
