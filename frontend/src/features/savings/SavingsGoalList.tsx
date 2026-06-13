@@ -65,13 +65,13 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
     const projectedLabel = (() => {
       if (!isActive || localMonths === null) {
         if (isNever) return "Never";
-        return new Date(goal.projectedDate).toLocaleDateString();
+        return new Date(goal.projectedDate).toLocaleDateString("en-GB");
       }
       if (localMonths === Infinity) return "Never";
       if (localMonths === 0) return "Already reached";
       return localDate
-        ? localDate.toLocaleDateString()
-        : new Date(goal.projectedDate).toLocaleDateString();
+        ? localDate.toLocaleDateString("en-GB")
+        : new Date(goal.projectedDate).toLocaleDateString("en-GB");
     })();
 
     const projectedColorClass =
@@ -145,7 +145,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                 Target Date
               </p>
               <p className="font-semibold text-slate-700 dark:text-slate-300">
-                {targetDate.toLocaleDateString()}
+                {targetDate.toLocaleDateString("en-GB")}
               </p>
             </div>
             <div className="text-right">

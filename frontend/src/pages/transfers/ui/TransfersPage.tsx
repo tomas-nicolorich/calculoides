@@ -81,7 +81,9 @@ export function TransfersPage() {
                 <span>
                   {transfer.fromMemberName} → {transfer.toMemberName}
                 </span>
-                <span>{new Date(transfer.date).toLocaleDateString()}</span>
+                <span>
+                  {new Date(transfer.date).toLocaleDateString("en-GB")}
+                </span>
               </div>
             </div>
           </div>
