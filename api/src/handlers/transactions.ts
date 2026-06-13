@@ -462,6 +462,13 @@ const routes: RouteConfig = {
   },
 };
 
+routes.expenses = async (req: ApiRequest, res: ApiResponse) => {
+  const actionKey = req.method === "POST" ? "expense-create" : "expenses-list";
+  const handler = routes[actionKey];
+  if (handler) return handler(req, res);
+  res.status(405).json({ error: "Method not allowed" });
+};
+
 routes.savings = async (req: ApiRequest, res: ApiResponse) => {
   const method = req.method;
   let actionKey = "";

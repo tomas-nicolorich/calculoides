@@ -151,7 +151,7 @@ export function DashboardPage() {
             members={summary.members}
           />
           <RemainingBalance
-            totalRemaining={summary.totalIncome - summary.totalSpent}
+            totalRemaining={summary.totalIncome - summary.totalBudget}
             members={summary.members}
           />
           <RecentExpenses expenses={summary.recentExpenses} />

@@ -141,7 +141,9 @@ export function ExpensesPage() {
                 </div>
               </div>
               <div className="flex justify-between text-sm text-slate-500">
-                <span>{new Date(expense.date).toLocaleDateString()}</span>
+                <span>
+                  {new Date(expense.date).toLocaleDateString("en-GB")}
+                </span>
                 <span>
                   Member: {expense.payerName} • {expense.categoryName}
                 </span>

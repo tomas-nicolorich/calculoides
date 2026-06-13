@@ -32,7 +32,7 @@
     },
     {
       "source": "/api/expenses",
-      "destination": "/api/transactions?action=expenses-list"
+      "destination": "/api/transactions?action=expenses"
     },
     {
       "source": "/api/transfers",
