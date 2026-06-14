@@ -6,16 +6,17 @@ import { RecentExpense } from "../../../../../shared/src/types/redesign";
 
 interface RecentExpensesProps {
   expenses: RecentExpense[];
+  groupId: string;
 }
 
-export function RecentExpenses({ expenses }: RecentExpensesProps) {
+export function RecentExpenses({ expenses, groupId }: RecentExpensesProps) {
   return (
     <Card title="Expenses">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div className="text-sm text-slate-500">Recent expenses</div>
           <Link
-            to="/expenses"
+            to={`/expenses/${groupId}`}
             className="text-sm font-medium text-brand-balance hover:underline"
           >
             View All
