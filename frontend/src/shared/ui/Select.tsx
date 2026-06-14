@@ -52,9 +52,7 @@ export function Select({
       >
         <BaseSelect.Value placeholder={placeholder}>
           {(val: string | null) =>
-            val
-              ? (options.find((o) => o.value === val)?.label ?? val)
-              : undefined
+            options.find((o) => o.value === (val ?? ""))?.label
           }
         </BaseSelect.Value>
         <BaseSelect.Icon className="h-4 w-4 opacity-50 flex items-center justify-center">
