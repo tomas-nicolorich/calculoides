@@ -6,7 +6,8 @@
     "frontend/src/test/setup.ts",
     "**/prisma/client/**",
     "frontend/dist/**",
-    "api/dist/**"
+    "api/dist/**",
+    "api/_src/server.ts"
   ],
   "duplicates": {
     "minOccurrences": 3

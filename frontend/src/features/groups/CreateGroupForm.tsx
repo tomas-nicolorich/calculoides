@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Button,
-  Input,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../shared/ui";
+import { Button, Input, Card } from "../../shared/ui";
 import { groupApi } from "../../entities/group";
 
 export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
@@ -32,38 +25,38 @@ export function CreateGroupForm({ onCreated }: { onCreated: () => void }) {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Create New Group</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={(e) => {
-            void handleSubmit(e);
-          }}
-          className="space-y-4"
+    <Card title="Create New Group" className="w-full max-w-md">
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+        className="space-y-4"
+      >
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium">
+            Group Name
+          </label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+            }}
+            placeholder="e.g. My Household"
+            required
+            disabled={isLoading}
+          />
+        </div>
+        {error && <p className="text-sm text-brand-expense">{error}</p>}
+        <Button
+          variant="balance"
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
         >
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Group Name
-            </label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-              }}
-              placeholder="e.g. My Household"
-              required
-              disabled={isLoading}
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating..." : "Create Group"}
-          </Button>
-        </form>
-      </CardContent>
+          {isLoading ? "Creating..." : "Create Group"}
+        </Button>
+      </form>
     </Card>
   );
 }

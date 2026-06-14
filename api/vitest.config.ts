@@ -4,8 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["tests/**/*.test.ts"],
-    setupFiles: ["src/env.ts"],
+    include: ["_tests/**/*.test.ts"],
+    setupFiles: ["_src/env.ts"],
     env: {
       CALC_ENVIRONMENT: "test-local",
       SUPABASE_URL: "https://placeholder.supabase.co",
@@ -14,7 +14,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      exclude: ["node_modules/**", "scripts/**", "tests/**"],
+      exclude: ["node_modules/**", "scripts/**", "_tests/**"],
     },
   },
 });

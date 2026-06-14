@@ -46,11 +46,17 @@ export function Select({
     >
       <BaseSelect.Trigger
         className={cn(
-          "flex h-9 w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-colors hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-500 disabled:cursor-not-allowed disabled:opacity-50 text-left cursor-pointer",
+          "flex h-9 w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm shadow-xs transition-colors hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:border-brand-balance focus:ring-1 focus:ring-brand-balance disabled:cursor-not-allowed disabled:opacity-60 text-left cursor-pointer",
           className,
         )}
       >
-        <BaseSelect.Value placeholder={placeholder} />
+        <BaseSelect.Value placeholder={placeholder}>
+          {(val: string | null) =>
+            val
+              ? (options.find((o) => o.value === val)?.label ?? val)
+              : undefined
+          }
+        </BaseSelect.Value>
         <BaseSelect.Icon className="h-4 w-4 opacity-50 flex items-center justify-center">
           <ChevronDown size={16} />
         </BaseSelect.Icon>

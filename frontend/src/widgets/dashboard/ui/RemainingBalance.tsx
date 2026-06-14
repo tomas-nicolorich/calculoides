@@ -1,4 +1,5 @@
 import { Card } from "../../../shared/ui/Card";
+import { StatFigure } from "../../../shared/ui/money";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 
 interface RemainingBalanceProps {
@@ -20,14 +21,11 @@ export function RemainingBalance({
   return (
     <Card title="Remaining Balance">
       <div className="space-y-6">
-        <div>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            Total Group Remaining
-          </div>
-          <div className="text-3xl font-semibold tracking-tight text-brand-balance font-mono tnum">
-            {formatCurrency(totalRemaining)}
-          </div>
-        </div>
+        <StatFigure
+          label="Total Group Remaining"
+          value={formatCurrency(totalRemaining)}
+          tone="balance"
+        />
 
         <div className="space-y-4">
           {members.length === 0 && (

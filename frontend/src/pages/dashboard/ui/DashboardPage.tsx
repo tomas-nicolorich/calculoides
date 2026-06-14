@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   useDashboardSummary,
   useCategoriesList,
@@ -7,10 +8,13 @@ import { RemainingBalance } from "../../../widgets/dashboard/ui/RemainingBalance
 import { BudgetCategories } from "../../../widgets/dashboard/ui/BudgetCategories";
 import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
 import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
+import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { Link, useParams } from "react-router-dom";
-import { Calculator } from "lucide-react";
+import { Calculator, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
+import { Button } from "../../../shared/ui";
+import { Dialog } from "../../../shared/ui/Dialog";
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -27,6 +31,7 @@ export function DashboardPage() {
     error: categoriesError,
     refresh: refreshCategories,
   } = useCategoriesList(groupId ?? null);
+  const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
 
   if (summaryLoading || categoriesLoading) {
     return (
@@ -96,28 +101,62 @@ export function DashboardPage() {
           <p className="text-slate-500">Welcome back to your dashboard</p>
         </div>
 
-        <Link
-          to={`/savings/${groupId ?? ""}`}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-balance text-white rounded-2xl font-semibold shadow-lg shadow-brand-balance/20 hover:scale-[1.02] transition-transform active:scale-[0.98]"
-        >
-          <Calculator size={20} />
-          <span>Savings Goal</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="expense"
+            onClick={() => {
+              setCreateExpenseOpen(true);
+            }}
+          >
+            <Plus size={16} className="mr-1" />
+            Add Expense
+          </Button>
+          <Link
+            to={`/savings/${groupId ?? ""}`}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-balance text-white rounded-2xl font-semibold shadow-lg shadow-brand-balance/20 hover:scale-[1.02] transition-transform active:scale-[0.98]"
+          >
+            <Calculator size={20} />
+            <span>Savings Goal</span>
+          </Link>
+        </div>
       </header>
 
+      <Dialog
+        open={createExpenseOpen}
+        onOpenChange={setCreateExpenseOpen}
+        title="Log Expense"
+        description="Record a new expense for your group."
+      >
+        <ExpenseForm
+          groupId={groupId ?? ""}
+          categories={categories}
+          members={summary.members}
+          onSuccess={() => {
+            setCreateExpenseOpen(false);
+            handleRefresh();
+          }}
+          onCancel={() => {
+            setCreateExpenseOpen(false);
+          }}
+        />
+      </Dialog>
+
       <div
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start"
+        className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
         data-testid="dashboard-grid"
       >
-        <IncomeOverview
-          totalIncome={summary.totalIncome}
-          members={summary.members}
-        />
-        <RemainingBalance
-          totalRemaining={summary.totalIncome - summary.totalSpent}
-          members={summary.members}
-        />
-        <RecentExpenses expenses={summary.recentExpenses} />
+        <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
+          <IncomeOverview
+            totalIncome={summary.totalIncome}
+            members={summary.members}
+          />
+          <RemainingBalance
+            totalRemaining={summary.totalIncome - summary.totalBudget}
+            members={summary.members}
+          />
+          <RecentExpenses expenses={summary.recentExpenses} />
+          <BudgetTransfers transfers={summary.recentTransfers} />
+        </div>
 
         <BudgetCategories
           categories={categories}
@@ -129,8 +168,6 @@ export function DashboardPage() {
           members={summary.members.map((m) => ({ id: m.id, name: m.name }))}
           onRefresh={handleRefresh}
         />
-
-        <BudgetTransfers transfers={summary.recentTransfers} />
       </div>
     </div>
   );

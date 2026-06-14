@@ -52,6 +52,7 @@ const underTargetGoal: SavingsGoal = {
     .toISOString()
     .split("T")[0],
   varianceMonths: -4,
+  isNever: false,
   breakdown: [
     {
       memberId: "m1",
@@ -74,6 +75,7 @@ const overTargetGoal: SavingsGoal = {
     .toISOString()
     .split("T")[0],
   varianceMonths: 2,
+  isNever: false,
   breakdown: [
     {
       memberId: "m1",
@@ -96,6 +98,7 @@ const zeroContribGoal: SavingsGoal = {
     .toISOString()
     .split("T")[0],
   varianceMonths: 100,
+  isNever: false,
   breakdown: [
     {
       memberId: "m1",
@@ -116,6 +119,7 @@ const alreadyFundedGoal: SavingsGoal = {
   targetDate: futureTargetDate,
   projectedDate: new Date().toISOString().split("T")[0],
   varianceMonths: -12,
+  isNever: false,
   breakdown: [
     {
       memberId: "m1",
@@ -165,10 +169,12 @@ describe("SavingsGoalList — Contribution Session", () => {
     });
   });
 
-  it("Save button is disabled when all contributions are zero (FR-DS-014)", async () => {
+  it("Save button is enabled even when all contributions are zero (FR-DS-014 updated: zero-contribution save allowed)", async () => {
     await clickAdjustAndWaitForForecast(zeroContribGoal);
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /^save$/i })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /^save$/i }),
+      ).not.toBeDisabled();
     });
   });
 

@@ -264,7 +264,7 @@ export function BudgetCategories({
   };
 
   return (
-    <Card title="Budget Categories" className="md:col-span-2 xl:col-span-3">
+    <Card title="Budget Categories">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div className="text-sm text-slate-500">
@@ -414,7 +414,7 @@ export function BudgetCategories({
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {categories.map((category) => (
             <div
               key={category.id}

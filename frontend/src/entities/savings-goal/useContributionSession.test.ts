@@ -43,6 +43,7 @@ const mockGoal: SavingsGoal = {
     .toISOString()
     .split("T")[0],
   varianceMonths: -2,
+  isNever: false,
   breakdown: [
     {
       memberId: "m1",
