@@ -79,6 +79,7 @@ export const ExpenseService = {
   async listExpenses(
     groupId: string,
     categoryId?: string,
+    memberId?: string,
     limit = 20,
     offset = 0,
   ) {
@@ -91,6 +92,10 @@ export const ExpenseService = {
 
     if (categoryId) {
       where.categoryId = categoryId;
+    }
+
+    if (memberId) {
+      where.payerId = memberId;
     }
 
     const [expenses, total] = await prisma.$transaction([
