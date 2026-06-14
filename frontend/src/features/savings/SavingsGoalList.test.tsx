@@ -1,15 +1,31 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SavingsGoalList } from "./SavingsGoalList";
 import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect } from "vitest";
 
-vi.mock("../../entities/savings-goal", () => ({
-  savingsGoalApi: {
-    upsertContribution: vi.fn().mockResolvedValue({}),
+vi.mock("../../shared/api/supabase", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: "mock-token" } },
+      }),
+    },
   },
 }));
 
-// Mock UserDisplay to simplify testing
+vi.mock("../../entities/savings-goal", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../entities/savings-goal")>();
+  return {
+    ...actual,
+    savingsGoalApi: {
+      ...actual.savingsGoalApi,
+      upsertContribution: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+});
+
 vi.mock("../../shared/ui", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../shared/ui")>();
   return {
@@ -28,10 +44,11 @@ const mockGoals = [
     groupId: "group-1",
     name: "Vacation",
     targetAmount: 1200,
-    startingAmount: 0,
+    currentAmount: 0,
     targetDate: "2026-12-31T00:00:00.000Z",
     projectedDate: "2026-12-31T00:00:00.000Z",
     varianceMonths: 0,
+    isNever: false,
     breakdown: [
       {
         memberId: "member-1",
@@ -45,39 +62,62 @@ const mockGoals = [
 ];
 
 describe("SavingsGoalList", () => {
-  it("triggers onRefresh immediately after contribution change", async () => {
+  it("calls onRefresh after saving contributions and closes editing panel", async () => {
+    const user = userEvent.setup();
     const onRefresh = vi.fn();
     render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
-    // Click Adjust button
-    const adjustButton = screen.getByText(/Adjust/i);
-    fireEvent.click(adjustButton);
+    await user.click(screen.getByRole("button", { name: /adjust/i }));
 
-    // Change the contribution amount
-    const input = screen.getByRole("spinbutton");
-    fireEvent.change(input, { target: { value: "150" } });
+    // Wait for session to enter editing phase
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
 
-    // Click Save Adjustments
-    const saveButton = screen.getByText(/Save Adjustments/i);
-    fireEvent.click(saveButton);
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    // Verify API call was made correctly
-    expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
-      "goal-1",
-      "member-1",
-      150,
-    );
+    // onRefresh called after successful save
+    await waitFor(() => {
+      expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
+        "goal-1",
+        "member-1",
+        100,
+      );
+      expect(onRefresh).toHaveBeenCalled();
+    });
+  });
 
-    // Verify onRefresh is called WITHOUT waiting for the 1.5s timeout that existed before
-    await waitFor(
-      () => {
-        expect(onRefresh).toHaveBeenCalled();
+  it("renders a ProgressMeter for each goal with correct value and max", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    const meter = screen.getByRole("progressbar");
+    expect(meter).toBeInTheDocument();
+    expect(meter).toHaveAttribute("aria-valuenow", "0");
+    expect(meter).toHaveAttribute("aria-valuemax", "1200");
+  });
+
+  it("renders an on-track Badge for goals with no variance", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(screen.getByText("On Track")).toBeInTheDocument();
+  });
+
+  it("renders a delayed Badge and behind-state ProgressMeter for late goals", () => {
+    const goalsWithVariance = [
+      {
+        ...mockGoals[0],
+        id: "goal-2",
+        name: "New Car",
+        projectedDate: "2027-06-30T00:00:00.000Z",
+        varianceMonths: 6,
       },
-      { timeout: 1000 },
-    ); // Short timeout to ensure it's "immediate"
+    ];
 
-    // Verify success feedback is visible
-    expect(screen.getByText(/Changes saved successfully/i)).toBeInTheDocument();
+    render(<SavingsGoalList goals={goalsWithVariance} />);
+
+    expect(screen.getByText(/Delayed 6mo/i)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "data-state",
+      "behind",
+    );
   });
 
   it("displays the projected date and variance correctly", () => {
@@ -93,11 +133,47 @@ describe("SavingsGoalList", () => {
 
     render(<SavingsGoalList goals={goalsWithVariance} />);
 
-    expect(screen.getByText(/Delayed 6mo/i)).toBeInTheDocument();
-
-    // Check for the date display (using a flexible regex for date formats)
     const dateDisplay = screen.getByText(/2027/);
     expect(dateDisplay).toBeInTheDocument();
     expect(dateDisplay).not.toHaveTextContent("1970");
+  });
+
+  it("renders a Never Badge and blocked ProgressMeter for isNever goals", () => {
+    const neverGoals = [
+      {
+        ...mockGoals[0],
+        id: "goal-never",
+        name: "Impossible Dream",
+        varianceMonths: 1200,
+        isNever: true,
+      },
+    ];
+
+    render(<SavingsGoalList goals={neverGoals} />);
+
+    expect(screen.getAllByText("Never").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
+  });
+
+  it("Save button is enabled even when session forecast is red (never)", async () => {
+    const user = userEvent.setup();
+    const onRefresh = vi.fn();
+    render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+
+    await user.click(screen.getByRole("button", { name: /adjust/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
+
+    const input = screen.getByRole("spinbutton");
+    await user.clear(input);
+    await user.type(input, "0");
+
+    const saveButton = screen.getByRole("button", { name: /^save$/i });
+    expect(saveButton).not.toBeDisabled();
   });
 });

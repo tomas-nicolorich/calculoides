@@ -1,3 +1,3 @@
 // fallow-ignore-file unused-file
-import handler from "./src/handlers/members";
+import handler from "./_src/handlers/members";
 export default handler;

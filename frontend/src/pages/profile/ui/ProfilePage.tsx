@@ -1,6 +1,6 @@
-import { Card } from "../../../shared/ui/Card";
-import { Input } from "../../../shared/ui";
+import { Card, Button, IconButton, Input } from "../../../shared/ui";
 import {
+  ArrowLeft,
   User as UserIcon,
   Lock,
   Save,
@@ -8,11 +8,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { supabase } from "../../../shared/api/supabase";
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
@@ -80,13 +82,26 @@ export function ProfilePage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Profile
-        </h1>
-        <p className="text-slate-500">
-          Manage your personal information and security
-        </p>
+      <header className="flex items-center gap-4">
+        <IconButton
+          hover="balance"
+          bordered
+          size="lg"
+          onClick={() => {
+            void navigate(-1);
+          }}
+          aria-label="Back to Dashboard"
+        >
+          <ArrowLeft size={24} />
+        </IconButton>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Profile
+          </h1>
+          <p className="text-slate-500">
+            Manage your personal information and security
+          </p>
+        </div>
       </header>
 
       <Card title="Personal Information">
@@ -125,16 +140,17 @@ export function ProfilePage() {
             </div>
           )}
 
-          <button
+          <Button
+            variant="balance"
             onClick={() => {
               void handleUpdateProfile();
             }}
             disabled={loading}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-brand-balance text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+            className="w-full gap-2"
           >
             <Save size={18} />
             <span>{loading ? "Saving..." : "Update Profile"}</span>
-          </button>
+          </Button>
         </div>
       </Card>
 
@@ -175,15 +191,16 @@ export function ProfilePage() {
             </div>
           )}
 
-          <button
+          <Button
+            variant="outline"
             onClick={() => {
               void handleChangePassword();
             }}
             disabled={loading || !password}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="w-full"
           >
-            <span>{loading ? "Changing..." : "Change Password"}</span>
-          </button>
+            {loading ? "Changing..." : "Change Password"}
+          </Button>
         </div>
       </Card>
     </div>

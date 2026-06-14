@@ -7,19 +7,24 @@ import {
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
 import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFilter";
-import { useParams } from "react-router-dom";
-import { Receipt, Trash2 } from "lucide-react";
+import { ExpenseForm } from "../../../features/expense/ExpenseForm";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../app/providers/AuthContext";
+import { ArrowLeft, Plus, Receipt, Trash2 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
-import { Button } from "../../../shared/ui";
+import { Button, IconButton } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 
 export function ExpensesPage() {
+  const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<{
     memberId?: string;
     categoryId?: string;
   }>({});
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: summary, refresh: refreshSummary } = useDashboardSummary(
     groupId ?? null,
@@ -49,14 +54,58 @@ export function ExpensesPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Expenses
-        </h1>
-        <p className="text-slate-500">
-          View and filter all expenses for {summary?.groupName}
-        </p>
+      <header className="flex items-center gap-4">
+        <button
+          onClick={() => {
+            void navigate(-1);
+          }}
+          aria-label="Back to Dashboard"
+          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <ArrowLeft size={24} className="text-brand-balance" />
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Expenses
+          </h1>
+          <p className="text-slate-500">
+            View and filter all expenses for {summary?.groupName}
+          </p>
+        </div>
+        <Button
+          variant="expense"
+          disabled={!summary}
+          onClick={() => {
+            setCreateOpen(true);
+          }}
+        >
+          <Plus size={16} className="mr-1" />
+          Add Expense
+        </Button>
       </header>
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="Log Expense"
+        description="Record a new expense for your group."
+      >
+        <ExpenseForm
+          groupId={groupId ?? ""}
+          categories={categories}
+          members={summary?.members ?? []}
+          defaultPayerId={
+            summary?.members.find((m) => m.userId === user?.id)?.id
+          }
+          onSuccess={() => {
+            setCreateOpen(false);
+            refreshExpenses();
+          }}
+          onCancel={() => {
+            setCreateOpen(false);
+          }}
+        />
+      </Dialog>
 
       <ExpenseFilter
         onFilterChange={setFilters}
@@ -83,23 +132,24 @@ export function ExpensesPage() {
                   {expense.description}
                 </span>
                 <div className="flex items-center gap-4">
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="font-bold text-slate-900 dark:text-white font-mono tnum">
                     {formatCurrency(expense.amount)}
                   </span>
-                  <Button
-                    variant="ghost"
+                  <IconButton
+                    hover="expense"
                     size="sm"
-                    className="text-slate-400 hover:text-destructive p-2 h-auto"
                     onClick={() => {
                       setExpenseToDelete(expense.id);
                     }}
                   >
                     <Trash2 size={16} />
-                  </Button>
+                  </IconButton>
                 </div>
               </div>
               <div className="flex justify-between text-sm text-slate-500">
-                <span>{new Date(expense.date).toLocaleDateString()}</span>
+                <span>
+                  {new Date(expense.date).toLocaleDateString("en-GB")}
+                </span>
                 <span>
                   Member: {expense.payerName} • {expense.categoryName}
                 </span>
@@ -127,7 +177,7 @@ export function ExpensesPage() {
             Cancel
           </Button>
           <Button
-            className="bg-brand-expense hover:opacity-90"
+            variant="expense"
             onClick={() => {
               if (expenseToDelete) void handleDeleteExpense(expenseToDelete);
             }}

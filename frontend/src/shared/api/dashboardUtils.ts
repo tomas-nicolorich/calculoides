@@ -3,8 +3,8 @@ export function calculateTotalIncome(members: { income: number }[]) {
 }
 
 export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
   }).format(amount);
 }
