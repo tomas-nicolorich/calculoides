@@ -1,2 +1,2 @@
-import handler from "./src/handlers/transactions";
+import handler from "./_src/handlers/transactions";
 export default handler;

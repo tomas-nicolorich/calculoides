@@ -7,8 +7,8 @@
     "baseUrl": ".",
     "types": ["node"],
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["_src/*"]
     }
   },
-  "include": ["src/**/*.ts", "*.ts", "scripts/**/*.ts", "tests/**/*.ts", "src/types/**/*.d.ts", "members/**/*.ts", "groups/**/*.ts"]
+  "include": ["_src/**/*.ts", "*.ts", "scripts/**/*.ts", "_tests/**/*.ts", "_src/types/**/*.d.ts", "members/**/*.ts", "groups/**/*.ts"]
 }
