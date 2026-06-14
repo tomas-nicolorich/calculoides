@@ -7,6 +7,7 @@ interface ExpenseFormProps {
   groupId: string;
   categories: CategoryWithBalances[];
   members: { id: string; name: string }[];
+  defaultPayerId?: string;
   onSuccess?: () => void | Promise<void>;
   onCancel?: () => void;
 }
@@ -14,6 +15,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({
   categories,
   members,
+  defaultPayerId,
   onSuccess,
   onCancel,
 }: ExpenseFormProps) {
@@ -23,7 +25,7 @@ export function ExpenseForm({
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState(today);
-  const [payerId, setPayerId] = useState("");
+  const [payerId, setPayerId] = useState(defaultPayerId ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +47,7 @@ export function ExpenseForm({
       setAmount("");
       setCategoryId("");
       setDate(today);
-      setPayerId("");
+      setPayerId(defaultPayerId ?? "");
       await onSuccess?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -127,12 +129,12 @@ export function ExpenseForm({
       {members.length > 0 && (
         <div className="space-y-2">
           <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Paid by (optional)
+            Paid by
           </label>
           <Select
             value={payerId}
             onValueChange={setPayerId}
-            placeholder="Leave blank for default"
+            placeholder="Select member"
             options={members.map((m) => ({ value: m.id, label: m.name }))}
           />
         </div>

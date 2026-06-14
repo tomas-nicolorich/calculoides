@@ -9,12 +9,14 @@ import {
 import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFilter";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../app/providers/AuthContext";
 import { ArrowLeft, Plus, Receipt, Trash2 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import { Button, IconButton } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 
 export function ExpensesPage() {
+  const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const [filters, setFilters] = useState<{
@@ -72,6 +74,7 @@ export function ExpensesPage() {
         </div>
         <Button
           variant="expense"
+          disabled={!summary}
           onClick={() => {
             setCreateOpen(true);
           }}
@@ -91,6 +94,9 @@ export function ExpensesPage() {
           groupId={groupId ?? ""}
           categories={categories}
           members={summary?.members ?? []}
+          defaultPayerId={
+            summary?.members.find((m) => m.userId === user?.id)?.id
+          }
           onSuccess={() => {
             setCreateOpen(false);
             refreshExpenses();

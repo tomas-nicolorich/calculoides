@@ -66,12 +66,13 @@ interface ExpenseListItem {
 const routes: RouteConfig = {
   // Expenses
   "expenses-list": async (req: ApiRequest, res: ApiResponse) => {
-    const { groupId, categoryId } = req.query;
+    const { groupId, categoryId, memberId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
     const { parsedLimit, parsedOffset } = parsePagination(req.query);
     const { expenses, total } = await ExpenseService.listExpenses(
       groupId,
       categoryId as string | undefined,
+      memberId as string | undefined,
       parsedLimit,
       parsedOffset,
     );
@@ -409,6 +410,7 @@ const routes: RouteConfig = {
 
       return {
         id: m.id,
+        userId: m.userId,
         name: m.user.name ?? m.user.email,
         income: Number(m.income),
         share: share?.percentage ?? 0,

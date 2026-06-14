@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSavingsGoals } from "../../../shared/api/savingsHooks";
 import { SavingsGoalList } from "../../../features/savings/SavingsGoalList";
 import { SavingsGoalForm } from "../../../features/savings/SavingsGoalForm";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
+import { Button } from "../../../shared/ui";
+import { Dialog } from "../../../shared/ui/Dialog";
 
 export function SavingsPage() {
   const { groupId } = useParams<{ groupId: string }>();
+  const [createOpen, setCreateOpen] = useState(false);
   const {
     data: goals,
     loading,
@@ -31,7 +35,7 @@ export function SavingsPage() {
         >
           <ArrowLeft size={24} className="text-brand-balance" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Savings Calculator
           </h1>
@@ -39,6 +43,15 @@ export function SavingsPage() {
             Plan and track your group savings goals
           </p>
         </div>
+        <Button
+          variant="balance"
+          onClick={() => {
+            setCreateOpen(true);
+          }}
+        >
+          <Plus size={16} className="mr-1" />
+          Add Goal
+        </Button>
       </header>
 
       {error && (
@@ -47,24 +60,30 @@ export function SavingsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <SavingsGoalList
-            goals={goals}
-            onRefresh={() => {
-              refresh();
-            }}
-          />
-        </div>
-        <div>
-          <SavingsGoalForm
-            groupId={groupId ?? ""}
-            onSuccess={() => {
-              refresh();
-            }}
-          />
-        </div>
-      </div>
+      <SavingsGoalList
+        goals={goals}
+        onRefresh={() => {
+          refresh();
+        }}
+      />
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="New Savings Goal"
+        description="Set a savings target for your group."
+      >
+        <SavingsGoalForm
+          groupId={groupId ?? ""}
+          onSuccess={() => {
+            setCreateOpen(false);
+            refresh();
+          }}
+          onCancel={() => {
+            setCreateOpen(false);
+          }}
+        />
+      </Dialog>
     </div>
   );
 }

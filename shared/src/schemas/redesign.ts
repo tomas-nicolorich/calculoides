@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const DashboardMemberSchema = z.object({
   id: z.uuid(),
+  userId: z.uuid(),
   name: z.string(),
   income: z.number().nonnegative(),
   share: z.number().min(0).max(100),

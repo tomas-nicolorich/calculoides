@@ -131,6 +131,9 @@ export function DashboardPage() {
           groupId={groupId ?? ""}
           categories={categories}
           members={summary.members}
+          defaultPayerId={
+            summary.members.find((m) => m.userId === user?.id)?.id
+          }
           onSuccess={() => {
             setCreateExpenseOpen(false);
             handleRefresh();
@@ -154,7 +157,10 @@ export function DashboardPage() {
             totalRemaining={summary.totalIncome - summary.totalBudget}
             members={summary.members}
           />
-          <RecentExpenses expenses={summary.recentExpenses} />
+          <RecentExpenses
+            expenses={summary.recentExpenses}
+            groupId={groupId ?? ""}
+          />
           <BudgetTransfers transfers={summary.recentTransfers} />
         </div>
 
