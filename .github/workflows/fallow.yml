@@ -42,7 +42,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.fallow.outputs.sarif }}
-          category: fallow-audit
+          category: fallow-audit-${{ github.run_id }}
 
   dead-code:
     name: Full dead code scan
