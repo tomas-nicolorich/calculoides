@@ -135,6 +135,32 @@ describe("Login Page & Form Redesign", () => {
     });
   });
 
+  it("renders brand mark, theme toggle, remember-me, forgot-password, and group subtitle", () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      loading: false,
+      signOut: () => Promise.resolve(),
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Calculoides")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /toggle theme/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: /remember me/i }),
+    ).toBeChecked();
+    expect(screen.getByText(/forgot password/i)).toBeInTheDocument();
+    expect(screen.getByText(/group budget overview/i)).toBeInTheDocument();
+    expect(screen.queryByText(/household/i)).not.toBeInTheDocument();
+  });
+
   it("displays authentication error on failure", async () => {
     mockUseAuth.mockReturnValue({
       user: null,

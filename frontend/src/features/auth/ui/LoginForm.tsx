@@ -36,7 +36,7 @@ export function LoginForm() {
           Sign In
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Access your household budget overview
+          Access your group budget overview
         </p>
       </div>
 
@@ -83,6 +83,24 @@ export function LoginForm() {
             required
             className="w-full bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
           />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+            <input
+              type="checkbox"
+              defaultChecked
+              className="rounded"
+              aria-label="Remember me"
+            />
+            Remember me
+          </label>
+          <a
+            href="#"
+            className="text-sm text-brand-balance hover:underline font-medium"
+          >
+            Forgot password?
+          </a>
         </div>
 
         {error && (
