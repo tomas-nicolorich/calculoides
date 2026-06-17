@@ -37,11 +37,17 @@ jobs:
           fail-on-issues: 'true'
           comment: 'true'
 
+      - name: Merge SARIF runs
+        if: always() && steps.fallow.outputs.sarif != ''
+        run: |
+          jq 'if (.runs | length) <= 1 then . else .runs = [{"tool": .runs[0].tool, "results": ([.runs[].results // []] | add // [])}] end' \
+            "${{ steps.fallow.outputs.sarif }}" > merged-fallow.sarif
+
       - name: Upload SARIF
-        if: always()
+        if: always() && steps.fallow.outputs.sarif != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: ${{ steps.fallow.outputs.sarif }}
+          sarif_file: merged-fallow.sarif
           category: fallow-audit
 
   dead-code:
