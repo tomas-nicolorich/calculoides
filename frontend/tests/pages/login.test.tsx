@@ -34,6 +34,7 @@ describe("Login Page & Form Redesign", () => {
       user: null,
       session: null,
       loading: true,
+      profileIncomplete: false,
       signOut: () => Promise.resolve(),
     });
 
@@ -56,6 +57,7 @@ describe("Login Page & Form Redesign", () => {
       user: mockUser,
       session: null,
       loading: false,
+      profileIncomplete: false,
       signOut: () => Promise.resolve(),
     });
 
@@ -76,6 +78,7 @@ describe("Login Page & Form Redesign", () => {
       user: null,
       session: null,
       loading: false,
+      profileIncomplete: false,
       signOut: () => Promise.resolve(),
     });
 
@@ -102,6 +105,7 @@ describe("Login Page & Form Redesign", () => {
       user: null,
       session: null,
       loading: false,
+      profileIncomplete: false,
       signOut: () => Promise.resolve(),
     });
 
@@ -140,6 +144,7 @@ describe("Login Page & Form Redesign", () => {
       user: null,
       session: null,
       loading: false,
+      profileIncomplete: false,
       signOut: () => Promise.resolve(),
     });
 
@@ -166,6 +171,7 @@ describe("Login Page & Form Redesign", () => {
       user: null,
       session: null,
       loading: false,
+      profileIncomplete: false,
       signOut: () => Promise.resolve(),
     });
 
