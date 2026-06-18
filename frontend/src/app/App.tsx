@@ -3,6 +3,7 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
+import { CompleteProfilePage } from "../pages/CompleteProfilePage";
 import { DashboardPage } from "../pages/dashboard/ui/DashboardPage";
 import { GroupsPage } from "../pages/groups/ui/GroupsPage";
 import { ExpensesPage } from "../pages/expenses/ui/ExpensesPage";
@@ -18,6 +19,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/complete-profile" element={<CompleteProfilePage />} />
           <Route
             path="/*"
             element={
