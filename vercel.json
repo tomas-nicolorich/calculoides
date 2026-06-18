@@ -60,6 +60,9 @@
       "source": "/api/members/:id/income",
       "destination": "/api/members?action=update-income&id=:id"
     },
+    { "source": "/api/users/me", "destination": "/api/users?action=me" },
+    { "source": "/api/users", "destination": "/api/users?action=upsert" },
+
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
