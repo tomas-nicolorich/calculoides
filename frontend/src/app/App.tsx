@@ -4,6 +4,8 @@ import { ProtectedRoute } from "./providers/ProtectedRoute";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 import { CompleteProfilePage } from "../pages/CompleteProfilePage";
+import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "../pages/ResetPasswordPage";
 import { DashboardPage } from "../pages/dashboard/ui/DashboardPage";
 import { GroupsPage } from "../pages/groups/ui/GroupsPage";
 import { ExpensesPage } from "../pages/expenses/ui/ExpensesPage";
@@ -20,6 +22,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/complete-profile" element={<CompleteProfilePage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route
             path="/*"
             element={
