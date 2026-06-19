@@ -22,6 +22,17 @@ function renderForm() {
   );
 }
 
+function submitEmailForm(email: string) {
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: email },
+  });
+  const form = screen
+    .getByRole("button", { name: /send reset link/i })
+    .closest("form");
+  if (!form) throw new Error("form not found");
+  fireEvent.submit(form);
+}
+
 describe("ForgotPasswordForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,16 +53,7 @@ describe("ForgotPasswordForm", () => {
     });
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "user@example.com" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /send reset link/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitEmailForm("user@example.com");
 
     await waitFor(() => {
       expect(screen.getByText("Check your inbox")).toBeInTheDocument();
@@ -66,16 +68,7 @@ describe("ForgotPasswordForm", () => {
     } as never);
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "nobody@example.com" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /send reset link/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitEmailForm("nobody@example.com");
 
     await waitFor(() => {
       expect(screen.getByText("Check your inbox")).toBeInTheDocument();
@@ -89,16 +82,7 @@ describe("ForgotPasswordForm", () => {
     } as never);
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "nobody@example.com" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /send reset link/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitEmailForm("nobody@example.com");
 
     await waitFor(() => {
       expect(screen.getByText("Check your inbox")).toBeInTheDocument();
@@ -112,16 +96,7 @@ describe("ForgotPasswordForm", () => {
     } as never);
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "user@example.com" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /send reset link/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitEmailForm("user@example.com");
 
     await waitFor(() => {
       expect(
@@ -139,16 +114,7 @@ describe("ForgotPasswordForm", () => {
     );
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "user@example.com" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /send reset link/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitEmailForm("user@example.com");
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /sending/i })).toBeDisabled();

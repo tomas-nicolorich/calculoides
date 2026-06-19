@@ -50,6 +50,20 @@ function renderForm() {
   );
 }
 
+function submitPasswordForm(password: string, confirm = password) {
+  fireEvent.change(screen.getByLabelText("New Password"), {
+    target: { value: password },
+  });
+  fireEvent.change(screen.getByLabelText("Confirm Password"), {
+    target: { value: confirm },
+  });
+  const form = screen
+    .getByRole("button", { name: /update password/i })
+    .closest("form");
+  if (!form) throw new Error("form not found");
+  fireEvent.submit(form);
+}
+
 describe("ResetPasswordForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,19 +101,7 @@ describe("ResetPasswordForm", () => {
   it("shows error when passwords do not match", async () => {
     mockAuth({});
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "password123" },
-    });
-    fireEvent.change(screen.getByLabelText("Confirm Password"), {
-      target: { value: "different" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /update password/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitPasswordForm("password123", "different");
 
     await waitFor(() => {
       expect(screen.getByText("Passwords do not match.")).toBeInTheDocument();
@@ -110,19 +112,7 @@ describe("ResetPasswordForm", () => {
   it("shows error when password is shorter than 6 characters", async () => {
     mockAuth({});
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "abc" },
-    });
-    fireEvent.change(screen.getByLabelText("Confirm Password"), {
-      target: { value: "abc" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /update password/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitPasswordForm("abc");
 
     await waitFor(() => {
       expect(
@@ -140,19 +130,7 @@ describe("ResetPasswordForm", () => {
     });
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "newpassword" },
-    });
-    fireEvent.change(screen.getByLabelText("Confirm Password"), {
-      target: { value: "newpassword" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /update password/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitPasswordForm("newpassword");
 
     await waitFor(() => {
       expect(vi.mocked(supabase.auth.updateUser)).toHaveBeenCalledWith({
@@ -169,19 +147,7 @@ describe("ResetPasswordForm", () => {
     });
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "newpassword" },
-    });
-    fireEvent.change(screen.getByLabelText("Confirm Password"), {
-      target: { value: "newpassword" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /update password/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitPasswordForm("newpassword");
 
     await waitFor(() => {
       expect(screen.getByText("Groups page")).toBeInTheDocument();
@@ -196,19 +162,7 @@ describe("ResetPasswordForm", () => {
     } as never);
 
     renderForm();
-
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "newpassword" },
-    });
-    fireEvent.change(screen.getByLabelText("Confirm Password"), {
-      target: { value: "newpassword" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: /update password/i })
-      .closest("form");
-    if (!form) throw new Error("form not found");
-    fireEvent.submit(form);
+    submitPasswordForm("newpassword");
 
     await waitFor(() => {
       expect(screen.getByText("Update failed")).toBeInTheDocument();
