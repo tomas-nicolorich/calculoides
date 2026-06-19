@@ -95,12 +95,12 @@ export function LoginForm() {
             />
             Remember me
           </label>
-          <a
-            href="#"
+          <Link
+            to="/forgot-password"
             className="text-sm text-brand-balance hover:underline font-medium"
           >
             Forgot password?
-          </a>
+          </Link>
         </div>
 
         {error && (
