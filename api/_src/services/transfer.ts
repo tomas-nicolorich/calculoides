@@ -4,6 +4,11 @@ import { Prisma } from "@prisma/client";
 export const TransferService = {
   /**
    * Creates a budget transfer between two members within a category.
+   *
+   * `fromMemberId` and `toMemberId` are group member ids. They are resolved to
+   * the corresponding `category_members` rows (which the Transfer foreign keys
+   * reference) before insertion. Both members must already belong to the
+   * category.
    */
   async createTransfer(
     categoryId: string,
@@ -11,11 +16,28 @@ export const TransferService = {
     toMemberId: string,
     amount: number,
   ) {
+    const [fromCategoryMember, toCategoryMember] = await Promise.all([
+      prisma.categoryMember.findUnique({
+        where: { categoryId_memberId: { categoryId, memberId: fromMemberId } },
+        select: { id: true },
+      }),
+      prisma.categoryMember.findUnique({
+        where: { categoryId_memberId: { categoryId, memberId: toMemberId } },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!fromCategoryMember || !toCategoryMember) {
+      throw new Error(
+        "Both members must be assigned to this category to transfer budget.",
+      );
+    }
+
     return await prisma.transfer.create({
       data: {
         categoryId,
-        fromMemberId,
-        toMemberId,
+        fromMemberId: fromCategoryMember.id,
+        toMemberId: toCategoryMember.id,
         amount,
         date: new Date(),
       },
