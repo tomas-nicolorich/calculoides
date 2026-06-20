@@ -10,7 +10,7 @@ import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
 import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { Link, useParams } from "react-router-dom";
-import { Calculator, Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
 import { Button } from "../../../shared/ui";
@@ -94,11 +94,22 @@ export function DashboardPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-            {summary.groupName}
-          </h1>
-          <p className="text-slate-500">Welcome back to your dashboard</p>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/groups"
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Back to groups"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+              {summary.groupName}
+            </h1>
+            <p className="text-slate-500">
+              Shared budget · {summary.members.length} members
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -111,13 +122,6 @@ export function DashboardPage() {
             <Plus size={16} className="mr-1" />
             Add Expense
           </Button>
-          <Link
-            to={`/savings/${groupId ?? ""}`}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-balance text-white rounded-2xl font-semibold shadow-lg shadow-brand-balance/20 hover:scale-[1.02] transition-transform active:scale-[0.98]"
-          >
-            <Calculator size={20} />
-            <span>Savings Goal</span>
-          </Link>
         </div>
       </header>
 
@@ -171,7 +175,13 @@ export function DashboardPage() {
             void handleDeleteCategory(id);
           }}
           groupId={groupId ?? ""}
-          members={summary.members.map((m) => ({ id: m.id, name: m.name }))}
+          members={summary.members.map((m, i) => ({
+            id: m.id,
+            name: m.name,
+            income: m.income,
+            share: m.share,
+            index: i,
+          }))}
           onRefresh={handleRefresh}
         />
       </div>
