@@ -237,6 +237,9 @@ export function BudgetCategories({
     id: string;
     name: string;
   } | null>(null);
+  const [transferCategoryMemberIds, setTransferCategoryMemberIds] = useState<
+    string[]
+  >([]);
   const [transferFromMemberId, setTransferFromMemberId] = useState("");
   const [transferToMemberId, setTransferToMemberId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
@@ -448,10 +451,12 @@ export function BudgetCategories({
                   setTransferFromMemberId(val);
                 }}
                 disabled={!isOwner}
-                options={members.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                }))}
+                options={members
+                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .map((m) => ({
+                    value: m.id,
+                    label: m.name,
+                  }))}
               />
             </div>
             <div className="space-y-2">
@@ -462,11 +467,13 @@ export function BudgetCategories({
                   setTransferToMemberId(val);
                 }}
                 placeholder="Select recipient"
-                options={members.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                  disabled: m.id === transferFromMemberId,
-                }))}
+                options={members
+                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .map((m) => ({
+                    value: m.id,
+                    label: m.name,
+                    disabled: m.id === transferFromMemberId,
+                  }))}
               />
             </div>
             <div className="space-y-2">
@@ -570,6 +577,9 @@ export function BudgetCategories({
                               id: category.id,
                               name: category.name,
                             });
+                            setTransferCategoryMemberIds(
+                              category.balances.map((b) => b.memberId),
+                            );
                             setTransferFromMemberId(balance.memberId);
                             setTransferToMemberId("");
                             setTransferAmount("");
