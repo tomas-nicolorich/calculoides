@@ -1,10 +1,17 @@
-import { Card } from "../../../shared/ui/Card";
 import { Plus, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { groupApi, type Group } from "../../../entities/group";
 import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
+import { Card } from "../../../shared/ui/Card";
+import { Button, Avatar, AvatarGroup } from "../../../shared/ui";
+import { formatCurrency } from "../../../shared/api/dashboardUtils";
+
+/** Sum of every member's monthly income — the card's "Group Income" figure. */
+function groupIncome(group: Group): number {
+  return group.members.reduce((sum, m) => sum + m.income, 0);
+}
 
 export function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -32,25 +39,25 @@ export function GroupsPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-      <header className="flex justify-between items-center">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
             My Groups
           </h1>
-          <p className="text-slate-500">
+          <p className="mt-1 text-sm text-slate-500">
             Select a group to view your dashboard
           </p>
         </div>
 
-        <button
+        <Button
+          variant="income"
           onClick={() => {
             setIsCreatingGroup(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-income text-white rounded-xl hover:opacity-90 transition-opacity font-semibold"
         >
           <Plus size={18} />
           <span>New Group</span>
-        </button>
+        </Button>
       </header>
 
       <ResponsiveDialog
@@ -74,43 +81,81 @@ export function GroupsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-balance"></div>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {groups.map((group) => (
-            <Link key={group.id} to={`/dashboard/${group.id}`}>
-              <Card className="hover:border-brand-balance/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-brand-balance/10 text-brand-balance rounded-2xl">
-                      <Users size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                        {group.name}
-                      </h3>
-                      <p className="text-sm text-slate-500 capitalize">
+        <div className="flex flex-col gap-4">
+          {groups.map((group) => {
+            const income = groupIncome(group);
+            return (
+              <Link
+                key={group.id}
+                to={`/dashboard/${group.id}`}
+                className="group flex flex-col gap-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-balance/50 hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-6"
+              >
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="grid h-[52px] w-[52px] flex-none place-items-center rounded-2xl bg-brand-balance/10 text-brand-balance">
+                    <Users size={24} />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white [overflow-wrap:anywhere]">
+                      {group.name}
+                    </h3>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      <span className="capitalize">
                         {group.role.toLowerCase()}
-                      </p>
+                      </span>
+                      <span className="h-[3px] w-[3px] rounded-full bg-slate-300 dark:bg-slate-600" />
+                      <span>
+                        {group.members.length}{" "}
+                        {group.members.length === 1 ? "member" : "members"}
+                      </span>
                     </div>
                   </div>
-                  <ChevronRight size={20} className="text-slate-300" />
                 </div>
-              </Card>
-            </Link>
-          ))}
+
+                <div className="flex flex-none items-center justify-between gap-4 sm:justify-end">
+                  {income > 0 && (
+                    <div className="text-right">
+                      <div className="text-[0.625rem] uppercase tracking-[0.12em] text-slate-400">
+                        Group Income
+                      </div>
+                      <div className="font-mono text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+                        {formatCurrency(income)}
+                      </div>
+                    </div>
+                  )}
+                  {group.members.length > 0 && (
+                    <AvatarGroup max={4} size="sm">
+                      {group.members.map((m, i) => (
+                        <Avatar
+                          key={m.id}
+                          name={m.user?.name ?? m.user?.email ?? "?"}
+                          colorIndex={i}
+                          size="sm"
+                        />
+                      ))}
+                    </AvatarGroup>
+                  )}
+                  <ChevronRight
+                    size={20}
+                    className="ml-auto text-slate-300 dark:text-slate-600 sm:ml-0"
+                  />
+                </div>
+              </Link>
+            );
+          })}
 
           {groups.length === 0 && (
             <Card className="py-12 text-center">
               <p className="text-slate-500 mb-6">
                 You are not part of any groups yet.
               </p>
-              <button
+              <Button
+                variant="balance"
                 onClick={() => {
                   setIsCreatingGroup(true);
                 }}
-                className="px-6 py-2 bg-brand-balance text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
               >
                 Create your first group
-              </button>
+              </Button>
             </Card>
           )}
         </div>
