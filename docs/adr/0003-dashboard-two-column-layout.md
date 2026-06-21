@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (amended 2026-06-05)
+Accepted (amended 2026-06-05, 2026-06-19)
 
 ## Context
 
@@ -33,6 +33,17 @@ The income stacked bar chart and per-member breakdown inside Income Overview and
 ## Amendment (2026-06-05)
 
 Three-column layout is reinstated at `xl` viewports and above. The two original objections are resolved at this breakpoint: `align-items: start` eliminates height stretching, and at `xl` widths the additional breathing room reduces the visual-hierarchy concern. Two columns remains the default at `md`–`lg`. At `xl`+ the arrangement becomes: Row 1 → Income Overview, Remaining Balance, Recent Expenses; Row 2 → Budget Categories (full width); Row 3 → Budget Transfers.
+
+## Amendment (2026-06-19)
+
+The dashboard moved to an **asymmetric** column structure, and this amendment records it as the canonical layout (superseding the row-based arrangement described above):
+
+- **Right column**: Budget Categories, always its own full-height column. Its nested accordion (see ADR 0006) makes it the tallest, most interactive widget, so it owns a dedicated column rather than a full-width row.
+- **Left region**: the four summary/detail widgets (Income Overview, Remaining Balance, Recent Expenses, Budget Transfers) stacked in a single column at `md`–`lg`, flowing into multiple columns only at `3xl`.
+
+Concretely: `grid-cols-1` (mobile) → `lg:grid-cols-2` (left stack | categories) → `3xl:grid-cols-3` (left region splits to two columns, categories still full-height on the right). `align-items: start` is retained throughout.
+
+The strict two-column variant (left stack never splits, even on very wide screens) from the redesign mock was **rejected** — it wastes horizontal space at `3xl` and conflicts with the established preference for three columns on large displays.
 
 ## Rejected alternative
 
