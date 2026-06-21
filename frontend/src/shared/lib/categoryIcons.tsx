@@ -21,7 +21,7 @@ import { cn } from "./utils";
  * Keys are stable lowercase strings stored in `Category.icon`.
  * The set is intentionally small — no freeform emoji, no per-category palette.
  */
-export const CATEGORY_ICONS: Record<string, LucideIcon> = {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
   rent: Home,
   groceries: ShoppingCart,
   utilities: Plug,
@@ -43,7 +43,7 @@ export const CATEGORY_ICON_KEYS = Object.keys(CATEGORY_ICONS);
  * Resolve a stored icon key to a lucide component. Unknown, legacy (emoji),
  * or undefined values fall back to `Folder` so nothing renders broken.
  */
-export function resolveCategoryIcon(key?: string): LucideIcon {
+function resolveCategoryIcon(key?: string): LucideIcon {
   if (key && Object.prototype.hasOwnProperty.call(CATEGORY_ICONS, key)) {
     return CATEGORY_ICONS[key];
   }
