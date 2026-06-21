@@ -7,8 +7,12 @@ export const TransferService = {
    *
    * `fromMemberId` and `toMemberId` are group member ids. They are resolved to
    * the corresponding `category_members` rows (which the Transfer foreign keys
-   * reference) before insertion. Both members must already belong to the
-   * category.
+   * reference) before insertion.
+   *
+   * For restricted categories both members must already be in the member list.
+   * For unrestricted categories (no memberLinks) any group member is allowed;
+   * category_member rows are upserted for all group members on first transfer
+   * so that the FK constraint is satisfied and balances stay consistent.
    */
   async createTransfer(
     categoryId: string,
@@ -16,7 +20,7 @@ export const TransferService = {
     toMemberId: string,
     amount: number,
   ) {
-    const [fromCategoryMember, toCategoryMember] = await Promise.all([
+    let [fromCategoryMember, toCategoryMember] = await Promise.all([
       prisma.categoryMember.findUnique({
         where: { categoryId_memberId: { categoryId, memberId: fromMemberId } },
         select: { id: true },
@@ -28,9 +32,69 @@ export const TransferService = {
     ]);
 
     if (!fromCategoryMember || !toCategoryMember) {
-      throw new Error(
-        "Both members must be assigned to this category to transfer budget.",
-      );
+      const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: {
+          groupId: true,
+          memberLinks: { select: { memberId: true } },
+        },
+      });
+
+      if (!category) throw new Error("Category not found.");
+
+      const restrictedIds = category.memberLinks.map((ml) => ml.memberId);
+
+      if (restrictedIds.length > 0) {
+        if (
+          !restrictedIds.includes(fromMemberId) ||
+          !restrictedIds.includes(toMemberId)
+        ) {
+          throw new Error(
+            "Both members must be assigned to this category to transfer budget.",
+          );
+        }
+      } else {
+        // Unrestricted category — verify both members belong to the group
+        const matchedMembers = await prisma.groupMember.findMany({
+          where: {
+            groupId: category.groupId,
+            id: { in: [fromMemberId, toMemberId] },
+          },
+          select: { id: true },
+        });
+        if (matchedMembers.length !== 2) {
+          throw new Error(
+            "Both members must be assigned to this category to transfer budget.",
+          );
+        }
+
+        // Upsert category_member rows for ALL group members so that
+        // (a) the Transfer FK constraint is satisfied and
+        // (b) balance calculation remains consistent for every member.
+        const allGroupMembers = await prisma.groupMember.findMany({
+          where: { groupId: category.groupId },
+          select: { id: true },
+        });
+        await prisma.categoryMember.createMany({
+          data: allGroupMembers.map((m) => ({ categoryId, memberId: m.id })),
+          skipDuplicates: true,
+        });
+      }
+
+      [fromCategoryMember, toCategoryMember] = await Promise.all([
+        prisma.categoryMember.findUnique({
+          where: { categoryId_memberId: { categoryId, memberId: fromMemberId } },
+          select: { id: true },
+        }),
+        prisma.categoryMember.findUnique({
+          where: { categoryId_memberId: { categoryId, memberId: toMemberId } },
+          select: { id: true },
+        }),
+      ]);
+
+      if (!fromCategoryMember || !toCategoryMember) {
+        throw new Error("Failed to resolve category members for transfer.");
+      }
     }
 
     return await prisma.transfer.create({

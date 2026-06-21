@@ -341,6 +341,10 @@ const routes: RouteConfig = {
         categoryId: { in: categories.map((c) => c.id) },
         date: { gte: startOfMonth },
       },
+      include: {
+        fromMember: { select: { memberId: true } },
+        toMember: { select: { memberId: true } },
+      },
     });
 
     // 3. Perform Calculations
@@ -442,10 +446,10 @@ const routes: RouteConfig = {
         categoryName:
           categories.find((c) => c.id === t.categoryId)?.name ?? "Unknown",
         fromMemberName:
-          group.members.find((m) => m.id === t.fromMemberId)?.user.name ??
+          group.members.find((m) => m.id === t.fromMember.memberId)?.user.name ??
           "Unknown",
         toMemberName:
-          group.members.find((m) => m.id === t.toMemberId)?.user.name ??
+          group.members.find((m) => m.id === t.toMember.memberId)?.user.name ??
           "Unknown",
         amount: Number(t.amount),
         date: t.date,
