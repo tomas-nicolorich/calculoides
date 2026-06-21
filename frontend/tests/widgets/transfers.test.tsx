@@ -3,14 +3,7 @@ import { BudgetTransfers } from "@/widgets/dashboard/ui/BudgetTransfers";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
-vi.mock("@/shared/ui/Card", () => ({
-  Card: ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div data-testid="card-container">
-      <h2>{title}</h2>
-      {children}
-    </div>
-  ),
-}));
+vi.mock("@/shared/ui/Card");
 
 describe("BudgetTransfers Widget", () => {
   const mockTransfers = [

@@ -2,14 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { RemainingBalance } from "@/widgets/dashboard/ui/RemainingBalance";
 import { describe, it, expect, vi } from "vitest";
 
-vi.mock("@/shared/ui/Card", () => ({
-  Card: ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div data-testid="card-container">
-      <h2>{title}</h2>
-      {children}
-    </div>
-  ),
-}));
+vi.mock("@/shared/ui/Card");
 
 describe("RemainingBalance Widget", () => {
   const mockMembers = [
