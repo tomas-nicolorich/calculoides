@@ -63,7 +63,7 @@ interface ExpenseListItem {
   payer: { user: { name: string | null; email: string } };
 }
 
-const routes: RouteConfig = {
+export const routes: RouteConfig = {
   // Expenses
   "expenses-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId, categoryId, memberId } = req.query;
@@ -434,8 +434,10 @@ const routes: RouteConfig = {
         date: e.date,
         categoryName:
           categories.find((c) => c.id === e.categoryId)?.name ?? "Unknown",
+        categoryId: e.categoryId,
         payerName:
           group.members.find((m) => m.id === e.payerId)?.user.name ?? "Unknown",
+        payerId: e.payerId,
       }));
 
     const recentTransfers = transfers
@@ -446,11 +448,13 @@ const routes: RouteConfig = {
         categoryName:
           categories.find((c) => c.id === t.categoryId)?.name ?? "Unknown",
         fromMemberName:
-          group.members.find((m) => m.id === t.fromMember.memberId)?.user.name ??
-          "Unknown",
+          group.members.find((m) => m.id === t.fromMember.memberId)?.user
+            .name ?? "Unknown",
+        fromMemberId: t.fromMember.memberId,
         toMemberName:
           group.members.find((m) => m.id === t.toMember.memberId)?.user.name ??
           "Unknown",
+        toMemberId: t.toMember.memberId,
         amount: Number(t.amount),
         date: t.date,
       }));
