@@ -14,7 +14,23 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
 import { Button } from "../../../shared/ui";
+import { Avatar, AvatarGroup } from "../../../shared/ui/Avatar";
 import { Dialog } from "../../../shared/ui/Dialog";
+
+/**
+ * Builds the stable per-group member colour index (memberId → palette index)
+ * from join order. Computed once and threaded into every widget so one person
+ * keeps one colour + initial across the whole dashboard. Members arrive already
+ * ordered by join order, so the index is simply array position.
+ *
+ * Later issues (expenses, transfers, categories) reuse this map to colour the
+ * same members consistently.
+ */
+export function buildMemberColorIndex(
+  members: { id: string }[],
+): Map<string, number> {
+  return new Map(members.map((m, i) => [m.id, i]));
+}
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -73,6 +89,11 @@ export function DashboardPage() {
 
   const isOwner = user?.id === summary.ownerId;
 
+  // Stable member colour index (memberId → palette index), computed once and
+  // threaded into the widgets so a member's colour + initial is consistent
+  // everywhere. See ADR 0007 "Stable member colour index, threaded app-wide".
+  const memberColorIndex = buildMemberColorIndex(summary.members);
+
   const handleDeleteCategory = async (id: string) => {
     try {
       await apiClient.fetch(`/transactions?action=category-delete&id=${id}`, {
@@ -112,7 +133,19 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          {summary.members.length > 0 && (
+            <AvatarGroup max={4} size="sm">
+              {summary.members.map((m) => (
+                <Avatar
+                  key={m.id}
+                  size="sm"
+                  name={m.name}
+                  colorIndex={memberColorIndex.get(m.id) ?? 0}
+                />
+              ))}
+            </AvatarGroup>
+          )}
           <Button
             variant="expense"
             onClick={() => {
@@ -155,11 +188,17 @@ export function DashboardPage() {
         <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
           <IncomeOverview
             totalIncome={summary.totalIncome}
-            members={summary.members}
+            members={summary.members.map((m) => ({
+              ...m,
+              colorIndex: memberColorIndex.get(m.id) ?? 0,
+            }))}
           />
           <RemainingBalance
             totalRemaining={summary.totalIncome - summary.totalBudget}
-            members={summary.members}
+            members={summary.members.map((m) => ({
+              ...m,
+              colorIndex: memberColorIndex.get(m.id) ?? 0,
+            }))}
           />
           <RecentExpenses
             expenses={summary.recentExpenses}
