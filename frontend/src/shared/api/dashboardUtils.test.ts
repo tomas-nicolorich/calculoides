@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { categoryMemberShare } from "./dashboardUtils";
+import { categoryMemberShare, formatCurrency } from "./dashboardUtils";
 
 const allMembers = [
   { id: "m1", income: 3000 },
@@ -64,5 +64,27 @@ describe("categoryMemberShare", () => {
     const result = categoryMemberShare(allMembers, ["m2"]);
     expect(result).toHaveLength(1);
     expect(result[0].share).toBeCloseTo(100);
+  });
+});
+
+describe("formatCurrency (en-IE)", () => {
+  it("formats a positive amount as €-prefixed with comma thousands and dot decimals", () => {
+    expect(formatCurrency(8420)).toBe("€8,420.00");
+  });
+
+  it("formats larger amounts with comma thousands separators", () => {
+    expect(formatCurrency(13000)).toBe("€13,000.00");
+  });
+
+  it("formats zero as €0.00", () => {
+    expect(formatCurrency(0)).toBe("€0.00");
+  });
+
+  it("formats a negative amount with a leading minus before the symbol", () => {
+    expect(formatCurrency(-8420)).toBe("-€8,420.00");
+  });
+
+  it("formats a negative fractional amount correctly", () => {
+    expect(formatCurrency(-1234.5)).toBe("-€1,234.50");
   });
 });
