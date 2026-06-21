@@ -16,6 +16,10 @@ import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
 import { Select, Input } from "../../../shared/ui";
 import { cn } from "../../../shared/lib/utils";
+import {
+  CategoryIconTile,
+  CATEGORY_ICON_KEYS,
+} from "../../../shared/lib/categoryIcons";
 
 export interface MemberRich {
   id: string;
@@ -82,14 +86,32 @@ function CategoryFormFields({
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium">Icon (Emoji)</label>
-        <Input
-          placeholder="💰"
-          value={icon}
-          onChange={(e) => {
-            setIcon(e.target.value);
-          }}
-        />
+        <label className="text-sm font-medium">Icon</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_ICON_KEYS.map((key) => {
+            const selected = icon === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setIcon(key);
+                }}
+                aria-pressed={selected}
+                aria-label={`Icon: ${key}`}
+                title={key}
+                className={cn(
+                  "rounded-xl p-0.5 transition-all",
+                  selected
+                    ? "ring-2 ring-brand-category ring-offset-1 ring-offset-card"
+                    : "opacity-70 hover:opacity-100",
+                )}
+              >
+                <CategoryIconTile icon={key} size="md" />
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
@@ -228,7 +250,7 @@ export function BudgetCategories({
 
   const [name, setName] = useState("");
   const [monthlyBudget, setMonthlyBudget] = useState("");
-  const [icon, setIcon] = useState("💰");
+  const [icon, setIcon] = useState("other");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -277,6 +299,7 @@ export function BudgetCategories({
       setIsAdding(false);
       setName("");
       setMonthlyBudget("");
+      setIcon("other");
       setSelectedMemberIds([]);
       onRefresh();
     } catch (err) {
@@ -533,9 +556,7 @@ export function BudgetCategories({
                   aria-expanded={isExpanded}
                   className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
                 >
-                  <span className="text-2xl leading-none" aria-hidden>
-                    {category.icon ?? "💰"}
-                  </span>
+                  <CategoryIconTile icon={category.icon} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
@@ -595,7 +616,7 @@ export function BudgetCategories({
                           setEditingCategory(category);
                           setName(category.name);
                           setMonthlyBudget(category.monthlyBudget.toString());
-                          setIcon(category.icon ?? "💰");
+                          setIcon(category.icon ?? "other");
                           const assignedMemberIds = category.balances.map(
                             (b) => b.memberId,
                           );
