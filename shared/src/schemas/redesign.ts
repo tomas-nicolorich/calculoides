@@ -17,14 +17,18 @@ export const RecentExpenseSchema = z.object({
   amount: z.number().positive(),
   date: z.iso.datetime(),
   categoryName: z.string(),
+  categoryId: z.uuid(),
   payerName: z.string(),
+  payerId: z.uuid(),
 });
 
 const TransferSchema = z.object({
   id: z.uuid(),
   categoryName: z.string(),
   fromMemberName: z.string(),
+  fromMemberId: z.uuid(),
   toMemberName: z.string(),
+  toMemberId: z.uuid(),
   amount: z.number().positive(),
   date: z.iso.datetime(),
 });

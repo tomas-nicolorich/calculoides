@@ -222,7 +222,7 @@ describe("SavingsGoalList — Contribution Session", () => {
 
     const serverDateText = new Date(
       underTargetGoal.projectedDate,
-    ).toLocaleDateString();
+    ).toLocaleDateString("en-GB");
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
     await waitFor(() => {

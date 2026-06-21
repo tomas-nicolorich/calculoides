@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Card } from "../../../shared/ui/Card";
 import { Avatar } from "../../../shared/ui/Avatar";
+import { Badge, type BadgeTone } from "../../../shared/ui/Badge";
 import { ProgressMeter } from "../../../shared/ui/money";
+import type { ProgressState } from "../../../shared/ui/money/ProgressMeter";
 import {
   formatCurrency,
   categoryMemberShare,
+  progressState,
+  progressPercent,
 } from "../../../shared/api/dashboardUtils";
 import {
   CategoryWithBalances,
@@ -16,6 +20,17 @@ import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
 import { Select, Input } from "../../../shared/ui";
 import { cn } from "../../../shared/lib/utils";
+import {
+  CategoryIconTile,
+  CATEGORY_ICON_KEYS,
+} from "../../../shared/lib/categoryIcons";
+
+/** Badge tone for each urgency state — mirrors ProgressMeter's stateVar colours. */
+const stateTone: Record<ProgressState, BadgeTone> = {
+  "on-track": "income",
+  behind: "transfer",
+  blocked: "expense",
+};
 
 export interface MemberRich {
   id: string;
@@ -82,14 +97,32 @@ function CategoryFormFields({
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium">Icon (Emoji)</label>
-        <Input
-          placeholder="💰"
-          value={icon}
-          onChange={(e) => {
-            setIcon(e.target.value);
-          }}
-        />
+        <label className="text-sm font-medium">Icon</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_ICON_KEYS.map((key) => {
+            const selected = icon === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setIcon(key);
+                }}
+                aria-pressed={selected}
+                aria-label={`Icon: ${key}`}
+                title={key}
+                className={cn(
+                  "rounded-xl p-0.5 transition-all",
+                  selected
+                    ? "ring-2 ring-brand-category ring-offset-1 ring-offset-card"
+                    : "opacity-70 hover:opacity-100",
+                )}
+              >
+                <CategoryIconTile icon={key} size="md" />
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
@@ -139,6 +172,10 @@ interface MemberRowProps {
 // fallow-ignore-next-line complexity
 function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
   const isOver = balance.remainingQuota < 0;
+  const memberState: ProgressState = isOver
+    ? "blocked"
+    : progressState(balance.spent, balance.quota);
+  const memberPct = progressPercent(balance.spent, balance.quota);
   return (
     <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -154,6 +191,9 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
           <span className="text-xs text-slate-400 shrink-0">
             {share.toFixed(1)}%
           </span>
+          <Badge tone={stateTone[memberState]} size="sm" className="shrink-0">
+            {memberPct}%
+          </Badge>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right">
@@ -194,7 +234,7 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
       <ProgressMeter
         value={balance.spent}
         max={balance.quota}
-        tone={isOver ? "expense" : "category"}
+        state={memberState}
       />
     </div>
   );
@@ -228,7 +268,7 @@ export function BudgetCategories({
 
   const [name, setName] = useState("");
   const [monthlyBudget, setMonthlyBudget] = useState("");
-  const [icon, setIcon] = useState("💰");
+  const [icon, setIcon] = useState("other");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -237,6 +277,9 @@ export function BudgetCategories({
     id: string;
     name: string;
   } | null>(null);
+  const [transferCategoryMemberIds, setTransferCategoryMemberIds] = useState<
+    string[]
+  >([]);
   const [transferFromMemberId, setTransferFromMemberId] = useState("");
   const [transferToMemberId, setTransferToMemberId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
@@ -274,6 +317,7 @@ export function BudgetCategories({
       setIsAdding(false);
       setName("");
       setMonthlyBudget("");
+      setIcon("other");
       setSelectedMemberIds([]);
       onRefresh();
     } catch (err) {
@@ -448,10 +492,12 @@ export function BudgetCategories({
                   setTransferFromMemberId(val);
                 }}
                 disabled={!isOwner}
-                options={members.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                }))}
+                options={members
+                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .map((m) => ({
+                    value: m.id,
+                    label: m.name,
+                  }))}
               />
             </div>
             <div className="space-y-2">
@@ -462,11 +508,13 @@ export function BudgetCategories({
                   setTransferToMemberId(val);
                 }}
                 placeholder="Select recipient"
-                options={members.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                  disabled: m.id === transferFromMemberId,
-                }))}
+                options={members
+                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .map((m) => ({
+                    value: m.id,
+                    label: m.name,
+                    disabled: m.id === transferFromMemberId,
+                  }))}
               />
             </div>
             <div className="space-y-2">
@@ -506,6 +554,14 @@ export function BudgetCategories({
               (sum, b) => sum + b.spent,
               0,
             );
+            const categoryState = progressState(
+              totalSpent,
+              category.monthlyBudget,
+            );
+            const categoryPct = progressPercent(
+              totalSpent,
+              category.monthlyBudget,
+            );
             const shareByMemberId = Object.fromEntries(
               categoryMemberShare(
                 members,
@@ -526,22 +582,25 @@ export function BudgetCategories({
                   aria-expanded={isExpanded}
                   className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
                 >
-                  <span className="text-2xl leading-none" aria-hidden>
-                    {category.icon ?? "💰"}
-                  </span>
+                  <CategoryIconTile icon={category.icon} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {category.name}
                       </span>
-                      <span className="text-xs text-slate-400 font-mono tnum shrink-0">
-                        {formatCurrency(category.monthlyBudget)}
+                      <span className="flex items-center gap-2 shrink-0">
+                        <Badge tone={stateTone[categoryState]} size="sm">
+                          {categoryPct}%
+                        </Badge>
+                        <span className="text-xs text-slate-400 font-mono tnum">
+                          {formatCurrency(category.monthlyBudget)}
+                        </span>
                       </span>
                     </div>
                     <ProgressMeter
                       value={totalSpent}
                       max={category.monthlyBudget}
-                      tone="category"
+                      state={categoryState}
                       className="mt-2"
                     />
                   </div>
@@ -570,6 +629,9 @@ export function BudgetCategories({
                               id: category.id,
                               name: category.name,
                             });
+                            setTransferCategoryMemberIds(
+                              category.balances.map((b) => b.memberId),
+                            );
                             setTransferFromMemberId(balance.memberId);
                             setTransferToMemberId("");
                             setTransferAmount("");
@@ -585,7 +647,7 @@ export function BudgetCategories({
                           setEditingCategory(category);
                           setName(category.name);
                           setMonthlyBudget(category.monthlyBudget.toString());
-                          setIcon(category.icon ?? "💰");
+                          setIcon(category.icon ?? "other");
                           const assignedMemberIds = category.balances.map(
                             (b) => b.memberId,
                           );
