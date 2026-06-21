@@ -83,7 +83,7 @@ describe("Dashboard Page", () => {
     );
 
     const gridContainer = screen.getByTestId("dashboard-grid");
-    expect(gridContainer).toHaveClass("xl:grid-cols-3");
+    expect(gridContainer).toHaveClass("3xl:grid-cols-3");
     expect(gridContainer).not.toHaveClass("lg:grid-cols-3");
     expect(gridContainer).toHaveClass("items-start");
   });
