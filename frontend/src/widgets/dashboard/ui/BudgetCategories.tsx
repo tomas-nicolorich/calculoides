@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Card } from "../../../shared/ui/Card";
 import { Avatar } from "../../../shared/ui/Avatar";
+import { Badge, type BadgeTone } from "../../../shared/ui/Badge";
 import { ProgressMeter } from "../../../shared/ui/money";
+import type { ProgressState } from "../../../shared/ui/money/ProgressMeter";
 import {
   formatCurrency,
   categoryMemberShare,
+  progressState,
+  progressPercent,
 } from "../../../shared/api/dashboardUtils";
 import {
   CategoryWithBalances,
@@ -20,6 +24,13 @@ import {
   CategoryIconTile,
   CATEGORY_ICON_KEYS,
 } from "../../../shared/lib/categoryIcons";
+
+/** Badge tone for each urgency state — mirrors ProgressMeter's stateVar colours. */
+const stateTone: Record<ProgressState, BadgeTone> = {
+  "on-track": "income",
+  behind: "transfer",
+  blocked: "expense",
+};
 
 export interface MemberRich {
   id: string;
@@ -161,6 +172,10 @@ interface MemberRowProps {
 // fallow-ignore-next-line complexity
 function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
   const isOver = balance.remainingQuota < 0;
+  const memberState: ProgressState = isOver
+    ? "blocked"
+    : progressState(balance.spent, balance.quota);
+  const memberPct = progressPercent(balance.spent, balance.quota);
   return (
     <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -176,6 +191,9 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
           <span className="text-xs text-slate-400 shrink-0">
             {share.toFixed(1)}%
           </span>
+          <Badge tone={stateTone[memberState]} size="sm" className="shrink-0">
+            {memberPct}%
+          </Badge>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right">
@@ -216,7 +234,7 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
       <ProgressMeter
         value={balance.spent}
         max={balance.quota}
-        tone={isOver ? "expense" : "category"}
+        state={memberState}
       />
     </div>
   );
@@ -536,6 +554,14 @@ export function BudgetCategories({
               (sum, b) => sum + b.spent,
               0,
             );
+            const categoryState = progressState(
+              totalSpent,
+              category.monthlyBudget,
+            );
+            const categoryPct = progressPercent(
+              totalSpent,
+              category.monthlyBudget,
+            );
             const shareByMemberId = Object.fromEntries(
               categoryMemberShare(
                 members,
@@ -562,14 +588,19 @@ export function BudgetCategories({
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {category.name}
                       </span>
-                      <span className="text-xs text-slate-400 font-mono tnum shrink-0">
-                        {formatCurrency(category.monthlyBudget)}
+                      <span className="flex items-center gap-2 shrink-0">
+                        <Badge tone={stateTone[categoryState]} size="sm">
+                          {categoryPct}%
+                        </Badge>
+                        <span className="text-xs text-slate-400 font-mono tnum">
+                          {formatCurrency(category.monthlyBudget)}
+                        </span>
                       </span>
                     </div>
                     <ProgressMeter
                       value={totalSpent}
                       max={category.monthlyBudget}
-                      tone="category"
+                      state={categoryState}
                       className="mt-2"
                     />
                   </div>
