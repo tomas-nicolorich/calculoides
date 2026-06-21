@@ -203,8 +203,21 @@ export function DashboardPage() {
           <RecentExpenses
             expenses={summary.recentExpenses}
             groupId={groupId ?? ""}
+            members={summary.members.map((m) => ({
+              id: m.id,
+              name: m.name,
+              colorIndex: memberColorIndex.get(m.id) ?? 0,
+            }))}
+            categories={categories}
           />
-          <BudgetTransfers transfers={summary.recentTransfers} />
+          <BudgetTransfers
+            transfers={summary.recentTransfers}
+            members={summary.members.map((m) => ({
+              id: m.id,
+              name: m.name,
+              colorIndex: memberColorIndex.get(m.id) ?? 0,
+            }))}
+          />
         </div>
 
         <BudgetCategories

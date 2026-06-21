@@ -1,22 +1,70 @@
 import { Card } from "../../../shared/ui/Card";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Avatar } from "../../../shared/ui/Avatar";
 
 interface Transfer {
   id: string;
   categoryName: string;
   fromMemberName: string;
+  fromMemberId: string;
   toMemberName: string;
+  toMemberId: string;
   amount: number;
   date: string;
 }
 
-interface BudgetTransfersProps {
-  transfers: Transfer[];
+interface TransferMember {
+  id: string;
+  name: string;
+  colorIndex: number;
 }
 
-export function BudgetTransfers({ transfers }: BudgetTransfersProps) {
+interface BudgetTransfersProps {
+  transfers: Transfer[];
+  members: TransferMember[];
+}
+
+interface TransferRowProps {
+  transfer: Transfer;
+  members: TransferMember[];
+}
+
+/** A single transfer: payer avatar → recipient avatar, resolved by id. */
+function TransferRow({ transfer, members }: TransferRowProps) {
+  const from = members.find((m) => m.id === transfer.fromMemberId);
+  const to = members.find((m) => m.id === transfer.toMemberId);
+  const fromName = from?.name ?? transfer.fromMemberName;
+  const toName = to?.name ?? transfer.toMemberName;
+  return (
+    <div
+      data-testid="transfer-row"
+      className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 p-2 rounded-lg"
+    >
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Avatar size="sm" name={fromName} colorIndex={from?.colorIndex ?? 0} />
+        <ArrowRight size={16} className="text-brand-transfer" aria-hidden />
+        <Avatar size="sm" name={toName} colorIndex={to?.colorIndex ?? 0} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start gap-2">
+          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+            {transfer.categoryName}
+          </p>
+          <span className="text-sm font-semibold text-brand-transfer font-mono tnum">
+            {formatCurrency(transfer.amount)}
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 truncate">
+          {fromName} → {toName}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function BudgetTransfers({ transfers, members }: BudgetTransfersProps) {
   return (
     <Card title="Budget Transfers">
       <div className="space-y-6">
@@ -39,28 +87,11 @@ export function BudgetTransfers({ transfers }: BudgetTransfersProps) {
             </div>
           ) : (
             transfers.map((transfer) => (
-              <div
+              <TransferRow
                 key={transfer.id}
-                data-testid="transfer-row"
-                className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 p-2 rounded-lg"
-              >
-                <div className="p-2 bg-brand-transfer/10 text-brand-transfer rounded-lg">
-                  <ArrowRightLeft size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                      {transfer.categoryName}
-                    </p>
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum">
-                      {formatCurrency(transfer.amount)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 truncate">
-                    {transfer.fromMemberName} → {transfer.toMemberName}
-                  </p>
-                </div>
-              </div>
+                transfer={transfer}
+                members={members}
+              />
             ))
           )}
         </div>
