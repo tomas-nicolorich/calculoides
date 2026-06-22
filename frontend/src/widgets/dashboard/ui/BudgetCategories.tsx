@@ -1,19 +1,44 @@
 import { useState } from "react";
 import { Card } from "../../../shared/ui/Card";
-import { formatCurrency } from "../../../shared/api/dashboardUtils";
+import { Avatar } from "../../../shared/ui/Avatar";
+import { Badge, type BadgeTone } from "../../../shared/ui/Badge";
+import { ProgressMeter } from "../../../shared/ui/money";
+import type { ProgressState } from "../../../shared/ui/money/ProgressMeter";
+import {
+  formatCurrency,
+  categoryMemberShare,
+  progressState,
+  progressPercent,
+} from "../../../shared/api/dashboardUtils";
 import {
   CategoryWithBalances,
   CategoryBalance,
 } from "../../../../../shared/src/types/redesign";
-import { Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
+import { ChevronDown, Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
 import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
 import { Select, Input } from "../../../shared/ui";
+import { cn } from "../../../shared/lib/utils";
+import {
+  CategoryIconTile,
+  CATEGORY_ICON_KEYS,
+} from "../../../shared/lib/categoryIcons";
 
-interface MemberBasic {
+/** Badge tone for each urgency state — mirrors ProgressMeter's stateVar colours. */
+const stateTone: Record<ProgressState, BadgeTone> = {
+  "on-track": "income",
+  behind: "transfer",
+  blocked: "expense",
+};
+
+export interface MemberRich {
   id: string;
   name: string;
+  income: number;
+  share: number;
+  /** Stable 0-based position in the group; drives avatar colour. */
+  index: number;
 }
 
 interface CategoryFormFieldsProps {
@@ -23,7 +48,7 @@ interface CategoryFormFieldsProps {
   setMonthlyBudget: (v: string) => void;
   icon: string;
   setIcon: (v: string) => void;
-  members: MemberBasic[];
+  members: MemberRich[];
   selectedMemberIds: string[];
   toggleMember: (id: string) => void;
   formError: string | null;
@@ -72,14 +97,32 @@ function CategoryFormFields({
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium">Icon (Emoji)</label>
-        <Input
-          placeholder="💰"
-          value={icon}
-          onChange={(e) => {
-            setIcon(e.target.value);
-          }}
-        />
+        <label className="text-sm font-medium">Icon</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_ICON_KEYS.map((key) => {
+            const selected = icon === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setIcon(key);
+                }}
+                aria-pressed={selected}
+                aria-label={`Icon: ${key}`}
+                title={key}
+                className={cn(
+                  "rounded-xl p-0.5 transition-all",
+                  selected
+                    ? "ring-2 ring-brand-category ring-offset-1 ring-offset-card"
+                    : "opacity-70 hover:opacity-100",
+                )}
+              >
+                <CategoryIconTile icon={key} size="md" />
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
@@ -119,12 +162,90 @@ function CategoryFormFields({
   );
 }
 
+interface MemberRowProps {
+  balance: CategoryBalance;
+  member: MemberRich | undefined;
+  share: number;
+  onTransfer: () => void;
+}
+
+// fallow-ignore-next-line complexity
+function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
+  const isOver = balance.remainingQuota < 0;
+  const memberState: ProgressState = isOver
+    ? "blocked"
+    : progressState(balance.spent, balance.quota);
+  const memberPct = progressPercent(balance.spent, balance.quota);
+  return (
+    <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar
+            name={member?.name ?? balance.memberId}
+            colorIndex={member?.index ?? 0}
+            size="sm"
+          />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+            {member?.name ?? balance.memberId.slice(0, 4)}
+          </span>
+          <span className="text-xs text-slate-400 shrink-0">
+            {share.toFixed(1)}%
+          </span>
+          <Badge tone={stateTone[memberState]} size="sm" className="shrink-0">
+            {memberPct}%
+          </Badge>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-right">
+            <div
+              className={cn(
+                "text-sm font-medium font-mono tnum",
+                isOver
+                  ? "text-brand-expense"
+                  : "text-slate-900 dark:text-white",
+              )}
+            >
+              {formatCurrency(Math.abs(balance.remainingQuota))}{" "}
+              <span className="text-xs font-normal font-sans">
+                {isOver ? "over" : "left"}
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-500">
+              Budget:{" "}
+              <span className="font-mono tnum">
+                {formatCurrency(balance.quota)}
+              </span>{" "}
+              | Spent:{" "}
+              <span className="font-mono tnum">
+                {formatCurrency(balance.spent)}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={onTransfer}
+            className="p-1.5 text-brand-transfer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded transition-all"
+            title="Initiate Transfer"
+            aria-label={`Transfer from ${member?.name ?? "member"}`}
+          >
+            <ArrowRightLeft size={14} />
+          </button>
+        </div>
+      </div>
+      <ProgressMeter
+        value={balance.spent}
+        max={balance.quota}
+        state={memberState}
+      />
+    </div>
+  );
+}
+
 interface BudgetCategoriesProps {
   categories: CategoryWithBalances[];
   isOwner: boolean;
   onDelete: (id: string) => void;
   groupId: string;
-  members: MemberBasic[];
+  members: MemberRich[];
   onRefresh: () => void;
 }
 
@@ -136,6 +257,7 @@ export function BudgetCategories({
   members,
   onRefresh,
 }: BudgetCategoriesProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<CategoryWithBalances | null>(null);
@@ -144,22 +266,35 @@ export function BudgetCategories({
     name: string;
   } | null>(null);
 
-  // Category Form State
   const [name, setName] = useState("");
   const [monthlyBudget, setMonthlyBudget] = useState("");
-  const [icon, setIcon] = useState("💰");
+  const [icon, setIcon] = useState("other");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Transfer State
   const [transferCategory, setTransferCategory] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [transferCategoryMemberIds, setTransferCategoryMemberIds] = useState<
+    string[]
+  >([]);
   const [transferFromMemberId, setTransferFromMemberId] = useState("");
   const [transferToMemberId, setTransferToMemberId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const handleAddSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -182,6 +317,7 @@ export function BudgetCategories({
       setIsAdding(false);
       setName("");
       setMonthlyBudget("");
+      setIcon("other");
       setSelectedMemberIds([]);
       onRefresh();
     } catch (err) {
@@ -259,13 +395,9 @@ export function BudgetCategories({
     );
   };
 
-  const getMemberName = (id: string) => {
-    return members.find((m) => m.id === id)?.name ?? id.slice(0, 4);
-  };
-
   return (
     <Card title="Budget Categories">
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div className="text-sm text-slate-500">
             Categories and per-member breakdown
@@ -277,11 +409,10 @@ export function BudgetCategories({
             className="flex items-center gap-2 px-4 py-2 bg-brand-income text-white rounded-xl hover:opacity-90 transition-opacity"
           >
             <Plus size={18} />
-            <span>Add</span>
+            <span>New Category</span>
           </button>
         </div>
 
-        {/* Add Category Dialog */}
         <ResponsiveDialog
           open={isAdding}
           onOpenChange={setIsAdding}
@@ -306,7 +437,6 @@ export function BudgetCategories({
           </form>
         </ResponsiveDialog>
 
-        {/* Edit Category Dialog */}
         <ResponsiveDialog
           open={editingCategory !== null}
           onOpenChange={(open) => {
@@ -342,7 +472,6 @@ export function BudgetCategories({
           </form>
         </ResponsiveDialog>
 
-        {/* Transfer Dialog */}
         <ResponsiveDialog
           open={transferCategory !== null}
           onOpenChange={(open) => {
@@ -363,10 +492,12 @@ export function BudgetCategories({
                   setTransferFromMemberId(val);
                 }}
                 disabled={!isOwner}
-                options={members.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                }))}
+                options={members
+                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .map((m) => ({
+                    value: m.id,
+                    label: m.name,
+                  }))}
               />
             </div>
             <div className="space-y-2">
@@ -377,11 +508,13 @@ export function BudgetCategories({
                   setTransferToMemberId(val);
                 }}
                 placeholder="Select recipient"
-                options={members.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                  disabled: m.id === transferFromMemberId,
-                }))}
+                options={members
+                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .map((m) => ({
+                    value: m.id,
+                    label: m.name,
+                    disabled: m.id === transferFromMemberId,
+                  }))}
               />
             </div>
             <div className="space-y-2">
@@ -414,114 +547,146 @@ export function BudgetCategories({
           </p>
         )}
 
-        <div className="grid grid-cols-1 gap-6">
-          {categories.map((category) => (
-            <div
-              key={category.id}
-              className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 border-l-2 border-l-brand-category space-y-4"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium text-slate-900 dark:text-white text-lg">
-                    {category.icon} {category.name}
-                  </h4>
-                  <p className="text-sm text-slate-500">
-                    Target:{" "}
-                    <span className="font-mono tnum">
-                      {formatCurrency(category.monthlyBudget)}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingCategory(category);
-                      setName(category.name);
-                      setMonthlyBudget(category.monthlyBudget.toString());
-                      setIcon(category.icon ?? "💰");
-                      const assignedMemberIds = category.balances.map(
-                        (b) => b.memberId,
-                      );
-                      const isSubset =
-                        assignedMemberIds.length < members.length;
-                      setSelectedMemberIds(isSubset ? assignedMemberIds : []);
-                      setFormError(null);
-                    }}
-                    className="p-2 text-slate-400 hover:text-brand-balance transition-colors"
-                    aria-label="Edit"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  {isOwner && (
-                    <button
-                      onClick={() => {
-                        setCategoryToDelete({
-                          id: category.id,
-                          name: category.name,
-                        });
-                      }}
-                      className="p-2 text-slate-400 hover:text-brand-expense transition-colors"
-                      aria-label="Delete"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
-                </div>
-              </div>
+        <div className="flex flex-col gap-2">
+          {categories.map((category) => {
+            const isExpanded = expandedIds.has(category.id);
+            const totalSpent = category.balances.reduce(
+              (sum, b) => sum + b.spent,
+              0,
+            );
+            const categoryState = progressState(
+              totalSpent,
+              category.monthlyBudget,
+            );
+            const categoryPct = progressPercent(
+              totalSpent,
+              category.monthlyBudget,
+            );
+            const shareByMemberId = Object.fromEntries(
+              categoryMemberShare(
+                members,
+                category.balances.map((b) => b.memberId),
+              ).map((s) => [s.memberId, s.share]),
+            );
 
-              <div className="space-y-3">
-                {category.balances.map((balance: CategoryBalance) => (
-                  <div
-                    key={balance.memberId}
-                    className="flex justify-between items-center text-sm p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700"
-                  >
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => {
-                          setTransferCategory({
-                            id: category.id,
-                            name: category.name,
-                          });
-                          setTransferFromMemberId(balance.memberId);
-                          setTransferToMemberId("");
-                          setTransferAmount("");
-                          setFormError(null);
-                        }}
-                        className="p-1.5 text-brand-transfer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded transition-all"
-                        title="Initiate Transfer"
-                      >
-                        <ArrowRightLeft size={14} />
-                      </button>
-                      <span className="text-slate-600 dark:text-slate-300">
-                        {getMemberName(balance.memberId)}
+            return (
+              <div
+                key={category.id}
+                className="rounded-2xl border border-slate-100 dark:border-slate-800 border-l-2 border-l-brand-category overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleExpanded(category.id);
+                  }}
+                  aria-expanded={isExpanded}
+                  className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
+                >
+                  <CategoryIconTile icon={category.icon} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-medium text-slate-900 dark:text-white truncate">
+                        {category.name}
+                      </span>
+                      <span className="flex items-center gap-2 shrink-0">
+                        <Badge tone={stateTone[categoryState]} size="sm">
+                          {categoryPct}%
+                        </Badge>
+                        <span className="text-xs text-slate-400 font-mono tnum">
+                          {formatCurrency(category.monthlyBudget)}
+                        </span>
                       </span>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium text-slate-900 dark:text-white font-mono tnum">
-                        {formatCurrency(balance.remainingQuota)}{" "}
-                        <span className="text-xs text-slate-400 font-normal font-sans">
-                          left
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        Budget:{" "}
-                        <span className="font-mono tnum">
-                          {formatCurrency(balance.quota)}
-                        </span>{" "}
-                        | Spent:{" "}
-                        <span className="font-mono tnum">
-                          {formatCurrency(balance.spent)}
-                        </span>
-                      </div>
+                    <ProgressMeter
+                      value={totalSpent}
+                      max={category.monthlyBudget}
+                      state={categoryState}
+                      className="mt-2"
+                    />
+                  </div>
+                  <ChevronDown
+                    size={18}
+                    className={cn(
+                      "shrink-0 text-slate-400 transition-transform duration-200",
+                      isExpanded && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {isExpanded && (
+                  <div className="px-4 pb-4 space-y-3">
+                    <div className="space-y-2">
+                      {category.balances.map((balance: CategoryBalance) => (
+                        <MemberRow
+                          key={balance.memberId}
+                          balance={balance}
+                          member={members.find(
+                            (m) => m.id === balance.memberId,
+                          )}
+                          share={shareByMemberId[balance.memberId] ?? 0}
+                          onTransfer={() => {
+                            setTransferCategory({
+                              id: category.id,
+                              name: category.name,
+                            });
+                            setTransferCategoryMemberIds(
+                              category.balances.map((b) => b.memberId),
+                            );
+                            setTransferFromMemberId(balance.memberId);
+                            setTransferToMemberId("");
+                            setTransferAmount("");
+                            setFormError(null);
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        onClick={() => {
+                          setEditingCategory(category);
+                          setName(category.name);
+                          setMonthlyBudget(category.monthlyBudget.toString());
+                          setIcon(category.icon ?? "other");
+                          const assignedMemberIds = category.balances.map(
+                            (b) => b.memberId,
+                          );
+                          setSelectedMemberIds(
+                            assignedMemberIds.length < members.length
+                              ? assignedMemberIds
+                              : [],
+                          );
+                          setFormError(null);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-brand-balance hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        aria-label="Edit category"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+                      {isOwner && (
+                        <button
+                          onClick={() => {
+                            setCategoryToDelete({
+                              id: category.id,
+                              name: category.name,
+                            });
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-brand-expense hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                          aria-label="Delete category"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Delete Confirmation Dialog */}
         <Dialog
           open={categoryToDelete !== null}
           onOpenChange={(open) => {

@@ -13,7 +13,7 @@ vi.mock("@/entities/group", () => ({
 describe("Groups Page", () => {
   it("should not crash when a group has an undefined role", async () => {
     const mockGroups = [
-      { id: "1", name: "Broken Group", role: "MEMBER" },
+      { id: "1", name: "Broken Group", role: "MEMBER", members: [] },
     ] as unknown as Group[];
     vi.mocked(groupApi.list).mockResolvedValueOnce(mockGroups);
 

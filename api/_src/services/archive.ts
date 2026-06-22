@@ -39,6 +39,10 @@ export const ArchiveService = {
             archivedPeriod: null,
             date: { gte: startDate, lt: endDate },
           },
+          include: {
+            fromMember: { select: { memberId: true } },
+            toMember: { select: { memberId: true } },
+          },
         },
         memberLinks: { select: { memberId: true } },
       },
@@ -63,8 +67,8 @@ export const ArchiveService = {
           amount: Number(e.amount),
         })),
         category.transfers.map((t) => ({
-          fromMemberId: t.fromMemberId,
-          toMemberId: t.toMemberId,
+          fromMemberId: t.fromMember.memberId,
+          toMemberId: t.toMember.memberId,
           amount: Number(t.amount),
         })),
       );

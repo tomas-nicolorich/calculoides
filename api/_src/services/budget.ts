@@ -33,7 +33,12 @@ export const BudgetService = {
         expenses: {
           where: { isArchived: false },
         },
-        transfers: true,
+        transfers: {
+          include: {
+            fromMember: { select: { memberId: true } },
+            toMember: { select: { memberId: true } },
+          },
+        },
         memberLinks: {
           select: { memberId: true },
         },
@@ -57,8 +62,8 @@ export const BudgetService = {
           amount: Number(e.amount),
         })),
         category.transfers.map((t) => ({
-          fromMemberId: t.fromMemberId,
-          toMemberId: t.toMemberId,
+          fromMemberId: t.fromMember.memberId,
+          toMemberId: t.toMember.memberId,
           amount: Number(t.amount),
         })),
       );

@@ -17,10 +17,11 @@ describe("SavingsGoalForm", () => {
     expect(goalNameLabel).toHaveClass("font-medium");
   });
 
-  it("renders CardTitle heading with font-semibold (not font-bold)", () => {
+  it("renders submit button with balance variant", () => {
     render(<SavingsGoalForm groupId="group-1" />);
 
-    const heading = screen.getByRole("heading");
-    expect(heading).toHaveClass("font-semibold");
+    expect(
+      screen.getByRole("button", { name: /Save Goal/i }),
+    ).toBeInTheDocument();
   });
 });

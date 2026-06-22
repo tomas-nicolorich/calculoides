@@ -1,5 +1,6 @@
 import { Card } from "../../../shared/ui/Card";
 import { StatFigure } from "../../../shared/ui/money";
+import { Avatar } from "../../../shared/ui/Avatar";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 
 interface RemainingBalanceProps {
@@ -11,6 +12,11 @@ interface RemainingBalanceProps {
     spent: number;
     remainingQuota: number;
     budgeted: number;
+    /**
+     * Stable palette index (join order); same colour everywhere. Defaults to
+     * array position when omitted, for back-compat with bare callers.
+     */
+    colorIndex?: number;
   }[];
 }
 
@@ -33,13 +39,18 @@ export function RemainingBalance({
               No members yet
             </p>
           )}
-          {members.map((member) => (
+          {members.map((member, i) => (
             <div
               key={member.id}
               className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50"
             >
               <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold text-slate-900 dark:text-white">
+                <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+                  <Avatar
+                    size="sm"
+                    name={member.name}
+                    colorIndex={member.colorIndex ?? i}
+                  />
                   {member.name}
                 </span>
                 <span className="font-semibold text-brand-balance font-mono tnum">

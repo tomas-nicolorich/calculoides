@@ -3,14 +3,7 @@ import { BudgetTransfers } from "@/widgets/dashboard/ui/BudgetTransfers";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
-vi.mock("@/shared/ui/Card", () => ({
-  Card: ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div data-testid="card-container">
-      <h2>{title}</h2>
-      {children}
-    </div>
-  ),
-}));
+vi.mock("@/shared/ui/Card");
 
 describe("BudgetTransfers Widget", () => {
   const mockTransfers = [
@@ -18,7 +11,9 @@ describe("BudgetTransfers Widget", () => {
       id: "t1",
       categoryName: "Groceries",
       fromMemberName: "Alice",
+      fromMemberId: "m1",
       toMemberName: "Bob",
+      toMemberId: "m2",
       amount: 150.0,
       date: "2026-06-01",
     },
@@ -26,16 +21,24 @@ describe("BudgetTransfers Widget", () => {
       id: "t2",
       categoryName: "Utilities",
       fromMemberName: "Bob",
+      fromMemberId: "m2",
       toMemberName: "Charlie",
+      toMemberId: "m3",
       amount: 80.0,
       date: "2026-06-02",
     },
   ];
 
+  const mockMembers = [
+    { id: "m1", name: "Alice", colorIndex: 0 },
+    { id: "m2", name: "Bob", colorIndex: 1 },
+    { id: "m3", name: "Charlie", colorIndex: 2 },
+  ];
+
   it("renders the card title", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} />
+        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
       </MemoryRouter>,
     );
 
@@ -45,7 +48,7 @@ describe("BudgetTransfers Widget", () => {
   it("renders transfer category names", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} />
+        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
       </MemoryRouter>,
     );
 
@@ -56,7 +59,7 @@ describe("BudgetTransfers Widget", () => {
   it("shows empty state when transfers is empty", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={[]} />
+        <BudgetTransfers transfers={[]} members={mockMembers} />
       </MemoryRouter>,
     );
 
@@ -66,7 +69,7 @@ describe("BudgetTransfers Widget", () => {
   it("transfer item rows have class bg-slate-50", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} />
+        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
       </MemoryRouter>,
     );
 
@@ -80,7 +83,7 @@ describe("BudgetTransfers Widget", () => {
   it("transfer item rows have border-l-2 class", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} />
+        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
       </MemoryRouter>,
     );
 

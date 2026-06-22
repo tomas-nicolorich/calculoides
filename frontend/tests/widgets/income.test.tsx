@@ -2,15 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { IncomeOverview } from "@/widgets/dashboard/ui/IncomeOverview";
 import { describe, it, expect, vi } from "vitest";
 
-// Mock Card component
-vi.mock("@/shared/ui/Card", () => ({
-  Card: ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div data-testid="card-container">
-      <h2>{title}</h2>
-      {children}
-    </div>
-  ),
-}));
+vi.mock("@/shared/ui/Card");
 
 describe("IncomeOverview Widget", () => {
   const mockMembers = [

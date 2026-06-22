@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../../shared/api/supabase";
 import { AuthContext } from "./AuthContext";
@@ -11,15 +7,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileIncomplete, setProfileIncomplete] = useState(false);
 
   useEffect(() => {
     console.log("AuthProvider: Initializing session...");
 
     // Safety timeout to ensure terminal state (BUG-007)
     const timeoutId = setTimeout(() => {
-      setLoading(currentLoading => {
+      setLoading((currentLoading) => {
         if (currentLoading) {
-          console.warn('AuthProvider: Session initialization timed out. Forcing loading state to false.');
+          console.warn(
+            "AuthProvider: Session initialization timed out. Forcing loading state to false.",
+          );
           return false;
         }
         return currentLoading;
@@ -29,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session
     void supabase.auth
       .getSession()
-      .then(({ data: { session: initialSession }, error }) => {
+      .then(async ({ data: { session: initialSession }, error }) => {
         clearTimeout(timeoutId);
         if (error) {
           console.error("AuthProvider: Error getting session:", error);
@@ -41,6 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
+        if (initialSession?.access_token) {
+          try {
+            const res = await fetch("/api/users/me", {
+              headers: {
+                Authorization: `Bearer ${initialSession.access_token}`,
+              },
+            });
+            setProfileIncomplete(res.status === 404);
+          } catch (fetchErr) {
+            console.error(
+              "AuthProvider: Failed to check profile status:",
+              fetchErr,
+            );
+            setProfileIncomplete(false);
+          }
+        }
         setLoading(false);
       })
       .catch((e: unknown) => {
@@ -50,9 +65,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      if (newSession?.access_token) {
+        fetch("/api/users/me", {
+          headers: { Authorization: `Bearer ${newSession.access_token}` },
+        })
+          .then((res) => {
+            setProfileIncomplete(res.status === 404);
+          })
+          .catch((fetchErr: unknown) => {
+            console.error(
+              "AuthProvider: Failed to check profile status on auth change:",
+              fetchErr,
+            );
+            setProfileIncomplete(false);
+          });
+      } else {
+        setProfileIncomplete(false);
+      }
       setLoading(false);
     });
 
@@ -67,7 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider
+      value={{ user, session, loading, profileIncomplete, signOut }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -7,7 +7,12 @@ export interface MemberBarMember {
   share?: number;
   /** Pre-formatted income amount shown in the legend. */
   amount?: React.ReactNode;
-  /** Explicit colour; defaults to the member palette by position. */
+  /**
+   * Stable index into the member palette (join order), giving a member the
+   * same colour everywhere. Defaults to array position for back-compat.
+   */
+  colorIndex?: number;
+  /** Explicit colour; overrides both colorIndex and position. */
   color?: string;
 }
 
@@ -34,7 +39,9 @@ const MEMBER_PALETTE = [
 ];
 
 function colorFor(member: MemberBarMember, index: number): string {
-  return member.color ?? MEMBER_PALETTE[index % MEMBER_PALETTE.length];
+  if (member.color != null) return member.color;
+  const paletteIndex = member.colorIndex ?? index;
+  return MEMBER_PALETTE[paletteIndex % MEMBER_PALETTE.length];
 }
 
 export function MemberBar({

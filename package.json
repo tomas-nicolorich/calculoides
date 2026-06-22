@@ -1,6 +1,6 @@
 {
   "name": "calculoides",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "packageManager": "npm@10.8.2",
   "type": "module",
@@ -30,6 +30,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "prettier": "^3.0.0",
+    "supabase": "^2.107.0",
     "turbo": "^2.0.0",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.0.0"

@@ -1,12 +1,15 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
-import { ReactNode } from 'react';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+import { ReactNode } from "react";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, profileIncomplete } = useAuth();
   const location = useLocation();
 
-  console.log('ProtectedRoute: Checking state...', { loading, userEmail: user?.email });
+  console.log("ProtectedRoute: Checking state...", {
+    loading,
+    userEmail: user?.email,
+  });
 
   if (loading) {
     return (
@@ -20,10 +23,14 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    console.log('ProtectedRoute: No user found, redirecting to login');
+    console.log("ProtectedRoute: No user found, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  console.log('ProtectedRoute: Access granted');
+  if (profileIncomplete) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
+  console.log("ProtectedRoute: Access granted");
   return <>{children}</>;
 }

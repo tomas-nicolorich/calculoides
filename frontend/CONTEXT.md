@@ -18,6 +18,16 @@ See `shared/CONTEXT.md` for the core domain vocabulary used throughout this pack
 
 Add frontend-specific display conventions here as they emerge (e.g. how **Settlement** values are formatted, how **Budget Quota** progress is visualised). Use `/grill-with-docs` to formalise terms when they stabilise.
 
+## Dashboard UI
+
+**Budget Categories Accordion**:
+The dashboard's Budget Categories panel renders each **Budget Category** as a collapsible item. The collapsed header shows the category icon, name, monthly target, and a category-level spent meter (`Σ member spent ÷ monthly target`). Expanding reveals the per-member breakdown (one row per participating **Member**) and the owner-gated Edit/Delete actions. All items start collapsed on load. Per-member rows carry the **Budget Quota** amount, spent, remaining ("left"/"over"), a per-member progress meter, the **Category Member Share**, and a transfer trigger that opens the existing Transfer dialog.
+_Avoid_: category list, category cards, category table
+
+**Category Member Share**:
+The percentage shown on a member's row inside an expanded **Budget Category**. Defined as the member's income share **among that category's participating members**: `income_i ÷ Σ(income over the category's members) × 100`. For an all-members category the denominator is the whole group, so it equals the member's global **Income Percentage**; for a **Member Subset** category the denominator is just the subset, re-normalising the share. It is **transfer-independent** — it reflects the income-proportional split, not the transfer-adjusted **Budget Quota**.
+_Avoid_: income share, quota percentage, contribution percentage
+
 ## Savings UI
 
 **Savings Calculator**:

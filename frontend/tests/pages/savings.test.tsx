@@ -50,8 +50,10 @@ describe("Savings Page", () => {
     expect(screen.getByText(/New Sofa/i)).toBeInTheDocument();
     expect(screen.getByText(/Target:/i)).toHaveTextContent(/2,000/);
 
-    // Check for Creation Form Card
-    expect(screen.getByText(/New Savings Goal/i)).toBeInTheDocument();
+    // Check for creation trigger button
+    expect(
+      screen.getByRole("button", { name: /Add Goal/i }),
+    ).toBeInTheDocument();
 
     // Check for back button
     expect(
