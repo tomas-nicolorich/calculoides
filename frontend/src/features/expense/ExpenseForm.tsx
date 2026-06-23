@@ -121,7 +121,7 @@ export function ExpenseForm({
           placeholder="Select category..."
           options={categories.map((c) => ({
             value: c.id,
-            label: `${c.icon ?? ""} ${c.name}`.trim(),
+            label: c.name,
           }))}
         />
       </div>
