@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { BudgetCategories } from "./BudgetCategories";
 import type { CategoryWithBalances } from "../../../../../shared/src/types/redesign";
@@ -13,8 +13,51 @@ vi.mock("../../../shared/api/supabase", () => ({
   },
 }));
 
+const { mockFetch } = vi.hoisted(() => ({
+  mockFetch: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("../../../shared/api/client", () => ({
+  apiClient: { fetch: mockFetch },
+}));
+
+// Render the custom Select as a native <select> so tests can drive it with fireEvent.change
+vi.mock("../../../shared/ui", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../shared/ui")>();
+  return {
+    ...actual,
+    Select: ({
+      options,
+      placeholder,
+      value,
+      onValueChange,
+    }: {
+      options: { value: string; label: string; disabled?: boolean }[];
+      placeholder?: string;
+      value?: string;
+      onValueChange?: (v: string) => void;
+    }) => (
+      <select
+        aria-label={placeholder ?? "select"}
+        value={value ?? ""}
+        onChange={(e) => onValueChange?.(e.target.value)}
+      >
+        <option value="" disabled>
+          {placeholder ?? "Select..."}
+        </option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value} disabled={o.disabled}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    ),
+  };
+});
+
 const members = [
-  { id: "m1", name: "Alice", income: 3000, share: 100, index: 0 },
+  { id: "m1", name: "Alice Smith", income: 3000, share: 60, index: 0 },
+  { id: "m2", name: "Bob Jones", income: 2000, share: 40, index: 1 },
 ];
 
 function makeCategory(
@@ -61,8 +104,22 @@ describe("BudgetCategories category icon tile", () => {
   });
 });
 
-describe("BudgetCategories urgency pill (ADR 0007 thresholds)", () => {
-  it("shows an on-track pill at 79% spend", () => {
+describe("BudgetCategories category header — progress meter", () => {
+  it("shows '40% spent' label on the header progress meter (40% spend)", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [
+          { memberId: "m1", quota: 600, spent: 240, remainingQuota: 360 },
+          { memberId: "m2", quota: 400, spent: 160, remainingQuota: 240 },
+        ],
+      }),
+    ]);
+    // totalSpent = 400, budget = 1000 → 40%
+    expect(screen.getByText("40% spent")).toBeInTheDocument();
+  });
+
+  it("shows '79% spent' and does NOT render a spent badge/pill in header", () => {
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
@@ -71,14 +128,12 @@ describe("BudgetCategories urgency pill (ADR 0007 thresholds)", () => {
         ],
       }),
     ]);
-    expect(screen.getByText("79%")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "data-state",
-      "on-track",
-    );
+    expect(screen.getByText("79% spent")).toBeInTheDocument();
+    // No standalone "79%" badge separate from the "79% spent" label
+    expect(screen.queryByText("79%")).not.toBeInTheDocument();
   });
 
-  it("shows a behind pill at the 80% boundary", () => {
+  it("shows '80% spent' at the 80% boundary", () => {
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
@@ -87,14 +142,10 @@ describe("BudgetCategories urgency pill (ADR 0007 thresholds)", () => {
         ],
       }),
     ]);
-    expect(screen.getByText("80%")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "data-state",
-      "behind",
-    );
+    expect(screen.getByText("80% spent")).toBeInTheDocument();
   });
 
-  it("shows a blocked pill above 100% spend", () => {
+  it("shows '101% spent' when over budget", () => {
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
@@ -103,10 +154,179 @@ describe("BudgetCategories urgency pill (ADR 0007 thresholds)", () => {
         ],
       }),
     ]);
-    expect(screen.getByText("101%")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "data-state",
-      "blocked",
+    expect(screen.getByText("101% spent")).toBeInTheDocument();
+  });
+});
+
+describe("BudgetCategories member row (expanded)", () => {
+  const categoryWithBalances = makeCategory({
+    monthlyBudget: 1000,
+    balances: [
+      // Alice: 60%, quota 600, spent 240 → remaining 360
+      { memberId: "m1", quota: 600, spent: 240, remainingQuota: 360 },
+      // Bob: 40%, quota 400, spent 450 → over by 50
+      { memberId: "m2", quota: 400, spent: 450, remainingQuota: -50 },
+    ],
+  });
+
+  function expandCategory() {
+    const header = screen.getByRole("button", { name: /rent/i });
+    fireEvent.click(header);
+  }
+
+  it("shows first name, share percent, and budgeted amount for each member", () => {
+    renderWidget([categoryWithBalances]);
+    expandCategory();
+
+    // Alice row
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    // Bob row
+    expect(screen.getByText("Bob")).toBeInTheDocument();
+    // Share percents (from categoryMemberShare with income 3000/2000 → 60/40)
+    // Displayed as (60%) and (40%)
+    expect(screen.getByText("(60%)")).toBeInTheDocument();
+    expect(screen.getByText("(40%)")).toBeInTheDocument();
+  });
+
+  it("shows 'Spent: x' for each member", () => {
+    renderWidget([categoryWithBalances]);
+    expandCategory();
+
+    // Just verify the "Spent:" prefix appears for both members
+    const spentLabels = screen.getAllByText(/^Spent:/);
+    expect(spentLabels.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows 'x left' for a member under budget", () => {
+    renderWidget([categoryWithBalances]);
+    expandCategory();
+
+    // Alice: remaining 360 → "left"
+    const leftEl = screen.getByText(/left$/);
+    expect(leftEl).toBeInTheDocument();
+  });
+
+  it("shows 'x over' in red for an overspent member", () => {
+    renderWidget([categoryWithBalances]);
+    expandCategory();
+
+    // Bob: remainingQuota = -50 → "over"
+    const overEl = screen.getByText(/over$/);
+    expect(overEl).toBeInTheDocument();
+    expect(overEl.className).toContain("text-brand-expense");
+  });
+
+  it("renders transfer buttons for each member row", () => {
+    renderWidget([categoryWithBalances]);
+    expandCategory();
+
+    expect(
+      screen.getByRole("button", { name: "Transfer from Alice Smith" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Transfer from Bob Jones" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("BudgetCategories transfer dialog", () => {
+  const categoryWithBalances = makeCategory({
+    id: "cat-1",
+    name: "Rent",
+    monthlyBudget: 1000,
+    balances: [
+      { memberId: "m1", quota: 600, spent: 240, remainingQuota: 360 },
+      { memberId: "m2", quota: 400, spent: 450, remainingQuota: -50 },
+    ],
+  });
+
+  function openTransferForAlice() {
+    // Expand the category
+    fireEvent.click(screen.getByRole("button", { name: /rent/i }));
+    // Click Alice's transfer button
+    fireEvent.click(
+      screen.getByRole("button", { name: "Transfer from Alice Smith" }),
     );
+  }
+
+  it("locks Alice as the From member when her transfer button is clicked", () => {
+    renderWidget([categoryWithBalances]);
+    openTransferForAlice();
+
+    // Locked From line should mention Alice and category name
+    expect(screen.getByText(/From Alice/)).toBeInTheDocument();
+    expect(screen.getByText(/Rent/)).toBeInTheDocument();
+  });
+
+  it("dialog title is 'Transfer Budget' and description mentions Alice and category", () => {
+    renderWidget([categoryWithBalances]);
+    openTransferForAlice();
+
+    expect(
+      screen.getByRole("heading", { name: "Transfer Budget" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Move budget from Alice.*share of Rent/),
+    ).toBeInTheDocument();
+  });
+
+  it("recipient select excludes the source (Alice)", () => {
+    renderWidget([categoryWithBalances]);
+    openTransferForAlice();
+
+    // The To Member select should have Bob but not Alice
+    const select = screen.getByRole("combobox", { name: "Select recipient" });
+    const options = Array.from(select.querySelectorAll("option")).map(
+      (o) => o.textContent,
+    );
+    expect(options).toContain("Bob Jones");
+    expect(options).not.toContain("Alice Smith");
+  });
+
+  it("submit button reads 'Send Transfer' and calls apiClient.fetch with correct payload", async () => {
+    const onRefresh = vi.fn();
+    render(
+      <BudgetCategories
+        categories={[categoryWithBalances]}
+        isOwner
+        onDelete={vi.fn()}
+        groupId="group-1"
+        members={members}
+        onRefresh={onRefresh}
+      />,
+    );
+
+    openTransferForAlice();
+
+    // Pick Bob as recipient
+    const select = screen.getByRole("combobox", { name: "Select recipient" });
+    fireEvent.change(select, { target: { value: "m2" } });
+
+    // Set amount
+    const amountInput = screen.getByPlaceholderText("0.00");
+    fireEvent.change(amountInput, { target: { value: "100" } });
+
+    // Submit
+    const submitBtn = screen.getByRole("button", { name: "Send Transfer" });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/transactions?action=transfer-create",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            categoryId: "cat-1",
+            fromMemberId: "m1",
+            toMemberId: "m2",
+            amount: 100,
+          }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(onRefresh).toHaveBeenCalled();
+    });
   });
 });
