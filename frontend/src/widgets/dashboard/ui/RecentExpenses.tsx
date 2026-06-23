@@ -2,9 +2,8 @@ import { Card } from "../../../shared/ui/Card";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import { Link } from "react-router-dom";
 import { RecentExpense } from "../../../../../shared/src/types/redesign";
-import { CategoryIconTile } from "../../../shared/lib/categoryIcons";
 import { Avatar } from "../../../shared/ui/Avatar";
-import { Badge } from "../../../shared/ui/Badge";
+import { Receipt } from "lucide-react";
 
 interface ExpenseMember {
   id: string;
@@ -28,13 +27,12 @@ export function RecentExpenses({
   expenses,
   groupId,
   members,
-  categories,
 }: RecentExpensesProps) {
   return (
-    <Card title="Expenses">
+    <Card title="Recent Expenses">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-slate-500">Recent expenses</div>
+          <div className="text-sm text-slate-500">Latest 5 spends</div>
           <Link
             to={`/expenses/${groupId}`}
             className="text-sm font-medium text-brand-balance hover:underline"
@@ -51,34 +49,36 @@ export function RecentExpenses({
           ) : (
             expenses.map((expense) => {
               const payer = members.find((m) => m.id === expense.payerId);
-              const category = categories.find(
-                (c) => c.id === expense.categoryId,
-              );
+              const payerFirstName = (payer?.name ?? expense.payerName).split(
+                " ",
+              )[0];
               return (
                 <div key={expense.id} className="flex items-center gap-4">
-                  <CategoryIconTile icon={category?.icon} size="md" />
+                  <span
+                    className="flex items-center justify-center text-brand-expense"
+                    data-testid="expense-marker"
+                  >
+                    <Receipt size={18} />
+                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
                       <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                         {expense.description}
                       </p>
                       <span className="text-sm font-semibold text-brand-expense font-mono tnum">
-                        {formatCurrency(expense.amount)}
+                        -{formatCurrency(expense.amount)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1 min-w-0">
+                    <p className="flex items-center gap-1 mt-1 text-xs text-slate-500 min-w-0">
                       <Avatar
-                        size="sm"
+                        size="xs"
                         name={payer?.name ?? expense.payerName}
                         colorIndex={payer?.colorIndex ?? 0}
                       />
-                      <span className="text-xs text-slate-500 truncate">
-                        {payer?.name ?? expense.payerName}
-                      </span>
-                      <Badge tone="category" size="sm">
-                        {expense.categoryName}
-                      </Badge>
-                    </div>
+                      <span>{payerFirstName}</span>
+                      <span>·</span>
+                      <span className="truncate">{expense.categoryName}</span>
+                    </p>
                   </div>
                 </div>
               );
