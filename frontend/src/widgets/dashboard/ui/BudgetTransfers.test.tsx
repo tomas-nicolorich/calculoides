@@ -30,12 +30,33 @@ function renderList(props?: Partial<Parameters<typeof BudgetTransfers>[0]>) {
 }
 
 describe("BudgetTransfers", () => {
+  it("renders the card title and widget header label", () => {
+    renderList();
+    expect(screen.getByText("Budget Transfers")).toBeInTheDocument();
+    expect(screen.getByText("Money moved between members")).toBeInTheDocument();
+  });
+
+  it("renders category name and formatted amount for a transfer", () => {
+    renderList();
+    const row = screen.getByTestId("transfer-row");
+    expect(within(row).getByText("Groceries")).toBeInTheDocument();
+    // Amount is rendered via formatCurrency — just verify it is present.
+    expect(within(row).getByText(/50/)).toBeInTheDocument();
+  });
+
   it("renders both the from-avatar and to-avatar initials resolved from ids", () => {
     renderList();
     const row = screen.getByTestId("transfer-row");
     // Alice (from) and Bob (to) avatar initials.
     expect(within(row).getByText("A")).toBeInTheDocument();
     expect(within(row).getByText("B")).toBeInTheDocument();
+  });
+
+  it("renders from and to member first names in the sub-line", () => {
+    renderList();
+    const row = screen.getByTestId("transfer-row");
+    expect(within(row).getByText("Alice")).toBeInTheDocument();
+    expect(within(row).getByText("Bob")).toBeInTheDocument();
   });
 
   it("colours each avatar by its stable colorIndex", () => {
