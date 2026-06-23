@@ -87,8 +87,8 @@ export function ExpensesPage() {
       <Dialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        title="Log Expense"
-        description="Record a new expense for your group."
+        title="Add Expense"
+        description="Log a spend against a category and the member who paid."
       >
         <ExpenseForm
           groupId={groupId ?? ""}
