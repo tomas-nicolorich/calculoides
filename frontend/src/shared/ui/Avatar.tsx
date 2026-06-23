@@ -28,7 +28,7 @@ const MEMBER_PALETTE = [
 ];
 
 const sizes: Record<AvatarSize, string> = {
-  xs: "h-6 w-6 text-[10px]",
+  xs: "h-5 w-5 text-[9px]",
   sm: "h-8 w-8 text-xs",
   md: "h-10 w-10 text-sm",
   lg: "h-12 w-12 text-base",

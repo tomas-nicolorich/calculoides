@@ -82,6 +82,10 @@
 }
 
 @layer base {
+  html {
+    font-size: 15px;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
   }
