@@ -253,9 +253,8 @@ describe("BudgetCategories transfer dialog", () => {
     renderWidget([categoryWithBalances]);
     openTransferForAlice();
 
-    // Locked From line should mention Alice and category name
-    expect(screen.getByText(/From Alice/)).toBeInTheDocument();
-    expect(screen.getByText(/Rent/)).toBeInTheDocument();
+    // Locked From line should mention Alice and category name in one element
+    expect(screen.getByText(/From Alice.*Rent/)).toBeInTheDocument();
   });
 
   it("dialog title is 'Transfer Budget' and description mentions Alice and category", () => {

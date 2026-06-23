@@ -94,8 +94,8 @@ describe("BudgetCategories Widget — accordion", () => {
 
     await user.click(screen.getByRole("button", { name: /food/i }));
 
-    expect(screen.getByText("60.0%")).toBeInTheDocument();
-    expect(screen.getByText("40.0%")).toBeInTheDocument();
+    expect(screen.getByText("(60%)")).toBeInTheDocument();
+    expect(screen.getByText("(40%)")).toBeInTheDocument();
   });
 
   it("shows re-normalised shares for a Member Subset category", async () => {
@@ -114,7 +114,7 @@ describe("BudgetCategories Widget — accordion", () => {
 
     await user.click(screen.getByRole("button", { name: /food/i }));
 
-    expect(screen.getByText("100.0%")).toBeInTheDocument();
+    expect(screen.getByText("(100%)")).toBeInTheDocument();
   });
 
   it("shows Edit and Delete in expanded body when owner", async () => {
@@ -189,7 +189,7 @@ describe("BudgetCategories Widget — accordion", () => {
 
     await user.click(screen.getByRole("button", { name: /food/i }));
 
-    expect(screen.getByText("over")).toBeInTheDocument();
-    expect(screen.getByText("left")).toBeInTheDocument();
+    expect(screen.getByText(/over$/)).toBeInTheDocument();
+    expect(screen.getByText(/left$/)).toBeInTheDocument();
   });
 });

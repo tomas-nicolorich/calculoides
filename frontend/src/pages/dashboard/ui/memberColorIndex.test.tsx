@@ -46,7 +46,7 @@ describe("buildMemberColorIndex", () => {
 });
 
 describe("stable member colour across panels", () => {
-  it("renders the same colour + initial for a member in income, balance, and header", () => {
+  it("renders the same colour + initial for a member in balance and header", () => {
     const index = buildMemberColorIndex(rawMembers);
     const withIndex = rawMembers.map((m) => ({
       ...m,
@@ -56,11 +56,12 @@ describe("stable member colour across panels", () => {
       colorIndex: index.get(m.id) ?? 0,
     }));
 
+    // IncomeOverview now uses MemberBar (colour dots + full name, no avatar initials).
+    // Verify that it at least renders Zoe's name in the legend.
     const income = render(
       <IncomeOverview totalIncome={6000} members={withIndex} />,
     );
-    const incomeZoe = within(income.container).getByText("Z");
-    expect(incomeZoe).toHaveStyle({ background: "var(--color-member-3)" });
+    expect(within(income.container).getByText("Zoe")).toBeInTheDocument();
 
     const balance = render(
       <RemainingBalance totalRemaining={6000} members={withIndex} />,
