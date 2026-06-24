@@ -55,7 +55,7 @@ export function RecentExpenses({
               return (
                 <div key={expense.id} className="flex items-center gap-4">
                   <span
-                    className="flex items-center justify-center text-brand-expense"
+                    className="grid place-items-center size-9 shrink-0 rounded-lg bg-brand-expense/10 text-brand-expense"
                     data-testid="expense-marker"
                   >
                     <Receipt size={18} />

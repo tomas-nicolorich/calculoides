@@ -64,16 +64,18 @@ export function GroupsPage() {
         open={isCreatingGroup}
         onOpenChange={setIsCreatingGroup}
         title="Create New Group"
-        description="Establish a new collaborative budgeting group."
+        description="Set up a new shared budgeting group."
+        hideCloseButton
       >
-        <div className="flex justify-center p-4">
-          <CreateGroupForm
-            onCreated={() => {
-              setIsCreatingGroup(false);
-              void fetchGroups();
-            }}
-          />
-        </div>
+        <CreateGroupForm
+          onCreated={() => {
+            setIsCreatingGroup(false);
+            void fetchGroups();
+          }}
+          onCancel={() => {
+            setIsCreatingGroup(false);
+          }}
+        />
       </ResponsiveDialog>
 
       {loading ? (
@@ -123,7 +125,7 @@ export function GroupsPage() {
                     </div>
                   )}
                   {group.members.length > 0 && (
-                    <AvatarGroup max={4} size="sm">
+                    <AvatarGroup max={3} size="sm">
                       {group.members.map((m, i) => (
                         <Avatar
                           key={m.id}

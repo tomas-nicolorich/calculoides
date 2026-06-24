@@ -38,11 +38,11 @@ function TransferRow({ transfer, members }: TransferRowProps) {
   const fromName = from?.name ?? transfer.fromMemberName;
   const toName = to?.name ?? transfer.toMemberName;
   return (
-    <div
-      data-testid="transfer-row"
-      className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2"
-    >
-      <span className="shrink-0 text-brand-transfer" aria-hidden>
+    <div data-testid="transfer-row" className="flex items-center gap-3 py-2">
+      <span
+        className="grid place-items-center size-9 shrink-0 rounded-lg bg-brand-transfer/10 text-brand-transfer"
+        aria-hidden
+      >
         <ArrowRightLeft size={18} />
       </span>
       <div className="flex-1 min-w-0">

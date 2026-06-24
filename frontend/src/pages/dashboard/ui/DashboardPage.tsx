@@ -137,7 +137,7 @@ export function DashboardPage() {
 
         <div className="flex items-center gap-4">
           {summary.members.length > 0 && (
-            <AvatarGroup max={4} size="sm">
+            <AvatarGroup max={3} size="sm">
               {summary.members.map((m) => (
                 <Avatar
                   key={m.id}
