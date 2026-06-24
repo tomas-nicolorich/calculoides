@@ -2,6 +2,7 @@ import { Card } from "../../../shared/ui/Card";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { Avatar } from "../../../shared/ui/Avatar";
+import { Link } from "react-router-dom";
 
 interface Transfer {
   id: string;
@@ -39,7 +40,7 @@ function TransferRow({ transfer, members }: TransferRowProps) {
   return (
     <div
       data-testid="transfer-row"
-      className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 px-3 py-2"
+      className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2"
     >
       <span className="shrink-0 text-brand-transfer" aria-hidden>
         <ArrowRightLeft size={18} />
@@ -73,8 +74,16 @@ export function BudgetTransfers({ transfers, members }: BudgetTransfersProps) {
   return (
     <Card title="Budget Transfers">
       <div className="space-y-4">
-        <div className="text-sm text-slate-500">
-          Money moved between members
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-slate-500">
+            Money moved between members
+          </div>
+          <Link
+            to="/transfers"
+            className="text-sm font-medium text-brand-balance hover:underline"
+          >
+            View All
+          </Link>
         </div>
 
         <div className="space-y-2">

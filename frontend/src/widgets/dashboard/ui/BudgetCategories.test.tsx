@@ -229,6 +229,133 @@ describe("BudgetCategories member row (expanded)", () => {
   });
 });
 
+describe("BudgetCategories category header — progress meter urgency state", () => {
+  it("data-state is 'on-track' when spend < 80%", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 1000, spent: 700, remainingQuota: 300 }],
+      }),
+    ]);
+    const bars = screen.getAllByRole("progressbar");
+    const headerBar = bars[0];
+    expect(headerBar).toHaveAttribute("data-state", "on-track");
+  });
+
+  it("data-state is 'behind' when spend is 80–100%", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 1000, spent: 850, remainingQuota: 150 }],
+      }),
+    ]);
+    const bars = screen.getAllByRole("progressbar");
+    const headerBar = bars[0];
+    expect(headerBar).toHaveAttribute("data-state", "behind");
+  });
+
+  it("data-state is 'blocked' when spend > 100%", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 1000, spent: 1100, remainingQuota: -100 }],
+      }),
+    ]);
+    const bars = screen.getAllByRole("progressbar");
+    const headerBar = bars[0];
+    expect(headerBar).toHaveAttribute("data-state", "blocked");
+  });
+});
+
+describe("BudgetCategories member row — progress meter urgency state (expanded)", () => {
+  function expandCategory() {
+    fireEvent.click(screen.getByRole("button", { name: /rent/i }));
+  }
+
+  it("member data-state is 'on-track' when spent < 80% of quota", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 }],
+      }),
+    ]);
+    expandCategory();
+    // Only one progressbar after expansion (member row)
+    const bars = screen.getAllByRole("progressbar");
+    // Last bar is the member bar (header bar first, member bar second)
+    const memberBar = bars[bars.length - 1];
+    expect(memberBar).toHaveAttribute("data-state", "on-track");
+  });
+
+  it("member data-state is 'behind' when spent 80–100% of quota", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 }],
+      }),
+    ]);
+    expandCategory();
+    const bars = screen.getAllByRole("progressbar");
+    const memberBar = bars[bars.length - 1];
+    expect(memberBar).toHaveAttribute("data-state", "behind");
+  });
+
+  it("member data-state is 'blocked' when spent > quota", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 }],
+      }),
+    ]);
+    expandCategory();
+    const bars = screen.getAllByRole("progressbar");
+    const memberBar = bars[bars.length - 1];
+    expect(memberBar).toHaveAttribute("data-state", "blocked");
+  });
+});
+
+describe("BudgetCategories member row — spend label colour (expanded)", () => {
+  function expandCategory() {
+    fireEvent.click(screen.getByRole("button", { name: /rent/i }));
+  }
+
+  it("'x left' label has text-brand-income when on-track (< 80%)", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 }],
+      }),
+    ]);
+    expandCategory();
+    const leftEl = screen.getByText(/left$/);
+    expect(leftEl.className).toContain("text-brand-income");
+  });
+
+  it("'x left' label has text-brand-transfer when behind (80–100%)", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 }],
+      }),
+    ]);
+    expandCategory();
+    const leftEl = screen.getByText(/left$/);
+    expect(leftEl.className).toContain("text-brand-transfer");
+  });
+
+  it("'x over' label has text-brand-expense when blocked (> 100%)", () => {
+    renderWidget([
+      makeCategory({
+        monthlyBudget: 1000,
+        balances: [{ memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 }],
+      }),
+    ]);
+    expandCategory();
+    const overEl = screen.getByText(/over$/);
+    expect(overEl.className).toContain("text-brand-expense");
+  });
+});
+
 describe("BudgetCategories transfer dialog", () => {
   const categoryWithBalances = makeCategory({
     id: "cat-1",

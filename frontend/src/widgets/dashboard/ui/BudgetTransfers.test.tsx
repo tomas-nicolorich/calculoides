@@ -86,4 +86,17 @@ describe("BudgetTransfers", () => {
     renderList({ transfers: [] });
     expect(screen.getByText("No recent transfers")).toBeInTheDocument();
   });
+
+  it("renders a View All link pointing to /transfers", () => {
+    renderList();
+    const link = screen.getByRole("link", { name: "View All" });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/transfers");
+  });
+
+  it("transfer row does not have a border class", () => {
+    renderList();
+    const row = screen.getByTestId("transfer-row");
+    expect(row.className).not.toContain("border-slate-200");
+  });
 });

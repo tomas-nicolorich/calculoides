@@ -6,6 +6,7 @@ import {
   formatCurrency,
   categoryMemberShare,
   progressPercent,
+  progressState,
 } from "../../../shared/api/dashboardUtils";
 import {
   CategoryWithBalances,
@@ -164,6 +165,13 @@ interface MemberRowProps {
 function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
   const isOver = balance.remainingQuota < 0;
   const firstName = member?.name.split(" ")[0] ?? balance.memberId.slice(0, 4);
+  const memberState = progressState(balance.spent, balance.quota);
+  const spendLabelColour =
+    memberState === "blocked"
+      ? "text-brand-expense"
+      : memberState === "behind"
+        ? "text-brand-transfer"
+        : "text-brand-income";
   return (
     <div className="rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2 space-y-2">
       {/* Top row: avatar + name + Custom badge | transfer btn + share% + amount */}
@@ -201,9 +209,7 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
         <span
           className={cn(
             "font-medium",
-            isOver
-              ? "text-brand-expense"
-              : "text-slate-600 dark:text-slate-400",
+            spendLabelColour,
           )}
         >
           {isOver
@@ -212,7 +218,7 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
         </span>
       </div>
       {/* Progress bar */}
-      <ProgressMeter value={balance.spent} max={balance.quota} tone="income" />
+      <ProgressMeter value={balance.spent} max={balance.quota} state={memberState} />
     </div>
   );
 }
@@ -585,7 +591,7 @@ export function BudgetCategories({
                     <ProgressMeter
                       value={totalSpent}
                       max={category.monthlyBudget}
-                      tone="category"
+                      state={progressState(totalSpent, category.monthlyBudget)}
                       valueLabel={`${String(spentPct)}% spent`}
                       className="mt-2"
                     />

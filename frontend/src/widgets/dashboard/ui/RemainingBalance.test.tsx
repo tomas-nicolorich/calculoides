@@ -59,9 +59,9 @@ describe("RemainingBalance", () => {
   it("uses xs-size avatars", () => {
     render(<RemainingBalance totalRemaining={2500} members={members} />);
     const alice = screen.getByText("A");
-    // xs avatars have h-5 w-5 classes
-    expect(alice).toHaveClass("h-5");
-    expect(alice).toHaveClass("w-5");
+    // xs avatars have h-[22px] w-[22px] classes
+    expect(alice).toHaveClass("h-[22px]");
+    expect(alice).toHaveClass("w-[22px]");
   });
 
   it("colours a member's avatar by its stable colorIndex, not array position", () => {

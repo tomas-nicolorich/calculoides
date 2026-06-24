@@ -80,7 +80,7 @@ describe("BudgetTransfers Widget", () => {
     });
   });
 
-  it("transfer item rows have border class", () => {
+  it("transfer item rows do not have a border class", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
@@ -89,7 +89,7 @@ describe("BudgetTransfers Widget", () => {
 
     const rows = screen.getAllByTestId("transfer-row");
     rows.forEach((row) => {
-      expect(row).toHaveClass("border");
+      expect(row).not.toHaveClass("border");
     });
   });
 });
