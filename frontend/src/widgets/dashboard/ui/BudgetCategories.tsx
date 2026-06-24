@@ -165,7 +165,7 @@ interface MemberRowProps {
 // fallow-ignore-next-line complexity
 function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
   const isOver = balance.remainingQuota < 0;
-  const firstName = member?.name.split(" ")[0] ?? balance.memberId.slice(0, 4);
+  const displayName = member?.name ?? balance.memberId.slice(0, 4);
   const memberState = progressState(balance.spent, balance.quota);
   const spendLabelColour =
     memberState === "blocked"
@@ -184,7 +184,7 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
             size="xs"
           />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
-            {firstName}
+            {displayName}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
