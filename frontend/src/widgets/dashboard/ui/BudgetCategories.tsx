@@ -195,8 +195,13 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
           >
             <ArrowRightLeft size={14} />
           </button>
-          <span className="text-xs text-slate-500 font-mono">
-            ({share.toFixed(0)}%)
+          <span
+            className="text-xs rounded-full px-2 py-0.5 font-mono bg-slate-700 dark:bg-slate-800"
+            style={{
+              color: `var(--color-member-${String((member?.index ?? 0) + 1)})`,
+            }}
+          >
+            {share.toFixed(1)}%
           </span>
           <span className="text-sm font-medium font-mono tnum">
             {formatCurrency(balance.quota)}

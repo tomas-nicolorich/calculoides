@@ -183,9 +183,20 @@ describe("BudgetCategories member row (expanded)", () => {
     // Bob row
     expect(screen.getByText("Bob")).toBeInTheDocument();
     // Share percents (from categoryMemberShare with income 3000/2000 → 60/40)
-    // Displayed as (60%) and (40%)
-    expect(screen.getByText("(60%)")).toBeInTheDocument();
-    expect(screen.getByText("(40%)")).toBeInTheDocument();
+    // Displayed as pills: 60.0% and 40.0%
+    expect(screen.getByText("60.0%")).toBeInTheDocument();
+    expect(screen.getByText("40.0%")).toBeInTheDocument();
+  });
+
+  it("share pill carries member colour as inline style", () => {
+    renderWidget([categoryWithBalances]);
+    expandCategory();
+    // Alice has index 0 → color-member-1
+    const alicePill = screen.getByText("60.0%");
+    expect(alicePill).toHaveStyle({ color: "var(--color-member-1)" });
+    // Bob has index 1 → color-member-2
+    const bobPill = screen.getByText("40.0%");
+    expect(bobPill).toHaveStyle({ color: "var(--color-member-2)" });
   });
 
   it("shows 'Spent: x' for each member", () => {
