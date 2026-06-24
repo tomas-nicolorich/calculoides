@@ -66,11 +66,11 @@ describe("stable member colour across panels", () => {
     const balance = render(
       <RemainingBalance totalRemaining={6000} members={withIndex} />,
     );
-    const balanceZoe = within(balance.container).getByText("Z");
+    const balanceZoe = within(balance.container).getByText("ZO");
     expect(balanceZoe).toHaveStyle({ background: "var(--color-member-3)" });
 
     const header = render(<HeaderGroup members={rawMembers} index={index} />);
-    const headerZoe = within(header.container).getByText("Z");
+    const headerZoe = within(header.container).getByText("ZO");
     expect(headerZoe).toHaveStyle({ background: "var(--color-member-3)" });
   });
 });
@@ -89,12 +89,12 @@ describe("header AvatarGroup overflow", () => {
     render(<HeaderGroup members={sixMembers} index={index} max={4} />);
 
     // First four initials render, the rest collapse into +2.
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
-    expect(screen.getByText("C")).toBeInTheDocument();
-    expect(screen.getByText("D")).toBeInTheDocument();
-    expect(screen.queryByText("E")).not.toBeInTheDocument();
-    expect(screen.queryByText("F")).not.toBeInTheDocument();
+    expect(screen.getByText("AN")).toBeInTheDocument();
+    expect(screen.getByText("BO")).toBeInTheDocument();
+    expect(screen.getByText("CA")).toBeInTheDocument();
+    expect(screen.getByText("DA")).toBeInTheDocument();
+    expect(screen.queryByText("EV")).not.toBeInTheDocument();
+    expect(screen.queryByText("FA")).not.toBeInTheDocument();
     expect(screen.getByText("+2")).toBeInTheDocument();
   });
 });

@@ -179,9 +179,9 @@ describe("BudgetCategories member row (expanded)", () => {
     expandCategory();
 
     // Alice row
-    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
     // Bob row
-    expect(screen.getByText("Bob")).toBeInTheDocument();
+    expect(screen.getByText("Bob Jones")).toBeInTheDocument();
     // Share percents (from categoryMemberShare with income 3000/2000 → 60/40)
     // Displayed as pills: 60.0% and 40.0%
     expect(screen.getByText("60.0%")).toBeInTheDocument();

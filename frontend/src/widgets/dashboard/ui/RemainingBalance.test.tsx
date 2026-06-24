@@ -32,8 +32,8 @@ describe("RemainingBalance", () => {
 
   it("renders an avatar initial per member", () => {
     render(<RemainingBalance totalRemaining={2500} members={members} />);
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("AL")).toBeInTheDocument();
+    expect(screen.getByText("BO")).toBeInTheDocument();
   });
 
   it("renders member income and budgeted figures", () => {
@@ -58,10 +58,10 @@ describe("RemainingBalance", () => {
 
   it("uses xs-size avatars", () => {
     render(<RemainingBalance totalRemaining={2500} members={members} />);
-    const alice = screen.getByText("A");
-    // xs avatars have h-[22px] w-[22px] classes
-    expect(alice).toHaveClass("h-[22px]");
-    expect(alice).toHaveClass("w-[22px]");
+    const alice = screen.getByText("AL");
+    // xs avatars have h-[24px] w-[24px] classes
+    expect(alice).toHaveClass("h-[24px]");
+    expect(alice).toHaveClass("w-[24px]");
   });
 
   it("colours a member's avatar by its stable colorIndex, not array position", () => {
@@ -71,7 +71,7 @@ describe("RemainingBalance", () => {
         members={[{ ...members[0], colorIndex: 2 }, members[1]]}
       />,
     );
-    const alice = screen.getByText("A");
+    const alice = screen.getByText("AL");
     expect(alice).toHaveStyle({ background: "var(--color-member-3)" });
   });
 });

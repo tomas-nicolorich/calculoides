@@ -48,8 +48,8 @@ describe("BudgetTransfers", () => {
     renderList();
     const row = screen.getByTestId("transfer-row");
     // Alice (from) and Bob (to) avatar initials.
-    expect(within(row).getByText("A")).toBeInTheDocument();
-    expect(within(row).getByText("B")).toBeInTheDocument();
+    expect(within(row).getByText("AL")).toBeInTheDocument();
+    expect(within(row).getByText("BO")).toBeInTheDocument();
   });
 
   it("renders from and to member first names in the sub-line", () => {
@@ -67,10 +67,10 @@ describe("BudgetTransfers", () => {
       ],
     });
     const row = screen.getByTestId("transfer-row");
-    expect(within(row).getByText("A")).toHaveStyle({
+    expect(within(row).getByText("AL")).toHaveStyle({
       background: "var(--color-member-3)",
     });
-    expect(within(row).getByText("B")).toHaveStyle({
+    expect(within(row).getByText("BO")).toHaveStyle({
       background: "var(--color-member-5)",
     });
   });
@@ -78,8 +78,8 @@ describe("BudgetTransfers", () => {
   it("falls back to the member name fields when ids are unknown", () => {
     renderList({ members: [] });
     const row = screen.getByTestId("transfer-row");
-    expect(within(row).getByText("A")).toBeInTheDocument();
-    expect(within(row).getByText("B")).toBeInTheDocument();
+    expect(within(row).getByText("AL")).toBeInTheDocument();
+    expect(within(row).getByText("BO")).toBeInTheDocument();
   });
 
   it("renders an empty state when there are no transfers", () => {

@@ -3,24 +3,24 @@ import { describe, it, expect } from "vitest";
 import { Avatar, AvatarGroup } from "../../../src/shared/ui";
 
 describe("Avatar", () => {
-  it("renders the first character of the display name as the initial", () => {
+  it("renders two-letter initials from a single-word name", () => {
     render(<Avatar name="Tomas" />);
-    expect(screen.getByText("T")).toBeInTheDocument();
+    expect(screen.getByText("TO")).toBeInTheDocument();
   });
 
-  it("uppercases a lowercase initial", () => {
+  it("uppercases initials from a lowercase name", () => {
     render(<Avatar name="alice" />);
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByText("AL")).toBeInTheDocument();
   });
 
-  it("ignores leading whitespace when deriving the initial", () => {
+  it("ignores leading whitespace when deriving initials", () => {
     render(<Avatar name="  bruno" />);
-    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("BR")).toBeInTheDocument();
   });
 
   it("exposes the name as the element title", () => {
     render(<Avatar name="Carla" />);
-    expect(screen.getByText("C")).toHaveAttribute("title", "Carla");
+    expect(screen.getByText("CA")).toHaveAttribute("title", "Carla");
   });
 });
 
@@ -32,8 +32,8 @@ describe("AvatarGroup", () => {
         <Avatar name="Beto" />
       </AvatarGroup>,
     );
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("AN")).toBeInTheDocument();
+    expect(screen.getByText("BE")).toBeInTheDocument();
     expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe("AvatarGroup", () => {
     // 5 members, max 3 -> 2 hidden
     expect(screen.getByText("+2")).toBeInTheDocument();
     // the 4th and 5th members' initials are not rendered
-    expect(screen.queryByText("D")).not.toBeInTheDocument();
-    expect(screen.queryByText("E")).not.toBeInTheDocument();
+    expect(screen.queryByText("DA")).not.toBeInTheDocument();
+    expect(screen.queryByText("EL")).not.toBeInTheDocument();
   });
 });

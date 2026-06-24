@@ -50,7 +50,7 @@ describe("RecentExpenses", () => {
   it("renders the payer avatar initial resolved from payerId", () => {
     renderList();
     // Alice (m1) avatar initial — first character of "Alice Smith".
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByText("AS")).toBeInTheDocument();
   });
 
   it("renders payer first name and category name inline on the sub-line", () => {
@@ -86,7 +86,7 @@ describe("RecentExpenses", () => {
     renderList({
       members: [{ id: "m1", name: "Alice Smith", colorIndex: 2 }],
     });
-    expect(screen.getByText("A")).toHaveStyle({
+    expect(screen.getByText("AS")).toHaveStyle({
       background: "var(--color-member-3)",
     });
   });
@@ -94,7 +94,7 @@ describe("RecentExpenses", () => {
   it("falls back to the payer name field when the id is unknown", () => {
     renderList({ members: [] });
     // Avatar initial still comes from the expense's payerName.
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByText("AS")).toBeInTheDocument();
   });
 
   it("renders an empty state when there are no expenses", () => {

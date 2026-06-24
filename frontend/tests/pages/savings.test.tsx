@@ -3,6 +3,10 @@ import { SavingsPage } from "@/pages/savings/ui/SavingsPage";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
+vi.mock("@/app/providers/ActiveGroupContext", () => ({
+  useSetActiveGroup: vi.fn(),
+}));
+
 // Mock the hooks
 vi.mock("@/shared/api/savingsHooks", () => ({
   useSavingsGoals: () => ({

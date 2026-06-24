@@ -3,6 +3,10 @@ import { DashboardPage } from "@/pages/dashboard/ui/DashboardPage";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
+vi.mock("@/app/providers/ActiveGroupContext", () => ({
+  useSetActiveGroup: vi.fn(),
+}));
+
 // Mock the AuthContext
 vi.mock("@/app/providers/AuthContext", () => ({
   useAuth: () => ({
