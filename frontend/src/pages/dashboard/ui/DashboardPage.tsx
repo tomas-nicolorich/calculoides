@@ -9,12 +9,12 @@ import { BudgetCategories } from "../../../widgets/dashboard/ui/BudgetCategories
 import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
 import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
-import { Button } from "../../../shared/ui";
+import { Button, IconButton } from "../../../shared/ui";
 import { Avatar, AvatarGroup } from "../../../shared/ui/Avatar";
 import { Dialog } from "../../../shared/ui/Dialog";
 
@@ -34,6 +34,7 @@ export function buildMemberColorIndex(
 }
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
@@ -117,14 +118,17 @@ export function DashboardPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/groups"
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+        <div className="flex items-center gap-4">
+          <IconButton
+            bordered
+            hover="balance"
+            onClick={() => {
+              void navigate("/groups");
+            }}
             aria-label="Back to groups"
           >
             <ArrowLeft size={20} />
-          </Link>
+          </IconButton>
           <div>
             <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
               {summary.groupName}

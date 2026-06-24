@@ -61,7 +61,7 @@ describe("Savings Page", () => {
 
     // Check for back button
     expect(
-      screen.getByRole("link", { name: /Back to Dashboard/i }),
+      screen.getByRole("button", { name: /Back to Dashboard/i }),
     ).toBeInTheDocument();
   });
 });

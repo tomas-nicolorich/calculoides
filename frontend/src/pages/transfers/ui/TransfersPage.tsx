@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IconButton } from "../../../shared/ui";
 import { LoadingCard } from "../../../shared/ui/LoadingCard";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import { ArrowLeft, ArrowRightLeft } from "lucide-react";
@@ -32,15 +33,16 @@ export function TransfersPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex items-center gap-4">
-        <button
+        <IconButton
+          bordered
+          hover="balance"
           onClick={() => {
             void navigate(-1);
           }}
           aria-label="Back to Dashboard"
-          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
         >
-          <ArrowLeft size={24} className="text-brand-balance" />
-        </button>
+          <ArrowLeft size={20} />
+        </IconButton>
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             Budget Transfers
