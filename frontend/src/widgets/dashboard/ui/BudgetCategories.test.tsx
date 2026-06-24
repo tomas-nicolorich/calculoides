@@ -484,4 +484,32 @@ describe("BudgetCategories transfer dialog", () => {
       expect(onRefresh).toHaveBeenCalled();
     });
   });
+
+  it("Cancel button is present in the transfer dialog footer", () => {
+    renderWidget([categoryWithBalances]);
+    openTransferForAlice();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("Cancel button closes the transfer dialog", () => {
+    renderWidget([categoryWithBalances]);
+    openTransferForAlice();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(
+      screen.queryByRole("heading", { name: "Transfer Budget" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("transfer dialog has no icon-only close button in the header", () => {
+    renderWidget([categoryWithBalances]);
+    openTransferForAlice();
+    // The only buttons inside the dialog should be Cancel and Send Transfer
+    // (plus the icon transfer buttons are outside the dialog)
+    // Confirm no button exists with empty text content (the X close button)
+    const allButtons = screen.getAllByRole("button");
+    const iconOnlyButtons = allButtons.filter(
+      (btn) => !btn.textContent.trim() && btn.querySelector("svg") !== null,
+    );
+    expect(iconOnlyButtons).toHaveLength(0);
+  });
 });

@@ -471,6 +471,7 @@ export function BudgetCategories({
           onOpenChange={(open) => {
             if (!open) setTransferCategory(null);
           }}
+          hideCloseButton
           title="Transfer Budget"
           description={
             transferCategory
@@ -533,13 +534,24 @@ export function BudgetCategories({
               />
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
-            <button
-              type="submit"
-              disabled={formLoading || !transferToMemberId}
-              className="w-full p-3 mt-4 bg-brand-transfer text-white rounded-xl font-medium disabled:opacity-50"
-            >
-              {formLoading ? "Processing..." : "Send Transfer"}
-            </button>
+            <div className="flex gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setTransferCategory(null);
+                }}
+                className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={formLoading || !transferToMemberId}
+                className="flex-1 p-3 bg-brand-transfer text-white rounded-xl font-medium disabled:opacity-50"
+              >
+                {formLoading ? "Processing..." : "Send Transfer"}
+              </button>
+            </div>
           </form>
         </ResponsiveDialog>
 
