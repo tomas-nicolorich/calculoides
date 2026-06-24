@@ -234,7 +234,9 @@ describe("BudgetCategories category header — progress meter urgency state", ()
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 1000, spent: 700, remainingQuota: 300 }],
+        balances: [
+          { memberId: "m1", quota: 1000, spent: 700, remainingQuota: 300 },
+        ],
       }),
     ]);
     const bars = screen.getAllByRole("progressbar");
@@ -246,7 +248,9 @@ describe("BudgetCategories category header — progress meter urgency state", ()
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 1000, spent: 850, remainingQuota: 150 }],
+        balances: [
+          { memberId: "m1", quota: 1000, spent: 850, remainingQuota: 150 },
+        ],
       }),
     ]);
     const bars = screen.getAllByRole("progressbar");
@@ -258,7 +262,9 @@ describe("BudgetCategories category header — progress meter urgency state", ()
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 1000, spent: 1100, remainingQuota: -100 }],
+        balances: [
+          { memberId: "m1", quota: 1000, spent: 1100, remainingQuota: -100 },
+        ],
       }),
     ]);
     const bars = screen.getAllByRole("progressbar");
@@ -276,7 +282,9 @@ describe("BudgetCategories member row — progress meter urgency state (expanded
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 }],
+        balances: [
+          { memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 },
+        ],
       }),
     ]);
     expandCategory();
@@ -291,7 +299,9 @@ describe("BudgetCategories member row — progress meter urgency state (expanded
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 }],
+        balances: [
+          { memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 },
+        ],
       }),
     ]);
     expandCategory();
@@ -304,7 +314,9 @@ describe("BudgetCategories member row — progress meter urgency state (expanded
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 }],
+        balances: [
+          { memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 },
+        ],
       }),
     ]);
     expandCategory();
@@ -323,7 +335,9 @@ describe("BudgetCategories member row — spend label colour (expanded)", () => 
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 }],
+        balances: [
+          { memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 },
+        ],
       }),
     ]);
     expandCategory();
@@ -335,7 +349,9 @@ describe("BudgetCategories member row — spend label colour (expanded)", () => 
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 }],
+        balances: [
+          { memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 },
+        ],
       }),
     ]);
     expandCategory();
@@ -347,7 +363,9 @@ describe("BudgetCategories member row — spend label colour (expanded)", () => 
     renderWidget([
       makeCategory({
         monthlyBudget: 1000,
-        balances: [{ memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 }],
+        balances: [
+          { memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 },
+        ],
       }),
     ]);
     expandCategory();

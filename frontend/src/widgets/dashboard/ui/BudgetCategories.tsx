@@ -206,19 +206,18 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
       {/* Second row: Spent: x | x left / x over */}
       <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
         <span>Spent: {formatCurrency(balance.spent)}</span>
-        <span
-          className={cn(
-            "font-medium",
-            spendLabelColour,
-          )}
-        >
+        <span className={cn("font-medium", spendLabelColour)}>
           {isOver
             ? `${formatCurrency(Math.abs(balance.remainingQuota))} over`
             : `${formatCurrency(balance.remainingQuota)} left`}
         </span>
       </div>
       {/* Progress bar */}
-      <ProgressMeter value={balance.spent} max={balance.quota} state={memberState} />
+      <ProgressMeter
+        value={balance.spent}
+        max={balance.quota}
+        state={memberState}
+      />
     </div>
   );
 }
