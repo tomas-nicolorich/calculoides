@@ -144,23 +144,26 @@ function CategoryFormFields({
         </p>
       </div>
       {formError && <p className="text-sm text-red-500">{formError}</p>}
-      <div className="flex gap-3 mt-4">
+      <div className="flex gap-3 pt-2">
         {onCancel && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            className="flex-1"
             onClick={onCancel}
-            className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            disabled={formLoading}
           >
             Cancel
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="submit"
+          variant="balance"
+          className="flex-1"
           disabled={formLoading}
-          className="flex-1 p-3 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
         >
           {formLoading ? "Saving..." : submitLabel}
-        </button>
+        </Button>
       </div>
     </>
   );
@@ -556,23 +559,25 @@ export function BudgetCategories({
               />
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
-            <div className="flex gap-3 mt-4">
-              <button
+            <div className="flex gap-3 pt-2">
+              <Button
                 type="button"
+                variant="outline"
+                className="flex-1"
                 onClick={() => {
                   setTransferCategory(null);
                 }}
-                className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="transfer"
+                className="flex-1"
                 disabled={formLoading || !transferToMemberId}
-                className="flex-1 p-3 bg-brand-transfer text-white rounded-xl font-medium disabled:opacity-50"
               >
                 {formLoading ? "Processing..." : "Send Transfer"}
-              </button>
+              </Button>
             </div>
           </form>
         </Dialog>
