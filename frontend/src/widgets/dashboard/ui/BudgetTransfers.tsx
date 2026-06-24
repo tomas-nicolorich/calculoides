@@ -75,7 +75,7 @@ export function BudgetTransfers({ transfers, members }: BudgetTransfersProps) {
     <Card title="Budget Transfers">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-400">
             Money moved between members
           </div>
           <Link

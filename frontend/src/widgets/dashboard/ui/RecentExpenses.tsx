@@ -32,7 +32,7 @@ export function RecentExpenses({
     <Card title="Recent Expenses">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-slate-500">Latest 5 spends</div>
+          <div className="text-sm text-slate-400">Latest 5 spends</div>
           <Link
             to={`/expenses/${groupId}`}
             className="text-sm font-medium text-brand-balance hover:underline"

@@ -392,7 +392,7 @@ export function BudgetCategories({
     <Card title="Budget Categories">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-400">
             Shared buckets · each member&apos;s share is set by income. Expand
             to view and transfer.
           </div>
