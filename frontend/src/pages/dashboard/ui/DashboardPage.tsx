@@ -165,6 +165,7 @@ export function DashboardPage() {
         onOpenChange={setCreateExpenseOpen}
         title="Add Expense"
         description="Log a spend against a category and the member who paid."
+        hideCloseButton
       >
         <ExpenseForm
           groupId={groupId ?? ""}

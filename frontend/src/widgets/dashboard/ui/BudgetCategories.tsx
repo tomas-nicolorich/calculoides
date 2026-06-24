@@ -46,6 +46,7 @@ interface CategoryFormFieldsProps {
   formError: string | null;
   formLoading: boolean;
   submitLabel: string;
+  onCancel?: () => void;
 }
 
 function CategoryFormFields({
@@ -61,6 +62,7 @@ function CategoryFormFields({
   formError,
   formLoading,
   submitLabel,
+  onCancel,
 }: CategoryFormFieldsProps) {
   return (
     <>
@@ -143,13 +145,24 @@ function CategoryFormFields({
         </p>
       </div>
       {formError && <p className="text-sm text-red-500">{formError}</p>}
-      <button
-        type="submit"
-        disabled={formLoading}
-        className="w-full p-3 mt-4 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
-      >
-        {formLoading ? "Saving..." : submitLabel}
-      </button>
+      <div className="flex gap-3 mt-4">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={formLoading}
+          className="flex-1 p-3 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
+        >
+          {formLoading ? "Saving..." : submitLabel}
+        </button>
+      </div>
     </>
   );
 }
@@ -413,6 +426,7 @@ export function BudgetCategories({
           onOpenChange={setIsAdding}
           title="Add Category"
           description="Create a new budget category for your group."
+          hideCloseButton
         >
           <form onSubmit={(e) => void handleAddSubmit(e)} className="space-y-4">
             <CategoryFormFields
@@ -428,6 +442,9 @@ export function BudgetCategories({
               formError={formError}
               formLoading={formLoading}
               submitLabel="Save Category"
+              onCancel={() => {
+                setIsAdding(false);
+              }}
             />
           </form>
         </ResponsiveDialog>
@@ -445,6 +462,7 @@ export function BudgetCategories({
           }}
           title="Edit Category"
           description="Update details for this budget category."
+          hideCloseButton
         >
           <form
             onSubmit={(e) => void handleEditSubmit(e)}
@@ -463,6 +481,9 @@ export function BudgetCategories({
               formError={formError}
               formLoading={formLoading}
               submitLabel="Save Changes"
+              onCancel={() => {
+                setEditingCategory(null);
+              }}
             />
           </form>
         </ResponsiveDialog>
