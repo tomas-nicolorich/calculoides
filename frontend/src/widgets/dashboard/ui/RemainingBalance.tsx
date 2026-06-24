@@ -53,7 +53,7 @@ export function RemainingBalance({
                   />
                   {member.name}
                 </span>
-                <span className="font-semibold text-brand-balance font-mono tnum">
+                <span className="font-semibold text-slate-900 dark:text-white font-mono tnum">
                   {formatCurrency(member.income - member.budgeted)}
                 </span>
               </div>

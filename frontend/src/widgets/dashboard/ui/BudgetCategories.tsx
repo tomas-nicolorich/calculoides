@@ -18,6 +18,7 @@ import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
 import { Select, Input } from "../../../shared/ui";
 import { cn } from "../../../shared/lib/utils";
+import { Button } from "../../../shared/ui/Button";
 import {
   CategoryIconTile,
   CATEGORY_ICON_KEYS,
@@ -395,15 +396,16 @@ export function BudgetCategories({
             Shared buckets · each member&apos;s share is set by income. Expand
             to view and transfer.
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            leadingIcon={<Plus size={16} />}
             onClick={() => {
               setIsAdding(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-income text-white rounded-xl hover:opacity-90 transition-opacity"
           >
-            <Plus size={18} />
-            <span>New Category</span>
-          </button>
+            New Category
+          </Button>
         </div>
 
         <ResponsiveDialog
