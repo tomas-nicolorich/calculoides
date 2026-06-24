@@ -8,10 +8,12 @@ import {
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFilter";
 
 export function TransfersPage() {
   const { groupId } = useParams<{ groupId: string }>();
+  useSetActiveGroup(groupId);
   const navigate = useNavigate();
   const [filters, setFilters] = useState<{
     memberId?: string;

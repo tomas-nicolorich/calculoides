@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { useSavingsGoals } from "../../../shared/api/savingsHooks";
 import { SavingsGoalList } from "../../../features/savings/SavingsGoalList";
 import { SavingsGoalForm } from "../../../features/savings/SavingsGoalForm";
@@ -9,6 +10,7 @@ import { Dialog } from "../../../shared/ui/Dialog";
 
 export function SavingsPage() {
   const { groupId } = useParams<{ groupId: string }>();
+  useSetActiveGroup(groupId);
   const [createOpen, setCreateOpen] = useState(false);
   const {
     data: goals,

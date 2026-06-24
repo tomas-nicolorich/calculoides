@@ -10,6 +10,7 @@ import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
 import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { Link, useParams } from "react-router-dom";
+import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
@@ -35,6 +36,7 @@ export function buildMemberColorIndex(
 export function DashboardPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
+  useSetActiveGroup(groupId);
   const {
     data: summary,
     loading: summaryLoading,

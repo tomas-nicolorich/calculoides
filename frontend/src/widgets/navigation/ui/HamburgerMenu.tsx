@@ -1,16 +1,14 @@
 import { Menu } from "@base-ui/react";
 import { Menu as MenuIcon, User, Users, LogOut, PiggyBank } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
+import { useActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { IconButton } from "../../../shared/ui";
 import { ThemeToggle } from "../../../features/theme-toggle/ui/ThemeToggle";
 
 export function HamburgerMenu() {
   const { signOut } = useAuth();
-  const { pathname } = useLocation();
-  const groupId = /\/(?:dashboard|expenses|savings|transfers)\/([^/]+)/.exec(
-    pathname,
-  )?.[1];
+  const groupId = useActiveGroup();
 
   return (
     <Menu.Root>
