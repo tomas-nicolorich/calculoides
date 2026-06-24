@@ -13,7 +13,6 @@ import {
   CategoryBalance,
 } from "../../../../../shared/src/types/redesign";
 import { ChevronDown, Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
-import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
 import { Select, Input } from "../../../shared/ui";
@@ -421,7 +420,7 @@ export function BudgetCategories({
           </Button>
         </div>
 
-        <ResponsiveDialog
+        <Dialog
           open={isAdding}
           onOpenChange={setIsAdding}
           title="Add Category"
@@ -447,9 +446,9 @@ export function BudgetCategories({
               }}
             />
           </form>
-        </ResponsiveDialog>
+        </Dialog>
 
-        <ResponsiveDialog
+        <Dialog
           open={editingCategory !== null}
           onOpenChange={(open) => {
             if (!open) {
@@ -486,10 +485,10 @@ export function BudgetCategories({
               }}
             />
           </form>
-        </ResponsiveDialog>
+        </Dialog>
 
         {/* Transfer Budget dialog — From is locked to the row that was clicked */}
-        <ResponsiveDialog
+        <Dialog
           open={transferCategory !== null}
           onOpenChange={(open) => {
             if (!open) setTransferCategory(null);
@@ -576,7 +575,7 @@ export function BudgetCategories({
               </button>
             </div>
           </form>
-        </ResponsiveDialog>
+        </Dialog>
 
         {categories.length === 0 && (
           <p className="text-center py-8 text-slate-400 text-sm">
