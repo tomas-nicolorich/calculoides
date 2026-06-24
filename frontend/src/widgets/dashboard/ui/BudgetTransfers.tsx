@@ -50,7 +50,7 @@ function TransferRow({ transfer, members }: TransferRowProps) {
           <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
             {transfer.categoryName}
           </p>
-          <span className="text-sm font-semibold text-brand-transfer font-mono tnum">
+          <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum">
             {formatCurrency(transfer.amount)}
           </span>
         </div>
