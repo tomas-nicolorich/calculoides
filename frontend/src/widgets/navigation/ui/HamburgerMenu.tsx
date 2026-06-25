@@ -1,12 +1,14 @@
 import { Menu } from "@base-ui/react";
-import { Menu as MenuIcon, User, Users, LogOut } from "lucide-react";
+import { Menu as MenuIcon, User, Users, LogOut, PiggyBank } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
+import { useActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { IconButton } from "../../../shared/ui";
 import { ThemeToggle } from "../../../features/theme-toggle/ui/ThemeToggle";
 
 export function HamburgerMenu() {
   const { signOut } = useAuth();
+  const groupId = useActiveGroup();
 
   return (
     <Menu.Root>
@@ -53,6 +55,25 @@ export function HamburgerMenu() {
                   My Groups
                 </span>
               </Menu.Item>
+
+              {groupId && (
+                <Menu.Item
+                  render={
+                    <Link
+                      to={`/savings/${groupId}`}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none group"
+                    />
+                  }
+                >
+                  <PiggyBank
+                    size={18}
+                    className="text-slate-400 group-hover:text-brand-balance"
+                  />
+                  <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Savings Goal
+                  </span>
+                </Menu.Item>
+              )}
 
               <Menu.Item
                 render={

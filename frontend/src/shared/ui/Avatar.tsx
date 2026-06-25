@@ -4,7 +4,7 @@ import { cn } from "../lib/utils";
 export type AvatarSize = "xs" | "sm" | "md" | "lg";
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
-  /** Member display name; the first character becomes the initial. */
+  /** Member display name; two-letter initials are derived from it. */
   name?: string;
   /** Index into the CDS member palette; gives a member a stable colour. */
   colorIndex?: number;
@@ -28,15 +28,18 @@ const MEMBER_PALETTE = [
 ];
 
 const sizes: Record<AvatarSize, string> = {
-  xs: "h-6 w-6 text-[10px]",
-  sm: "h-8 w-8 text-xs",
-  md: "h-10 w-10 text-sm",
-  lg: "h-12 w-12 text-base",
+  xs: "h-[24px] w-[24px] text-[10px]",
+  sm: "h-[34px] w-[34px] text-xs",
+  md: "h-[42px] w-[42px] text-sm",
+  lg: "h-[50px] w-[50px] text-base",
 };
 
-/** First character of the trimmed display name, uppercased. */
-function avatarInitial(name: string): string {
-  return name.trim().charAt(0).toUpperCase();
+/** Two-letter initials: first 2 chars of single word, or first char of first 2 words. */
+function avatarInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
 export function Avatar({
@@ -60,7 +63,7 @@ export function Avatar({
       title={name}
       {...props}
     >
-      {avatarInitial(name)}
+      {avatarInitials(name)}
     </span>
   );
 }

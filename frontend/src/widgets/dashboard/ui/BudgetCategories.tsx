@@ -1,36 +1,27 @@
 import { useState } from "react";
 import { Card } from "../../../shared/ui/Card";
 import { Avatar } from "../../../shared/ui/Avatar";
-import { Badge, type BadgeTone } from "../../../shared/ui/Badge";
 import { ProgressMeter } from "../../../shared/ui/money";
-import type { ProgressState } from "../../../shared/ui/money/ProgressMeter";
 import {
   formatCurrency,
   categoryMemberShare,
-  progressState,
   progressPercent,
+  progressState,
 } from "../../../shared/api/dashboardUtils";
 import {
   CategoryWithBalances,
   CategoryBalance,
 } from "../../../../../shared/src/types/redesign";
 import { ChevronDown, Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
-import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
 import { Select, Input } from "../../../shared/ui";
 import { cn } from "../../../shared/lib/utils";
+import { Button } from "../../../shared/ui/Button";
 import {
   CategoryIconTile,
   CATEGORY_ICON_KEYS,
 } from "../../../shared/lib/categoryIcons";
-
-/** Badge tone for each urgency state — mirrors ProgressMeter's stateVar colours. */
-const stateTone: Record<ProgressState, BadgeTone> = {
-  "on-track": "income",
-  behind: "transfer",
-  blocked: "expense",
-};
 
 export interface MemberRich {
   id: string;
@@ -54,6 +45,7 @@ interface CategoryFormFieldsProps {
   formError: string | null;
   formLoading: boolean;
   submitLabel: string;
+  onCancel?: () => void;
 }
 
 function CategoryFormFields({
@@ -69,6 +61,7 @@ function CategoryFormFields({
   formError,
   formLoading,
   submitLabel,
+  onCancel,
 }: CategoryFormFieldsProps) {
   return (
     <>
@@ -151,13 +144,27 @@ function CategoryFormFields({
         </p>
       </div>
       {formError && <p className="text-sm text-red-500">{formError}</p>}
-      <button
-        type="submit"
-        disabled={formLoading}
-        className="w-full p-3 mt-4 bg-brand-balance text-white rounded-xl font-medium disabled:opacity-50"
-      >
-        {formLoading ? "Saving..." : submitLabel}
-      </button>
+      <div className="flex gap-3 pt-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={formLoading}
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
+          type="submit"
+          variant="balance"
+          className="flex-1"
+          disabled={formLoading}
+        >
+          {formLoading ? "Saving..." : submitLabel}
+        </Button>
+      </div>
     </>
   );
 }
@@ -165,6 +172,7 @@ function CategoryFormFields({
 interface MemberRowProps {
   balance: CategoryBalance;
   member: MemberRich | undefined;
+  /** Income share percent for this member (e.g. 32.5) */
   share: number;
   onTransfer: () => void;
 }
@@ -172,55 +180,29 @@ interface MemberRowProps {
 // fallow-ignore-next-line complexity
 function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
   const isOver = balance.remainingQuota < 0;
-  const memberState: ProgressState = isOver
-    ? "blocked"
-    : progressState(balance.spent, balance.quota);
-  const memberPct = progressPercent(balance.spent, balance.quota);
+  const displayName = member?.name ?? balance.memberId.slice(0, 4);
+  const memberState = progressState(balance.spent, balance.quota);
+  const spendLabelColour =
+    memberState === "blocked"
+      ? "text-brand-expense"
+      : memberState === "behind"
+        ? "text-brand-transfer"
+        : "text-brand-income";
   return (
-    <div className="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-3 space-y-2">
+    <div className="rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2 space-y-2">
+      {/* Top row: avatar + name + Custom badge | transfer btn + share% + amount */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <Avatar
             name={member?.name ?? balance.memberId}
             colorIndex={member?.index ?? 0}
-            size="sm"
+            size="xs"
           />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
-            {member?.name ?? balance.memberId.slice(0, 4)}
+            {displayName}
           </span>
-          <span className="text-xs text-slate-400 shrink-0">
-            {share.toFixed(1)}%
-          </span>
-          <Badge tone={stateTone[memberState]} size="sm" className="shrink-0">
-            {memberPct}%
-          </Badge>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
-            <div
-              className={cn(
-                "text-sm font-medium font-mono tnum",
-                isOver
-                  ? "text-brand-expense"
-                  : "text-slate-900 dark:text-white",
-              )}
-            >
-              {formatCurrency(Math.abs(balance.remainingQuota))}{" "}
-              <span className="text-xs font-normal font-sans">
-                {isOver ? "over" : "left"}
-              </span>
-            </div>
-            <div className="text-[10px] text-slate-500">
-              Budget:{" "}
-              <span className="font-mono tnum">
-                {formatCurrency(balance.quota)}
-              </span>{" "}
-              | Spent:{" "}
-              <span className="font-mono tnum">
-                {formatCurrency(balance.spent)}
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onTransfer}
             className="p-1.5 text-brand-transfer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded transition-all"
@@ -229,8 +211,29 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
           >
             <ArrowRightLeft size={14} />
           </button>
+          <span
+            className="text-xs rounded-full px-2 py-0.5 font-mono bg-slate-700 dark:bg-slate-800"
+            style={{
+              color: `var(--color-member-${String((member?.index ?? 0) + 1)})`,
+            }}
+          >
+            {share.toFixed(1)}%
+          </span>
+          <span className="text-sm font-medium font-mono tnum">
+            {formatCurrency(balance.quota)}
+          </span>
         </div>
       </div>
+      {/* Second row: Spent: x | x left / x over */}
+      <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+        <span>Spent: {formatCurrency(balance.spent)}</span>
+        <span className={cn("font-medium", spendLabelColour)}>
+          {isOver
+            ? `${formatCurrency(Math.abs(balance.remainingQuota))} over`
+            : `${formatCurrency(balance.remainingQuota)} left`}
+        </span>
+      </div>
+      {/* Progress bar */}
       <ProgressMeter
         value={balance.spent}
         max={balance.quota}
@@ -395,29 +398,37 @@ export function BudgetCategories({
     );
   };
 
+  /** Resolve the from-member for the transfer dialog. */
+  const transferFromMember = members.find((m) => m.id === transferFromMemberId);
+  const transferFromFirstName =
+    transferFromMember?.name.split(" ")[0] ?? transferFromMemberId;
+
   return (
     <Card title="Budget Categories">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-slate-500">
-            Categories and per-member breakdown
+          <div className="text-sm text-slate-400">
+            Shared buckets · each member&apos;s share is set by income. Expand
+            to view and transfer.
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            leadingIcon={<Plus size={16} />}
             onClick={() => {
               setIsAdding(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-income text-white rounded-xl hover:opacity-90 transition-opacity"
           >
-            <Plus size={18} />
-            <span>New Category</span>
-          </button>
+            New Category
+          </Button>
         </div>
 
-        <ResponsiveDialog
+        <Dialog
           open={isAdding}
           onOpenChange={setIsAdding}
           title="Add Category"
           description="Create a new budget category for your group."
+          hideCloseButton
         >
           <form onSubmit={(e) => void handleAddSubmit(e)} className="space-y-4">
             <CategoryFormFields
@@ -433,11 +444,14 @@ export function BudgetCategories({
               formError={formError}
               formLoading={formLoading}
               submitLabel="Save Category"
+              onCancel={() => {
+                setIsAdding(false);
+              }}
             />
           </form>
-        </ResponsiveDialog>
+        </Dialog>
 
-        <ResponsiveDialog
+        <Dialog
           open={editingCategory !== null}
           onOpenChange={(open) => {
             if (!open) {
@@ -450,6 +464,7 @@ export function BudgetCategories({
           }}
           title="Edit Category"
           description="Update details for this budget category."
+          hideCloseButton
         >
           <form
             onSubmit={(e) => void handleEditSubmit(e)}
@@ -468,40 +483,50 @@ export function BudgetCategories({
               formError={formError}
               formLoading={formLoading}
               submitLabel="Save Changes"
+              onCancel={() => {
+                setEditingCategory(null);
+              }}
             />
           </form>
-        </ResponsiveDialog>
+        </Dialog>
 
-        <ResponsiveDialog
+        {/* Transfer Budget dialog — From is locked to the row that was clicked */}
+        <Dialog
           open={transferCategory !== null}
           onOpenChange={(open) => {
             if (!open) setTransferCategory(null);
           }}
+          hideCloseButton
           title="Transfer Budget"
-          description={`Transfer funds within ${transferCategory?.name ?? ""}`}
+          description={
+            transferCategory
+              ? `Move budget from ${transferFromFirstName}'s share of ${transferCategory.name} to another member.`
+              : ""
+          }
         >
           <form
             onSubmit={(e) => void handleTransferSubmit(e)}
             className="space-y-4"
           >
+            {/* Locked From line */}
             <div className="space-y-2">
               <label className="text-sm font-medium">From</label>
-              <Select
-                value={transferFromMemberId}
-                onValueChange={(val) => {
-                  setTransferFromMemberId(val);
-                }}
-                disabled={!isOwner}
-                options={members
-                  .filter((m) => transferCategoryMemberIds.includes(m.id))
-                  .map((m) => ({
-                    value: m.id,
-                    label: m.name,
-                  }))}
-              />
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+                {transferFromMember && (
+                  <Avatar
+                    name={transferFromMember.name}
+                    colorIndex={transferFromMember.index}
+                    size="sm"
+                  />
+                )}
+                <span>
+                  From {transferFromFirstName}
+                  {transferCategory ? ` · ${transferCategory.name}` : ""}
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">To</label>
+              <label className="text-sm font-medium">To Member</label>
               <Select
                 value={transferToMemberId}
                 onValueChange={(val) => {
@@ -509,11 +534,14 @@ export function BudgetCategories({
                 }}
                 placeholder="Select recipient"
                 options={members
-                  .filter((m) => transferCategoryMemberIds.includes(m.id))
+                  .filter(
+                    (m) =>
+                      transferCategoryMemberIds.includes(m.id) &&
+                      m.id !== transferFromMemberId,
+                  )
                   .map((m) => ({
                     value: m.id,
                     label: m.name,
-                    disabled: m.id === transferFromMemberId,
                   }))}
               />
             </div>
@@ -531,15 +559,28 @@ export function BudgetCategories({
               />
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
-            <button
-              type="submit"
-              disabled={formLoading || !transferToMemberId}
-              className="w-full p-3 mt-4 bg-brand-transfer text-white rounded-xl font-medium disabled:opacity-50"
-            >
-              {formLoading ? "Processing..." : "Transfer"}
-            </button>
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setTransferCategory(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="transfer"
+                className="flex-1"
+                disabled={formLoading || !transferToMemberId}
+              >
+                {formLoading ? "Processing..." : "Send Transfer"}
+              </Button>
+            </div>
           </form>
-        </ResponsiveDialog>
+        </Dialog>
 
         {categories.length === 0 && (
           <p className="text-center py-8 text-slate-400 text-sm">
@@ -554,11 +595,7 @@ export function BudgetCategories({
               (sum, b) => sum + b.spent,
               0,
             );
-            const categoryState = progressState(
-              totalSpent,
-              category.monthlyBudget,
-            );
-            const categoryPct = progressPercent(
+            const spentPct = progressPercent(
               totalSpent,
               category.monthlyBudget,
             );
@@ -584,23 +621,21 @@ export function BudgetCategories({
                 >
                   <CategoryIconTile icon={category.icon} size="md" />
                   <div className="flex-1 min-w-0">
+                    {/* Name row: name (left) + budget amount (right) */}
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {category.name}
                       </span>
-                      <span className="flex items-center gap-2 shrink-0">
-                        <Badge tone={stateTone[categoryState]} size="sm">
-                          {categoryPct}%
-                        </Badge>
-                        <span className="text-xs text-slate-400 font-mono tnum">
-                          {formatCurrency(category.monthlyBudget)}
-                        </span>
+                      <span className="text-xs text-slate-400 font-mono tnum shrink-0">
+                        {formatCurrency(category.monthlyBudget)}
                       </span>
                     </div>
+                    {/* Progress meter with "x% spent" label */}
                     <ProgressMeter
                       value={totalSpent}
                       max={category.monthlyBudget}
-                      state={categoryState}
+                      state={progressState(totalSpent, category.monthlyBudget)}
+                      valueLabel={`${String(spentPct)}% spent`}
                       className="mt-2"
                     />
                   </div>

@@ -30,7 +30,7 @@ export function RemainingBalance({
         <StatFigure
           label="Total Group Remaining"
           value={formatCurrency(totalRemaining)}
-          tone="balance"
+          tone="primary"
         />
 
         <div className="space-y-4">
@@ -42,18 +42,18 @@ export function RemainingBalance({
           {members.map((member, i) => (
             <div
               key={member.id}
-              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50"
+              className="rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2"
             >
               <div className="flex justify-between items-center mb-2">
                 <span className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
                   <Avatar
-                    size="sm"
+                    size="xs"
                     name={member.name}
                     colorIndex={member.colorIndex ?? i}
                   />
                   {member.name}
                 </span>
-                <span className="font-semibold text-brand-balance font-mono tnum">
+                <span className="font-semibold text-slate-900 dark:text-white font-mono tnum">
                   {formatCurrency(member.income - member.budgeted)}
                 </span>
               </div>

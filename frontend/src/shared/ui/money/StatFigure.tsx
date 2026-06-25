@@ -44,7 +44,7 @@ export function StatFigure({
   ...props
 }: StatFigureProps) {
   return (
-    <div className={cn("flex flex-col gap-1", className)} {...props}>
+    <div className={cn("flex flex-col gap-2", className)} {...props}>
       {label && (
         <span className="text-sm text-slate-500 dark:text-slate-400">
           {label}

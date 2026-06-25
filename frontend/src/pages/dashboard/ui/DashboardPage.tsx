@@ -9,11 +9,12 @@ import { BudgetCategories } from "../../../widgets/dashboard/ui/BudgetCategories
 import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
 import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
-import { Button } from "../../../shared/ui";
+import { Button, IconButton } from "../../../shared/ui";
 import { Avatar, AvatarGroup } from "../../../shared/ui/Avatar";
 import { Dialog } from "../../../shared/ui/Dialog";
 
@@ -33,8 +34,10 @@ export function buildMemberColorIndex(
 }
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
+  useSetActiveGroup(groupId);
   const {
     data: summary,
     loading: summaryLoading,
@@ -115,14 +118,17 @@ export function DashboardPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/groups"
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+        <div className="flex items-center gap-4">
+          <IconButton
+            bordered
+            hover="balance"
+            onClick={() => {
+              void navigate("/groups");
+            }}
             aria-label="Back to groups"
           >
             <ArrowLeft size={20} />
-          </Link>
+          </IconButton>
           <div>
             <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
               {summary.groupName}
@@ -135,7 +141,7 @@ export function DashboardPage() {
 
         <div className="flex items-center gap-4">
           {summary.members.length > 0 && (
-            <AvatarGroup max={4} size="sm">
+            <AvatarGroup max={3} size="sm">
               {summary.members.map((m) => (
                 <Avatar
                   key={m.id}
@@ -161,8 +167,9 @@ export function DashboardPage() {
       <Dialog
         open={createExpenseOpen}
         onOpenChange={setCreateExpenseOpen}
-        title="Log Expense"
-        description="Record a new expense for your group."
+        title="Add Expense"
+        description="Log a spend against a category and the member who paid."
+        hideCloseButton
       >
         <ExpenseForm
           groupId={groupId ?? ""}

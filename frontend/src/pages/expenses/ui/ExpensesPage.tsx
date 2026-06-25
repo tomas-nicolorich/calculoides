@@ -10,6 +10,7 @@ import { ExpenseFilter } from "../../../features/expense-filtering/ui/ExpenseFil
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
+import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ArrowLeft, Plus, Receipt, Trash2 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import { Button, IconButton } from "../../../shared/ui";
@@ -18,6 +19,7 @@ import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 export function ExpensesPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
+  useSetActiveGroup(groupId);
   const navigate = useNavigate();
   const [filters, setFilters] = useState<{
     memberId?: string;
@@ -55,15 +57,16 @@ export function ExpensesPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex items-center gap-4">
-        <button
+        <IconButton
+          bordered
+          hover="balance"
           onClick={() => {
             void navigate(-1);
           }}
           aria-label="Back to Dashboard"
-          className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all hover:scale-105 active:scale-95 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
         >
-          <ArrowLeft size={24} className="text-brand-balance" />
-        </button>
+          <ArrowLeft size={20} />
+        </IconButton>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             Expenses
@@ -87,8 +90,8 @@ export function ExpensesPage() {
       <Dialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        title="Log Expense"
-        description="Record a new expense for your group."
+        title="Add Expense"
+        description="Log a spend against a category and the member who paid."
       >
         <ExpenseForm
           groupId={groupId ?? ""}

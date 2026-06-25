@@ -189,7 +189,7 @@ describe("BudgetCategories Widget — accordion", () => {
 
     await user.click(screen.getByRole("button", { name: /food/i }));
 
-    expect(screen.getByText("over")).toBeInTheDocument();
-    expect(screen.getByText("left")).toBeInTheDocument();
+    expect(screen.getByText(/over$/)).toBeInTheDocument();
+    expect(screen.getByText(/left$/)).toBeInTheDocument();
   });
 });

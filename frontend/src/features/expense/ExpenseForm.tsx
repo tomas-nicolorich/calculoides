@@ -65,9 +65,7 @@ export function ExpenseForm({
       className="space-y-4"
     >
       <div className="space-y-2">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-          Description
-        </label>
+        <label className="text-sm font-medium">Description</label>
         <Input
           placeholder="e.g. Groceries, Electricity bill"
           value={description}
@@ -80,9 +78,7 @@ export function ExpenseForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Amount (€)
-          </label>
+          <label className="text-sm font-medium">Amount (€)</label>
           <Input
             type="number"
             step="0.01"
@@ -97,9 +93,7 @@ export function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Date
-          </label>
+          <label className="text-sm font-medium">Date</label>
           <Input
             type="date"
             value={date}
@@ -112,25 +106,21 @@ export function ExpenseForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-          Category
-        </label>
+        <label className="text-sm font-medium">Category</label>
         <Select
           value={categoryId}
           onValueChange={setCategoryId}
           placeholder="Select category..."
           options={categories.map((c) => ({
             value: c.id,
-            label: `${c.icon ?? ""} ${c.name}`.trim(),
+            label: c.name,
           }))}
         />
       </div>
 
       {members.length > 0 && (
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Paid by
-          </label>
+          <label className="text-sm font-medium">Paid By</label>
           <Select
             value={payerId}
             onValueChange={setPayerId}
