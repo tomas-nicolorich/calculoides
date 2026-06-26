@@ -23,6 +23,7 @@ import { expenseApi } from "../../../entities/expense";
 import { Button, IconButton } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 
+// fallow-ignore-next-line complexity
 export function ExpensesPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
@@ -32,6 +33,8 @@ export function ExpensesPage() {
   const [filters, setFilters] = useState<{
     memberId?: string;
     categoryId?: string;
+    from?: string;
+    to?: string;
   }>({});
   const [offset, setOffset] = useState(0);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
@@ -51,6 +54,8 @@ export function ExpensesPage() {
     filters.memberId,
     PAGE_SIZE,
     offset,
+    filters.from,
+    filters.to,
   );
 
   const handleDeleteExpense = async (id: string) => {

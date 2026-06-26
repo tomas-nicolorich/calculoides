@@ -82,6 +82,8 @@ export const ExpenseService = {
     memberId?: string,
     limit = 20,
     offset = 0,
+    from?: string,
+    to?: string,
   ) {
     const where: Prisma.ExpenseWhereInput = {
       category: {
@@ -96,6 +98,18 @@ export const ExpenseService = {
 
     if (memberId) {
       where.payerId = memberId;
+    }
+
+    if (from || to) {
+      where.date = {};
+      if (from) {
+        where.date.gte = new Date(from);
+      }
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setDate(toDate.getDate() + 1);
+        where.date.lt = toDate;
+      }
     }
 
     const [expenses, total] = await prisma.$transaction([

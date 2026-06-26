@@ -66,7 +66,7 @@ interface ExpenseListItem {
 export const routes: RouteConfig = {
   // Expenses
   "expenses-list": async (req: ApiRequest, res: ApiResponse) => {
-    const { groupId, categoryId, memberId } = req.query;
+    const { groupId, categoryId, memberId, from, to } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
     const { parsedLimit, parsedOffset } = parsePagination(req.query);
     const { expenses, total } = await ExpenseService.listExpenses(
@@ -75,6 +75,8 @@ export const routes: RouteConfig = {
       memberId as string | undefined,
       parsedLimit,
       parsedOffset,
+      from as string | undefined,
+      to as string | undefined,
     );
 
     const mappedExpenses = (expenses as unknown as ExpenseListItem[]).map(
