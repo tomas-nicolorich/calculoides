@@ -78,6 +78,7 @@ export const ExpensesListSchema = z.object({
       amount: z.number().positive(),
       date: z.iso.datetime(),
       categoryName: z.string(),
+      categoryIcon: z.string(),
       payerName: z.string(),
     }),
   ),

@@ -59,7 +59,7 @@ interface ExpenseListItem {
   description: string;
   amount: { toString(): string } | number | string;
   date: Date;
-  category: { name: string };
+  category: { name: string; icon: string | null };
   payer: { user: { name: string | null; email: string } };
 }
 
@@ -86,6 +86,7 @@ export const routes: RouteConfig = {
         amount: Number(e.amount.toString()),
         date: e.date,
         categoryName: e.category.name,
+        categoryIcon: e.category.icon ?? "",
         payerName: e.payer.user.name ?? e.payer.user.email,
       }),
     );

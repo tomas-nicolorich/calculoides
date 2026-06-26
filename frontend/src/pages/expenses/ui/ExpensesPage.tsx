@@ -11,7 +11,14 @@ import { ExpenseForm } from "../../../features/expense/ExpenseForm";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
-import { ArrowLeft, Plus, Receipt, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import { Button, IconButton } from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
@@ -21,10 +28,12 @@ export function ExpensesPage() {
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
   const navigate = useNavigate();
+  const PAGE_SIZE = 25;
   const [filters, setFilters] = useState<{
     memberId?: string;
     categoryId?: string;
   }>({});
+  const [offset, setOffset] = useState(0);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -40,7 +49,8 @@ export function ExpensesPage() {
     groupId ?? null,
     filters.categoryId,
     filters.memberId,
-    50,
+    PAGE_SIZE,
+    offset,
   );
 
   const handleDeleteExpense = async (id: string) => {
@@ -111,10 +121,49 @@ export function ExpensesPage() {
       </Dialog>
 
       <ExpenseFilter
-        onFilterChange={setFilters}
+        onFilterChange={(f) => {
+          setFilters(f);
+          setOffset(0);
+        }}
         members={summary?.members ?? []}
         categories={categories}
       />
+
+      {expensesList && expensesList.pagination.total > 0 && (
+        <div className="flex items-center justify-between text-sm text-slate-500">
+          <span>
+            Showing {offset + 1}–
+            {Math.min(offset + PAGE_SIZE, expensesList.pagination.total)} of{" "}
+            {expensesList.pagination.total} expenses
+          </span>
+          <div className="flex items-center gap-2">
+            <IconButton
+              bordered
+              hover="balance"
+              size="sm"
+              disabled={offset === 0}
+              onClick={() => {
+                setOffset(Math.max(0, offset - PAGE_SIZE));
+              }}
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={16} />
+            </IconButton>
+            <IconButton
+              bordered
+              hover="balance"
+              size="sm"
+              disabled={offset + PAGE_SIZE >= expensesList.pagination.total}
+              onClick={() => {
+                setOffset(offset + PAGE_SIZE);
+              }}
+              aria-label="Next page"
+            >
+              <ChevronRight size={16} />
+            </IconButton>
+          </div>
+        </div>
+      )}
 
       <LoadingCard
         loading={loading}
@@ -127,7 +176,13 @@ export function ExpensesPage() {
             className="py-4 flex items-center gap-4 first:pt-0 last:pb-0"
           >
             <div className="p-3 bg-brand-expense/10 text-brand-expense rounded-xl">
-              <Receipt size={20} />
+              {expense.categoryIcon ? (
+                <span className="text-xl leading-none">
+                  {expense.categoryIcon}
+                </span>
+              ) : (
+                <Receipt size={20} />
+              )}
             </div>
             <div className="flex-1">
               <div className="flex justify-between">
