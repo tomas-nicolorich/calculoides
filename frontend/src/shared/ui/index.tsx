@@ -24,3 +24,4 @@ export { IconButton } from "./IconButton";
 export { UserDisplay } from "./UserDisplay";
 export { Select } from "./Select";
 export { ProgressMeter } from "./money/ProgressMeter";
+export { FilterPanel } from "./FilterPanel";
