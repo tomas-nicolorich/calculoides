@@ -50,15 +50,19 @@ function resolveCategoryIcon(key?: string): LucideIcon {
   return Folder;
 }
 
-export type CategoryIconTileSize = "sm" | "md" | "lg";
+export type CategoryIconTileSize = "2xs" | "xs" | "sm" | "md" | "lg";
 
 const tileSizes: Record<CategoryIconTileSize, string> = {
+  "2xs": "h-4 w-4 rounded-[4px]",
+  xs: "h-5 w-5 rounded-md",
   sm: "h-8 w-8 rounded-lg",
   md: "h-10 w-10 rounded-xl",
   lg: "h-12 w-12 rounded-xl",
 };
 
 const glyphSizes: Record<CategoryIconTileSize, number> = {
+  "2xs": 11,
+  xs: 12,
   sm: 16,
   md: 20,
   lg: 24,

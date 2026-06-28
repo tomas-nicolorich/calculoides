@@ -6,7 +6,7 @@ export function useApiQuery<T>(
   initialData: T,
 ) {
   const [data, setData] = useState<T>(initialData);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!groupId);
   const [error, setError] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
 

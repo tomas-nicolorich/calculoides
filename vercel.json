@@ -28,7 +28,7 @@
 
     {
       "source": "/api/transactions/:id",
-      "destination": "/api/transactions?action=expense-delete&id=:id"
+      "destination": "/api/transactions?action=transaction&id=:id"
     },
     {
       "source": "/api/expenses",
