@@ -52,6 +52,14 @@ const CreateTransferSchema = z.object({
   amount: z.number().positive(),
 });
 
+const UpdateExpenseSchema = z.object({
+  description: z.string().min(1),
+  amount: z.number().positive(),
+  date: z.string(),
+  categoryId: IdSchema,
+  payerId: IdSchema,
+});
+
 interface ExpenseListItem {
   id: string;
   categoryId: string;
@@ -109,6 +117,31 @@ export const routes: RouteConfig = {
       validatedBody.date,
     );
     res.status(201).json(expense);
+  },
+  "expense-update": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
+    const id =
+      req.query.id ??
+      (req as ApiRequest & { params?: Record<string, string> }).params?.id;
+    const validatedId = IdSchema.parse(id);
+    const validatedBody = UpdateExpenseSchema.parse(req.body);
+    try {
+      const updated = await ExpenseService.updateExpense(
+        validatedId,
+        validatedBody,
+        authReq.user.id,
+      );
+      res.status(200).json(updated);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg === "Expense not found") {
+        res.status(404).json({ error: msg });
+      } else if (msg === "Not a member of this group") {
+        res.status(403).json({ error: msg });
+      } else {
+        throw err;
+      }
+    }
   },
   "expense-delete": async (req: ApiRequest, res: ApiResponse) => {
     const id =
@@ -477,6 +510,19 @@ export const routes: RouteConfig = {
 
 routes.expenses = async (req: ApiRequest, res: ApiResponse) => {
   const actionKey = req.method === "POST" ? "expense-create" : "expenses-list";
+  const handler = routes[actionKey];
+  if (handler) return handler(req, res);
+  res.status(405).json({ error: "Method not allowed" });
+};
+
+routes.transaction = async (req: ApiRequest, res: ApiResponse) => {
+  const method = req.method;
+  let actionKey = "";
+  if (method === "PUT") {
+    actionKey = "expense-update";
+  } else if (method === "DELETE") {
+    actionKey = "expense-delete";
+  }
   const handler = routes[actionKey];
   if (handler) return handler(req, res);
   res.status(405).json({ error: "Method not allowed" });

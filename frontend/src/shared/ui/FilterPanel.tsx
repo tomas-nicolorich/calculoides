@@ -7,18 +7,28 @@ interface FilterPanelProps {
   children: React.ReactNode;
 }
 
-export function FilterPanel({ activeCount, onClear, children }: FilterPanelProps) {
+export function FilterPanel({
+  activeCount,
+  onClear,
+  children,
+}: FilterPanelProps) {
   const [open, setOpen] = useState(false);
 
   const toggleLabel = open
     ? "Hide Filters"
     : activeCount > 0
-      ? `Filters (${activeCount})`
+      ? `Filters (${activeCount.toString()})`
       : "Filters";
 
   return (
     <div>
-      <Button variant="outline" size="sm" onClick={() => setOpen((o) => !o)}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          setOpen((o) => !o);
+        }}
+      >
         {toggleLabel}
       </Button>
       {open && (

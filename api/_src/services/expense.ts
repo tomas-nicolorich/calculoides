@@ -138,6 +138,51 @@ export const ExpenseService = {
   },
 
   /**
+   * Updates all five mutable fields of an existing expense.
+   * Validates that the caller is a member of the expense's group.
+   * Returns 404 if expense not found, 403 if not a member.
+   */
+  async updateExpense(
+    expenseId: string,
+    fields: {
+      description: string;
+      amount: number;
+      date: string;
+      categoryId: string;
+      payerId: string;
+    },
+    callerUserId: string,
+  ) {
+    const expense = await prisma.expense.findUnique({
+      where: { id: expenseId },
+      include: { category: { select: { groupId: true } } },
+    });
+
+    if (!expense) throw new Error("Expense not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: {
+        groupId: expense.category.groupId,
+        userId: callerUserId,
+      },
+      select: { id: true },
+    });
+
+    if (!membership) throw new Error("Not a member of this group");
+
+    return await prisma.expense.update({
+      where: { id: expenseId },
+      data: {
+        description: fields.description,
+        amount: fields.amount,
+        date: new Date(fields.date),
+        categoryId: fields.categoryId,
+        payerId: fields.payerId,
+      },
+    });
+  },
+
+  /**
    * Deletes an expense (Permanent deletion per specification).
    */
   async deleteExpense(expenseId: string) {

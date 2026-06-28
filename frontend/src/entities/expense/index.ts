@@ -27,4 +27,18 @@ export const expenseApi = {
     }),
   delete: (id: string) =>
     apiClient.fetch<undefined>(`/transactions/${id}`, { method: "DELETE" }),
+  update: (
+    id: string,
+    data: {
+      description: string;
+      amount: number;
+      date: string;
+      categoryId: string;
+      payerId: string;
+    },
+  ) =>
+    apiClient.fetch<undefined>(`/transactions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 };

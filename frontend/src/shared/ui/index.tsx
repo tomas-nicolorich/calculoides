@@ -25,3 +25,4 @@ export { UserDisplay } from "./UserDisplay";
 export { Select } from "./Select";
 export { ProgressMeter } from "./money/ProgressMeter";
 export { FilterPanel } from "./FilterPanel";
+export { RowMenu } from "./RowMenu";
