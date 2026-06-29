@@ -2,7 +2,7 @@ import { Plus, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { groupApi, type Group } from "../../../entities/group";
-import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
+import { Dialog } from "../../../shared/ui/Dialog";
 import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
 import { Card } from "../../../shared/ui/Card";
 import { Button, Avatar, AvatarGroup } from "../../../shared/ui";
@@ -60,7 +60,7 @@ export function GroupsPage() {
         </Button>
       </header>
 
-      <ResponsiveDialog
+      <Dialog
         open={isCreatingGroup}
         onOpenChange={setIsCreatingGroup}
         title="Create New Group"
@@ -76,7 +76,7 @@ export function GroupsPage() {
             setIsCreatingGroup(false);
           }}
         />
-      </ResponsiveDialog>
+      </Dialog>
 
       {loading ? (
         <div className="py-20 flex justify-center">

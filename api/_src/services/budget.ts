@@ -29,6 +29,7 @@ export const BudgetService = {
     // 2. Fetch all categories for the group
     const categories = await prisma.category.findMany({
       where: { groupId },
+      orderBy: { monthlyBudget: "desc" },
       include: {
         expenses: {
           where: { isArchived: false },

@@ -4,7 +4,9 @@ export type MemberIncome = MemberWithIncome;
 export type IncomeShare = RoundedShare;
 
 /**
- * Calculates proportional income shares with remainder absorption by the highest earner.
+ * Calculates proportional income shares. The money `share` (0..1) absorbs its
+ * rounding deficit on the highest earner; the display `percentage` (1dp) is
+ * allocated by largest remainder so it always sums to exactly 100.0 (issue #128).
  */
 export function calculateIncomeShares(members: MemberIncome[]): IncomeShare[] {
   return calculateRoundedShares(members);
