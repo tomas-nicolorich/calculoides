@@ -621,3 +621,100 @@ describe("BudgetCategories transfer dialog", () => {
     expect(iconOnlyButtons).toHaveLength(0);
   });
 });
+
+describe("BudgetCategories zero-income exclusion (#130)", () => {
+  function expandCategory() {
+    const toggle = screen
+      .getAllByRole("button")
+      .find((b) => b.getAttribute("aria-expanded") === "false");
+    if (!toggle) throw new Error("no expand toggle");
+    fireEvent.click(toggle);
+  }
+
+  it("shows an empty state for a category with no income-bearing members", () => {
+    renderWidget([
+      makeCategory({
+        isEmpty: true,
+        balances: [
+          {
+            memberId: "m1",
+            quota: 0,
+            spent: 0,
+            percentage: 0,
+            excluded: true,
+            remainingQuota: 0,
+          },
+          {
+            memberId: "m2",
+            quota: 0,
+            spent: 0,
+            percentage: 0,
+            excluded: true,
+            remainingQuota: 0,
+          },
+        ],
+      }),
+    ]);
+    expandCategory();
+    expect(
+      screen.getByText("No members with income in this category"),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render an allocation row for an excluded member", () => {
+    renderWidget([
+      makeCategory({
+        balances: [
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 0,
+            percentage: 100,
+            excluded: false,
+            remainingQuota: 1000,
+          },
+          {
+            memberId: "m2",
+            quota: 0,
+            spent: 0,
+            percentage: 0,
+            excluded: true,
+            remainingQuota: 0,
+          },
+        ],
+      }),
+    ]);
+    expandCategory();
+    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
+    expect(screen.queryByText("Bob Jones")).not.toBeInTheDocument();
+  });
+
+  it("greys out and strikes zero-income members in the assign-members picker", () => {
+    render(
+      <BudgetCategories
+        categories={[makeCategory()]}
+        isOwner
+        onDelete={vi.fn()}
+        groupId="group-1"
+        members={[
+          { id: "m1", name: "Alice Smith", income: 3000, share: 100, index: 0 },
+          { id: "m2", name: "Bob Jones", income: 0, share: 0, index: 1 },
+        ]}
+        onRefresh={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /New Category/i }));
+
+    // Income-bearing member is a selectable button.
+    expect(
+      screen.getByRole("button", { name: "Alice Smith" }),
+    ).toBeInTheDocument();
+    // Zero-income member is rendered struck/greyed, not a button, with a hint.
+    expect(
+      screen.queryByRole("button", { name: "Bob Jones" }),
+    ).not.toBeInTheDocument();
+    const bob = screen.getByText("Bob Jones");
+    expect(bob.className).toContain("line-through");
+    expect(bob.getAttribute("title")).toBe("No income — not included");
+  });
+});

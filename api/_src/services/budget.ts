@@ -94,9 +94,14 @@ export const BudgetService = {
         };
       });
 
+      // Empty-category signal (#130): no eligible member has income > 0, so no
+      // allocation was computed — the frontend renders an empty state.
+      const isEmpty = !relevantMembers.some((m) => m.income > 0);
+
       return {
         ...category,
         balances: enrichedBalances,
+        isEmpty,
         totalSpent: enrichedBalances.reduce((acc, b) => acc + b.spent, 0),
       };
     });

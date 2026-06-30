@@ -121,25 +121,43 @@ function CategoryFormFields({
           Assign to Members (Optional)
         </label>
         <div className="flex flex-wrap gap-2">
-          {members.map((member) => (
-            <button
-              key={member.id}
-              type="button"
-              onClick={() => {
-                toggleMember(member.id);
-              }}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedMemberIds.includes(member.id)
-                  ? "bg-brand-balance text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-              }`}
-            >
-              {member.name}
-            </button>
-          ))}
+          {members.map((member) => {
+            // Zero-income members are excluded from any category allocation
+            // (#130): show them greyed + struck with a hint, not invisible.
+            const noIncome = member.income <= 0;
+            if (noIncome) {
+              return (
+                <span
+                  key={member.id}
+                  title="No income — not included"
+                  aria-disabled="true"
+                  className="px-3 py-1 rounded-full text-sm line-through opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-500"
+                >
+                  {member.name}
+                </span>
+              );
+            }
+            return (
+              <button
+                key={member.id}
+                type="button"
+                onClick={() => {
+                  toggleMember(member.id);
+                }}
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  selectedMemberIds.includes(member.id)
+                    ? "bg-brand-balance text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                }`}
+              >
+                {member.name}
+              </button>
+            );
+          })}
         </div>
         <p className="text-xs text-slate-500">
-          If none selected, category applies to everyone.
+          If none selected, category applies to everyone. Members with no income
+          are not included.
         </p>
       </div>
       {formError && <p className="text-sm text-red-500">{formError}</p>}
@@ -647,30 +665,47 @@ export function BudgetCategories({
 
                 {isExpanded && (
                   <div className="px-4 pb-4 space-y-3">
+                    {/* Empty state (#130): no member with income → no allocation. */}
+                    {(category.isEmpty ??
+                      category.balances.every((b) => b.excluded)) && (
+                      <div className="rounded-lg bg-slate-50 dark:bg-slate-800/40 px-4 py-6 text-center space-y-1">
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                          No members with income in this category
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Set a member&apos;s income to start splitting this
+                          budget.
+                        </p>
+                      </div>
+                    )}
                     <div className="space-y-2">
-                      {category.balances.map((balance: CategoryBalance) => (
-                        <MemberRow
-                          key={balance.memberId}
-                          balance={balance}
-                          member={members.find(
-                            (m) => m.id === balance.memberId,
-                          )}
-                          share={balance.percentage}
-                          onTransfer={() => {
-                            setTransferCategory({
-                              id: category.id,
-                              name: category.name,
-                            });
-                            setTransferCategoryMemberIds(
-                              category.balances.map((b) => b.memberId),
-                            );
-                            setTransferFromMemberId(balance.memberId);
-                            setTransferToMemberId("");
-                            setTransferAmount("");
-                            setFormError(null);
-                          }}
-                        />
-                      ))}
+                      {category.balances
+                        .filter((b) => !b.excluded)
+                        .map((balance: CategoryBalance) => (
+                          <MemberRow
+                            key={balance.memberId}
+                            balance={balance}
+                            member={members.find(
+                              (m) => m.id === balance.memberId,
+                            )}
+                            share={balance.percentage}
+                            onTransfer={() => {
+                              setTransferCategory({
+                                id: category.id,
+                                name: category.name,
+                              });
+                              setTransferCategoryMemberIds(
+                                category.balances
+                                  .filter((b) => !b.excluded)
+                                  .map((b) => b.memberId),
+                              );
+                              setTransferFromMemberId(balance.memberId);
+                              setTransferToMemberId("");
+                              setTransferAmount("");
+                              setFormError(null);
+                            }}
+                          />
+                        ))}
                     </div>
 
                     <div className="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">

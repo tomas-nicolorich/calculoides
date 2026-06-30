@@ -24,6 +24,12 @@ export interface CategoryBalance {
   totalQuota: number;
   /** 1dp display share (0..100); sums to exactly 100.0 within the category. */
   percentage: number;
+  /**
+   * True when the member has zero income and is excluded from the category's
+   * allocation (issue #130). Excluded members are still returned, but with
+   * quota 0 and percentage 0 — never silently dropped.
+   */
+  excluded: boolean;
   spent: number;
   remainingQuota: number;
 }
@@ -66,21 +72,41 @@ export function calculateCategoryBalances(
     amount: number;
   }[] = [],
 ): CategoryBalance[] {
-  const ids = members.map((m) => m.id);
-  const incomes = members.map((m) => m.income);
+  // Eligible = income > 0. Zero-income members are excluded from the category
+  // allocation (issue #130): they are still returned (flagged `excluded`) but
+  // with quota 0 / percentage 0, never silently dropped. Allocating only over
+  // the eligible subset renormalizes shares to exactly 100.0 / the budget.
+  const eligible = members.filter((m) => m.income > 0);
+  const eligibleIds = eligible.map((m) => m.id);
+  const eligibleIncomes = eligible.map((m) => m.income);
 
   // Quota: precise income weights, cent quantum → sums EXACTLY to the budget.
-  const quotas = largestRemainderAllocate(
-    incomes,
-    category.monthlyBudget,
-    0.01,
-    ids,
-  );
   // Percentage: same incomes, 0.1 quantum → sums EXACTLY to 100.0. Cosmetic.
-  const percentages = largestRemainderAllocate(incomes, 100, 0.1, ids);
+  // Skip the allocator entirely when nobody is eligible (empty category).
+  const quotas =
+    eligible.length > 0
+      ? largestRemainderAllocate(
+          eligibleIncomes,
+          category.monthlyBudget,
+          0.01,
+          eligibleIds,
+        )
+      : [];
+  const percentages =
+    eligible.length > 0
+      ? largestRemainderAllocate(eligibleIncomes, 100, 0.1, eligibleIds)
+      : [];
 
-  return members.map((m, i) => {
-    const baseQuota = quotas[i];
+  const quotaById = new Map<string, number>();
+  const percentageById = new Map<string, number>();
+  eligible.forEach((m, i) => {
+    quotaById.set(m.id, quotas[i]);
+    percentageById.set(m.id, percentages[i]);
+  });
+
+  return members.map((m) => {
+    const excluded = m.income <= 0;
+    const baseQuota = excluded ? 0 : (quotaById.get(m.id) ?? 0);
 
     const memberExpenses = expenses
       .filter((e) => e.payerId === m.id)
@@ -99,7 +125,8 @@ export function calculateCategoryBalances(
       memberId: m.id,
       quota: Number(adjustedQuota.toFixed(2)),
       totalQuota: Number(adjustedQuota.toFixed(2)),
-      percentage: percentages[i],
+      percentage: excluded ? 0 : (percentageById.get(m.id) ?? 0),
+      excluded,
       spent: Number(memberExpenses.toFixed(2)),
       remainingQuota: Number((adjustedQuota - memberExpenses).toFixed(2)),
     };

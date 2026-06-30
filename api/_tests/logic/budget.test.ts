@@ -56,6 +56,53 @@ describe("Category Balance Calculation", () => {
     expect((m1.percentage / 100) * category.monthlyBudget).not.toBe(m1.quota);
   });
 
+  it("excludes zero-income members from the allocation (flagged, zeroed)", () => {
+    const members = [
+      { id: "m1", income: 2000 },
+      { id: "m2", income: 0 },
+    ];
+    const category = { monthlyBudget: 1000 };
+
+    const balances = calculateCategoryBalances(category, members, []);
+
+    const m1 = balances.find((b) => b.memberId === "m1");
+    const m2 = balances.find((b) => b.memberId === "m2");
+    if (!m1 || !m2) throw new Error("missing balance");
+    // Zero-income member excluded: zeroed quota/percentage, flagged.
+    expect(m2.excluded).toBe(true);
+    expect(m2.quota).toBe(0);
+    expect(m2.percentage).toBe(0);
+    // Sole eligible member absorbs 100.0% and the whole budget.
+    expect(m1.excluded).toBe(false);
+    expect(m1.quota).toBe(1000);
+    expect(m1.percentage).toBe(100);
+    // Eligible set still foots exactly to the budget.
+    expect(quotaCents(balances)).toBe(100000);
+    // Eligible-set percentages still sum to exactly 100.0 (tenths space).
+    const pctTenths = balances.reduce(
+      (acc, b) => acc + Math.round(b.percentage * 10),
+      0,
+    );
+    expect(pctTenths).toBe(1000);
+  });
+
+  it("marks every member excluded when the whole category has zero income (empty signal)", () => {
+    const members = [
+      { id: "m1", income: 0 },
+      { id: "m2", income: 0 },
+    ];
+    const category = { monthlyBudget: 1000 };
+
+    const balances = calculateCategoryBalances(category, members, []);
+
+    // Empty-category signal at this seam: nobody eligible → all excluded, no quota.
+    expect(balances.every((b) => b.excluded)).toBe(true);
+    expect(balances.every((b) => b.quota === 0 && b.percentage === 0)).toBe(
+      true,
+    );
+    expect(quotaCents(balances)).toBe(0);
+  });
+
   it("gives a single eligible member 100% of the budget", () => {
     const members = [{ id: "m1", income: 5000 }];
     const category = { monthlyBudget: 500 };
