@@ -661,7 +661,7 @@ describe("BudgetCategories zero-income exclusion (#130)", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not render an allocation row for an excluded member", () => {
+  it("renders an excluded member as a greyed/struck row, not hidden", () => {
     renderWidget([
       makeCategory({
         balances: [
@@ -686,10 +686,13 @@ describe("BudgetCategories zero-income exclusion (#130)", () => {
     ]);
     expandCategory();
     expect(screen.getByText("Alice Smith")).toBeInTheDocument();
-    expect(screen.queryByText("Bob Jones")).not.toBeInTheDocument();
+    // Excluded member stays visible, greyed + struck, with a hint.
+    const bob = screen.getByText("Bob Jones");
+    expect(bob.className).toContain("line-through");
+    expect(screen.getByText("No income — not included")).toBeInTheDocument();
   });
 
-  it("greys out and strikes zero-income members in the assign-members picker", () => {
+  it("keeps zero-income members selectable (not greyed) in the assign-members picker", () => {
     render(
       <BudgetCategories
         categories={[makeCategory()]}
@@ -705,16 +708,12 @@ describe("BudgetCategories zero-income exclusion (#130)", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /New Category/i }));
 
-    // Income-bearing member is a selectable button.
+    // Both members are selectable buttons, regardless of income.
     expect(
       screen.getByRole("button", { name: "Alice Smith" }),
     ).toBeInTheDocument();
-    // Zero-income member is rendered struck/greyed, not a button, with a hint.
-    expect(
-      screen.queryByRole("button", { name: "Bob Jones" }),
-    ).not.toBeInTheDocument();
-    const bob = screen.getByText("Bob Jones");
-    expect(bob.className).toContain("line-through");
-    expect(bob.getAttribute("title")).toBe("No income — not included");
+    const bob = screen.getByRole("button", { name: "Bob Jones" });
+    expect(bob).toBeInTheDocument();
+    expect(bob.className).not.toContain("line-through");
   });
 });

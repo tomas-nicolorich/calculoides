@@ -122,21 +122,9 @@ function CategoryFormFields({
         </label>
         <div className="flex flex-wrap gap-2">
           {members.map((member) => {
-            // Zero-income members are excluded from any category allocation
-            // (#130): show them greyed + struck with a hint, not invisible.
-            const noIncome = member.income <= 0;
-            if (noIncome) {
-              return (
-                <span
-                  key={member.id}
-                  title="No income — not included"
-                  aria-disabled="true"
-                  className="px-3 py-1 rounded-full text-sm line-through opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-500"
-                >
-                  {member.name}
-                </span>
-              );
-            }
+            // Any member can be assigned to a category, including those with no
+            // income. Zero-income members are excluded from the *allocation*
+            // (greyed in the category breakdown), but remain freely selectable.
             return (
               <button
                 key={member.id}
@@ -198,6 +186,33 @@ interface MemberRowProps {
 function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
   const isOver = balance.remainingQuota < 0;
   const displayName = member?.name ?? balance.memberId.slice(0, 4);
+
+  // Zero-income members are excluded from the allocation (#130): keep them
+  // visible but greyed/struck, with no quota/transfer, so they don't silently
+  // vanish from the category breakdown.
+  if (balance.excluded) {
+    return (
+      <div
+        className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2 opacity-60"
+        title="No income — not included"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar
+            name={member?.name ?? balance.memberId}
+            colorIndex={member?.index ?? 0}
+            size="xs"
+          />
+          <span className="text-sm font-medium text-slate-500 line-through truncate">
+            {displayName}
+          </span>
+        </div>
+        <span className="text-xs text-slate-400 shrink-0">
+          No income — not included
+        </span>
+      </div>
+    );
+  }
+
   const memberState = progressState(balance.spent, balance.quota);
   const spendLabelColour =
     memberState === "blocked"
@@ -679,33 +694,31 @@ export function BudgetCategories({
                       </div>
                     )}
                     <div className="space-y-2">
-                      {category.balances
-                        .filter((b) => !b.excluded)
-                        .map((balance: CategoryBalance) => (
-                          <MemberRow
-                            key={balance.memberId}
-                            balance={balance}
-                            member={members.find(
-                              (m) => m.id === balance.memberId,
-                            )}
-                            share={balance.percentage}
-                            onTransfer={() => {
-                              setTransferCategory({
-                                id: category.id,
-                                name: category.name,
-                              });
-                              setTransferCategoryMemberIds(
-                                category.balances
-                                  .filter((b) => !b.excluded)
-                                  .map((b) => b.memberId),
-                              );
-                              setTransferFromMemberId(balance.memberId);
-                              setTransferToMemberId("");
-                              setTransferAmount("");
-                              setFormError(null);
-                            }}
-                          />
-                        ))}
+                      {category.balances.map((balance: CategoryBalance) => (
+                        <MemberRow
+                          key={balance.memberId}
+                          balance={balance}
+                          member={members.find(
+                            (m) => m.id === balance.memberId,
+                          )}
+                          share={balance.percentage}
+                          onTransfer={() => {
+                            setTransferCategory({
+                              id: category.id,
+                              name: category.name,
+                            });
+                            setTransferCategoryMemberIds(
+                              category.balances
+                                .filter((b) => !b.excluded)
+                                .map((b) => b.memberId),
+                            );
+                            setTransferFromMemberId(balance.memberId);
+                            setTransferToMemberId("");
+                            setTransferAmount("");
+                            setFormError(null);
+                          }}
+                        />
+                      ))}
                     </div>
 
                     <div className="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
