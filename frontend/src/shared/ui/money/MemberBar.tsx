@@ -74,7 +74,7 @@ export function MemberBar({
             <div
               key={m.id ?? origIdx}
               data-testid="memberbar-segment"
-              title={`${m.name}: ${(m.share ?? 0).toString()}%`}
+              title={`${m.name}: ${(m.share ?? 0).toFixed(1)}%`}
               className={cn(
                 "h-full border-r-2 border-card",
                 i === arr.length - 1 && "border-r-0",
@@ -106,7 +106,7 @@ export function MemberBar({
                 </span>
                 {m.share != null && (
                   <span className="ml-2 font-mono text-slate-400 dark:text-slate-500">
-                    ({m.share}%)
+                    ({m.share.toFixed(1)}%)
                   </span>
                 )}
               </span>
