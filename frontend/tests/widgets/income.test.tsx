@@ -22,15 +22,15 @@ describe("IncomeOverview Widget", () => {
     render(<IncomeOverview totalIncome={6000} members={mockMembers} />);
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.getByText("(60%)")).toBeInTheDocument();
+    expect(screen.getByText("(60.0%)")).toBeInTheDocument();
     expect(screen.getByText(/3,000\.00/i)).toBeInTheDocument();
 
     expect(screen.getByText("Bob")).toBeInTheDocument();
-    expect(screen.getByText("(40%)")).toBeInTheDocument();
+    expect(screen.getByText("(40.0%)")).toBeInTheDocument();
     expect(screen.getByText(/2,000\.00/i)).toBeInTheDocument();
 
     expect(screen.getByText("Charlie")).toBeInTheDocument();
-    expect(screen.getByText("(20%)")).toBeInTheDocument();
+    expect(screen.getByText("(20.0%)")).toBeInTheDocument();
     expect(screen.getByText(/1,000\.00/i)).toBeInTheDocument();
   });
 

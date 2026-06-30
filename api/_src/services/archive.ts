@@ -1,10 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { GroupService } from "./group";
-import {
-  calculateIncomeShares,
-  calculateCategoryBalances,
-  resolveRelevantShares,
-} from "./calculation";
+import { calculateCategoryBalances } from "./calculation";
 
 const UNDO_WINDOW_SECONDS = 10;
 
@@ -24,9 +20,6 @@ export const ArchiveService = {
     const endDate = new Date(year, month, 1);
 
     const members = await prisma.groupMember.findMany({ where: { groupId } });
-    const incomeShares = calculateIncomeShares(
-      members.map((m) => ({ id: m.id, income: Number(m.income) })),
-    );
 
     const categories = await prisma.category.findMany({
       where: { groupId },
@@ -53,15 +46,18 @@ export const ArchiveService = {
     );
 
     for (const category of categories) {
-      const relevantShares = resolveRelevantShares(
-        members.map((m) => ({ id: m.id, income: Number(m.income) })),
-        category.memberLinks,
-        incomeShares,
-      );
+      const relevantMembers =
+        category.memberLinks.length === 0
+          ? members.map((m) => ({ id: m.id, income: Number(m.income) }))
+          : members
+              .filter((m) =>
+                category.memberLinks.some((ml) => ml.memberId === m.id),
+              )
+              .map((m) => ({ id: m.id, income: Number(m.income) }));
 
       const balances = calculateCategoryBalances(
         { monthlyBudget: Number(category.monthlyBudget) },
-        relevantShares,
+        relevantMembers,
         category.expenses.map((e) => ({
           payerId: e.payerId,
           amount: Number(e.amount),

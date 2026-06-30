@@ -55,9 +55,20 @@ export const BudgetService = {
         incomeShares,
       );
 
+      // Quota + percentage derive from PRECISE income weights over the eligible
+      // subset (restricted categories renormalize over their linked members).
+      const relevantMembers =
+        category.memberLinks.length === 0
+          ? members.map((m) => ({ id: m.id, income: Number(m.income) }))
+          : members
+              .filter((m) =>
+                category.memberLinks.some((ml) => ml.memberId === m.id),
+              )
+              .map((m) => ({ id: m.id, income: Number(m.income) }));
+
       const balances = calculateCategoryBalances(
         { monthlyBudget: Number(category.monthlyBudget) },
-        relevantShares,
+        relevantMembers,
         category.expenses.map((e) => ({
           payerId: e.payerId,
           amount: Number(e.amount),
@@ -76,8 +87,10 @@ export const BudgetService = {
         return {
           ...b,
           user: member?.user,
+          // money share (0..1) kept for any consumers; percentage is the
+          // canonical 1dp display value, computed alongside the quota.
           share: shareData?.share ?? 0,
-          percentage: shareData?.percentage ?? 0,
+          percentage: b.percentage,
         };
       });
 

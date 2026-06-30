@@ -56,6 +56,8 @@ export const DashboardSummarySchema = z.object({
 export const CategoryBalanceSchema = z.object({
   memberId: z.uuid(),
   quota: z.number().nonnegative(),
+  /** Canonical 1dp display share (0..100); sums to exactly 100.0 per category. */
+  percentage: z.number().nonnegative(),
   spent: z.number().nonnegative(),
   remainingQuota: z.number(),
 });

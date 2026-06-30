@@ -13,8 +13,8 @@ describe("IncomeOverview", () => {
     render(<IncomeOverview totalIncome={5000} members={members} />);
     expect(screen.getByText(formatCurrency(3000))).toBeInTheDocument();
     expect(screen.getByText(formatCurrency(2000))).toBeInTheDocument();
-    expect(screen.getByText("(60%)")).toBeInTheDocument();
-    expect(screen.getByText("(40%)")).toBeInTheDocument();
+    expect(screen.getByText("(60.0%)")).toBeInTheDocument();
+    expect(screen.getByText("(40.0%)")).toBeInTheDocument();
   });
 
   it("does not render avatar initials — members shown as coloured dots", () => {

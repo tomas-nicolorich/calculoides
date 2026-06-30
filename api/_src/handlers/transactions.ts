@@ -421,15 +421,15 @@ export const routes: RouteConfig = {
         const catExpenses = expenses.filter((e) => e.categoryId === cat.id);
         const catTransfers = transfers.filter((t) => t.categoryId === cat.id);
 
-        const relevantShares = isRestricted
-          ? shares.filter((s) =>
-              cat.memberLinks.some((ml) => ml.memberId === s.id),
+        const relevantMembers = isRestricted
+          ? memberIncomes.filter((mi) =>
+              cat.memberLinks.some((ml) => ml.memberId === mi.id),
             )
-          : shares;
+          : memberIncomes;
 
         const balances = calculateCategoryBalances(
           { monthlyBudget: Number(cat.monthlyBudget) },
-          relevantShares,
+          relevantMembers,
           catExpenses.map((e) => ({
             payerId: e.payerId,
             amount: Number(e.amount),

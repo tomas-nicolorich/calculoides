@@ -110,8 +110,20 @@ describe("BudgetCategories category header — progress meter", () => {
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 240, remainingQuota: 360 },
-          { memberId: "m2", quota: 400, spent: 160, remainingQuota: 240 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 240,
+            percentage: 60,
+            remainingQuota: 360,
+          },
+          {
+            memberId: "m2",
+            quota: 400,
+            spent: 160,
+            percentage: 40,
+            remainingQuota: 240,
+          },
         ],
       }),
     ]);
@@ -124,7 +136,13 @@ describe("BudgetCategories category header — progress meter", () => {
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 1000, spent: 790, remainingQuota: 210 },
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 790,
+            percentage: 100,
+            remainingQuota: 210,
+          },
         ],
       }),
     ]);
@@ -138,7 +156,13 @@ describe("BudgetCategories category header — progress meter", () => {
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 1000, spent: 800, remainingQuota: 200 },
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 800,
+            percentage: 100,
+            remainingQuota: 200,
+          },
         ],
       }),
     ]);
@@ -150,7 +174,13 @@ describe("BudgetCategories category header — progress meter", () => {
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 1000, spent: 1010, remainingQuota: -10 },
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 1010,
+            percentage: 100,
+            remainingQuota: -10,
+          },
         ],
       }),
     ]);
@@ -163,9 +193,21 @@ describe("BudgetCategories member row (expanded)", () => {
     monthlyBudget: 1000,
     balances: [
       // Alice: 60%, quota 600, spent 240 → remaining 360
-      { memberId: "m1", quota: 600, spent: 240, remainingQuota: 360 },
+      {
+        memberId: "m1",
+        quota: 600,
+        spent: 240,
+        percentage: 60,
+        remainingQuota: 360,
+      },
       // Bob: 40%, quota 400, spent 450 → over by 50
-      { memberId: "m2", quota: 400, spent: 450, remainingQuota: -50 },
+      {
+        memberId: "m2",
+        quota: 400,
+        spent: 450,
+        percentage: 40,
+        remainingQuota: -50,
+      },
     ],
   });
 
@@ -182,7 +224,7 @@ describe("BudgetCategories member row (expanded)", () => {
     expect(screen.getByText("Alice Smith")).toBeInTheDocument();
     // Bob row
     expect(screen.getByText("Bob Jones")).toBeInTheDocument();
-    // Share percents (from categoryMemberShare with income 3000/2000 → 60/40)
+    // Share percents come from backend-authoritative balance.percentage (60/40)
     // Displayed as pills: 60.0% and 40.0%
     expect(screen.getByText("60.0%")).toBeInTheDocument();
     expect(screen.getByText("40.0%")).toBeInTheDocument();
@@ -246,7 +288,13 @@ describe("BudgetCategories category header — progress meter urgency state", ()
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 1000, spent: 700, remainingQuota: 300 },
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 700,
+            percentage: 100,
+            remainingQuota: 300,
+          },
         ],
       }),
     ]);
@@ -260,7 +308,13 @@ describe("BudgetCategories category header — progress meter urgency state", ()
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 1000, spent: 850, remainingQuota: 150 },
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 850,
+            percentage: 100,
+            remainingQuota: 150,
+          },
         ],
       }),
     ]);
@@ -274,7 +328,13 @@ describe("BudgetCategories category header — progress meter urgency state", ()
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 1000, spent: 1100, remainingQuota: -100 },
+          {
+            memberId: "m1",
+            quota: 1000,
+            spent: 1100,
+            percentage: 100,
+            remainingQuota: -100,
+          },
         ],
       }),
     ]);
@@ -294,7 +354,13 @@ describe("BudgetCategories member row — progress meter urgency state (expanded
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 300,
+            percentage: 100,
+            remainingQuota: 300,
+          },
         ],
       }),
     ]);
@@ -311,7 +377,13 @@ describe("BudgetCategories member row — progress meter urgency state (expanded
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 510,
+            percentage: 100,
+            remainingQuota: 90,
+          },
         ],
       }),
     ]);
@@ -326,7 +398,13 @@ describe("BudgetCategories member row — progress meter urgency state (expanded
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 700,
+            percentage: 100,
+            remainingQuota: -100,
+          },
         ],
       }),
     ]);
@@ -347,7 +425,13 @@ describe("BudgetCategories member row — spend label colour (expanded)", () => 
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 300, remainingQuota: 300 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 300,
+            percentage: 100,
+            remainingQuota: 300,
+          },
         ],
       }),
     ]);
@@ -361,7 +445,13 @@ describe("BudgetCategories member row — spend label colour (expanded)", () => 
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 510, remainingQuota: 90 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 510,
+            percentage: 100,
+            remainingQuota: 90,
+          },
         ],
       }),
     ]);
@@ -375,7 +465,13 @@ describe("BudgetCategories member row — spend label colour (expanded)", () => 
       makeCategory({
         monthlyBudget: 1000,
         balances: [
-          { memberId: "m1", quota: 600, spent: 700, remainingQuota: -100 },
+          {
+            memberId: "m1",
+            quota: 600,
+            spent: 700,
+            percentage: 100,
+            remainingQuota: -100,
+          },
         ],
       }),
     ]);
@@ -391,8 +487,20 @@ describe("BudgetCategories transfer dialog", () => {
     name: "Rent",
     monthlyBudget: 1000,
     balances: [
-      { memberId: "m1", quota: 600, spent: 240, remainingQuota: 360 },
-      { memberId: "m2", quota: 400, spent: 450, remainingQuota: -50 },
+      {
+        memberId: "m1",
+        quota: 600,
+        spent: 240,
+        percentage: 60,
+        remainingQuota: 360,
+      },
+      {
+        memberId: "m2",
+        quota: 400,
+        spent: 450,
+        percentage: 40,
+        remainingQuota: -50,
+      },
     ],
   });
 

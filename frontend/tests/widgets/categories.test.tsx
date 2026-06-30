@@ -48,8 +48,20 @@ const categoryWithBalances: CategoryWithBalances = {
   monthlyBudget: 500,
   icon: "🍔",
   balances: [
-    { memberId: "m1", quota: 300, spent: 100, remainingQuota: 200 },
-    { memberId: "m2", quota: 200, spent: 80, remainingQuota: 120 },
+    {
+      memberId: "m1",
+      quota: 300,
+      spent: 100,
+      percentage: 60,
+      remainingQuota: 200,
+    },
+    {
+      memberId: "m2",
+      quota: 200,
+      spent: 80,
+      percentage: 40,
+      remainingQuota: 120,
+    },
   ],
 };
 
@@ -106,7 +118,13 @@ describe("BudgetCategories Widget — accordion", () => {
           ...categoryWithBalances,
           id: "cat-2",
           balances: [
-            { memberId: "m1", quota: 300, spent: 100, remainingQuota: 200 },
+            {
+              memberId: "m1",
+              quota: 300,
+              spent: 100,
+              percentage: 100,
+              remainingQuota: 200,
+            },
           ],
         },
       ],
@@ -180,8 +198,20 @@ describe("BudgetCategories Widget — accordion", () => {
           ...categoryWithBalances,
           id: "cat-3",
           balances: [
-            { memberId: "m1", quota: 100, spent: 150, remainingQuota: -50 },
-            { memberId: "m2", quota: 200, spent: 80, remainingQuota: 120 },
+            {
+              memberId: "m1",
+              quota: 100,
+              spent: 150,
+              percentage: 60,
+              remainingQuota: -50,
+            },
+            {
+              memberId: "m2",
+              quota: 200,
+              spent: 80,
+              percentage: 40,
+              remainingQuota: 120,
+            },
           ],
         },
       ],

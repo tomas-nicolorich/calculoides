@@ -98,7 +98,7 @@ describe("Income Share Calculation", () => {
 
     let balances = calculateCategoryBalances(
       { monthlyBudget: 400 },
-      shares.map((s) => ({ id: s.id, share: s.share })),
+      initialMembers,
       expenses,
     );
     expect(balances.find((b) => b.memberId === "1")?.remainingQuota).toBe(100); // 200 - 100
@@ -114,7 +114,7 @@ describe("Income Share Calculation", () => {
     // Re-calculate balances with NEW shares but SAME expenses
     balances = calculateCategoryBalances(
       { monthlyBudget: 400 },
-      shares.map((s) => ({ id: s.id, share: s.share })),
+      updatedMembers,
       expenses,
     );
     expect(balances.find((b) => b.memberId === "1")?.remainingQuota).toBe(200); // 300 - 100

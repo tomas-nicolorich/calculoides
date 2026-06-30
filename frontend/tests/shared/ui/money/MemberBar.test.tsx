@@ -25,7 +25,7 @@ describe("MemberBar", () => {
     expect(screen.getByText("Ana")).toBeInTheDocument();
     expect(screen.getByText("Beto")).toBeInTheDocument();
     expect(screen.getAllByText("€1,000.00")).toHaveLength(2);
-    expect(screen.getAllByText("(50%)")).toHaveLength(2);
+    expect(screen.getAllByText("(50.0%)")).toHaveLength(2);
   });
 
   it("renders an empty state when there are no members", () => {
