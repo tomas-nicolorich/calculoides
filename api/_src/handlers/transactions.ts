@@ -460,40 +460,55 @@ export const routes: RouteConfig = {
       };
     });
 
-    const recentExpenses = expenses
-      .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 5)
-      .map((e) => ({
-        id: e.id,
-        description: e.description,
-        amount: Number(e.amount),
-        date: e.date,
-        categoryName:
-          categories.find((c) => c.id === e.categoryId)?.name ?? "Unknown",
-        categoryId: e.categoryId,
-        payerName:
-          group.members.find((m) => m.id === e.payerId)?.user.name ?? "Unknown",
-        payerId: e.payerId,
-      }));
+    const recentExpensesRaw = await prisma.expense.findMany({
+      where: {
+        categoryId: { in: categories.map((c) => c.id) },
+        isArchived: false,
+      },
+      orderBy: { date: "desc" },
+      take: 5,
+    });
 
-    const recentTransfers = transfers
-      .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 5)
-      .map((t) => ({
-        id: t.id,
-        categoryName:
-          categories.find((c) => c.id === t.categoryId)?.name ?? "Unknown",
-        fromMemberName:
-          group.members.find((m) => m.id === t.fromMember.memberId)?.user
-            .name ?? "Unknown",
-        fromMemberId: t.fromMember.memberId,
-        toMemberName:
-          group.members.find((m) => m.id === t.toMember.memberId)?.user.name ??
-          "Unknown",
-        toMemberId: t.toMember.memberId,
-        amount: Number(t.amount),
-        date: t.date,
-      }));
+    const recentExpenses = recentExpensesRaw.map((e) => ({
+      id: e.id,
+      description: e.description,
+      amount: Number(e.amount),
+      date: e.date,
+      categoryName:
+        categories.find((c) => c.id === e.categoryId)?.name ?? "Unknown",
+      categoryId: e.categoryId,
+      payerName:
+        group.members.find((m) => m.id === e.payerId)?.user.name ?? "Unknown",
+      payerId: e.payerId,
+    }));
+
+    const recentTransfersRaw = await prisma.transfer.findMany({
+      where: {
+        categoryId: { in: categories.map((c) => c.id) },
+      },
+      include: {
+        fromMember: { select: { memberId: true } },
+        toMember: { select: { memberId: true } },
+      },
+      orderBy: { date: "desc" },
+      take: 5,
+    });
+
+    const recentTransfers = recentTransfersRaw.map((t) => ({
+      id: t.id,
+      categoryName:
+        categories.find((c) => c.id === t.categoryId)?.name ?? "Unknown",
+      fromMemberName:
+        group.members.find((m) => m.id === t.fromMember.memberId)?.user.name ??
+        "Unknown",
+      fromMemberId: t.fromMember.memberId,
+      toMemberName:
+        group.members.find((m) => m.id === t.toMember.memberId)?.user.name ??
+        "Unknown",
+      toMemberId: t.toMember.memberId,
+      amount: Number(t.amount),
+      date: t.date,
+    }));
 
     res.status(200).json({
       groupName: group.name,
