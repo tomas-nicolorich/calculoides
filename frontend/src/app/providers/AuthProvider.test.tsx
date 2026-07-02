@@ -32,18 +32,22 @@ describe("AuthProvider /me fetch dedup", () => {
       error: null,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- mocking the deprecated overload the app still uses
-    (
-      supabase.auth.onAuthStateChange as ReturnType<typeof vi.fn>
-    ).mockImplementation((cb: (event: string, session: unknown) => void) => {
-      authChangeCallback = cb;
-      // Real supabase-js fires INITIAL_SESSION synchronously/soon after
-      // subscribing, on top of the getSession().then() resolution.
-      void Promise.resolve().then(() => {
-        authChangeCallback("INITIAL_SESSION", mockSession);
-      });
-      return { data: { subscription: { unsubscribe: vi.fn() } } };
-    });
+    /* eslint-disable @typescript-eslint/no-deprecated, @typescript-eslint/unbound-method -- mocking the deprecated overload the app still uses */
+    const onAuthStateChangeMock = supabase.auth.onAuthStateChange as ReturnType<
+      typeof vi.fn
+    >;
+    /* eslint-enable @typescript-eslint/no-deprecated, @typescript-eslint/unbound-method */
+    onAuthStateChangeMock.mockImplementation(
+      (cb: (event: string, session: unknown) => void) => {
+        authChangeCallback = cb;
+        // Real supabase-js fires INITIAL_SESSION synchronously/soon after
+        // subscribing, on top of the getSession().then() resolution.
+        void Promise.resolve().then(() => {
+          authChangeCallback("INITIAL_SESSION", mockSession);
+        });
+        return { data: { subscription: { unsubscribe: vi.fn() } } };
+      },
+    );
   });
 
   it("fetches /me only once on initial mount, not once per getSession + onAuthStateChange(INITIAL_SESSION)", async () => {
