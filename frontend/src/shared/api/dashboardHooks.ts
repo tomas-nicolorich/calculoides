@@ -34,6 +34,8 @@ export function useExpensesList(
   memberId?: string,
   limit = 20,
   offset = 0,
+  from?: string,
+  to?: string,
 ) {
   const fetcher = useCallback(
     (gId: string, signal: AbortSignal) => {
@@ -44,11 +46,13 @@ export function useExpensesList(
       });
       if (categoryId) params.append("categoryId", categoryId);
       if (memberId) params.append("memberId", memberId);
+      if (from) params.append("from", from);
+      if (to) params.append("to", to);
       return apiClient.fetch<ExpensesList>(`/expenses?${params.toString()}`, {
         signal,
       });
     },
-    [categoryId, memberId, limit, offset],
+    [categoryId, memberId, limit, offset, from, to],
   );
   return useApiQuery<ExpensesList | null>(groupId, fetcher, null);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useRef, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../../shared/api/supabase";
 import { AuthContext } from "./AuthContext";
@@ -8,6 +8,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileIncomplete, setProfileIncomplete] = useState(false);
+  // Supabase re-emits 'SIGNED_IN' (via _recoverAndRefresh) every time the
+  // tab regains focus with a still-valid cached session, not just on real
+  // login. Dedupe the /me profile check by user id instead of trusting the
+  // event name, so recovering the same user doesn't refetch.
+  const checkedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     console.log("AuthProvider: Initializing session...");
@@ -40,7 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
-        if (initialSession?.access_token) {
+        if (
+          initialSession?.access_token &&
+          initialSession.user.id &&
+          checkedUserIdRef.current !== initialSession.user.id
+        ) {
+          checkedUserIdRef.current = initialSession.user.id;
           try {
             const res = await fetch("/api/users/me", {
               headers: {
@@ -68,7 +78,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
-      if (newSession?.access_token) {
+      if (!newSession?.access_token || !newSession.user.id) {
+        checkedUserIdRef.current = null;
+        setProfileIncomplete(false);
+      } else if (checkedUserIdRef.current !== newSession.user.id) {
+        // Supabase fires 'SIGNED_IN' both for real logins and for
+        // _recoverAndRefresh() recovering an already-valid session on tab
+        // refocus, so the event name alone can't distinguish them — gate on
+        // user id instead.
+        checkedUserIdRef.current = newSession.user.id;
         fetch("/api/users/me", {
           headers: { Authorization: `Bearer ${newSession.access_token}` },
         })
@@ -82,8 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             );
             setProfileIncomplete(false);
           });
-      } else {
-        setProfileIncomplete(false);
       }
       setLoading(false);
     });

@@ -24,10 +24,44 @@ const members = [
 ];
 
 describe("RemainingBalance", () => {
-  it("renders an avatar initial per member card", () => {
+  it("renders the card title and stat label", () => {
     render(<RemainingBalance totalRemaining={2500} members={members} />);
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("Remaining Balance")).toBeInTheDocument();
+    expect(screen.getByText("Total Group Remaining")).toBeInTheDocument();
+  });
+
+  it("renders an avatar initial per member", () => {
+    render(<RemainingBalance totalRemaining={2500} members={members} />);
+    expect(screen.getByText("AL")).toBeInTheDocument();
+    expect(screen.getByText("BO")).toBeInTheDocument();
+  });
+
+  it("renders member income and budgeted figures", () => {
+    render(<RemainingBalance totalRemaining={2500} members={members} />);
+    // One Income: row per member
+    const incomeLabels = screen.getAllByText(/Income:/);
+    expect(incomeLabels).toHaveLength(members.length);
+    const budgetedLabels = screen.getAllByText(/Budgeted:/);
+    expect(budgetedLabels).toHaveLength(members.length);
+  });
+
+  it("renders member remaining (income − budgeted) figures", () => {
+    render(<RemainingBalance totalRemaining={2500} members={members} />);
+    // Alice: 3000 - 1500 = 1500; Bob: 2000 - 1000 = 1000
+    // Both should appear as formatted currency amounts
+    const allText =
+      screen.getByText(/Total Group Remaining/).closest("div")?.parentElement
+        ?.textContent ?? "";
+    expect(allText).toContain("Alice");
+    expect(allText).toContain("Bob");
+  });
+
+  it("uses xs-size avatars", () => {
+    render(<RemainingBalance totalRemaining={2500} members={members} />);
+    const alice = screen.getByText("AL");
+    // xs avatars have h-[24px] w-[24px] classes
+    expect(alice).toHaveClass("h-[24px]");
+    expect(alice).toHaveClass("w-[24px]");
   });
 
   it("colours a member's avatar by its stable colorIndex, not array position", () => {
@@ -37,7 +71,7 @@ describe("RemainingBalance", () => {
         members={[{ ...members[0], colorIndex: 2 }, members[1]]}
       />,
     );
-    const alice = screen.getByText("A");
+    const alice = screen.getByText("AL");
     expect(alice).toHaveStyle({ background: "var(--color-member-3)" });
   });
 });

@@ -67,18 +67,24 @@ export function MemberBar({
   return (
     <div className={cn("flex flex-col gap-4", className)} {...props}>
       <div className="flex h-4 w-full overflow-hidden rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
-        {members.map((m, i) => (
-          <div
-            key={m.id ?? i}
-            data-testid="memberbar-segment"
-            title={`${m.name}: ${(m.share ?? 0).toString()}%`}
-            className="h-full border-r-2 border-card last:border-r-0"
-            style={{
-              width: `${(((m.share ?? 0) / total) * 100).toString()}%`,
-              background: colorFor(m, i),
-            }}
-          />
-        ))}
+        {members
+          .map((m, origIdx) => ({ m, origIdx }))
+          .filter(({ m }) => (m.share ?? 0) > 0)
+          .map(({ m, origIdx }, i, arr) => (
+            <div
+              key={m.id ?? origIdx}
+              data-testid="memberbar-segment"
+              title={`${m.name}: ${(m.share ?? 0).toFixed(1)}%`}
+              className={cn(
+                "h-full border-r-2 border-card",
+                i === arr.length - 1 && "border-r-0",
+              )}
+              style={{
+                width: `${(((m.share ?? 0) / total) * 100).toString()}%`,
+                background: colorFor(m, origIdx),
+              }}
+            />
+          ))}
       </div>
       {legend && (
         <div className="flex flex-col gap-3">
@@ -100,7 +106,7 @@ export function MemberBar({
                 </span>
                 {m.share != null && (
                   <span className="ml-2 font-mono text-slate-400 dark:text-slate-500">
-                    ({m.share}%)
+                    ({m.share.toFixed(1)}%)
                   </span>
                 )}
               </span>

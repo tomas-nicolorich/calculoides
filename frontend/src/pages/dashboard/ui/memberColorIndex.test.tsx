@@ -46,7 +46,7 @@ describe("buildMemberColorIndex", () => {
 });
 
 describe("stable member colour across panels", () => {
-  it("renders the same colour + initial for a member in income, balance, and header", () => {
+  it("renders the same colour + initial for a member in balance and header", () => {
     const index = buildMemberColorIndex(rawMembers);
     const withIndex = rawMembers.map((m) => ({
       ...m,
@@ -56,20 +56,21 @@ describe("stable member colour across panels", () => {
       colorIndex: index.get(m.id) ?? 0,
     }));
 
+    // IncomeOverview now uses MemberBar (colour dots + full name, no avatar initials).
+    // Verify that it at least renders Zoe's name in the legend.
     const income = render(
       <IncomeOverview totalIncome={6000} members={withIndex} />,
     );
-    const incomeZoe = within(income.container).getByText("Z");
-    expect(incomeZoe).toHaveStyle({ background: "var(--color-member-3)" });
+    expect(within(income.container).getByText("Zoe")).toBeInTheDocument();
 
     const balance = render(
       <RemainingBalance totalRemaining={6000} members={withIndex} />,
     );
-    const balanceZoe = within(balance.container).getByText("Z");
+    const balanceZoe = within(balance.container).getByText("ZO");
     expect(balanceZoe).toHaveStyle({ background: "var(--color-member-3)" });
 
     const header = render(<HeaderGroup members={rawMembers} index={index} />);
-    const headerZoe = within(header.container).getByText("Z");
+    const headerZoe = within(header.container).getByText("ZO");
     expect(headerZoe).toHaveStyle({ background: "var(--color-member-3)" });
   });
 });
@@ -88,12 +89,12 @@ describe("header AvatarGroup overflow", () => {
     render(<HeaderGroup members={sixMembers} index={index} max={4} />);
 
     // First four initials render, the rest collapse into +2.
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
-    expect(screen.getByText("C")).toBeInTheDocument();
-    expect(screen.getByText("D")).toBeInTheDocument();
-    expect(screen.queryByText("E")).not.toBeInTheDocument();
-    expect(screen.queryByText("F")).not.toBeInTheDocument();
+    expect(screen.getByText("AN")).toBeInTheDocument();
+    expect(screen.getByText("BO")).toBeInTheDocument();
+    expect(screen.getByText("CA")).toBeInTheDocument();
+    expect(screen.getByText("DA")).toBeInTheDocument();
+    expect(screen.queryByText("EV")).not.toBeInTheDocument();
+    expect(screen.queryByText("FA")).not.toBeInTheDocument();
     expect(screen.getByText("+2")).toBeInTheDocument();
   });
 });

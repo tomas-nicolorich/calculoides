@@ -8,24 +8,42 @@ interface ExpenseFormProps {
   categories: CategoryWithBalances[];
   members: { id: string; name: string }[];
   defaultPayerId?: string;
+  expense?: {
+    id: string;
+    description: string;
+    amount: number;
+    categoryId: string;
+    payerId: string;
+    date: string;
+  };
   onSuccess?: () => void | Promise<void>;
   onCancel?: () => void;
+  onDelete?: () => void;
 }
 
+// fallow-ignore-next-line complexity
 export function ExpenseForm({
   categories,
   members,
   defaultPayerId,
+  expense,
   onSuccess,
   onCancel,
+  onDelete,
 }: ExpenseFormProps) {
   const today = new Date().toISOString().split("T")[0];
 
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [date, setDate] = useState(today);
-  const [payerId, setPayerId] = useState(defaultPayerId ?? "");
+  const [description, setDescription] = useState(expense?.description ?? "");
+  const [amount, setAmount] = useState(
+    expense?.amount ? expense.amount.toString() : "",
+  );
+  const [categoryId, setCategoryId] = useState(expense?.categoryId ?? "");
+  const [date, setDate] = useState(
+    expense?.date ? new Date(expense.date).toISOString().split("T")[0] : today,
+  );
+  const [payerId, setPayerId] = useState(
+    expense?.payerId ?? defaultPayerId ?? "",
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,13 +53,23 @@ export function ExpenseForm({
     setError(null);
 
     try {
-      await expenseApi.log({
-        description,
-        amount: Number(amount),
-        categoryId,
-        date: new Date(date).toISOString(),
-        ...(payerId ? { payerId } : {}),
-      });
+      if (expense) {
+        await expenseApi.update(expense.id, {
+          description,
+          amount: Number(amount),
+          categoryId,
+          date: new Date(date).toISOString(),
+          payerId,
+        });
+      } else {
+        await expenseApi.log({
+          description,
+          amount: Number(amount),
+          categoryId,
+          date: new Date(date).toISOString(),
+          ...(payerId ? { payerId } : {}),
+        });
+      }
 
       setDescription("");
       setAmount("");
@@ -51,7 +79,7 @@ export function ExpenseForm({
       await onSuccess?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || "Failed to log expense");
+      setError(message || "Failed to save expense");
     } finally {
       setLoading(false);
     }
@@ -65,9 +93,7 @@ export function ExpenseForm({
       className="space-y-4"
     >
       <div className="space-y-2">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-          Description
-        </label>
+        <label className="text-sm font-medium">Description</label>
         <Input
           placeholder="e.g. Groceries, Electricity bill"
           value={description}
@@ -80,9 +106,7 @@ export function ExpenseForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Amount (€)
-          </label>
+          <label className="text-sm font-medium">Amount (€)</label>
           <Input
             type="number"
             step="0.01"
@@ -97,9 +121,7 @@ export function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Date
-          </label>
+          <label className="text-sm font-medium">Date</label>
           <Input
             type="date"
             value={date}
@@ -112,25 +134,21 @@ export function ExpenseForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-          Category
-        </label>
+        <label className="text-sm font-medium">Category</label>
         <Select
           value={categoryId}
           onValueChange={setCategoryId}
           placeholder="Select category..."
           options={categories.map((c) => ({
             value: c.id,
-            label: `${c.icon ?? ""} ${c.name}`.trim(),
+            label: c.name,
           }))}
         />
       </div>
 
       {members.length > 0 && (
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            Paid by
-          </label>
+          <label className="text-sm font-medium">Paid By</label>
           <Select
             value={payerId}
             onValueChange={setPayerId}
@@ -146,12 +164,23 @@ export function ExpenseForm({
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-2 justify-end">
+        {onDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-brand-expense hover:text-red-700 hover:bg-brand-expense/5 mr-auto"
+            onClick={onDelete}
+            disabled={loading}
+          >
+            Delete
+          </Button>
+        )}
         {onCancel && (
           <Button
             type="button"
             variant="outline"
-            className="flex-1"
+            className={onDelete ? "" : "flex-1"}
             onClick={onCancel}
             disabled={loading}
           >
@@ -161,10 +190,10 @@ export function ExpenseForm({
         <Button
           type="submit"
           variant="expense"
-          className="flex-1"
+          className={onDelete ? "" : "flex-1"}
           disabled={loading || !categoryId}
         >
-          {loading ? "Saving..." : "Log Expense"}
+          {loading ? "Saving..." : expense ? "Save Changes" : "Log Expense"}
         </Button>
       </div>
     </form>

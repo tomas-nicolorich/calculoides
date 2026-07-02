@@ -4,8 +4,8 @@ import { calculateCategoryBalances } from "../../_src/services/calculation";
 describe("Transfer Logic", () => {
   const category = { monthlyBudget: 1000 };
   const members = [
-    { id: "1", share: 0.5 }, // €500 quota
-    { id: "2", share: 0.5 }, // €500 quota
+    { id: "1", income: 1000 }, // €500 quota (equal incomes → 50/50)
+    { id: "2", income: 1000 }, // €500 quota
   ];
   const expenses: { payerId: string; amount: number }[] = [];
 

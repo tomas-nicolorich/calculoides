@@ -66,7 +66,7 @@ describe("BudgetTransfers Widget", () => {
     expect(screen.getByText("No recent transfers")).toBeInTheDocument();
   });
 
-  it("transfer item rows have class bg-slate-50", () => {
+  it("transfer item rows have no background colour", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
@@ -76,11 +76,12 @@ describe("BudgetTransfers Widget", () => {
     const rows = screen.getAllByTestId("transfer-row");
     expect(rows.length).toBe(2);
     rows.forEach((row) => {
-      expect(row).toHaveClass("bg-slate-50");
+      expect(row).not.toHaveClass("bg-slate-50");
+      expect(row).not.toHaveClass("bg-slate-800/40");
     });
   });
 
-  it("transfer item rows have border-l-2 class", () => {
+  it("transfer item rows do not have a border class", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
@@ -89,7 +90,7 @@ describe("BudgetTransfers Widget", () => {
 
     const rows = screen.getAllByTestId("transfer-row");
     rows.forEach((row) => {
-      expect(row).toHaveClass("border-l-2");
+      expect(row).not.toHaveClass("border");
     });
   });
 });

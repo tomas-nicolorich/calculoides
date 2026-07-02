@@ -160,4 +160,31 @@ describe("Dashboard summary — identity fields (Seam B)", () => {
     // Guard against an accidental field swap.
     expect(transfer.fromMemberId).not.toBe(transfer.toMemberId);
   });
+
+  it("recent expenses from a prior month still appear (not filtered to current month)", async () => {
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([
+      {
+        id: EXPENSE_ID,
+        categoryId: CATEGORY_ID,
+        payerId: MEMBER_A,
+        description: "Rent",
+        amount: 900,
+        date: new Date("2026-04-05T10:00:00.000Z"),
+      },
+    ] as never);
+
+    const req = {
+      query: { groupId: GROUP_ID },
+      user: { id: USER_ID },
+    } as unknown as AuthenticatedRequest;
+    const { res, captured } = makeRes();
+
+    const summary = routes.summary;
+    if (!summary) throw new Error("routes.summary is not registered");
+    await summary(req, res);
+
+    const body = captured.body as SummaryPayload;
+    expect(body.recentExpenses).toHaveLength(1);
+    expect(body.recentExpenses[0].id).toBe(EXPENSE_ID);
+  });
 });

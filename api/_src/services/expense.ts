@@ -82,6 +82,8 @@ export const ExpenseService = {
     memberId?: string,
     limit = 20,
     offset = 0,
+    from?: string,
+    to?: string,
   ) {
     const where: Prisma.ExpenseWhereInput = {
       category: {
@@ -96,6 +98,18 @@ export const ExpenseService = {
 
     if (memberId) {
       where.payerId = memberId;
+    }
+
+    if (from || to) {
+      where.date = {};
+      if (from) {
+        where.date.gte = new Date(from);
+      }
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setDate(toDate.getDate() + 1);
+        where.date.lt = toDate;
+      }
     }
 
     const [expenses, total] = await prisma.$transaction([
@@ -121,6 +135,51 @@ export const ExpenseService = {
     ]);
 
     return { expenses, total };
+  },
+
+  /**
+   * Updates all five mutable fields of an existing expense.
+   * Validates that the caller is a member of the expense's group.
+   * Returns 404 if expense not found, 403 if not a member.
+   */
+  async updateExpense(
+    expenseId: string,
+    fields: {
+      description: string;
+      amount: number;
+      date: string;
+      categoryId: string;
+      payerId: string;
+    },
+    callerUserId: string,
+  ) {
+    const expense = await prisma.expense.findUnique({
+      where: { id: expenseId },
+      include: { category: { select: { groupId: true } } },
+    });
+
+    if (!expense) throw new Error("Expense not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: {
+        groupId: expense.category.groupId,
+        userId: callerUserId,
+      },
+      select: { id: true },
+    });
+
+    if (!membership) throw new Error("Not a member of this group");
+
+    return await prisma.expense.update({
+      where: { id: expenseId },
+      data: {
+        description: fields.description,
+        amount: fields.amount,
+        date: new Date(fields.date),
+        categoryId: fields.categoryId,
+        payerId: fields.payerId,
+      },
+    });
   },
 
   /**

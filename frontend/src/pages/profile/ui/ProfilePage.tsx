@@ -84,15 +84,14 @@ export function ProfilePage() {
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-8">
       <header className="flex items-center gap-4">
         <IconButton
-          hover="balance"
           bordered
-          size="lg"
+          hover="balance"
           onClick={() => {
             void navigate(-1);
           }}
           aria-label="Back to Dashboard"
         >
-          <ArrowLeft size={24} />
+          <ArrowLeft size={20} />
         </IconButton>
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">

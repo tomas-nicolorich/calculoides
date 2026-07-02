@@ -56,6 +56,10 @@ export const DashboardSummarySchema = z.object({
 export const CategoryBalanceSchema = z.object({
   memberId: z.uuid(),
   quota: z.number().nonnegative(),
+  /** Canonical 1dp display share (0..100); sums to exactly 100.0 per category. */
+  percentage: z.number().nonnegative(),
+  /** True when the member is zero-income and excluded from allocation (#130). */
+  excluded: z.boolean().optional(),
   spent: z.number().nonnegative(),
   remainingQuota: z.number(),
 });
@@ -66,6 +70,11 @@ export const CategoryWithBalancesSchema = z.object({
   monthlyBudget: z.number().nonnegative(),
   icon: z.string().optional(),
   balances: z.array(CategoryBalanceSchema),
+  /**
+   * True when the category has no eligible (income > 0) members, so no
+   * allocation was computed — the frontend shows an empty state (#130).
+   */
+  isEmpty: z.boolean().optional(),
 });
 
 export const ExpensesListSchema = z.object({
@@ -78,6 +87,7 @@ export const ExpensesListSchema = z.object({
       amount: z.number().positive(),
       date: z.iso.datetime(),
       categoryName: z.string(),
+      categoryIcon: z.string(),
       payerName: z.string(),
     }),
   ),

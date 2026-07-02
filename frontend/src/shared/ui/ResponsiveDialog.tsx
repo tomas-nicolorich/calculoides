@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { Dialog } from '@base-ui/react';
-import { X } from 'lucide-react';
-import { useMediaQuery } from '../lib/hooks/useMediaQuery';
+import * as React from "react";
+import { Dialog } from "@base-ui/react";
+import { X } from "lucide-react";
+import { useMediaQuery } from "../lib/hooks/useMediaQuery";
 
 interface ResponsiveDialogProps {
   open?: boolean;
@@ -10,6 +10,7 @@ interface ResponsiveDialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
+  hideCloseButton?: boolean;
 }
 
 export function ResponsiveDialog({
@@ -19,13 +20,14 @@ export function ResponsiveDialog({
   title,
   description,
   children,
+  hideCloseButton,
 }: ResponsiveDialogProps) {
-  const isDesktop = useMediaQuery('(min-width: 768px)');
-  
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
-  
+
   const handleOpenChange = (newOpen: boolean) => {
     if (!isControlled) {
       setInternalOpen(newOpen);
@@ -40,13 +42,14 @@ export function ResponsiveDialog({
       {trigger && <Dialog.Trigger render={trigger} handle={handle} />}
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200" />
-        <Dialog.Popup 
+        <Dialog.Popup
           className={`
             fixed z-50 bg-white dark:bg-slate-900 shadow-xl overflow-hidden
             animate-in duration-300
-            ${isDesktop 
-              ? 'left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] rounded-2xl w-full max-w-md zoom-in-95 fade-in' 
-              : 'left-0 bottom-0 right-0 rounded-t-2xl max-h-[90vh] slide-in-from-bottom flex flex-col'
+            ${
+              isDesktop
+                ? "left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] rounded-2xl w-full max-w-md zoom-in-95 fade-in"
+                : "left-0 bottom-0 right-0 rounded-t-2xl max-h-[90vh] slide-in-from-bottom flex flex-col"
             }
           `}
         >
@@ -62,13 +65,13 @@ export function ResponsiveDialog({
                   </Dialog.Description>
                 )}
               </div>
-              <Dialog.Close className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0">
-                <X size={20} />
-              </Dialog.Close>
+              {!hideCloseButton && (
+                <Dialog.Close className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0">
+                  <X size={20} />
+                </Dialog.Close>
+              )}
             </div>
-            <div className="p-4 overflow-y-auto">
-              {children}
-            </div>
+            <div className="p-4 overflow-y-auto">{children}</div>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>

@@ -2,7 +2,7 @@ import { Plus, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { groupApi, type Group } from "../../../entities/group";
-import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
+import { Dialog } from "../../../shared/ui/Dialog";
 import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
 import { Card } from "../../../shared/ui/Card";
 import { Button, Avatar, AvatarGroup } from "../../../shared/ui";
@@ -60,21 +60,23 @@ export function GroupsPage() {
         </Button>
       </header>
 
-      <ResponsiveDialog
+      <Dialog
         open={isCreatingGroup}
         onOpenChange={setIsCreatingGroup}
         title="Create New Group"
-        description="Establish a new collaborative budgeting group."
+        description="Set up a new shared budgeting group."
+        hideCloseButton
       >
-        <div className="flex justify-center p-4">
-          <CreateGroupForm
-            onCreated={() => {
-              setIsCreatingGroup(false);
-              void fetchGroups();
-            }}
-          />
-        </div>
-      </ResponsiveDialog>
+        <CreateGroupForm
+          onCreated={() => {
+            setIsCreatingGroup(false);
+            void fetchGroups();
+          }}
+          onCancel={() => {
+            setIsCreatingGroup(false);
+          }}
+        />
+      </Dialog>
 
       {loading ? (
         <div className="py-20 flex justify-center">
@@ -123,7 +125,7 @@ export function GroupsPage() {
                     </div>
                   )}
                   {group.members.length > 0 && (
-                    <AvatarGroup max={4} size="sm">
+                    <AvatarGroup max={3} size="sm">
                       {group.members.map((m, i) => (
                         <Avatar
                           key={m.id}
