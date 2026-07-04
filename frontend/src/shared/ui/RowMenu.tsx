@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { MoreVertical, Edit2, Trash2 } from "lucide-react";
 
 interface RowMenuProps {
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
 }
 
@@ -66,7 +66,7 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
         type="button"
         className="inline-grid place-items-center rounded-lg border border-transparent bg-transparent text-slate-400 dark:text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-balance focus-visible:ring-offset-2 focus-visible:ring-offset-card active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 cursor-pointer h-7 w-7 hover:text-brand-expense"
         onClick={handleToggle}
-        aria-label="Expense options"
+        aria-label="Row options"
       >
         <MoreVertical size={16} />
       </button>
@@ -86,16 +86,18 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
               e.stopPropagation();
             }}
           >
-            <button
-              onClick={() => {
-                setOpen(false);
-                onEdit();
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
-            >
-              <Edit2 size={14} />
-              <span>Edit</span>
-            </button>
+            {onEdit && (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onEdit();
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+              >
+                <Edit2 size={14} />
+                <span>Edit</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 setOpen(false);
