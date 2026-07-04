@@ -24,7 +24,9 @@ export const RecentExpenseSchema = z.object({
 
 const TransferSchema = z.object({
   id: z.uuid(),
+  categoryId: z.uuid(),
   categoryName: z.string(),
+  categoryIcon: z.string(),
   fromMemberName: z.string(),
   fromMemberId: z.uuid(),
   toMemberName: z.string(),

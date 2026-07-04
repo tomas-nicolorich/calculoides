@@ -106,5 +106,48 @@ describe("Budget & Transfer Services Extensions", () => {
         }),
       );
     });
+
+    it("should select category id and icon and map them onto each transfer", async () => {
+      const groupId = "group-123";
+      const categoryId = "cat-123";
+
+      vi.mocked(prisma.category.findMany).mockResolvedValue([
+        { id: categoryId },
+      ] as unknown as Category[]);
+
+      vi.mocked(prisma.transfer.findMany).mockResolvedValue([
+        {
+          id: "transfer-1",
+          category: { id: categoryId, name: "Groceries", icon: "🍎" },
+          fromMember: {
+            member: { user: { name: "Alice", email: "alice@example.com" } },
+          },
+          toMember: {
+            member: { user: { name: "Bob", email: "bob@example.com" } },
+          },
+          amount: 100,
+          date: new Date("2026-01-01"),
+        },
+      ] as unknown as Transfer[]);
+      vi.mocked(prisma.transfer.count).mockResolvedValue(1);
+
+      const { transfers } = await TransferService.listTransfers(groupId);
+
+      expect(prisma.transfer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            category: { select: { id: true, name: true, icon: true } },
+          }),
+        }),
+      );
+
+      expect(transfers[0]).toEqual(
+        expect.objectContaining({
+          categoryId,
+          categoryName: "Groceries",
+          categoryIcon: "🍎",
+        }),
+      );
+    });
   });
 });

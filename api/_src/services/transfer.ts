@@ -195,7 +195,7 @@ export const TransferService = {
       prisma.transfer.findMany({
         where: whereClause,
         include: {
-          category: { select: { name: true } },
+          category: { select: { id: true, name: true, icon: true } },
           fromMember: {
             include: {
               member: {
@@ -223,9 +223,13 @@ export const TransferService = {
     return {
       transfers: transfers.map((t) => ({
         id: t.id,
+        categoryId: t.category.id,
         categoryName: t.category.name,
+        categoryIcon: t.category.icon ?? "",
+        fromMemberId: t.fromMember.member.id,
         fromMemberName:
           t.fromMember.member.user.name ?? t.fromMember.member.user.email,
+        toMemberId: t.toMember.member.id,
         toMemberName:
           t.toMember.member.user.name ?? t.toMember.member.user.email,
         amount: Number(t.amount),
@@ -233,5 +237,14 @@ export const TransferService = {
       })),
       total,
     };
+  },
+
+  /**
+   * Deletes a transfer (permanent deletion, mirroring deleteExpense).
+   */
+  async deleteTransfer(transferId: string) {
+    return await prisma.transfer.delete({
+      where: { id: transferId },
+    });
   },
 };
