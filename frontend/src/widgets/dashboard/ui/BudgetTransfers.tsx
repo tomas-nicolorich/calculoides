@@ -24,6 +24,7 @@ interface TransferMember {
 interface BudgetTransfersProps {
   transfers: Transfer[];
   members: TransferMember[];
+  groupId: string;
 }
 
 interface TransferRowProps {
@@ -70,7 +71,11 @@ function TransferRow({ transfer, members }: TransferRowProps) {
   );
 }
 
-export function BudgetTransfers({ transfers, members }: BudgetTransfersProps) {
+export function BudgetTransfers({
+  transfers,
+  members,
+  groupId,
+}: BudgetTransfersProps) {
   return (
     <Card title="Budget Transfers">
       <div className="space-y-4">
@@ -79,7 +84,7 @@ export function BudgetTransfers({ transfers, members }: BudgetTransfersProps) {
             Money moved between members
           </div>
           <Link
-            to="/transfers"
+            to={`/transfers/${groupId}`}
             className="text-sm font-medium text-brand-balance hover:underline"
           >
             View All
