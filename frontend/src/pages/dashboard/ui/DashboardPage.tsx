@@ -218,6 +218,7 @@ export function DashboardPage() {
             categories={categories}
           />
           <BudgetTransfers
+            groupId={groupId ?? ""}
             transfers={summary.recentTransfers}
             members={summary.members.map((m) => ({
               id: m.id,

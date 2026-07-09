@@ -42,7 +42,10 @@ function App() {
                         element={<ExpensesPage />}
                       />
                       <Route path="profile" element={<ProfilePage />} />
-                      <Route path="transfers" element={<TransfersPage />} />
+                      <Route
+                        path="transfers/:groupId"
+                        element={<TransfersPage />}
+                      />
                       <Route
                         path="savings/:groupId"
                         element={<SavingsPage />}
