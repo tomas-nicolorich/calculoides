@@ -36,7 +36,7 @@
     },
     {
       "source": "/api/transfers",
-      "destination": "/api/transactions?action=transfers-by-category"
+      "destination": "/api/transactions?action=transfers-list"
     },
     {
       "source": "/api/summary",

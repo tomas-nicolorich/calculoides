@@ -441,10 +441,7 @@ export function BudgetCategories({
     transferFromMember?.name.split(" ")[0] ?? transferFromMemberId;
 
   return (
-    <Card
-      title="Budget Categories"
-      className="-mx-4 sm:mx-0 rounded-none sm:rounded-2xl border-x-0 sm:border-x"
-    >
+    <Card title="Budget Categories" className="sm:mx-0 rounded-2xl border-x">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div className="text-sm text-slate-400">
@@ -628,7 +625,7 @@ export function BudgetCategories({
           </p>
         )}
 
-        <div className="flex flex-col gap-2 -mx-6 sm:mx-0">
+        <div className="flex flex-col sm:gap-2 -mx-6 sm:mx-0">
           {categories.map((category) => {
             const isExpanded = expandedIds.has(category.id);
             const totalSpent = category.balances.reduce(

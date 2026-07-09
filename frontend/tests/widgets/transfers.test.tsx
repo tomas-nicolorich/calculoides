@@ -38,7 +38,11 @@ describe("BudgetTransfers Widget", () => {
   it("renders the card title", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
+        <BudgetTransfers
+          transfers={mockTransfers}
+          members={mockMembers}
+          groupId="g1"
+        />
       </MemoryRouter>,
     );
 
@@ -48,7 +52,11 @@ describe("BudgetTransfers Widget", () => {
   it("renders transfer category names", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
+        <BudgetTransfers
+          transfers={mockTransfers}
+          members={mockMembers}
+          groupId="g1"
+        />
       </MemoryRouter>,
     );
 
@@ -59,7 +67,7 @@ describe("BudgetTransfers Widget", () => {
   it("shows empty state when transfers is empty", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={[]} members={mockMembers} />
+        <BudgetTransfers transfers={[]} members={mockMembers} groupId="g1" />
       </MemoryRouter>,
     );
 
@@ -69,7 +77,11 @@ describe("BudgetTransfers Widget", () => {
   it("transfer item rows have no background colour", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
+        <BudgetTransfers
+          transfers={mockTransfers}
+          members={mockMembers}
+          groupId="g1"
+        />
       </MemoryRouter>,
     );
 
@@ -84,7 +96,11 @@ describe("BudgetTransfers Widget", () => {
   it("transfer item rows do not have a border class", () => {
     render(
       <MemoryRouter>
-        <BudgetTransfers transfers={mockTransfers} members={mockMembers} />
+        <BudgetTransfers
+          transfers={mockTransfers}
+          members={mockMembers}
+          groupId="g1"
+        />
       </MemoryRouter>,
     );
 

@@ -24,7 +24,12 @@ const transfers = [
 function renderList(props?: Partial<Parameters<typeof BudgetTransfers>[0]>) {
   return render(
     <MemoryRouter>
-      <BudgetTransfers transfers={transfers} members={members} {...props} />
+      <BudgetTransfers
+        transfers={transfers}
+        members={members}
+        groupId="g1"
+        {...props}
+      />
     </MemoryRouter>,
   );
 }
@@ -91,7 +96,7 @@ describe("BudgetTransfers", () => {
     renderList();
     const link = screen.getByRole("link", { name: "View All" });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/transfers");
+    expect(link).toHaveAttribute("href", "/transfers/g1");
   });
 
   it("transfer row does not have a border class", () => {

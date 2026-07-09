@@ -153,6 +153,14 @@ export const routes: RouteConfig = {
   },
 
   // Transfers
+  "transfer-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const id =
+      req.query.id ??
+      (req as ApiRequest & { params?: Record<string, string> }).params?.id;
+    const validatedId = IdSchema.parse(id);
+    await TransferService.deleteTransfer(validatedId);
+    res.status(204).end();
+  },
   "transfer-create": async (req: ApiRequest, res: ApiResponse) => {
     const validatedBody = CreateTransferSchema.parse(req.body);
     const transfer = await TransferService.createTransfer(
@@ -536,7 +544,8 @@ routes.transaction = async (req: ApiRequest, res: ApiResponse) => {
   if (method === "PUT") {
     actionKey = "expense-update";
   } else if (method === "DELETE") {
-    actionKey = "expense-delete";
+    actionKey =
+      req.query.type === "transfer" ? "transfer-delete" : "expense-delete";
   }
   const handler = routes[actionKey];
   if (handler) return handler(req, res);
