@@ -54,7 +54,6 @@ export function TransfersPage() {
 
   const transfers = transfersList?.transfers ?? [];
   const totalCount = transfersList?.pagination.total ?? 0;
-  const pageTotal = transfers.reduce((s, t) => s + t.amount, 0);
 
   const memberOpts = [
     { value: "", label: "All members" },
@@ -179,12 +178,6 @@ export function TransfersPage() {
             </strong>{" "}
             of {totalCount.toString()} transfers
           </span>
-          <span className="text-slate-500">
-            Total{" "}
-            <strong className="font-semibold text-slate-900 dark:text-white font-mono tabular-nums">
-              {formatCurrency(pageTotal)}
-            </strong>
-          </span>
         </div>
 
         {isMobile && transfers.length > 0 && (
@@ -256,7 +249,7 @@ export function TransfersPage() {
                     <div className="flex items-center gap-3">
                       <CategoryIconTile
                         icon={transfer.categoryIcon}
-                        size="2xs"
+                        size="md"
                         className="bg-brand-transfer/10 text-brand-transfer"
                       />
                       <div className="min-w-0 flex-1">
