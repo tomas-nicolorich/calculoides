@@ -61,10 +61,26 @@ export function Select({
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
         <BaseSelect.Positioner
-          className="z-50 min-w-(--anchor-width)"
+          // positionMethod="fixed" keeps the popup out of the document scroll
+          // region. base-ui's default is "absolute" (see SelectPositioner), which
+          // makes the popup part of document scrollWidth; on first open, before
+          // floating-ui measures, it transiently overflows and expands the mobile
+          // layout viewport, re-centering the fixed Dialog off-screen (the flash).
+          positionMethod="fixed"
+          // Width comes from base-ui's measured CSS vars, never a viewport unit.
+          // The old `min(var(--anchor-width,100%), calc(100vw-2rem))` used `100vw`
+          // (the layout viewport). On first open, before base-ui sets --anchor-width,
+          // the fallback made this fixed-positioned popup viewport-wide; on mobile a
+          // fixed element wider than the visual viewport expands the layout viewport,
+          // which re-centers any fixed Dialog off-screen. --available-width is
+          // collision-aware and never exceeds the space to the viewport edge; the
+          // 16rem fallback keeps the first paint (before vars resolve) sanely sized.
+          className="z-50 w-[var(--anchor-width,16rem)] max-w-[var(--available-width)]"
           sideOffset={4}
+          collisionPadding={16}
+          alignItemWithTrigger={false}
         >
-          <BaseSelect.Popup className="max-h-60 overflow-y-auto w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1 animate-in fade-in-50 zoom-in-95 duration-100">
+          <BaseSelect.Popup className="max-h-60 overflow-y-auto w-full max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1 animate-in fade-in-50 zoom-in-95 duration-100">
             <BaseSelect.List className="space-y-0.5">
               {options.map((option) => (
                 <BaseSelect.Item
