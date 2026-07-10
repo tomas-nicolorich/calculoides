@@ -79,11 +79,13 @@ export const SavingsService = {
     targetAmount: number,
     targetDate: Date,
     currentAmount = 0,
+    icon?: string | null,
   ) {
     return await prisma.savingsGoal.create({
       data: {
         groupId,
         name,
+        icon,
         targetAmount,
         currentAmount,
         targetDate,
@@ -98,11 +100,13 @@ export const SavingsService = {
     targetAmount: number,
     targetDate: Date,
     currentAmount: number,
+    icon?: string | null,
   ) {
     return await prisma.savingsGoal.update({
       where: { id: goalId },
       data: {
         name,
+        icon,
         targetAmount,
         currentAmount,
         targetDate,
@@ -166,6 +170,7 @@ export const SavingsService = {
         return {
           memberId: s.id,
           user: memberInfo?.user,
+          share: s.share,
           proportionalAmount: base,
           actualAmount: override ? Number(override.customAmount) : base,
           isOverridden: !!override,

@@ -3,12 +3,137 @@ import { Button, Input, UserDisplay } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { useContributionSession } from "../../entities/savings-goal/useContributionSession";
 import { cn } from "../../shared/lib/utils";
+import {
+  CATEGORY_ICON_KEYS,
+  CategoryIconTile,
+} from "../../shared/lib/categoryIcons";
 
 interface SavingsGoalFormProps {
   groupId: string;
   goal?: SavingsGoal;
   onSuccess?: () => void | Promise<void>;
   onCancel?: () => void;
+}
+
+function AllocationOverridesEditor({
+  goal,
+  session,
+  loading,
+}: {
+  goal: SavingsGoal;
+  session: ReturnType<typeof useContributionSession>;
+  loading: boolean;
+}) {
+  return (
+    <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+      <div className="flex justify-between items-center pb-1">
+        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          Monthly Allocation
+        </label>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-5 px-2 text-[9px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20"
+          onClick={() => {
+            session.resetToIncomeSplit();
+          }}
+          disabled={loading}
+        >
+          Reset to Income Split
+        </Button>
+      </div>
+
+      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+        Editing member&apos;s monthly amount recalculates projected completion
+        date.
+      </p>
+
+      {goal.breakdown.map((item) => (
+        <div
+          key={item.memberId}
+          className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
+        >
+          <UserDisplay
+            user={item.user}
+            className="font-medium text-slate-700 dark:text-slate-300 text-sm"
+          />
+          <Input
+            type="number"
+            step="0.01"
+            aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
+            className="h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance"
+            disabled={loading}
+            value={
+              session.overrideAmounts[item.memberId] ?? item.proportionalAmount
+            }
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              if (!isNaN(val)) {
+                session.overrideMember(item.memberId, val);
+              }
+            }}
+          />
+        </div>
+      ))}
+
+      {session.preResetSnapshot !== null && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs w-full"
+          onClick={() => {
+            session.undoReset();
+          }}
+          disabled={loading}
+        >
+          Undo Reset
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function IconPicker({
+  icon,
+  setIcon,
+}: {
+  icon: string;
+  setIcon: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+        Icon
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {CATEGORY_ICON_KEYS.map((key) => {
+          const selected = icon === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setIcon(key);
+              }}
+              aria-pressed={selected}
+              aria-label={`Icon: ${key}`}
+              title={key}
+              className={cn(
+                "rounded-xl p-0.5 transition-all",
+                selected
+                  ? "ring-2 ring-brand-balance ring-offset-1 ring-offset-card"
+                  : "opacity-70 hover:opacity-100",
+              )}
+            >
+              <CategoryIconTile icon={key} size="md" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function SavingsGoalForm({
@@ -26,10 +151,9 @@ export function SavingsGoalForm({
     goal?.currentAmount.toString() ?? "0",
   );
   const [targetDate, setTargetDate] = useState(
-    goal?.targetDate
-      ? new Date(goal.targetDate).toISOString().split("T")[0]
-      : "",
+    goal?.targetDate ? new Date(goal.targetDate).toISOString().slice(0, 7) : "",
   );
+  const [icon, setIcon] = useState(goal?.icon ?? "other");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,9 +170,10 @@ export function SavingsGoalForm({
       if (isEditing) {
         await savingsGoalApi.update(goal.id, {
           name,
+          icon,
           targetAmount: Number(targetAmount),
           currentAmount: Number(currentAmount),
-          targetDate: new Date(targetDate).toISOString(),
+          targetDate: new Date(`${targetDate}-01`).toISOString(),
         });
         await Promise.all(
           goal.breakdown.map((item) =>
@@ -62,9 +187,10 @@ export function SavingsGoalForm({
       } else {
         await savingsGoalApi.create(groupId, {
           name,
+          icon,
           targetAmount: Number(targetAmount),
           currentAmount: Number(currentAmount),
-          targetDate: new Date(targetDate).toISOString(),
+          targetDate: new Date(`${targetDate}-01`).toISOString(),
         });
       }
 
@@ -73,6 +199,7 @@ export function SavingsGoalForm({
         setTargetAmount("");
         setCurrentAmount("0");
         setTargetDate("");
+        setIcon("other");
       }
       await onSuccess?.();
     } catch (err) {
@@ -106,6 +233,8 @@ export function SavingsGoalForm({
           required
         />
       </div>
+
+      <IconPicker icon={icon} setIcon={setIcon} />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -147,7 +276,7 @@ export function SavingsGoalForm({
           Target Date
         </label>
         <Input
-          type="date"
+          type="month"
           className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
           value={targetDate}
           onChange={(e) => {
@@ -158,69 +287,11 @@ export function SavingsGoalForm({
       </div>
 
       {isEditing && goal.breakdown.length > 0 && (
-        <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-          <div className="flex justify-between items-center pb-1">
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-              Monthly Allocation
-            </label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-5 px-2 text-[9px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20"
-              onClick={() => {
-                session.resetToIncomeSplit();
-              }}
-              disabled={loading}
-            >
-              Reset to Income Split
-            </Button>
-          </div>
-
-          {goal.breakdown.map((item) => (
-            <div
-              key={item.memberId}
-              className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
-            >
-              <UserDisplay
-                user={item.user}
-                className="font-medium text-slate-700 dark:text-slate-300 text-sm"
-              />
-              <Input
-                type="number"
-                step="0.01"
-                aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
-                className="h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance"
-                disabled={loading}
-                value={
-                  session.overrideAmounts[item.memberId] ??
-                  item.proportionalAmount
-                }
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) {
-                    session.overrideMember(item.memberId, val);
-                  }
-                }}
-              />
-            </div>
-          ))}
-
-          {session.preResetSnapshot !== null && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs w-full"
-              onClick={() => {
-                session.undoReset();
-              }}
-              disabled={loading}
-            >
-              Undo Reset
-            </Button>
-          )}
-        </div>
+        <AllocationOverridesEditor
+          goal={goal}
+          session={session}
+          loading={loading}
+        />
       )}
 
       {error && (

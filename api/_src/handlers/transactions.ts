@@ -273,6 +273,7 @@ export const routes: RouteConfig = {
       validatedBody.targetAmount,
       validatedBody.targetDate,
       validatedBody.currentAmount,
+      validatedBody.icon,
     );
     res.status(201).json(goal);
   },
@@ -287,6 +288,7 @@ export const routes: RouteConfig = {
       validatedBody.targetAmount,
       validatedBody.targetDate,
       validatedBody.currentAmount,
+      validatedBody.icon,
     );
     res.status(200).json(goal);
   },

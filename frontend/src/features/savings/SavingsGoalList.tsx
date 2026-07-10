@@ -8,6 +8,7 @@ import {
 } from "../../shared/ui";
 import { SavingsGoal } from "../../entities/savings-goal";
 import { SavingsGoalForm } from "./SavingsGoalForm";
+import { CategoryIconTile } from "../../shared/lib/categoryIcons";
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];
@@ -53,6 +54,10 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
         ? "text-amber-500"
         : "text-emerald-600 dark:text-emerald-400";
 
+    const monthlyTotal = goal.breakdown
+      .reduce((sum, item) => sum + item.actualAmount, 0)
+      .toLocaleString(undefined, { minimumFractionDigits: 2 });
+
     return (
       <Card
         key={goal.id}
@@ -63,6 +68,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
         <div className="flex justify-between items-start pb-2">
           <div>
             <div className="flex items-center gap-2">
+              <CategoryIconTile icon={goal.icon ?? undefined} size="sm" />
               <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
                 {goal.name}
               </span>
@@ -85,6 +91,12 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               Target:{" "}
               <span className="font-mono tnum">
                 €{goal.targetAmount.toLocaleString()}
+              </span>
+            </p>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              Saved so far{" "}
+              <span className="font-mono tnum">
+                €{goal.currentAmount.toLocaleString()}
               </span>
             </p>
             <div className="mt-1">
@@ -131,7 +143,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
           <div className="space-y-2">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-1">
               <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                Monthly Allocation
+                Monthly Allocation · €{monthlyTotal}/mo
               </p>
             </div>
 
@@ -140,10 +152,15 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                 key={item.memberId}
                 className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
               >
-                <UserDisplay
-                  user={item.user}
-                  className="font-medium text-slate-700 dark:text-slate-300"
-                />
+                <div className="flex items-center">
+                  <UserDisplay
+                    user={item.user}
+                    className="font-medium text-slate-700 dark:text-slate-300"
+                  />
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">
+                    {Math.round(item.share * 100)}%
+                  </span>
+                </div>
                 <div className="text-right">
                   <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
                     €

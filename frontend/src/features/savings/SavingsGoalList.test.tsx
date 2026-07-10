@@ -53,6 +53,7 @@ const mockGoals = [
         memberId: "member-1",
         proportionalAmount: 100,
         actualAmount: 100,
+        share: 0.4,
         isOverridden: false,
         user: { id: "user-1", name: "Alice", email: "alice@example.com" },
       },
@@ -148,6 +149,29 @@ describe("SavingsGoalList", () => {
     const dateDisplay = screen.getByText(/2027/);
     expect(dateDisplay).toBeInTheDocument();
     expect(dateDisplay).not.toHaveTextContent("1970");
+  });
+
+  it("renders an icon tile for each goal", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(screen.getAllByRole("img").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders the saved-so-far amount", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(screen.getByText(/Saved so far/i)).toBeInTheDocument();
+    expect(screen.getByText("€0")).toBeInTheDocument();
+  });
+
+  it("shows each member's income share percentage", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(screen.getByText("40%")).toBeInTheDocument();
+  });
+
+  it("shows the monthly allocation total in the section header", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(
+      screen.getByText(/Monthly Allocation · €100\.00\/mo/),
+    ).toBeInTheDocument();
   });
 
   it("renders a Never Badge and blocked ProgressMeter for isNever goals", () => {

@@ -23,6 +23,7 @@ vi.mock("@/shared/api/savingsHooks", () => ({
         breakdown: [
           {
             memberId: "user-1",
+            share: 1,
             proportionalAmount: 50,
             actualAmount: 50,
             isOverridden: false,
@@ -48,7 +49,9 @@ describe("Savings Page", () => {
     );
 
     // Check for title and header
-    expect(screen.getByText(/Savings Calculator/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Savings Goals/i }),
+    ).toBeInTheDocument();
 
     // Check for Savings Goal Card (from SavingsGoalList)
     expect(screen.getByText(/New Sofa/i)).toBeInTheDocument();
@@ -56,7 +59,7 @@ describe("Savings Page", () => {
 
     // Check for creation trigger button
     expect(
-      screen.getByRole("button", { name: /Add Goal/i }),
+      screen.getByRole("button", { name: /Add Savings Goal/i }),
     ).toBeInTheDocument();
 
     // Check for back button

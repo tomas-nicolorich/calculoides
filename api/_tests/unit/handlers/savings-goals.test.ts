@@ -95,6 +95,7 @@ describe("Savings Goal Handlers", () => {
         1000,
         expect.any(Date),
         100,
+        undefined,
       );
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith(mockGoal);

@@ -1,5 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+function getMonthInput(container: HTMLElement): HTMLInputElement {
+  const input = container.querySelector<HTMLInputElement>(
+    'input[type="month"]',
+  );
+  if (!input) throw new Error("month input not found");
+  return input;
+}
 import { SavingsGoalForm } from "./SavingsGoalForm";
 import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect } from "vitest";
@@ -53,6 +61,7 @@ const mockGoal = {
   breakdown: [
     {
       memberId: "member-1",
+      share: 1,
       proportionalAmount: 100,
       actualAmount: 100,
       isOverridden: false,
@@ -126,5 +135,97 @@ describe("SavingsGoalForm", () => {
 
     const saveButton = screen.getByRole("button", { name: /update goal/i });
     expect(saveButton).not.toBeDisabled();
+  });
+
+  it("renders icon picker tiles and selects one on click", async () => {
+    const user = userEvent.setup();
+    render(<SavingsGoalForm groupId="group-1" />);
+
+    const otherTile = screen.getByRole("button", { name: "Icon: other" });
+    expect(otherTile).toHaveAttribute("aria-pressed", "true");
+
+    const carTile = screen.getByRole("button", { name: "Icon: transport" });
+    expect(carTile).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(carTile);
+
+    expect(carTile).toHaveAttribute("aria-pressed", "true");
+    expect(otherTile).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("includes selected icon in create submit payload", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<SavingsGoalForm groupId="group-1" />);
+
+    await user.type(screen.getByPlaceholderText(/e.g. New Sofa/i), "Trip");
+    await user.type(screen.getAllByPlaceholderText("0.00")[0], "500");
+    const monthInput = getMonthInput(container);
+    await user.type(monthInput, "2027-06");
+    await user.click(screen.getByRole("button", { name: "Icon: transport" }));
+    await user.click(screen.getByRole("button", { name: /save goal/i }));
+
+    await waitFor(() => {
+      expect(savingsGoalApi.create).toHaveBeenCalledWith(
+        "group-1",
+        expect.objectContaining({ icon: "transport", name: "Trip" }),
+      );
+    });
+  });
+
+  it("includes selected icon in update submit payload", async () => {
+    const user = userEvent.setup();
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
+
+    await user.click(screen.getByRole("button", { name: "Icon: transport" }));
+    await user.click(screen.getByRole("button", { name: /update goal/i }));
+
+    await waitFor(() => {
+      expect(savingsGoalApi.update).toHaveBeenCalledWith(
+        "goal-1",
+        expect.objectContaining({ icon: "transport" }),
+      );
+    });
+  });
+
+  it("renders the allocation hint text when editing a goal with breakdown", () => {
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
+
+    expect(
+      screen.getByText(
+        /Editing member's monthly amount recalculates projected completion date\./i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("renders month input with YYYY-MM value derived from goal.targetDate", () => {
+    const { container } = render(
+      <SavingsGoalForm groupId="group-1" goal={mockGoal} />,
+    );
+
+    const monthInput = getMonthInput(container);
+    expect(monthInput).not.toBeNull();
+    expect(monthInput.value).toBe("2026-12");
+  });
+
+  it("submits an ISO date built from the typed month value", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <SavingsGoalForm groupId="group-1" goal={mockGoal} />,
+    );
+
+    const monthInput = getMonthInput(container);
+    await user.clear(monthInput);
+    await user.type(monthInput, "2027-03");
+
+    await user.click(screen.getByRole("button", { name: /update goal/i }));
+
+    await waitFor(() => {
+      expect(savingsGoalApi.update).toHaveBeenCalledWith(
+        "goal-1",
+        expect.objectContaining({
+          targetDate: new Date("2027-03-01").toISOString(),
+        }),
+      );
+    });
   });
 });
