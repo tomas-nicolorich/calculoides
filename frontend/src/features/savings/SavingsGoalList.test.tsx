@@ -1,7 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SavingsGoalList } from "./SavingsGoalList";
-import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect } from "vitest";
 
 vi.mock("../../shared/api/supabase", () => ({
@@ -62,29 +61,42 @@ const mockGoals = [
 ];
 
 describe("SavingsGoalList", () => {
-  it("calls onRefresh after saving contributions and closes editing panel", async () => {
+  it("opens the edit form (with metadata and allocation fields) when the pencil is clicked", async () => {
     const user = userEvent.setup();
-    const onRefresh = vi.fn();
-    render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+    render(<SavingsGoalList goals={mockGoals} />);
 
-    await user.click(screen.getByRole("button", { name: /adjust/i }));
+    await user.click(
+      screen.getByRole("button", { name: /edit goal settings/i }),
+    );
 
-    // Wait for session to enter editing phase
-    await waitFor(() => {
-      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Goal Name")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Allocation")).toBeInTheDocument();
+    expect(
+      screen.getByRole("spinbutton", { name: /Alice/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /update goal/i }),
+    ).toBeInTheDocument();
+  });
 
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
+  it("no longer renders a standalone ADJUST button", () => {
+    render(<SavingsGoalList goals={mockGoals} />);
+    expect(
+      screen.queryByRole("button", { name: /^adjust$/i }),
+    ).not.toBeInTheDocument();
+  });
 
-    // onRefresh called after successful save
-    await waitFor(() => {
-      expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
-        "goal-1",
-        "member-1",
-        100,
-      );
-      expect(onRefresh).toHaveBeenCalled();
-    });
+  it("closes the edit form when Cancel is clicked", async () => {
+    const user = userEvent.setup();
+    render(<SavingsGoalList goals={mockGoals} />);
+
+    await user.click(
+      screen.getByRole("button", { name: /edit goal settings/i }),
+    );
+    expect(screen.getByText("Goal Name")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+    expect(screen.queryByText("Goal Name")).not.toBeInTheDocument();
   });
 
   it("renders a ProgressMeter for each goal with correct value and max", () => {
@@ -156,24 +168,5 @@ describe("SavingsGoalList", () => {
       "data-state",
       "blocked",
     );
-  });
-
-  it("Save button is enabled even when session forecast is red (never)", async () => {
-    const user = userEvent.setup();
-    const onRefresh = vi.fn();
-    render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
-
-    await user.click(screen.getByRole("button", { name: /adjust/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
-    });
-
-    const input = screen.getByRole("spinbutton");
-    await user.clear(input);
-    await user.type(input, "0");
-
-    const saveButton = screen.getByRole("button", { name: /^save$/i });
-    expect(saveButton).not.toBeDisabled();
   });
 });

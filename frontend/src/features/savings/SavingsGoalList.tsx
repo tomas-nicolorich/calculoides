@@ -2,13 +2,11 @@ import { useState } from "react";
 import {
   Badge,
   Card,
-  Input,
   Button,
   UserDisplay,
   ProgressMeter,
 } from "../../shared/ui";
 import { SavingsGoal } from "../../entities/savings-goal";
-import { useContributionSession } from "../../entities/savings-goal/useContributionSession";
 import { SavingsGoalForm } from "./SavingsGoalForm";
 
 interface SavingsGoalListProps {
@@ -21,25 +19,12 @@ const FOCUS_RING =
 
 export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
-  const [activeGoalId, setActiveGoalId] = useState<string | null>(null);
-
-  const activeGoal = goals.find((g) => g.id === activeGoalId) ?? null;
-  const session = useContributionSession(activeGoal);
-
-  const handleSave = async () => {
-    const ok = await session.saveSession();
-    if (ok) {
-      setActiveGoalId(null);
-      await onRefresh?.();
-    }
-  };
 
   // fallow-ignore-next-line complexity
   const renderGoalCard = (goal: SavingsGoal) => {
     const targetDate = new Date(goal.targetDate);
     const isLate = goal.varianceMonths > 0;
     const isNever = goal.isNever;
-    const isActive = activeGoalId === goal.id;
 
     if (editingGoalId === goal.id) {
       return (
@@ -58,34 +43,15 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
       );
     }
 
-    const localMonths = isActive ? session.localProjectedMonths : null;
-    const localDate = isActive ? session.localProjectedDate : null;
-    const forecastColor = isActive ? session.forecastColor : "neutral";
+    const projectedLabel = isNever
+      ? "Never"
+      : new Date(goal.projectedDate).toLocaleDateString("en-GB");
 
-    const projectedLabel = (() => {
-      if (!isActive || localMonths === null) {
-        if (isNever) return "Never";
-        return new Date(goal.projectedDate).toLocaleDateString("en-GB");
-      }
-      if (localMonths === Infinity) return "Never";
-      if (localMonths === 0) return "Already reached";
-      return localDate
-        ? localDate.toLocaleDateString("en-GB")
-        : new Date(goal.projectedDate).toLocaleDateString("en-GB");
-    })();
-
-    const projectedColorClass =
-      !isActive || forecastColor === "neutral"
-        ? isNever
-          ? "text-red-500"
-          : isLate
-            ? "text-amber-500"
-            : "text-emerald-600 dark:text-emerald-400"
-        : forecastColor === "green"
-          ? "text-green-600"
-          : forecastColor === "amber"
-            ? "text-amber-500"
-            : "text-red-500";
+    const projectedColorClass = isNever
+      ? "text-red-500"
+      : isLate
+        ? "text-amber-500"
+        : "text-emerald-600 dark:text-emerald-400";
 
     return (
       <Card
@@ -108,6 +74,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                   setEditingGoalId(goal.id);
                 }}
                 title="Edit Goal Settings"
+                aria-label="Edit Goal Settings"
               >
                 <span className="text-slate-400 hover:text-brand-balance transition-colors">
                   ✎
@@ -166,18 +133,6 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Monthly Allocation
               </p>
-              {!isActive ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-5 px-2 text-[9px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20 ${FOCUS_RING}`}
-                  onClick={() => {
-                    setActiveGoalId(goal.id);
-                  }}
-                >
-                  ADJUST
-                </Button>
-              ) : null}
             </div>
 
             {goal.breakdown.map((item) => (
@@ -189,102 +144,21 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                   user={item.user}
                   className="font-medium text-slate-700 dark:text-slate-300"
                 />
-                <div className="flex items-center gap-2">
-                  {isActive ? (
-                    <Input
-                      type="number"
-                      step="0.01"
-                      aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
-                      className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance ${FOCUS_RING}`}
-                      disabled={session.phase === "saving"}
-                      value={
-                        session.overrideAmounts[item.memberId] ??
-                        item.proportionalAmount
-                      }
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        if (!isNaN(val)) {
-                          session.overrideMember(item.memberId, val);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="text-right">
-                      <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-                        €
-                        {item.actualAmount.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
-                      </p>
-                      {item.isOverridden && (
-                        <p className="text-[9px] font-medium text-brand-balance bg-brand-balance/5 dark:bg-brand-balance/10 dark:text-blue-400 border border-brand-balance/10 dark:border-blue-900/30 px-1.5 rounded-full inline-block">
-                          CUSTOM
-                        </p>
-                      )}
-                    </div>
+                <div className="text-right">
+                  <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
+                    €
+                    {item.actualAmount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                  </p>
+                  {item.isOverridden && (
+                    <p className="text-[9px] font-medium text-brand-balance bg-brand-balance/5 dark:bg-brand-balance/10 dark:text-blue-400 border border-brand-balance/10 dark:border-blue-900/30 px-1.5 rounded-full inline-block">
+                      CUSTOM
+                    </p>
                   )}
                 </div>
               </div>
             ))}
-
-            {isActive && (
-              <div className="space-y-2 pt-2">
-                {session.saveError && (
-                  <p
-                    data-testid="session-save-error"
-                    className="text-[10px] text-destructive font-medium bg-destructive/5 dark:bg-destructive/10 dark:text-red-400 p-2 rounded border border-destructive/20 dark:border-red-900/30"
-                  >
-                    {session.saveError}
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    size="sm"
-                    className={`h-8 text-xs ${FOCUS_RING}`}
-                    onClick={() => void handleSave()}
-                    disabled={session.phase === "saving"}
-                  >
-                    {session.phase === "saving" ? "Saving..." : "Save"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`h-8 text-xs ${FOCUS_RING}`}
-                    onClick={() => {
-                      session.cancelSession();
-                      setActiveGoalId(null);
-                    }}
-                    disabled={session.phase === "saving"}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`h-8 text-xs col-span-2 ${FOCUS_RING}`}
-                    onClick={() => {
-                      session.resetToIncomeSplit();
-                    }}
-                    disabled={session.phase === "saving"}
-                  >
-                    Reset to Income Split
-                  </Button>
-                  {session.preResetSnapshot !== null && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-8 text-xs col-span-2 ${FOCUS_RING}`}
-                      onClick={() => {
-                        session.undoReset();
-                      }}
-                      disabled={session.phase === "saving"}
-                    >
-                      Undo Reset
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </Card>
