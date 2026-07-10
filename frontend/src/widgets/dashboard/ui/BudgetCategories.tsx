@@ -664,6 +664,7 @@ export function BudgetCategories({
                     <ProgressMeter
                       value={totalSpent}
                       max={category.monthlyBudget}
+                      tone="category"
                       state={progressState(totalSpent, category.monthlyBudget)}
                       valueLabel={`${String(spentPct)}% spent`}
                       className="mt-2"
