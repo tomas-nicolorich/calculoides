@@ -192,7 +192,7 @@ describe("SavingsGoalForm", () => {
 
     expect(
       screen.getByText(
-        /Editing member's monthly amount recalculates projected completion date\./i,
+        /Editing a member's monthly amount recalculates the projected completion date\./i,
       ),
     ).toBeInTheDocument();
   });

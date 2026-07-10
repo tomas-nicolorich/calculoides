@@ -45,8 +45,8 @@ function AllocationOverridesEditor({
       </div>
 
       <p className="text-[10px] text-slate-500 dark:text-slate-400">
-        Editing member&apos;s monthly amount recalculates projected completion
-        date.
+        Editing a member&apos;s monthly amount recalculates the projected
+        completion date.
       </p>
 
       {goal.breakdown.map((item) => (

@@ -93,6 +93,9 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                 €{goal.targetAmount.toLocaleString()}
               </span>
             </p>
+            {/* Mockup shows "Started €X · saved so far €Y", but a past migration
+                merged startingAmount into currentAmount, so no distinct
+                starting figure exists to render. */}
             <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
               Saved so far{" "}
               <span className="font-mono tnum">

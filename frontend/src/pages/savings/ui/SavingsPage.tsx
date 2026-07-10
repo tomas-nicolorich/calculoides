@@ -77,7 +77,7 @@ export function SavingsPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         title="New Savings Goal"
-        description="We'll split monthly contribution by each member's income share."
+        description="We'll split the monthly contribution by each member's income share."
       >
         <SavingsGoalForm
           groupId={groupId ?? ""}
