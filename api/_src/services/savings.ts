@@ -22,7 +22,7 @@ export function calculateSavingsContributions(
   targetAmount: number,
   currentAmount: number,
   targetDate: Date,
-  members: { id: string; share: number }[],
+  members: { id: string; share: number; percentage?: number }[],
 ): MemberContribution[] {
   if (members.length === 0) return [];
 
@@ -50,9 +50,16 @@ export function calculateSavingsContributions(
       highestShareIndex = index;
     }
 
+    // Derive proportional weight from the finer 1dp `percentage` value when
+    // available, falling back to the coarser 2dp `share` otherwise. Keeps
+    // the displayed percentage and computed dollar amount reconciled
+    // (issue #160). Remainder absorption below still targets the
+    // highest-`share` member, unchanged from prior behavior.
+    const weight = m.percentage != null ? m.percentage / 100 : m.share;
+
     // Round down to 2 decimal places
     const baseAmount =
-      Math.floor(Number((totalMonthlyNeed * m.share).toFixed(10)) * 100) / 100;
+      Math.floor(Number((totalMonthlyNeed * weight).toFixed(10)) * 100) / 100;
 
     return {
       memberId: m.id,
