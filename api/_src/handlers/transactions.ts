@@ -23,6 +23,7 @@ import { prisma } from "../utils/prisma";
 import {
   calculateIncomeShares,
   calculateCategoryBalances,
+  calculateMemberBudgetedTotals,
 } from "../services/calculation";
 
 function requireStringParam(
@@ -408,6 +409,32 @@ export const routes: RouteConfig = {
     );
     const totalSpent = expenses.reduce((acc, e) => acc + Number(e.amount), 0);
 
+    // Budgeted totals reuse the shared helper (also used by
+    // SavingsService.getGoalsForGroup) instead of an inline per-member loop —
+    // same calculateCategoryBalances-based computation, single source of truth.
+    const memberBudgetedTotals = calculateMemberBudgetedTotals(
+      memberIncomes,
+      categories.map((c) => ({
+        id: c.id,
+        monthlyBudget: Number(c.monthlyBudget),
+        memberLinks: c.memberLinks,
+      })),
+      expenses.map((e) => ({
+        payerId: e.payerId,
+        categoryId: e.categoryId,
+        amount: Number(e.amount),
+      })),
+      transfers.map((t) => ({
+        categoryId: t.categoryId,
+        fromMemberId: t.fromMemberId,
+        toMemberId: t.toMemberId,
+        amount: Number(t.amount),
+      })),
+    );
+    const budgetedByMemberId = new Map(
+      memberBudgetedTotals.map((b) => [b.memberId, b.budgeted]),
+    );
+
     const membersSummary = group.members.map((m) => {
       const share = shares.find((s) => s.id === m.id);
 
@@ -417,7 +444,6 @@ export const routes: RouteConfig = {
 
       // Calculate remaining quota across all categories
       let totalRemainingQuota = 0;
-      let totalBudgetedQuota = 0;
       categories.forEach((cat) => {
         // Filter members if category is restricted
         const isRestricted = cat.memberLinks.length > 0;
@@ -454,7 +480,6 @@ export const routes: RouteConfig = {
         const memberBalance = balances.find((b) => b.memberId === m.id);
         if (memberBalance) {
           totalRemainingQuota += memberBalance.remainingQuota;
-          totalBudgetedQuota += memberBalance.totalQuota;
         }
       });
 
@@ -466,7 +491,7 @@ export const routes: RouteConfig = {
         share: share?.percentage ?? 0,
         spent: memberExpensesTotal,
         remainingQuota: totalRemainingQuota,
-        budgeted: Number(totalBudgetedQuota.toFixed(2)),
+        budgeted: budgetedByMemberId.get(m.id) ?? 0,
       };
     });
 
