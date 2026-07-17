@@ -132,3 +132,65 @@ export function calculateCategoryBalances(
     };
   });
 }
+
+export interface MemberBudgetedTotal {
+  memberId: string;
+  budgeted: number;
+}
+
+/**
+ * Sums each member's budgeted category commitments (`totalQuota`) across all
+ * categories, respecting per-category member restrictions and zero-income
+ * exclusion — both handled internally by `calculateCategoryBalances`.
+ *
+ * Used to derive each member's live affordability ceiling:
+ * `ceiling = income - budgeted` (identical to the dashboard's
+ * `RemainingBalance` figure and the `summary` handler's per-member
+ * `budgeted`). Never persisted — recomputed on every call from current data.
+ */
+export function calculateMemberBudgetedTotals(
+  members: { id: string; income: number }[],
+  categories: {
+    id: string;
+    monthlyBudget: number;
+    memberLinks: { memberId: string }[];
+  }[],
+  expenses: { payerId: string; categoryId: string; amount: number }[],
+  transfers: {
+    categoryId: string;
+    fromMemberId: string;
+    toMemberId: string;
+    amount: number;
+  }[] = [],
+): MemberBudgetedTotal[] {
+  const budgetedById = new Map<string, number>(members.map((m) => [m.id, 0]));
+
+  categories.forEach((cat) => {
+    const isRestricted = cat.memberLinks.length > 0;
+    const relevantMembers = isRestricted
+      ? members.filter((m) =>
+          cat.memberLinks.some((ml) => ml.memberId === m.id),
+        )
+      : members;
+
+    const catExpenses = expenses.filter((e) => e.categoryId === cat.id);
+    const catTransfers = transfers.filter((t) => t.categoryId === cat.id);
+
+    const balances = calculateCategoryBalances(
+      { monthlyBudget: cat.monthlyBudget },
+      relevantMembers,
+      catExpenses,
+      catTransfers,
+    );
+
+    balances.forEach((b) => {
+      const current = budgetedById.get(b.memberId) ?? 0;
+      budgetedById.set(b.memberId, current + b.totalQuota);
+    });
+  });
+
+  return members.map((m) => ({
+    memberId: m.id,
+    budgeted: Number((budgetedById.get(m.id) ?? 0).toFixed(2)),
+  }));
+}

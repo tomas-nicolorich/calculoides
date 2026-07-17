@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { calculateSavingsContributions } from "../../_src/services/savings";
+import { calculateMemberBudgetedTotals } from "../../_src/services/calculation";
 import {
   calculateProjectedMonths,
   addMonths,
@@ -62,6 +63,86 @@ describe("Savings Logic", () => {
         [{ id: "1", share: 1 }],
       );
       expect(contributions[0].monthlyContribution).toBe(0);
+    });
+  });
+
+  describe("calculateMemberBudgetedTotals (Per-Member Affordability Ceiling Exposure)", () => {
+    it("returns budgeted 0 for every member when there are no categories, so ceiling equals income", () => {
+      const members = [
+        { id: "1", income: 1000 },
+        { id: "2", income: 500 },
+      ];
+
+      const result = calculateMemberBudgetedTotals(members, [], [], []);
+
+      expect(result).toHaveLength(2);
+      expect(result.find((r) => r.memberId === "1")?.budgeted).toBe(0);
+      expect(result.find((r) => r.memberId === "2")?.budgeted).toBe(0);
+    });
+
+    it("only budgets members linked to a restricted category, excluding the rest", () => {
+      const members = [
+        { id: "1", income: 600 },
+        { id: "2", income: 400 },
+      ];
+      const categories = [
+        {
+          id: "cat-1",
+          monthlyBudget: 100,
+          memberLinks: [{ memberId: "1" }],
+        },
+      ];
+
+      const result = calculateMemberBudgetedTotals(members, categories, [], []);
+
+      expect(result.find((r) => r.memberId === "1")?.budgeted).toBe(100);
+      expect(result.find((r) => r.memberId === "2")?.budgeted).toBe(0);
+    });
+
+    it("excludes a zero-income member from the category allocation", () => {
+      const members = [
+        { id: "1", income: 1000 },
+        { id: "2", income: 0 },
+      ];
+      const categories = [{ id: "cat-1", monthlyBudget: 200, memberLinks: [] }];
+
+      const result = calculateMemberBudgetedTotals(members, categories, [], []);
+
+      expect(result.find((r) => r.memberId === "1")?.budgeted).toBe(200);
+      expect(result.find((r) => r.memberId === "2")?.budgeted).toBe(0);
+    });
+
+    it("produces a negative ceiling (income - budgeted) when the sole eligible member is over-budget", () => {
+      const members = [{ id: "1", income: 100 }];
+      const categories = [{ id: "cat-1", monthlyBudget: 500, memberLinks: [] }];
+
+      const result = calculateMemberBudgetedTotals(members, categories, [], []);
+      const entry = result.find((r) => r.memberId === "1");
+
+      expect(entry?.budgeted).toBe(500);
+      const ceiling = members[0].income - (entry?.budgeted ?? 0);
+      expect(ceiling).toBe(-400);
+    });
+
+    it("shifts each member's budgeted total by transfers on the category", () => {
+      const members = [
+        { id: "1", income: 600 },
+        { id: "2", income: 400 },
+      ];
+      const categories = [{ id: "cat-1", monthlyBudget: 100, memberLinks: [] }];
+      const transfers = [
+        { categoryId: "cat-1", fromMemberId: "1", toMemberId: "2", amount: 20 },
+      ];
+
+      const result = calculateMemberBudgetedTotals(
+        members,
+        categories,
+        [],
+        transfers,
+      );
+
+      expect(result.find((r) => r.memberId === "1")?.budgeted).toBe(40); // 60 - 20
+      expect(result.find((r) => r.memberId === "2")?.budgeted).toBe(60); // 40 + 20
     });
   });
 

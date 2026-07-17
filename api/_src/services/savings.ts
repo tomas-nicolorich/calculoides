@@ -1,5 +1,8 @@
 import { prisma } from "../utils/prisma";
-import { calculateIncomeShares } from "./calculation";
+import {
+  calculateIncomeShares,
+  calculateMemberBudgetedTotals,
+} from "./calculation";
 import { calculateProjectedMonths, addMonths } from "shared";
 
 export interface MemberContribution {
@@ -132,8 +135,71 @@ export const SavingsService = {
       },
     });
 
-    const incomeShares = calculateIncomeShares(
-      members.map((m) => ({ id: m.id, income: Number(m.income) })),
+    const memberIncomes = members.map((m) => ({
+      id: m.id,
+      income: Number(m.income),
+    }));
+
+    const incomeShares = calculateIncomeShares(memberIncomes);
+
+    // 1b. Fetch this month's categories/expenses/transfers to derive each
+    // member's live affordability ceiling (income - budgeted), identical to
+    // the dashboard's RemainingBalance figure. Never persisted — recomputed
+    // on every call from current data.
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const categories = await prisma.category.findMany({
+      where: { groupId },
+      include: {
+        memberLinks: { select: { memberId: true } },
+      },
+    });
+
+    const categoryIds = categories.map((c) => c.id);
+
+    const expenses = await prisma.expense.findMany({
+      where: {
+        categoryId: { in: categoryIds },
+        date: { gte: startOfMonth },
+        isArchived: false,
+      },
+    });
+
+    const transfers = await prisma.transfer.findMany({
+      where: {
+        categoryId: { in: categoryIds },
+        date: { gte: startOfMonth },
+      },
+    });
+
+    const budgetedTotals = calculateMemberBudgetedTotals(
+      memberIncomes,
+      categories.map((c) => ({
+        id: c.id,
+        monthlyBudget: Number(c.monthlyBudget),
+        memberLinks: c.memberLinks,
+      })),
+      expenses.map((e) => ({
+        payerId: e.payerId,
+        categoryId: e.categoryId,
+        amount: Number(e.amount),
+      })),
+      transfers.map((t) => ({
+        categoryId: t.categoryId,
+        fromMemberId: t.fromMemberId,
+        toMemberId: t.toMemberId,
+        amount: Number(t.amount),
+      })),
+    );
+
+    const remainingBalanceById = new Map<string, number>(
+      memberIncomes.map((m) => {
+        const budgeted =
+          budgetedTotals.find((b) => b.memberId === m.id)?.budgeted ?? 0;
+        return [m.id, Number((m.income - budgeted).toFixed(2))];
+      }),
     );
 
     // 2. Fetch all goals for the group
@@ -175,6 +241,7 @@ export const SavingsService = {
           proportionalAmount: base,
           actualAmount: override ? Number(override.customAmount) : base,
           isOverridden: !!override,
+          remainingBalance: remainingBalanceById.get(s.id) ?? 0,
         };
       });
 
