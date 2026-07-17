@@ -231,9 +231,10 @@ describe("Savings API Integration", () => {
       const bob = breakdown.find((b) => b.memberId === "m2");
 
       // Allocation split is untouched by the ceiling addition (60/40 income share).
-      expect(alice?.proportionalAmount).toBe(120);
-      expect(alice?.actualAmount).toBe(120);
-      expect(bob?.proportionalAmount).toBe(80);
+      // Divisor corrected by calculateMonthsRemaining (issue #159): raw diff 5 -> 4 months -> 250/month total.
+      expect(alice?.proportionalAmount).toBe(150);
+      expect(alice?.actualAmount).toBe(150);
+      expect(bob?.proportionalAmount).toBe(100);
       // Override still applies exactly as before.
       expect(bob?.actualAmount).toBe(999);
       expect(bob?.isOverridden).toBe(true);

@@ -12,7 +12,8 @@ describe("Savings Logic", () => {
       const targetAmount = 1200;
       const currentAmount = 200; // 1000 left to save
       const targetDate = new Date();
-      targetDate.setMonth(targetDate.getMonth() + 5); // 5 months away -> 200/month total
+      targetDate.setDate(1); // anchor to day=1 to avoid month-rollover flakiness
+      targetDate.setMonth(targetDate.getMonth() + 5); // raw diff 5 -> corrected 4 months -> 250/month total
 
       const members = [
         { id: "1", share: 0.6 },
@@ -29,10 +30,42 @@ describe("Savings Logic", () => {
       expect(contributions).toHaveLength(2);
       expect(
         contributions.find((c) => c.memberId === "1")?.monthlyContribution,
-      ).toBe(120);
+      ).toBe(150);
       expect(
         contributions.find((c) => c.memberId === "2")?.monthlyContribution,
-      ).toBe(80);
+      ).toBe(100);
+    });
+
+    it("should fall back to lump-sum when the target date is exactly one calendar month out", () => {
+      const targetAmount = 1200;
+      const currentAmount = 200; // 1000 left to save
+      const targetDate = new Date();
+      targetDate.setDate(1);
+      targetDate.setMonth(targetDate.getMonth() + 1); // rawDiff 1 -> corrected 0 -> lump sum
+
+      const contributions = calculateSavingsContributions(
+        targetAmount,
+        currentAmount,
+        targetDate,
+        [{ id: "1", share: 1 }],
+      );
+
+      expect(contributions[0].monthlyContribution).toBe(1000);
+    });
+
+    it("should fall back to lump-sum when the target date is within the current month", () => {
+      const targetAmount = 1200;
+      const currentAmount = 200; // 1000 left to save
+      const targetDate = new Date(); // same month as "now" -> corrected -1 -> lump sum
+
+      const contributions = calculateSavingsContributions(
+        targetAmount,
+        currentAmount,
+        targetDate,
+        [{ id: "1", share: 1 }],
+      );
+
+      expect(contributions[0].monthlyContribution).toBe(1000);
     });
 
     it("should handle zero members", () => {

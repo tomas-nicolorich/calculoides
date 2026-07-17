@@ -1,5 +1,9 @@
 import { useReducer, useEffect, useCallback } from "react";
-import { calculateProjectedMonths, addMonths } from "shared";
+import {
+  calculateProjectedMonths,
+  addMonths,
+  calculateMonthsRemaining,
+} from "shared";
 import type {
   SavingsGoal,
   ContributionSessionPhase,
@@ -156,14 +160,7 @@ export function useContributionSession(
       : null;
 
   const targetMonths = activeGoal
-    ? (() => {
-        const now = new Date();
-        const target = new Date(activeGoal.targetDate);
-        return (
-          (target.getFullYear() - now.getFullYear()) * 12 +
-          (target.getMonth() - now.getMonth())
-        );
-      })()
+    ? calculateMonthsRemaining(new Date(), new Date(activeGoal.targetDate))
     : 0;
 
   const forecastColor: ContributionSession["forecastColor"] =

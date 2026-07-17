@@ -3,7 +3,11 @@ import {
   calculateIncomeShares,
   calculateMemberBudgetedTotals,
 } from "./calculation";
-import { calculateProjectedMonths, addMonths } from "shared";
+import {
+  calculateProjectedMonths,
+  addMonths,
+  calculateMonthsRemaining,
+} from "shared";
 
 export interface MemberContribution {
   memberId: string;
@@ -28,9 +32,7 @@ export function calculateSavingsContributions(
   }
 
   const now = new Date();
-  const monthsRemaining =
-    (targetDate.getFullYear() - now.getFullYear()) * 12 +
-    (targetDate.getMonth() - now.getMonth());
+  const monthsRemaining = calculateMonthsRemaining(now, targetDate);
 
   const totalMonthlyNeed = Number(
     (monthsRemaining > 0
@@ -257,9 +259,7 @@ export const SavingsService = {
       const projectedDate = addMonths(now, months);
 
       // Variance in months
-      const targetMonths =
-        (targetDate.getFullYear() - now.getFullYear()) * 12 +
-        (targetDate.getMonth() - now.getMonth());
+      const targetMonths = calculateMonthsRemaining(now, targetDate);
       const projectedMonths =
         (projectedDate.getFullYear() - now.getFullYear()) * 12 +
         (projectedDate.getMonth() - now.getMonth());
