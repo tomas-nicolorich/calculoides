@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Input, UserDisplay } from "../../shared/ui";
+import { Badge, Button, Input, UserDisplay } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { useContributionSession } from "../../entities/savings-goal/useContributionSession";
 import { cn } from "../../shared/lib/utils";
@@ -55,10 +55,23 @@ function AllocationOverridesEditor({
           key={item.memberId}
           className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
         >
-          <UserDisplay
-            user={item.user}
-            className="font-medium text-slate-700 dark:text-slate-300 text-sm"
-          />
+          <div className="flex items-center gap-2">
+            <UserDisplay
+              user={item.user}
+              className="font-medium text-slate-700 dark:text-slate-300 text-sm"
+            />
+            {session.ceilingWarnings[item.memberId] && (
+              <Badge
+                tone="transfer"
+                size="sm"
+                uppercase
+                title="Exceeds available balance"
+                aria-label="Exceeds available balance"
+              >
+                Over Balance
+              </Badge>
+            )}
+          </div>
           <Input
             type="number"
             step="0.01"

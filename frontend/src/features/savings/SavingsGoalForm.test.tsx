@@ -66,6 +66,7 @@ const mockGoal = {
       proportionalAmount: 100,
       actualAmount: 100,
       isOverridden: false,
+      remainingBalance: 1000,
       user: { id: "user-1", name: "Alice", email: "alice@example.com" },
     },
   ],
@@ -206,6 +207,80 @@ describe("SavingsGoalForm", () => {
     const monthInput = getMonthInput(container);
     expect(monthInput).not.toBeNull();
     expect(monthInput.value).toBe("2026-12");
+  });
+
+  it("does not render an over-ceiling badge when the member's share is within their remaining balance", () => {
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
+
+    expect(screen.queryByText(/over balance/i)).not.toBeInTheDocument();
+  });
+
+  it("renders an amber over-ceiling badge only on the member row whose share exceeds their remaining balance", () => {
+    const goalWithWarning = {
+      ...mockGoal,
+      breakdown: [
+        {
+          memberId: "member-1",
+          share: 0.6,
+          percentage: 60,
+          proportionalAmount: 500,
+          actualAmount: 500,
+          isOverridden: false,
+          remainingBalance: 400,
+          user: { id: "user-1", name: "Alice", email: "alice@example.com" },
+        },
+        {
+          memberId: "member-2",
+          share: 0.4,
+          percentage: 40,
+          proportionalAmount: 100,
+          actualAmount: 100,
+          isOverridden: false,
+          remainingBalance: 400,
+          user: { id: "user-2", name: "Bob", email: "bob@example.com" },
+        },
+      ],
+    };
+
+    render(<SavingsGoalForm groupId="group-1" goal={goalWithWarning} />);
+
+    const badges = screen.getAllByText(/over balance/i);
+    expect(badges).toHaveLength(1);
+
+    const badge = badges[0];
+    expect(badge).toHaveAttribute("title", "Exceeds available balance");
+
+    const aliceRow = screen.getByRole("spinbutton", {
+      name: /alice/i,
+    }).parentElement;
+    const bobRow = screen.getByRole("spinbutton", {
+      name: /bob/i,
+    }).parentElement;
+    expect(aliceRow).toContainElement(badge);
+    expect(bobRow).not.toContainElement(badge);
+  });
+
+  it("keeps the allocation input value driven by overrideAmounts/proportionalAmount unaffected by the warning badge", () => {
+    const goalWithWarning = {
+      ...mockGoal,
+      breakdown: [
+        {
+          memberId: "member-1",
+          share: 1,
+          percentage: 100,
+          proportionalAmount: 500,
+          actualAmount: 500,
+          isOverridden: false,
+          remainingBalance: 400,
+          user: { id: "user-1", name: "Alice", email: "alice@example.com" },
+        },
+      ],
+    };
+
+    render(<SavingsGoalForm groupId="group-1" goal={goalWithWarning} />);
+
+    const input = screen.getByRole("spinbutton", { name: /Alice/i });
+    expect(input).toHaveValue(500);
   });
 
   it("submits an ISO date built from the typed month value", async () => {

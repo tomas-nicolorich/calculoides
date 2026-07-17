@@ -52,6 +52,7 @@ const mockGoal: SavingsGoal = {
       proportionalAmount: 500,
       actualAmount: 600,
       isOverridden: true,
+      remainingBalance: 1000,
     },
     {
       memberId: "m2",
@@ -60,6 +61,7 @@ const mockGoal: SavingsGoal = {
       proportionalAmount: 300,
       actualAmount: 300,
       isOverridden: false,
+      remainingBalance: 1000,
     },
   ],
 };
@@ -203,6 +205,7 @@ describe("useContributionSession", () => {
           proportionalAmount: 800,
           actualAmount: 800,
           isOverridden: false,
+          remainingBalance: 1000,
         },
       ],
     };
@@ -224,6 +227,7 @@ describe("useContributionSession", () => {
           proportionalAmount: 0,
           actualAmount: 0,
           isOverridden: false,
+          remainingBalance: 1000,
         },
       ],
     };
@@ -232,5 +236,237 @@ describe("useContributionSession", () => {
     rerender({ goal: noContribGoal });
 
     expect(result.current.forecastColor).toBe("red");
+  });
+
+  describe("ceilingWarnings (derived, ceiling-aware Reset to Income Split)", () => {
+    it("flags a member whose effective share exceeds their remainingBalance", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 500,
+            actualAmount: 500,
+            isOverridden: false,
+            remainingBalance: 400,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      expect(result.current.ceilingWarnings).toEqual({ m1: true });
+    });
+
+    it("does not flag a member whose effective share is within their remainingBalance", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 300,
+            actualAmount: 300,
+            isOverridden: false,
+            remainingBalance: 400,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      expect(result.current.ceilingWarnings).toEqual({ m1: false });
+    });
+
+    it("after resetToIncomeSplit, warning reflects the proportional share, not any prior override", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 600,
+            actualAmount: 50,
+            isOverridden: true,
+            remainingBalance: 400,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      // Before reset: override (50) is well within the ceiling (400) -> no warning
+      expect(result.current.overrideAmounts).toEqual({ m1: 50 });
+      expect(result.current.ceilingWarnings).toEqual({ m1: false });
+
+      act(() => {
+        result.current.resetToIncomeSplit();
+      });
+
+      // After reset: overrideAmounts cleared, effective share falls back to
+      // proportionalAmount (600), which exceeds remainingBalance (400)
+      expect(result.current.overrideAmounts).toEqual({});
+      expect(result.current.ceilingWarnings).toEqual({ m1: true });
+    });
+
+    it("a member with 0% income share is never flagged", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 0,
+            percentage: 0,
+            proportionalAmount: 0,
+            actualAmount: 0,
+            isOverridden: false,
+            remainingBalance: 100,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      expect(result.current.ceilingWarnings).toEqual({ m1: false });
+    });
+
+    it("flags a member whose ceiling is zero or negative when their share is positive", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "zero-ceiling",
+            share: 0.5,
+            percentage: 50,
+            proportionalAmount: 50,
+            actualAmount: 50,
+            isOverridden: false,
+            remainingBalance: 0,
+          },
+          {
+            memberId: "negative-ceiling",
+            share: 0.5,
+            percentage: 50,
+            proportionalAmount: 50,
+            actualAmount: 50,
+            isOverridden: false,
+            remainingBalance: -20,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      expect(result.current.ceilingWarnings).toEqual({
+        "zero-ceiling": true,
+        "negative-ceiling": true,
+      });
+    });
+
+    it("flags multiple over-ceiling members independently, with no interaction between them", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "over",
+            share: 0.5,
+            percentage: 50,
+            proportionalAmount: 500,
+            actualAmount: 500,
+            isOverridden: false,
+            remainingBalance: 400,
+          },
+          {
+            memberId: "under",
+            share: 0.3,
+            percentage: 30,
+            proportionalAmount: 100,
+            actualAmount: 100,
+            isOverridden: false,
+            remainingBalance: 400,
+          },
+          {
+            memberId: "also-over",
+            share: 0.2,
+            percentage: 20,
+            proportionalAmount: 600,
+            actualAmount: 600,
+            isOverridden: false,
+            remainingBalance: 50,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      expect(result.current.ceilingWarnings).toEqual({
+        over: true,
+        under: false,
+        "also-over": true,
+      });
+    });
+
+    it("flags an overdue lump-sum goal's member whose live-income share exceeds their ceiling", () => {
+      const overdueGoal: SavingsGoal = {
+        ...mockGoal,
+        targetDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        varianceMonths: -12,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 900,
+            actualAmount: 900,
+            isOverridden: false,
+            remainingBalance: 300,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal: overdueGoal });
+
+      expect(result.current.ceilingWarnings).toEqual({ m1: true });
+    });
+
+    it("reading ceilingWarnings never mutates overrideAmounts state", () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 500,
+            actualAmount: 500,
+            isOverridden: true,
+            remainingBalance: 400,
+          },
+        ],
+      };
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      const overridesBefore = result.current.overrideAmounts;
+      // access ceilingWarnings repeatedly (simulating multiple renders/reads)
+      void result.current.ceilingWarnings;
+      void result.current.ceilingWarnings;
+      rerender({ goal });
+
+      expect(result.current.overrideAmounts).toEqual(overridesBefore);
+      expect(result.current.overrideAmounts).toEqual({ m1: 500 });
+
+      act(() => {
+        result.current.overrideMember("m1", 999);
+      });
+
+      expect(result.current.overrideAmounts).toEqual({ m1: 999 });
+    });
   });
 });

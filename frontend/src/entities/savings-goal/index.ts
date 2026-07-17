@@ -8,6 +8,7 @@ export interface ContributionBreakdown {
   proportionalAmount: number;
   actualAmount: number;
   isOverridden: boolean;
+  remainingBalance: number;
   user?: User;
 }
 

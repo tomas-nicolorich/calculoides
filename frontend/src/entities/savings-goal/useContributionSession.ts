@@ -18,6 +18,7 @@ export interface ContributionSession {
   localProjectedMonths: number | null;
   localProjectedDate: Date | null;
   forecastColor: "neutral" | "green" | "amber" | "red";
+  ceilingWarnings: Record<string, boolean>;
   saveError: string | null;
   overrideMember(memberId: string, amount: number): void;
   resetToIncomeSplit(): void;
@@ -174,6 +175,20 @@ export function useContributionSession(
           ? "green"
           : "amber";
 
+  // Pure derived/selector value — NOT reducer state. Compares each member's
+  // effective share (override, falling back to the proportional income-split
+  // amount) against their live affordability ceiling (remainingBalance).
+  // Never reads or writes overrideAmounts beyond this lookup.
+  const ceilingWarnings: Record<string, boolean> = activeGoal
+    ? Object.fromEntries(
+        activeGoal.breakdown.map((b) => [
+          b.memberId,
+          (state.overrideAmounts[b.memberId] ?? b.proportionalAmount) >
+            b.remainingBalance,
+        ]),
+      )
+    : {};
+
   const overrideMember = useCallback((memberId: string, amount: number) => {
     dispatch({ type: "overrideAmount", memberId, amount });
   }, []);
@@ -224,6 +239,7 @@ export function useContributionSession(
     localProjectedMonths,
     localProjectedDate,
     forecastColor,
+    ceilingWarnings,
     saveError,
     overrideMember,
     resetToIncomeSplit,

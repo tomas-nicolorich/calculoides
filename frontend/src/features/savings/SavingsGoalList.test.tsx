@@ -56,6 +56,7 @@ const mockGoals = [
         share: 0.4,
         percentage: 40,
         isOverridden: false,
+        remainingBalance: 1000,
         user: { id: "user-1", name: "Alice", email: "alice@example.com" },
       },
     ],
