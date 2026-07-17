@@ -171,6 +171,7 @@ export const SavingsService = {
           memberId: s.id,
           user: memberInfo?.user,
           share: s.share,
+          percentage: s.percentage,
           proportionalAmount: base,
           actualAmount: override ? Number(override.customAmount) : base,
           isOverridden: !!override,
@@ -199,6 +200,8 @@ export const SavingsService = {
 
       return {
         ...goal,
+        targetAmount,
+        currentAmount,
         projectedDate,
         varianceMonths,
         isNever: months === Infinity,

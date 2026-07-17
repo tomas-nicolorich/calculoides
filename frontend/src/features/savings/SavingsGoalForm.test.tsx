@@ -62,6 +62,7 @@ const mockGoal = {
     {
       memberId: "member-1",
       share: 1,
+      percentage: 100,
       proportionalAmount: 100,
       actualAmount: 100,
       isOverridden: false,

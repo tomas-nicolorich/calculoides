@@ -54,6 +54,7 @@ const mockGoals = [
         proportionalAmount: 100,
         actualAmount: 100,
         share: 0.4,
+        percentage: 40,
         isOverridden: false,
         user: { id: "user-1", name: "Alice", email: "alice@example.com" },
       },
@@ -127,10 +128,8 @@ describe("SavingsGoalList", () => {
     render(<SavingsGoalList goals={goalsWithVariance} />);
 
     expect(screen.getByText(/Delayed 6mo/i)).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "data-state",
-      "behind",
-    );
+    const bar = screen.getByRole("progressbar").firstChild as HTMLElement;
+    expect(bar.style.background).toBe("var(--color-brand-transfer)");
   });
 
   it("displays the projected date and variance correctly", () => {
@@ -158,13 +157,12 @@ describe("SavingsGoalList", () => {
 
   it("renders the saved-so-far amount", () => {
     render(<SavingsGoalList goals={mockGoals} />);
-    expect(screen.getByText(/Saved so far/i)).toBeInTheDocument();
-    expect(screen.getByText("€0")).toBeInTheDocument();
+    expect(screen.getByText(/€0\.00 \/ €1,200\.00/)).toBeInTheDocument();
   });
 
   it("shows each member's income share percentage", () => {
     render(<SavingsGoalList goals={mockGoals} />);
-    expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.getByText("40.0%")).toBeInTheDocument();
   });
 
   it("shows the monthly allocation total in the section header", () => {
@@ -188,9 +186,7 @@ describe("SavingsGoalList", () => {
     render(<SavingsGoalList goals={neverGoals} />);
 
     expect(screen.getAllByText("Never").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("progressbar")).toHaveAttribute(
-      "data-state",
-      "blocked",
-    );
+    const bar = screen.getByRole("progressbar").firstChild as HTMLElement;
+    expect(bar.style.background).toBe("var(--color-brand-expense)");
   });
 });

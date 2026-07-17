@@ -24,6 +24,7 @@ vi.mock("@/shared/api/savingsHooks", () => ({
           {
             memberId: "user-1",
             share: 1,
+            percentage: 100,
             proportionalAmount: 50,
             actualAmount: 50,
             isOverridden: false,
@@ -55,7 +56,11 @@ describe("Savings Page", () => {
 
     // Check for Savings Goal Card (from SavingsGoalList)
     expect(screen.getByText(/New Sofa/i)).toBeInTheDocument();
-    expect(screen.getByText(/Target:/i)).toHaveTextContent(/2,000/);
+    expect(
+      screen.getByText(
+        (_, el) => el?.textContent.trim().startsWith("Target €") ?? false,
+      ),
+    ).toHaveTextContent(/2,000/);
 
     // Check for creation trigger button
     expect(

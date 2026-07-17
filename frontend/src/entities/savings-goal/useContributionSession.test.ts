@@ -48,6 +48,7 @@ const mockGoal: SavingsGoal = {
     {
       memberId: "m1",
       share: 0.625,
+      percentage: 62.5,
       proportionalAmount: 500,
       actualAmount: 600,
       isOverridden: true,
@@ -55,6 +56,7 @@ const mockGoal: SavingsGoal = {
     {
       memberId: "m2",
       share: 0.375,
+      percentage: 37.5,
       proportionalAmount: 300,
       actualAmount: 300,
       isOverridden: false,
@@ -197,6 +199,7 @@ describe("useContributionSession", () => {
         {
           memberId: "m1",
           share: 1,
+          percentage: 100,
           proportionalAmount: 800,
           actualAmount: 800,
           isOverridden: false,
@@ -217,6 +220,7 @@ describe("useContributionSession", () => {
         {
           memberId: "m1",
           share: 1,
+          percentage: 100,
           proportionalAmount: 0,
           actualAmount: 0,
           isOverridden: false,

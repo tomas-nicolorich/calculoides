@@ -4,6 +4,7 @@ import { apiClient } from "../../shared/api/client";
 export interface ContributionBreakdown {
   memberId: string;
   share: number;
+  percentage: number;
   proportionalAmount: number;
   actualAmount: number;
   isOverridden: boolean;
