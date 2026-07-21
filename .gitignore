@@ -187,3 +187,7 @@ headroom_memory.db
 data
 .memsearch
 .tokensave/
+.env*.local
+.codegraph/
+.atl/
+.gga

@@ -19,6 +19,14 @@ if (env === "test-local") {
     );
   }
 } else {
-  dotenv.config({ path: path.resolve(rootDir, ".env") });
-  console.log("Loaded local environment from .env");
+  const localEnvPath = path.resolve(rootDir, ".env.local");
+  if (fs.existsSync(localEnvPath)) {
+    dotenv.config({ path: localEnvPath });
+    console.log(`Loaded local environment from ${localEnvPath}`);
+  } else {
+    dotenv.config({ path: path.resolve(rootDir, ".env") });
+    console.warn(
+      `Local environment file not found at ${localEnvPath}, falling back to .env`,
+    );
+  }
 }
