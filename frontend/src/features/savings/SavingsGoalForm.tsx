@@ -1,7 +1,36 @@
 import { useState } from "react";
 import { Badge, Button, Input, UserDisplay } from "../../shared/ui";
-import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
+import {
+  savingsGoalApi,
+  SavingsGoal,
+  ContributionBreakdown,
+  diffContributionPersistence,
+} from "../../entities/savings-goal";
 import { useContributionSession } from "../../entities/savings-goal/useContributionSession";
+
+/**
+ * Persists only the intentionally-changed contribution overrides for a goal:
+ * upserts members present in `overrideAmounts`, deletes DB rows for members
+ * whose override was reset (issue #161 — untouched members are left alone).
+ */
+async function persistContributionOverrides(
+  goalId: string,
+  breakdown: ContributionBreakdown[],
+  overrideAmounts: Record<string, number>,
+) {
+  const { toUpsert, toDelete } = diffContributionPersistence(
+    breakdown,
+    overrideAmounts,
+  );
+  await Promise.all([
+    ...toUpsert.map((entry) =>
+      savingsGoalApi.upsertContribution(goalId, entry.memberId, entry.amount),
+    ),
+    ...toDelete.map((memberId) =>
+      savingsGoalApi.deleteContribution(goalId, memberId),
+    ),
+  ]);
+}
 import { cn } from "../../shared/lib/utils";
 import {
   CATEGORY_ICON_KEYS,
@@ -185,14 +214,10 @@ export function SavingsGoalForm({
 
     try {
       if (isAllocationOnly) {
-        await Promise.all(
-          goal.breakdown.map((item) =>
-            savingsGoalApi.upsertContribution(
-              goal.id,
-              item.memberId,
-              session.overrideAmounts[item.memberId] ?? item.proportionalAmount,
-            ),
-          ),
+        await persistContributionOverrides(
+          goal.id,
+          goal.breakdown,
+          session.overrideAmounts,
         );
       } else if (isEditing) {
         await savingsGoalApi.update(goal.id, {
@@ -202,14 +227,10 @@ export function SavingsGoalForm({
           currentAmount: Number(currentAmount),
           targetDate: new Date(`${targetDate}-01`).toISOString(),
         });
-        await Promise.all(
-          goal.breakdown.map((item) =>
-            savingsGoalApi.upsertContribution(
-              goal.id,
-              item.memberId,
-              session.overrideAmounts[item.memberId] ?? item.proportionalAmount,
-            ),
-          ),
+        await persistContributionOverrides(
+          goal.id,
+          goal.breakdown,
+          session.overrideAmounts,
         );
       } else {
         await savingsGoalApi.create(groupId, {

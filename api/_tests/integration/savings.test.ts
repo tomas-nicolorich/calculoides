@@ -31,6 +31,9 @@ vi.mock("../../_src/utils/prisma", () => ({
     transfer: {
       findMany: vi.fn(),
     },
+    savingsGoalContribution: {
+      deleteMany: vi.fn(),
+    },
   },
 }));
 
@@ -240,6 +243,97 @@ describe("Savings API Integration", () => {
       expect(bob?.isOverridden).toBe(true);
       // remainingBalance is independent of the override.
       expect(bob?.remainingBalance).toBe(360);
+    });
+  });
+
+  describe("DELETE /api/savings/contribution (savings-contribution-delete) — issue #161", () => {
+    const goalId = "550e8400-e29b-41d4-a716-446655440005";
+    const memberId = "550e8400-e29b-41d4-a716-446655440006";
+    const groupId = "550e8400-e29b-41d4-a716-446655440001";
+
+    it("deletes the contribution row, then a subsequent list recomputes actualAmount from live base (no getGoalsForGroup merge-logic change)", async () => {
+      vi.mocked(prisma.savingsGoal.findUnique).mockResolvedValue({
+        id: goalId,
+        groupId,
+      } as unknown as SavingsGoal);
+      vi.mocked(prisma.groupMember.findUnique).mockResolvedValue({
+        id: memberId,
+        groupId,
+      } as unknown as Awaited<
+        ReturnType<typeof prisma.groupMember.findUnique>
+      >);
+      vi.mocked(prisma.savingsGoalContribution.deleteMany).mockResolvedValue({
+        count: 1,
+      });
+
+      const deleteReq = {
+        method: "DELETE",
+        headers: { authorization: "Bearer mock-token" },
+        query: { action: "savings-contribution-delete", goalId, memberId },
+      } as unknown as ApiRequest;
+      const deleteRes = createMockResponse();
+
+      await transactionsHandler(deleteReq, deleteRes);
+
+      expect(
+        vi.mocked(prisma.savingsGoalContribution.deleteMany),
+      ).toHaveBeenCalledWith({ where: { goalId, memberId } });
+      expect(deleteRes.status).toHaveBeenCalledWith(204);
+
+      // Simulate the post-delete DB state: getGoalsForGroup's own findMany
+      // now returns no contribution row for this goal/member — the merge
+      // logic in SavingsService.getGoalsForGroup is untouched (design:
+      // "Backend getGoalsForGroup merge is unchanged — removing a row
+      // makes it recompute base").
+      const targetDate = new Date();
+      targetDate.setMonth(targetDate.getMonth() + 5);
+
+      vi.mocked(prisma.groupMember.findMany).mockResolvedValue([
+        {
+          id: memberId,
+          income: 1000 as unknown as Prisma.Decimal,
+          user: { name: "Dave", email: "dave@x.com" },
+        },
+      ] as unknown as Awaited<ReturnType<typeof prisma.groupMember.findMany>>);
+
+      vi.mocked(prisma.savingsGoal.findMany).mockResolvedValue([
+        {
+          id: goalId,
+          groupId,
+          name: "Trip",
+          icon: null,
+          targetAmount: 1200 as unknown as Prisma.Decimal,
+          currentAmount: 200 as unknown as Prisma.Decimal,
+          targetDate,
+          contributions: [], // row was deleted — no override remains
+        },
+      ] as unknown as Awaited<ReturnType<typeof prisma.savingsGoal.findMany>>);
+
+      vi.mocked(prisma.category.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.transfer.findMany).mockResolvedValue([]);
+
+      const listReq = {
+        method: "GET",
+        headers: { authorization: "Bearer mock-token" },
+        query: { groupId, action: "savings-goals-list" },
+      } as unknown as ApiRequest;
+      const listRes = createMockResponse();
+
+      await transactionsHandler(listReq, listRes);
+
+      const body = vi.mocked(listRes.json).mock.calls[0][0] as {
+        breakdown: {
+          memberId: string;
+          proportionalAmount: number;
+          actualAmount: number;
+          isOverridden: boolean;
+        }[];
+      }[];
+
+      const member = body[0].breakdown.find((b) => b.memberId === memberId);
+      expect(member?.isOverridden).toBe(false);
+      expect(member?.actualAmount).toBe(member?.proportionalAmount);
     });
   });
 });

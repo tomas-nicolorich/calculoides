@@ -13,6 +13,7 @@ import type {
   SessionStartSnapshot,
 } from "./index";
 import { savingsGoalApi } from "./index";
+import { diffContributionPersistence } from "./contributionDiff";
 
 export interface ContributionSession {
   phase: ContributionSessionPhase;
@@ -208,15 +209,22 @@ export function useContributionSession(
     dispatch({ type: "saveStart" });
     setSaveError(null);
     try {
-      await Promise.all(
-        activeGoal.breakdown.map((b) =>
+      const { toUpsert, toDelete } = diffContributionPersistence(
+        activeGoal.breakdown,
+        state.overrideAmounts,
+      );
+      await Promise.all([
+        ...toUpsert.map((entry) =>
           savingsGoalApi.upsertContribution(
             activeGoal.id,
-            b.memberId,
-            state.overrideAmounts[b.memberId] ?? b.proportionalAmount,
+            entry.memberId,
+            entry.amount,
           ),
         ),
-      );
+        ...toDelete.map((memberId) =>
+          savingsGoalApi.deleteContribution(activeGoal.id, memberId),
+        ),
+      ]);
       dispatch({ type: "saveSuccess" });
       setSaveError(null);
       return true;

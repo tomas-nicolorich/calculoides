@@ -325,4 +325,29 @@ export const SavingsService = {
       where: { id: goalId },
     });
   },
+
+  /**
+   * Deletes a custom contribution override for a goal/member pair, so the
+   * member's actualAmount reverts to the computed proportional base on the
+   * next read. Idempotent: a no-op (no throw) when no override row exists.
+   */
+  async deleteContribution(goalId: string, memberId: string) {
+    const [goal, member] = await Promise.all([
+      prisma.savingsGoal.findUnique({ where: { id: goalId } }),
+      prisma.groupMember.findUnique({ where: { id: memberId } }),
+    ]);
+
+    if (!goal) throw new Error("Savings goal not found");
+    if (!member) throw new Error("Group member not found");
+
+    if (goal.groupId !== member.groupId) {
+      throw new Error(
+        "Member does not belong to the group associated with this savings goal",
+      );
+    }
+
+    await prisma.savingsGoalContribution.deleteMany({
+      where: { goalId, memberId },
+    });
+  },
 };

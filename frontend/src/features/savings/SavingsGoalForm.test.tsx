@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 function getMonthInput(container: HTMLElement): HTMLInputElement {
@@ -10,7 +10,7 @@ function getMonthInput(container: HTMLElement): HTMLInputElement {
 }
 import { SavingsGoalForm } from "./SavingsGoalForm";
 import { savingsGoalApi } from "../../entities/savings-goal";
-import { vi, describe, it, expect } from "vitest";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 vi.mock("../../shared/api/supabase", () => ({
   supabase: {
@@ -32,6 +32,7 @@ vi.mock("../../entities/savings-goal", async (importOriginal) => {
       create: vi.fn().mockResolvedValue({}),
       update: vi.fn().mockResolvedValue({}),
       upsertContribution: vi.fn().mockResolvedValue(undefined),
+      deleteContribution: vi.fn().mockResolvedValue(undefined),
     },
   };
 });
@@ -73,6 +74,10 @@ const mockGoal = {
 };
 
 describe("SavingsGoalForm", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders label elements with font-medium (not font-bold)", () => {
     render(<SavingsGoalForm groupId="group-1" />);
 
@@ -103,7 +108,7 @@ describe("SavingsGoalForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("saves metadata and allocation overrides together on submit", async () => {
+  it("saves metadata and an explicitly edited allocation override together on submit", async () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();
     render(
@@ -114,6 +119,12 @@ describe("SavingsGoalForm", () => {
       />,
     );
 
+    // Editing the allocation input records an explicit override for this
+    // member (issue #161: only members with an explicit override entry are
+    // persisted on save — an untouched member gets no upsert call).
+    const input = screen.getByRole("spinbutton", { name: /Alice/i });
+    fireEvent.change(input, { target: { value: "150" } });
+
     await user.click(screen.getByRole("button", { name: /update goal/i }));
 
     await waitFor(() => {
@@ -121,10 +132,23 @@ describe("SavingsGoalForm", () => {
       expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
         "goal-1",
         "member-1",
-        100,
+        150,
       );
       expect(onSuccess).toHaveBeenCalled();
     });
+  });
+
+  it("does not persist an override for a member left untouched on submit (issue #161)", async () => {
+    const user = userEvent.setup();
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
+
+    await user.click(screen.getByRole("button", { name: /update goal/i }));
+
+    await waitFor(() => {
+      expect(savingsGoalApi.update).toHaveBeenCalled();
+    });
+    expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
+    expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
   });
 
   it("submit button stays enabled after clearing an allocation input to 0", async () => {
@@ -186,6 +210,179 @@ describe("SavingsGoalForm", () => {
         "goal-1",
         expect.objectContaining({ icon: "transport" }),
       );
+    });
+  });
+
+  describe("scoped override persistence on save (issue #161)", () => {
+    const scopedGoal = {
+      ...mockGoal,
+      breakdown: [
+        {
+          memberId: "untouched-member",
+          share: 0.4,
+          percentage: 40,
+          proportionalAmount: 100,
+          actualAmount: 100,
+          isOverridden: false,
+          remainingBalance: 1000,
+          user: { id: "user-1", name: "Alice", email: "alice@example.com" },
+        },
+        {
+          memberId: "edited-member",
+          share: 0.6,
+          percentage: 60,
+          proportionalAmount: 150,
+          actualAmount: 150,
+          isOverridden: false,
+          remainingBalance: 1000,
+          user: { id: "user-2", name: "Bob", email: "bob@example.com" },
+        },
+      ],
+    };
+
+    const resetGoal = {
+      ...mockGoal,
+      breakdown: [
+        {
+          memberId: "reset-member",
+          share: 1,
+          percentage: 100,
+          proportionalAmount: 200,
+          actualAmount: 350,
+          isOverridden: true,
+          remainingBalance: 1000,
+          user: { id: "user-3", name: "Carol", email: "carol@example.com" },
+        },
+      ],
+    };
+
+    it("isEditing branch: only the edited member is upserted, the untouched member gets no call", async () => {
+      const user = userEvent.setup();
+      render(<SavingsGoalForm groupId="group-1" goal={scopedGoal} />);
+
+      const input = screen.getByRole("spinbutton", { name: /Bob/i });
+      fireEvent.change(input, { target: { value: "300" } });
+
+      await user.click(screen.getByRole("button", { name: /update goal/i }));
+
+      await waitFor(() => {
+        expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
+          "goal-1",
+          "edited-member",
+          300,
+        );
+      });
+      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalledWith(
+        "goal-1",
+        "untouched-member",
+        expect.anything(),
+      );
+      expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
+    });
+
+    it("isEditing branch: a member reset then saved deletes the prior override row", async () => {
+      const user = userEvent.setup();
+      render(<SavingsGoalForm groupId="group-1" goal={resetGoal} />);
+
+      await user.click(
+        screen.getByRole("button", { name: /reset to income split/i }),
+      );
+      await user.click(screen.getByRole("button", { name: /update goal/i }));
+
+      await waitFor(() => {
+        expect(savingsGoalApi.deleteContribution).toHaveBeenCalledWith(
+          "goal-1",
+          "reset-member",
+        );
+      });
+      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
+    });
+
+    it("isAllocationOnly branch: only the edited member is upserted, the untouched member gets no call", async () => {
+      const user = userEvent.setup();
+      render(
+        <SavingsGoalForm
+          groupId="group-1"
+          goal={scopedGoal}
+          mode="allocation"
+        />,
+      );
+
+      const input = screen.getByRole("spinbutton", { name: /Bob/i });
+      fireEvent.change(input, { target: { value: "300" } });
+
+      await user.click(
+        screen.getByRole("button", { name: /save allocation/i }),
+      );
+
+      await waitFor(() => {
+        expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
+          "goal-1",
+          "edited-member",
+          300,
+        );
+      });
+      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalledWith(
+        "goal-1",
+        "untouched-member",
+        expect.anything(),
+      );
+      expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
+    });
+
+    it("isAllocationOnly branch: a member reset then saved deletes the prior override row", async () => {
+      const user = userEvent.setup();
+      render(
+        <SavingsGoalForm
+          groupId="group-1"
+          goal={resetGoal}
+          mode="allocation"
+        />,
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /reset to income split/i }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: /save allocation/i }),
+      );
+
+      await waitFor(() => {
+        expect(savingsGoalApi.deleteContribution).toHaveBeenCalledWith(
+          "goal-1",
+          "reset-member",
+        );
+      });
+      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
+    });
+
+    it("regression: undo reset before save re-upserts the restored value instead of deleting, and leaves proportional/percentage computed fields untouched (#159/#160)", async () => {
+      const user = userEvent.setup();
+      render(<SavingsGoalForm groupId="group-1" goal={resetGoal} />);
+
+      await user.click(
+        screen.getByRole("button", { name: /reset to income split/i }),
+      );
+      await user.click(screen.getByRole("button", { name: /undo reset/i }));
+
+      // Non-regression guard: undoing a reset must not touch the
+      // months-remaining (#159) or share/percentage (#160) computed
+      // fields — the input still reflects the original override value
+      // (actualAmount 350), proving proportionalAmount/percentage math
+      // was never recalculated by the reset/undo cycle.
+      const input = screen.getByRole("spinbutton", { name: /Carol/i });
+      expect(input).toHaveValue(350);
+
+      await user.click(screen.getByRole("button", { name: /update goal/i }));
+
+      await waitFor(() => {
+        expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
+          "goal-1",
+          "reset-member",
+          350,
+        );
+      });
+      expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
     });
   });
 

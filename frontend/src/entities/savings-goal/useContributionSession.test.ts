@@ -7,6 +7,8 @@ const mockUpsertContribution =
   vi.fn<
     (goalId: string, memberId: string, amount: number) => Promise<undefined>
   >();
+const mockDeleteContribution =
+  vi.fn<(goalId: string, memberId: string) => Promise<undefined>>();
 
 vi.mock("./index", async (importOriginal) => {
   const module = await importOriginal<typeof import("./index")>();
@@ -16,6 +18,8 @@ vi.mock("./index", async (importOriginal) => {
       ...module.savingsGoalApi,
       upsertContribution: (goalId: string, memberId: string, amount: number) =>
         mockUpsertContribution(goalId, memberId, amount),
+      deleteContribution: (goalId: string, memberId: string) =>
+        mockDeleteContribution(goalId, memberId),
     },
   };
 });
@@ -77,6 +81,7 @@ describe("useContributionSession", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsertContribution.mockResolvedValue(undefined);
+    mockDeleteContribution.mockResolvedValue(undefined);
   });
 
   it("sessionStart seeds overrideAmounts from snapshot and initializes sessionStartSnapshot with preResetSnapshot null", () => {
@@ -168,6 +173,149 @@ describe("useContributionSession", () => {
 
     expect(result.current.phase).toBe("idle");
     expect(result.current.saveError).toBeNull();
+  });
+
+  describe("saveSession scoping (issue #161: only intentional edits persist)", () => {
+    it("only upserts members present in overrideAmounts, not every breakdown member", async () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "untouched",
+            share: 0.5,
+            percentage: 50,
+            proportionalAmount: 100,
+            actualAmount: 100,
+            isOverridden: false,
+            remainingBalance: 1000,
+          },
+          {
+            memberId: "edited",
+            share: 0.5,
+            percentage: 50,
+            proportionalAmount: 100,
+            actualAmount: 100,
+            isOverridden: false,
+            remainingBalance: 1000,
+          },
+        ],
+      };
+
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      act(() => {
+        result.current.overrideMember("edited", 250);
+      });
+
+      await act(async () => {
+        await result.current.saveSession();
+      });
+
+      expect(mockUpsertContribution).toHaveBeenCalledTimes(1);
+      expect(mockUpsertContribution).toHaveBeenCalledWith(
+        "goal-1",
+        "edited",
+        250,
+      );
+      expect(mockDeleteContribution).not.toHaveBeenCalled();
+    });
+
+    it("deletes the override row for a member reset then saved (not undone)", async () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 500,
+            actualAmount: 600,
+            isOverridden: true,
+            remainingBalance: 1000,
+          },
+        ],
+      };
+
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      act(() => {
+        result.current.resetToIncomeSplit();
+      });
+
+      await act(async () => {
+        await result.current.saveSession();
+      });
+
+      expect(mockDeleteContribution).toHaveBeenCalledWith("goal-1", "m1");
+      expect(mockUpsertContribution).not.toHaveBeenCalled();
+    });
+
+    it("upserts the restored value when a reset is undone before save, instead of deleting", async () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 500,
+            actualAmount: 600,
+            isOverridden: true,
+            remainingBalance: 1000,
+          },
+        ],
+      };
+
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      act(() => {
+        result.current.resetToIncomeSplit();
+      });
+      act(() => {
+        result.current.undoReset();
+      });
+
+      await act(async () => {
+        await result.current.saveSession();
+      });
+
+      expect(mockUpsertContribution).toHaveBeenCalledWith("goal-1", "m1", 600);
+      expect(mockDeleteContribution).not.toHaveBeenCalled();
+    });
+
+    it("makes no delete call for a reset member that had no pre-existing override row", async () => {
+      const goal: SavingsGoal = {
+        ...mockGoal,
+        breakdown: [
+          {
+            memberId: "m1",
+            share: 1,
+            percentage: 100,
+            proportionalAmount: 500,
+            actualAmount: 500,
+            isOverridden: false,
+            remainingBalance: 1000,
+          },
+        ],
+      };
+
+      const { result, rerender } = makeHook();
+      rerender({ goal });
+
+      act(() => {
+        result.current.resetToIncomeSplit();
+      });
+
+      await act(async () => {
+        await result.current.saveSession();
+      });
+
+      expect(mockDeleteContribution).not.toHaveBeenCalled();
+      expect(mockUpsertContribution).not.toHaveBeenCalled();
+    });
   });
 
   it("saveSession failure sets saveError and keeps phase editing", async () => {

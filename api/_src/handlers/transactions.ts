@@ -321,6 +321,22 @@ export const routes: RouteConfig = {
     );
     res.status(200).json(contribution);
   },
+  "savings-contribution-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const { goalId, memberId } = req.query;
+    if (
+      !goalId ||
+      typeof goalId !== "string" ||
+      !memberId ||
+      typeof memberId !== "string"
+    ) {
+      res.status(400).json({ error: "Missing goalId or memberId" });
+      return;
+    }
+    const validatedGoalId = IdSchema.parse(goalId);
+    const validatedMemberId = IdSchema.parse(memberId);
+    await SavingsService.deleteContribution(validatedGoalId, validatedMemberId);
+    res.status(204).end();
+  },
   "savings-goals-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
@@ -591,6 +607,24 @@ routes.savings = async (req: ApiRequest, res: ApiResponse) => {
     actionKey = "savings-goal-update";
   } else if (method === "DELETE") {
     actionKey = "savings-goal-delete";
+  }
+
+  const handler = routes[actionKey];
+  if (handler) {
+    return handler(req, res);
+  }
+
+  res.status(405).json({ error: "Method not allowed" });
+};
+
+routes["savings-contribution"] = async (req: ApiRequest, res: ApiResponse) => {
+  const method = req.method;
+  let actionKey = "";
+
+  if (method === "POST") {
+    actionKey = "savings-contribution-upsert";
+  } else if (method === "DELETE") {
+    actionKey = "savings-contribution-delete";
   }
 
   const handler = routes[actionKey];

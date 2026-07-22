@@ -1,6 +1,11 @@
 import type { User } from "../../shared/api/types";
 import { apiClient } from "../../shared/api/client";
 
+export {
+  diffContributionPersistence,
+  type ContributionPersistenceDiff,
+} from "./contributionDiff";
+
 export interface ContributionBreakdown {
   memberId: string;
   share: number;
@@ -87,6 +92,13 @@ export const savingsGoalApi = {
       {
         method: "POST",
         body: JSON.stringify({ amount }),
+      },
+    ),
+  deleteContribution: (goalId: string, memberId: string) =>
+    apiClient.fetch<undefined>(
+      `/savings/contribution?goalId=${goalId}&memberId=${memberId}`,
+      {
+        method: "DELETE",
       },
     ),
   delete: (goalId: string) =>

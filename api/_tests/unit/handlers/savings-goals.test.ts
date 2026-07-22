@@ -122,4 +122,94 @@ describe("Savings Goal Handlers", () => {
       expect(statusMock).toHaveBeenCalledWith(204);
     });
   });
+
+  describe("savings-contribution dispatcher", () => {
+    const goalId = "550e8400-e29b-41d4-a716-446655440000";
+    const memberId = "550e8400-e29b-41d4-a716-446655440001";
+
+    it("routes POST to savings-contribution-upsert", async () => {
+      mockedSavingsService.upsertContribution.mockResolvedValue({
+        goalId,
+        memberId,
+        customAmount: 42,
+      });
+      req = {
+        method: "POST",
+        query: { action: "savings-contribution", goalId, memberId },
+        body: { amount: 42 },
+      };
+
+      await transactionsHandler(req as ApiRequest, res as ApiResponse);
+
+      expect(mockedSavingsService.upsertContribution).toHaveBeenCalledWith(
+        goalId,
+        memberId,
+        42,
+      );
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it("routes DELETE to savings-contribution-delete", async () => {
+      mockedSavingsService.deleteContribution.mockResolvedValue(undefined);
+      req = {
+        method: "DELETE",
+        query: { action: "savings-contribution", goalId, memberId },
+      };
+
+      await transactionsHandler(req as ApiRequest, res as ApiResponse);
+
+      expect(mockedSavingsService.deleteContribution).toHaveBeenCalledWith(
+        goalId,
+        memberId,
+      );
+      expect(statusMock).toHaveBeenCalledWith(204);
+    });
+
+    it("returns 405 for unsupported methods", async () => {
+      req = {
+        method: "PUT",
+        query: { action: "savings-contribution", goalId, memberId },
+      };
+
+      await transactionsHandler(req as ApiRequest, res as ApiResponse);
+
+      expect(statusMock).toHaveBeenCalledWith(405);
+      expect(jsonMock).toHaveBeenCalledWith({ error: "Method not allowed" });
+    });
+  });
+
+  describe("savings-contribution-delete", () => {
+    it("deletes the contribution for a valid goalId/memberId pair", async () => {
+      const goalId = "550e8400-e29b-41d4-a716-446655440002";
+      const memberId = "550e8400-e29b-41d4-a716-446655440003";
+      mockedSavingsService.deleteContribution.mockResolvedValue(undefined);
+      req = {
+        query: { action: "savings-contribution-delete", goalId, memberId },
+      };
+
+      await transactionsHandler(req as ApiRequest, res as ApiResponse);
+
+      expect(mockedSavingsService.deleteContribution).toHaveBeenCalledWith(
+        goalId,
+        memberId,
+      );
+      expect(statusMock).toHaveBeenCalledWith(204);
+    });
+
+    it("returns 400 if goalId or memberId is missing", async () => {
+      req = {
+        query: {
+          action: "savings-contribution-delete",
+          goalId: "550e8400-e29b-41d4-a716-446655440002",
+        },
+      };
+
+      await transactionsHandler(req as ApiRequest, res as ApiResponse);
+
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith({
+        error: "Missing goalId or memberId",
+      });
+    });
+  });
 });
