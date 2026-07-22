@@ -51,10 +51,10 @@ describe("addMonths", () => {
 });
 
 describe("calculateMonthsRemaining", () => {
-  it("E1: multi-month goal excludes the elapsed and deadline months (rawDiff 13 -> 12)", () => {
+  it("E1: multi-month goal with matching day-of-month counts every full elapsed month (rawDiff 13, day match -> 13)", () => {
     const now = new Date(2026, 6, 17); // July 17, 2026
     const target = new Date(2027, 7, 17); // August 17, 2027
-    expect(calculateMonthsRemaining(now, target)).toBe(12);
+    expect(calculateMonthsRemaining(now, target)).toBe(13);
   });
 
   it("E2: target exactly one calendar month out hits the lump-sum boundary (rawDiff 1 -> 0)", () => {
@@ -63,25 +63,25 @@ describe("calculateMonthsRemaining", () => {
     expect(calculateMonthsRemaining(now, target)).toBe(0);
   });
 
-  it("E3: target within the current month returns a negative value (rawDiff 0 -> -1)", () => {
+  it("E3: target later in the current month returns 0, still triggering lump-sum (rawDiff 0 -> 0)", () => {
     const now = new Date(2026, 6, 17); // July 17, 2026
     const target = new Date(2026, 6, 25); // July 25, 2026
-    expect(calculateMonthsRemaining(now, target)).toBe(-1);
+    expect(calculateMonthsRemaining(now, target)).toBe(0);
   });
 
   it("E4/E5: axis-consistency with calculateProjectedMonths' contribution-opportunity count", () => {
     const now = new Date(2026, 0, 1); // Jan 1, 2026
-    const target = new Date(2027, 1, 1); // Feb 1, 2027 (rawDiff 13 -> 12 opportunities)
-    expect(calculateMonthsRemaining(now, target)).toBe(12);
+    const target = new Date(2027, 1, 1); // Feb 1, 2027 (day matches -> full 13 months elapsed)
+    expect(calculateMonthsRemaining(now, target)).toBe(13);
 
-    // E4 on-pace: closing 12000 at 1000/mo needs exactly the 12 opportunities offered
-    const onPaceProjected = calculateProjectedMonths(12000, 0, 1000);
-    expect(onPaceProjected).toBe(12);
+    // E4 on-pace: closing 13000 at 1000/mo needs exactly the 13 months offered
+    const onPaceProjected = calculateProjectedMonths(13000, 0, 1000);
+    expect(onPaceProjected).toBe(13);
     expect(onPaceProjected).toBe(calculateMonthsRemaining(now, target));
 
-    // E5 just-behind: closing 13000 at 1000/mo needs 13 opportunities, but only 12 are offered
-    const behindProjected = calculateProjectedMonths(13000, 0, 1000);
-    expect(behindProjected).toBe(13);
+    // E5 just-behind: closing 14000 at 1000/mo needs 14 months, but only 13 are available
+    const behindProjected = calculateProjectedMonths(14000, 0, 1000);
+    expect(behindProjected).toBe(14);
     expect(behindProjected).toBeGreaterThan(
       calculateMonthsRemaining(now, target),
     );

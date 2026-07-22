@@ -56,7 +56,7 @@ describe("Savings Logic", () => {
     it("should fall back to lump-sum when the target date is within the current month", () => {
       const targetAmount = 1200;
       const currentAmount = 200; // 1000 left to save
-      const targetDate = new Date(); // same month as "now" -> corrected -1 -> lump sum
+      const targetDate = new Date(); // same day as "now" -> no correction, rawDiff 0 -> lump sum
 
       const contributions = calculateSavingsContributions(
         targetAmount,

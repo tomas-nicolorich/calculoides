@@ -138,7 +138,8 @@ describe("Savings API Integration", () => {
       contributions: { memberId: string; customAmount: number }[],
     ) {
       const targetDate = new Date();
-      targetDate.setMonth(targetDate.getMonth() + 5);
+      targetDate.setDate(1); // anchor to day=1 to avoid month-rollover flakiness
+      targetDate.setMonth(targetDate.getMonth() + 5); // raw diff 5 -> corrected 4 months -> 250/month total
 
       vi.mocked(prisma.groupMember.findMany).mockResolvedValue([
         {
