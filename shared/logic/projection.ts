@@ -10,17 +10,17 @@ export function calculateProjectedMonths(
 }
 
 /**
- * Full calendar months elapsed between now and targetDate, day-of-month
- * aware. Only excludes the trailing partial month when targetDate's
- * day-of-month is earlier than now's — i.e. the last month hasn't fully
- * elapsed yet. Single source of truth consumed by both the contribution
- * divisor and the variance/forecast comparison sites.
+ * Calendar-months remaining until targetDate, adjusted to count only full
+ * contribution opportunities: excludes the current partially-elapsed month
+ * and the deadline month itself. Single source of truth consumed by both
+ * the contribution divisor and the variance/forecast comparison sites.
  */
 export function calculateMonthsRemaining(now: Date, targetDate: Date): number {
-  const rawDiff =
+  return (
     (targetDate.getFullYear() - now.getFullYear()) * 12 +
-    (targetDate.getMonth() - now.getMonth());
-  return targetDate.getDate() < now.getDate() ? rawDiff - 1 : rawDiff;
+    (targetDate.getMonth() - now.getMonth()) -
+    1
+  );
 }
 
 export function addMonths(date: Date, months: number): Date {
