@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 function getMonthInput(container: HTMLElement): HTMLInputElement {
@@ -99,16 +99,19 @@ describe("SavingsGoalForm", () => {
     expect(screen.queryByText("Monthly Allocation")).not.toBeInTheDocument();
   });
 
-  it("renders per-member allocation inputs when editing an existing goal", () => {
+  it("does not render an allocation section when editing an existing goal — allocation editing lives only in InlineAllocationEditor", () => {
     render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
 
-    expect(screen.getByText("Monthly Allocation")).toBeInTheDocument();
+    expect(screen.queryByText("Monthly Allocation")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("spinbutton", { name: /Alice/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("spinbutton", { name: /Alice/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/reset to income split/i),
+    ).not.toBeInTheDocument();
   });
 
-  it("saves metadata and an explicitly edited allocation override together on submit", async () => {
+  it("submits a metadata-only update — no contribution override calls are made", async () => {
     const user = userEvent.setup();
     const onSuccess = vi.fn();
     render(
@@ -119,48 +122,17 @@ describe("SavingsGoalForm", () => {
       />,
     );
 
-    // Editing the allocation input records an explicit override for this
-    // member (issue #161: only members with an explicit override entry are
-    // persisted on save — an untouched member gets no upsert call).
-    const input = screen.getByRole("spinbutton", { name: /Alice/i });
-    fireEvent.change(input, { target: { value: "150" } });
-
     await user.click(screen.getByRole("button", { name: /update goal/i }));
 
     await waitFor(() => {
-      expect(savingsGoalApi.update).toHaveBeenCalled();
-      expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
+      expect(savingsGoalApi.update).toHaveBeenCalledWith(
         "goal-1",
-        "member-1",
-        150,
+        expect.objectContaining({ name: "Vacation" }),
       );
       expect(onSuccess).toHaveBeenCalled();
     });
-  });
-
-  it("does not persist an override for a member left untouched on submit (issue #161)", async () => {
-    const user = userEvent.setup();
-    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
-
-    await user.click(screen.getByRole("button", { name: /update goal/i }));
-
-    await waitFor(() => {
-      expect(savingsGoalApi.update).toHaveBeenCalled();
-    });
     expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
     expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
-  });
-
-  it("submit button stays enabled after clearing an allocation input to 0", async () => {
-    const user = userEvent.setup();
-    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
-
-    const input = screen.getByRole("spinbutton", { name: /Alice/i });
-    await user.clear(input);
-    await user.type(input, "0");
-
-    const saveButton = screen.getByRole("button", { name: /update goal/i });
-    expect(saveButton).not.toBeDisabled();
   });
 
   it("renders icon picker tiles and selects one on click", async () => {
@@ -213,189 +185,6 @@ describe("SavingsGoalForm", () => {
     });
   });
 
-  describe("scoped override persistence on save (issue #161)", () => {
-    const scopedGoal = {
-      ...mockGoal,
-      breakdown: [
-        {
-          memberId: "untouched-member",
-          share: 0.4,
-          percentage: 40,
-          proportionalAmount: 100,
-          actualAmount: 100,
-          isOverridden: false,
-          remainingBalance: 1000,
-          user: { id: "user-1", name: "Alice", email: "alice@example.com" },
-        },
-        {
-          memberId: "edited-member",
-          share: 0.6,
-          percentage: 60,
-          proportionalAmount: 150,
-          actualAmount: 150,
-          isOverridden: false,
-          remainingBalance: 1000,
-          user: { id: "user-2", name: "Bob", email: "bob@example.com" },
-        },
-      ],
-    };
-
-    const resetGoal = {
-      ...mockGoal,
-      breakdown: [
-        {
-          memberId: "reset-member",
-          share: 1,
-          percentage: 100,
-          proportionalAmount: 200,
-          actualAmount: 350,
-          isOverridden: true,
-          remainingBalance: 1000,
-          user: { id: "user-3", name: "Carol", email: "carol@example.com" },
-        },
-      ],
-    };
-
-    it("isEditing branch: only the edited member is upserted, the untouched member gets no call", async () => {
-      const user = userEvent.setup();
-      render(<SavingsGoalForm groupId="group-1" goal={scopedGoal} />);
-
-      const input = screen.getByRole("spinbutton", { name: /Bob/i });
-      fireEvent.change(input, { target: { value: "300" } });
-
-      await user.click(screen.getByRole("button", { name: /update goal/i }));
-
-      await waitFor(() => {
-        expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
-          "goal-1",
-          "edited-member",
-          300,
-        );
-      });
-      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalledWith(
-        "goal-1",
-        "untouched-member",
-        expect.anything(),
-      );
-      expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
-    });
-
-    it("isEditing branch: a member reset then saved deletes the prior override row", async () => {
-      const user = userEvent.setup();
-      render(<SavingsGoalForm groupId="group-1" goal={resetGoal} />);
-
-      await user.click(
-        screen.getByRole("button", { name: /reset to income split/i }),
-      );
-      await user.click(screen.getByRole("button", { name: /update goal/i }));
-
-      await waitFor(() => {
-        expect(savingsGoalApi.deleteContribution).toHaveBeenCalledWith(
-          "goal-1",
-          "reset-member",
-        );
-      });
-      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
-    });
-
-    it("isAllocationOnly branch: only the edited member is upserted, the untouched member gets no call", async () => {
-      const user = userEvent.setup();
-      render(
-        <SavingsGoalForm
-          groupId="group-1"
-          goal={scopedGoal}
-          mode="allocation"
-        />,
-      );
-
-      const input = screen.getByRole("spinbutton", { name: /Bob/i });
-      fireEvent.change(input, { target: { value: "300" } });
-
-      await user.click(
-        screen.getByRole("button", { name: /save allocation/i }),
-      );
-
-      await waitFor(() => {
-        expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
-          "goal-1",
-          "edited-member",
-          300,
-        );
-      });
-      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalledWith(
-        "goal-1",
-        "untouched-member",
-        expect.anything(),
-      );
-      expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
-    });
-
-    it("isAllocationOnly branch: a member reset then saved deletes the prior override row", async () => {
-      const user = userEvent.setup();
-      render(
-        <SavingsGoalForm
-          groupId="group-1"
-          goal={resetGoal}
-          mode="allocation"
-        />,
-      );
-
-      await user.click(
-        screen.getByRole("button", { name: /reset to income split/i }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: /save allocation/i }),
-      );
-
-      await waitFor(() => {
-        expect(savingsGoalApi.deleteContribution).toHaveBeenCalledWith(
-          "goal-1",
-          "reset-member",
-        );
-      });
-      expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
-    });
-
-    it("regression: undo reset before save re-upserts the restored value instead of deleting, and leaves proportional/percentage computed fields untouched (#159/#160)", async () => {
-      const user = userEvent.setup();
-      render(<SavingsGoalForm groupId="group-1" goal={resetGoal} />);
-
-      await user.click(
-        screen.getByRole("button", { name: /reset to income split/i }),
-      );
-      await user.click(screen.getByRole("button", { name: /undo reset/i }));
-
-      // Non-regression guard: undoing a reset must not touch the
-      // months-remaining (#159) or share/percentage (#160) computed
-      // fields — the input still reflects the original override value
-      // (actualAmount 350), proving proportionalAmount/percentage math
-      // was never recalculated by the reset/undo cycle.
-      const input = screen.getByRole("spinbutton", { name: /Carol/i });
-      expect(input).toHaveValue(350);
-
-      await user.click(screen.getByRole("button", { name: /update goal/i }));
-
-      await waitFor(() => {
-        expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
-          "goal-1",
-          "reset-member",
-          350,
-        );
-      });
-      expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
-    });
-  });
-
-  it("renders the allocation hint text when editing a goal with breakdown", () => {
-    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
-
-    expect(
-      screen.getByText(
-        /Editing a member's monthly amount recalculates the projected completion date\./i,
-      ),
-    ).toBeInTheDocument();
-  });
-
   it("renders month input with YYYY-MM value derived from goal.targetDate", () => {
     const { container } = render(
       <SavingsGoalForm groupId="group-1" goal={mockGoal} />,
@@ -404,80 +193,6 @@ describe("SavingsGoalForm", () => {
     const monthInput = getMonthInput(container);
     expect(monthInput).not.toBeNull();
     expect(monthInput.value).toBe("2026-12");
-  });
-
-  it("does not render an over-ceiling badge when the member's share is within their remaining balance", () => {
-    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
-
-    expect(screen.queryByText(/over balance/i)).not.toBeInTheDocument();
-  });
-
-  it("renders an amber over-ceiling badge only on the member row whose share exceeds their remaining balance", () => {
-    const goalWithWarning = {
-      ...mockGoal,
-      breakdown: [
-        {
-          memberId: "member-1",
-          share: 0.6,
-          percentage: 60,
-          proportionalAmount: 500,
-          actualAmount: 500,
-          isOverridden: false,
-          remainingBalance: 400,
-          user: { id: "user-1", name: "Alice", email: "alice@example.com" },
-        },
-        {
-          memberId: "member-2",
-          share: 0.4,
-          percentage: 40,
-          proportionalAmount: 100,
-          actualAmount: 100,
-          isOverridden: false,
-          remainingBalance: 400,
-          user: { id: "user-2", name: "Bob", email: "bob@example.com" },
-        },
-      ],
-    };
-
-    render(<SavingsGoalForm groupId="group-1" goal={goalWithWarning} />);
-
-    const badges = screen.getAllByText(/over balance/i);
-    expect(badges).toHaveLength(1);
-
-    const badge = badges[0];
-    expect(badge).toHaveAttribute("title", "Exceeds available balance");
-
-    const aliceRow = screen.getByRole("spinbutton", {
-      name: /alice/i,
-    }).parentElement;
-    const bobRow = screen.getByRole("spinbutton", {
-      name: /bob/i,
-    }).parentElement;
-    expect(aliceRow).toContainElement(badge);
-    expect(bobRow).not.toContainElement(badge);
-  });
-
-  it("keeps the allocation input value driven by overrideAmounts/proportionalAmount unaffected by the warning badge", () => {
-    const goalWithWarning = {
-      ...mockGoal,
-      breakdown: [
-        {
-          memberId: "member-1",
-          share: 1,
-          percentage: 100,
-          proportionalAmount: 500,
-          actualAmount: 500,
-          isOverridden: false,
-          remainingBalance: 400,
-          user: { id: "user-1", name: "Alice", email: "alice@example.com" },
-        },
-      ],
-    };
-
-    render(<SavingsGoalForm groupId="group-1" goal={goalWithWarning} />);
-
-    const input = screen.getByRole("spinbutton", { name: /Alice/i });
-    expect(input).toHaveValue(500);
   });
 
   it("submits an ISO date built from the typed month value", async () => {

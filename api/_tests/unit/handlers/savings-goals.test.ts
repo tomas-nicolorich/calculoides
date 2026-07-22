@@ -114,11 +114,17 @@ describe("Savings Goal Handlers", () => {
   describe("savings-goal-delete", () => {
     it("should delete goal with valid goalId", async () => {
       const goalId = "550e8400-e29b-41d4-a716-446655440000";
-      req = { query: { action: "savings-goal-delete", goalId } };
+      req = {
+        query: { action: "savings-goal-delete", goalId },
+        user: { id: "user-1" },
+      } as unknown as Partial<ApiRequest>;
 
       await transactionsHandler(req as ApiRequest, res as ApiResponse);
 
-      expect(mockedSavingsService.deleteGoal).toHaveBeenCalledWith(goalId);
+      expect(mockedSavingsService.deleteGoal).toHaveBeenCalledWith(
+        goalId,
+        "user-1",
+      );
       expect(statusMock).toHaveBeenCalledWith(204);
     });
   });

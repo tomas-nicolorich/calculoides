@@ -16,6 +16,7 @@ vi.mock("../../_src/utils/prisma", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
       findMany: vi.fn(),
+      delete: vi.fn(),
     },
     groupMember: {
       findFirst: vi.fn(),
@@ -334,6 +335,63 @@ describe("Savings API Integration", () => {
       const member = body[0].breakdown.find((b) => b.memberId === memberId);
       expect(member?.isOverridden).toBe(false);
       expect(member?.actualAmount).toBe(member?.proportionalAmount);
+    });
+  });
+
+  describe("DELETE /api/savings (savings-goal-delete) — IDOR", () => {
+    const goalId = "550e8400-e29b-41d4-a716-446655440005";
+    const groupId = "550e8400-e29b-41d4-a716-446655440001";
+
+    it("rejects deleting a goal when the requesting user is not a member of the goal's group", async () => {
+      vi.mocked(prisma.savingsGoal.findUnique).mockResolvedValue({
+        id: goalId,
+        groupId,
+      } as unknown as SavingsGoal);
+      vi.mocked(prisma.groupMember.findUnique).mockResolvedValue(null);
+
+      const req = {
+        method: "DELETE",
+        headers: { authorization: "Bearer mock-token" },
+        query: { action: "savings-goal-delete", goalId },
+      } as unknown as ApiRequest;
+      const res = createMockResponse();
+
+      await transactionsHandler(req, res);
+
+      expect(prisma.savingsGoal.delete).not.toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalledWith(204);
+    });
+
+    it("deletes the goal when the requesting user belongs to the goal's group", async () => {
+      vi.mocked(prisma.savingsGoal.findUnique).mockResolvedValue({
+        id: goalId,
+        groupId,
+      } as unknown as SavingsGoal);
+      vi.mocked(prisma.groupMember.findUnique).mockResolvedValue({
+        id: "550e8400-e29b-41d4-a716-446655440006",
+        userId: "user-1",
+        groupId,
+      } as unknown as Awaited<
+        ReturnType<typeof prisma.groupMember.findUnique>
+      >);
+      vi.mocked(prisma.savingsGoal.delete).mockResolvedValue({
+        id: goalId,
+        groupId,
+      } as unknown as SavingsGoal);
+
+      const req = {
+        method: "DELETE",
+        headers: { authorization: "Bearer mock-token" },
+        query: { action: "savings-goal-delete", goalId },
+      } as unknown as ApiRequest;
+      const res = createMockResponse();
+
+      await transactionsHandler(req, res);
+
+      expect(prisma.savingsGoal.delete).toHaveBeenCalledWith({
+        where: { id: goalId },
+      });
+      expect(res.status).toHaveBeenCalledWith(204);
     });
   });
 });

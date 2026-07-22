@@ -294,10 +294,11 @@ export const routes: RouteConfig = {
     res.status(200).json(goal);
   },
   "savings-goal-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
     const { goalId } = req.query;
     if (!requireStringParam(goalId, "goalId", res)) return;
     const validatedGoalId = IdSchema.parse(goalId);
-    await SavingsService.deleteGoal(validatedGoalId);
+    await SavingsService.deleteGoal(validatedGoalId, authReq.user.id);
     res.status(204).end();
   },
   "savings-contribution-upsert": async (req: ApiRequest, res: ApiResponse) => {

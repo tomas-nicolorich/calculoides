@@ -320,7 +320,21 @@ export const SavingsService = {
     });
   },
 
-  async deleteGoal(goalId: string) {
+  async deleteGoal(goalId: string, userId: string) {
+    const goal = await prisma.savingsGoal.findUnique({
+      where: { id: goalId },
+    });
+    if (!goal) {
+      throw new Error("Savings goal not found");
+    }
+    const membership = await prisma.groupMember.findUnique({
+      where: { userId_groupId: { userId, groupId: goal.groupId } },
+    });
+    if (!membership) {
+      throw new Error(
+        "User does not belong to the group associated with this savings goal",
+      );
+    }
     return await prisma.savingsGoal.delete({
       where: { id: goalId },
     });

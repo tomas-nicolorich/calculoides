@@ -4,11 +4,14 @@ import {
   Badge,
   Card,
   Button,
+  RowMenu,
   UserDisplay,
   ProgressMeter,
 } from "../../shared/ui";
-import { SavingsGoal } from "../../entities/savings-goal";
+import { Dialog, DialogFooter } from "../../shared/ui/Dialog";
+import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { SavingsGoalForm } from "./SavingsGoalForm";
+import { InlineAllocationEditor } from "./InlineAllocationEditor";
 import { CategoryIconTile } from "../../shared/lib/categoryIcons";
 
 interface SavingsGoalListProps {
@@ -23,8 +26,27 @@ const fmt = (n: number) =>
   `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
-  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [goalToEdit, setGoalToEdit] = useState<SavingsGoal | null>(null);
   const [adjustingGoalId, setAdjustingGoalId] = useState<string | null>(null);
+  const [goalToDeleteId, setGoalToDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async (goalId: string) => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      await savingsGoalApi.delete(goalId);
+      await onRefresh?.();
+      setGoalToDeleteId(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setDeleteError(message || "Failed to delete savings goal");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   // fallow-ignore-next-line complexity
   const renderGoalCard = (goal: SavingsGoal) => {
@@ -32,40 +54,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
     const isLate = goal.varianceMonths > 0;
     const isNever = goal.isNever;
 
-    if (editingGoalId === goal.id) {
-      return (
-        <SavingsGoalForm
-          key={goal.id}
-          groupId={goal.groupId}
-          goal={goal}
-          onSuccess={() => {
-            setEditingGoalId(null);
-            void onRefresh?.();
-          }}
-          onCancel={() => {
-            setEditingGoalId(null);
-          }}
-        />
-      );
-    }
-
-    if (adjustingGoalId === goal.id) {
-      return (
-        <SavingsGoalForm
-          key={goal.id}
-          groupId={goal.groupId}
-          goal={goal}
-          mode="allocation"
-          onSuccess={() => {
-            setAdjustingGoalId(null);
-            void onRefresh?.();
-          }}
-          onCancel={() => {
-            setAdjustingGoalId(null);
-          }}
-        />
-      );
-    }
+    const isAdjusting = adjustingGoalId === goal.id;
 
     const projectedLabel = isNever
       ? "Never"
@@ -107,20 +96,6 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-6 w-6 p-0 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 ${FOCUS_RING}`}
-                onClick={() => {
-                  setEditingGoalId(goal.id);
-                }}
-                title="Edit Goal Settings"
-                aria-label="Edit Goal Settings"
-              >
-                <span className="text-slate-400 hover:text-brand-balance transition-colors">
-                  ✎
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
                 className={`h-6 px-2 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 ${FOCUS_RING}`}
                 onClick={() => {
                   setAdjustingGoalId(goal.id);
@@ -132,6 +107,15 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                   ADJUST
                 </span>
               </Button>
+              <RowMenu
+                onEdit={() => {
+                  setGoalToEdit(goal);
+                }}
+                onDelete={() => {
+                  setDeleteError(null);
+                  setGoalToDeleteId(goal.id);
+                }}
+              />
             </div>
             <p className="mt-1.5 font-mono tnum text-sm font-semibold text-slate-600 dark:text-slate-300">
               Target {fmt(goal.targetAmount)}
@@ -185,45 +169,58 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
-              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                Monthly Allocation · {fmt(monthlyTotal)}/mo
-              </p>
-            </div>
-
-            {goal.breakdown.map((item, index) => (
-              <div
-                key={item.memberId}
-                className="flex justify-between items-center py-2 bg-slate-100 dark:bg-slate-800 px-3 rounded-md"
-              >
-                <div className="flex items-center gap-2">
-                  <Avatar
-                    name={item.user?.name ?? item.user?.email ?? ""}
-                    colorIndex={index}
-                    size="xs"
-                  />
-                  <UserDisplay
-                    user={item.user}
-                    className="font-medium text-slate-700 dark:text-slate-300"
-                  />
-                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1">
-                    {item.percentage.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="text-right flex items-center gap-2">
-                  <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-                    {fmt(item.actualAmount)}
-                  </p>
-                  {item.isOverridden && (
-                    <Badge tone="balance" size="sm" uppercase>
-                      Custom
-                    </Badge>
-                  )}
-                </div>
+          {isAdjusting ? (
+            <InlineAllocationEditor
+              goal={goal}
+              onSaved={() => {
+                setAdjustingGoalId(null);
+                void onRefresh?.();
+              }}
+              onCancel={() => {
+                setAdjustingGoalId(null);
+              }}
+            />
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  Monthly Allocation · {fmt(monthlyTotal)}/mo
+                </p>
               </div>
-            ))}
-          </div>
+
+              {goal.breakdown.map((item, index) => (
+                <div
+                  key={item.memberId}
+                  className="flex justify-between items-center py-2 bg-slate-100 dark:bg-slate-800 px-3 rounded-md"
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar
+                      name={item.user?.name ?? item.user?.email ?? ""}
+                      colorIndex={index}
+                      size="xs"
+                    />
+                    <UserDisplay
+                      user={item.user}
+                      className="font-medium text-slate-700 dark:text-slate-300"
+                    />
+                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1">
+                      {item.percentage.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="text-right flex items-center gap-2">
+                    <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
+                      {fmt(item.actualAmount)}
+                    </p>
+                    {item.isOverridden && (
+                      <Badge tone="balance" size="sm" uppercase>
+                        Custom
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -242,6 +239,68 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
           </p>
         )}
       </div>
+
+      <Dialog
+        open={goalToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setGoalToEdit(null);
+        }}
+        title="Edit Goal"
+        description="Update this goal's name, icon, target, or date."
+      >
+        {goalToEdit && (
+          <SavingsGoalForm
+            groupId={goalToEdit.groupId}
+            goal={goalToEdit}
+            onSuccess={() => {
+              setGoalToEdit(null);
+              void onRefresh?.();
+            }}
+            onCancel={() => {
+              setGoalToEdit(null);
+            }}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        open={goalToDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setGoalToDeleteId(null);
+            setDeleteError(null);
+          }
+        }}
+        title="Delete Goal"
+        description="This removes the goal and its earmarking only — your shared balance stays intact."
+      >
+        {deleteError && (
+          <div className="text-[10px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+            {deleteError}
+          </div>
+        )}
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setGoalToDeleteId(null);
+              setDeleteError(null);
+            }}
+            disabled={deleteLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="expense"
+            onClick={() => {
+              if (goalToDeleteId) void handleDelete(goalToDeleteId);
+            }}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? "Deleting..." : "Delete Goal"}
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 }
