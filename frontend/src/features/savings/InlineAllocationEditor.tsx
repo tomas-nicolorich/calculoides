@@ -67,7 +67,7 @@ function AllocationAmountInput({
       type="number"
       step="0.01"
       aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
-      className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
+      className={`h-8 w-24 text-right text-xs border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
       disabled={loading}
       value={amount}
       onChange={(e) => {
