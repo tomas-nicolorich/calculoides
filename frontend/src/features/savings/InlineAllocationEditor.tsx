@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Avatar, Badge, Button, Input, UserDisplay } from "../../shared/ui";
 import {
   SavingsGoal,
@@ -26,6 +26,72 @@ interface AllocationRowProps {
   isEditing: boolean;
   loading: boolean;
   session: ContributionSession;
+}
+
+function AllocationCeilingWarning({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <Badge
+      tone="transfer"
+      size="sm"
+      uppercase
+      title="Exceeds available balance"
+      aria-label="Exceeds available balance"
+    >
+      Over Balance
+    </Badge>
+  );
+}
+
+function handleAmountInputChange(
+  e: ChangeEvent<HTMLInputElement>,
+  onChange: (value: number) => void,
+) {
+  const val = parseFloat(e.target.value);
+  if (!isNaN(val)) onChange(val);
+}
+
+function AllocationAmountInput({
+  item,
+  loading,
+  amount,
+  onChange,
+}: {
+  item: ContributionBreakdown;
+  loading: boolean;
+  amount: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <Input
+      type="number"
+      step="0.01"
+      aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
+      className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
+      disabled={loading}
+      value={amount}
+      onChange={(e) => {
+        handleAmountInputChange(e, onChange);
+      }}
+    />
+  );
+}
+
+function AllocationAmountDisplay({ item }: { item: ContributionBreakdown }) {
+  return (
+    <div className="text-right flex items-center gap-2 shrink-0">
+      {item.isOverridden && (
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-blue-500"
+          title="Custom allocation"
+          aria-label="Custom allocation"
+        />
+      )}
+      <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
+        {fmt(item.actualAmount)}
+      </p>
+    </div>
+  );
 }
 
 function AllocationRow({
@@ -56,47 +122,22 @@ function AllocationRow({
         <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1 shrink-0">
           {item.percentage.toFixed(1)}%
         </span>
-        {isEditing && session.ceilingWarnings[item.memberId] && (
-          <Badge
-            tone="transfer"
-            size="sm"
-            uppercase
-            title="Exceeds available balance"
-            aria-label="Exceeds available balance"
-          >
-            Over Balance
-          </Badge>
-        )}
+        <AllocationCeilingWarning
+          show={isEditing && session.ceilingWarnings[item.memberId]}
+        />
       </div>
 
       {isEditing ? (
-        <Input
-          type="number"
-          step="0.01"
-          aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
-          className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
-          disabled={loading}
-          value={amount}
-          onChange={(e) => {
-            const val = parseFloat(e.target.value);
-            if (!isNaN(val)) {
-              session.overrideMember(item.memberId, val);
-            }
+        <AllocationAmountInput
+          item={item}
+          loading={loading}
+          amount={amount}
+          onChange={(value) => {
+            session.overrideMember(item.memberId, value);
           }}
         />
       ) : (
-        <div className="text-right flex items-center gap-2 shrink-0">
-          {item.isOverridden && (
-            <span
-              className="h-1.5 w-1.5 rounded-full bg-blue-500"
-              title="Custom allocation"
-              aria-label="Custom allocation"
-            />
-          )}
-          <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-            {fmt(item.actualAmount)}
-          </p>
-        </div>
+        <AllocationAmountDisplay item={item} />
       )}
     </div>
   );
