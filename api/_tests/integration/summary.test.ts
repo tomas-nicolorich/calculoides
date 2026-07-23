@@ -341,3 +341,118 @@ describe("Dashboard summary — members budgeted/remainingQuota parity (Phase 3 
     });
   });
 });
+
+interface MemberShareEntry {
+  id: string;
+  income: number;
+  share: number;
+}
+
+interface SharePayload {
+  totalIncome: number;
+  members: MemberShareEntry[];
+}
+
+// Regression test for spec requirement "Derived Figures Refresh Live, Never
+// Persisted" (dashboard-income-edit): the summary handler must recompute
+// income/share/quota/ceiling figures live from each member's current `income`
+// column on every call — never from a cached/stored derived field. Two
+// mechanisms are asserted: (1) a decoy `share`/`percentage` field injected
+// into the raw DB row is ignored entirely; (2) a fresh summary call after a
+// simulated income change (what an income-update + refreshSummary()/
+// getSummary() round-trip does) reflects the new value immediately.
+describe("Dashboard summary — derived values are computed live, never persisted", () => {
+  function mockGroupWithIncomes(incomeA: number, incomeB: number) {
+    vi.mocked(prisma.group.findUnique).mockResolvedValue({
+      id: GROUP_ID,
+      name: "Test Group",
+      ownerId: USER_ID,
+      members: [
+        {
+          id: MEMBER_A,
+          userId: USER_ID,
+          income: incomeA,
+          // Decoy stored derived fields: if a persisted share/percentage
+          // column ever existed on the row, the handler must ignore it and
+          // recompute purely from `income`.
+          share: 999,
+          percentage: 999,
+          user: { name: "Alice", email: "alice@example.com" },
+        },
+        {
+          id: MEMBER_B,
+          userId: "99999999-9999-4999-8999-999999999999",
+          income: incomeB,
+          share: 999,
+          percentage: 999,
+          user: { name: "Bob", email: "bob@example.com" },
+        },
+      ],
+    } as never);
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.category.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.transfer.findMany).mockResolvedValue([]);
+  });
+
+  it("ignores decoy stored share/percentage fields and derives share solely from income", async () => {
+    mockGroupWithIncomes(1000, 1000);
+
+    const req = {
+      query: { groupId: GROUP_ID },
+      user: { id: USER_ID },
+    } as unknown as AuthenticatedRequest;
+    const { res, captured } = makeRes();
+
+    const summary = routes.summary;
+    if (!summary) throw new Error("routes.summary is not registered");
+    await summary(req, res);
+
+    const body = captured.body as SharePayload;
+    const byId = new Map(body.members.map((m) => [m.id, m]));
+
+    // Equal incomes -> equal 50/50 share, NOT the decoy 999 value.
+    expect(byId.get(MEMBER_A)?.share).toBe(50);
+    expect(byId.get(MEMBER_B)?.share).toBe(50);
+  });
+
+  it("recomputes totalIncome and per-member share live after an income change, without any persisted derived field", async () => {
+    mockGroupWithIncomes(1000, 1000);
+
+    const req = {
+      query: { groupId: GROUP_ID },
+      user: { id: USER_ID },
+    } as unknown as AuthenticatedRequest;
+
+    const { res: resBefore, captured: capturedBefore } = makeRes();
+    const summary = routes.summary;
+    if (!summary) throw new Error("routes.summary is not registered");
+    await summary(req, resBefore);
+
+    const before = capturedBefore.body as SharePayload;
+    expect(before.totalIncome).toBe(2000);
+    const byIdBefore = new Map(before.members.map((m) => [m.id, m]));
+    expect(byIdBefore.get(MEMBER_A)?.share).toBe(50);
+
+    // Simulate what happens server-side after an `update-income` call: only
+    // the raw `income` column changes (proven in
+    // api/_tests/logic/group.test.ts), nothing derived is written anywhere.
+    // A fresh summary call (= refreshSummary()/getSummary() from the client)
+    // must recompute live from the new income.
+    mockGroupWithIncomes(3000, 1000);
+
+    const { res: resAfter, captured: capturedAfter } = makeRes();
+    await summary(req, resAfter);
+
+    const after = capturedAfter.body as SharePayload;
+    expect(after.totalIncome).toBe(4000);
+    const byIdAfter = new Map(after.members.map((m) => [m.id, m]));
+    // 3000:1000 income ratio -> 75/25 share, recomputed live — not the stale
+    // 50/50 from before, and not the decoy 999 stored on the row.
+    expect(byIdAfter.get(MEMBER_A)?.share).toBe(75);
+    expect(byIdAfter.get(MEMBER_B)?.share).toBe(25);
+  });
+});

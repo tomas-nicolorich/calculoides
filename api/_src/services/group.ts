@@ -113,7 +113,8 @@ export const GroupService = {
 
   /**
    * Updates a member's income for retroactive calculation.
-   * Mandated by BUG-013 to allow group owners to update any member's income.
+   * Mandated by BUG-013 to allow group owners to update any member's income;
+   * widened so any member sharing the target's group may also update it.
    */
   async updateMemberIncome(
     requesterId: string,
@@ -128,12 +129,14 @@ export const GroupService = {
     if (!member) throw new Error("Member not found");
 
     const isOwner = member.group.ownerId === requesterId;
-    const isSelf = member.userId === requesterId;
+    const isMember = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: { userId: requesterId, groupId: member.groupId },
+      },
+    });
 
-    if (!isOwner && !isSelf) {
-      throw new Error(
-        "Unauthorized: Only the group owner or the member themselves can update income",
-      );
+    if (!isOwner && !isMember) {
+      throw new Error("Unauthorized: not a member of this group");
     }
 
     return await prisma.groupMember.update({
