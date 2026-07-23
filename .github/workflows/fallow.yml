@@ -30,13 +30,12 @@ jobs:
 
       - name: Run fallow audit
         id: fallow
-        uses: fallow-rs/fallow@v2
+        uses: fallow-rs/fallow@v3
         with:
           command: audit
           format: sarif
           fail-on-issues: 'true'
           comment: 'true'
-          version: '3.8.0'
 
       - name: Merge SARIF runs
         if: always() && steps.fallow.outputs.sarif != ''
@@ -67,11 +66,10 @@ jobs:
 
       - name: Run fallow dead-code
         id: fallow
-        uses: fallow-rs/fallow@v2
+        uses: fallow-rs/fallow@v3
         with:
           command: dead-code
           format: sarif
-          version: '3.8.0'
 
       - name: Upload SARIF
         if: always()
