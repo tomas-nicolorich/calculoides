@@ -265,11 +265,11 @@ export const SavingsService = {
       );
       const projectedDate = addMonths(now, months);
 
-      // Variance in months
+      // Variance in months. Both sides must use the same axis
+      // (calculateMonthsRemaining's elapsed/deadline-month exclusion) or an
+      // on-target goal (projectedDate === targetDate) reports a false 1-month delay.
       const targetMonths = calculateMonthsRemaining(now, targetDate);
-      const projectedMonths =
-        (projectedDate.getFullYear() - now.getFullYear()) * 12 +
-        (projectedDate.getMonth() - now.getMonth());
+      const projectedMonths = calculateMonthsRemaining(now, projectedDate);
       const varianceMonths = projectedMonths - targetMonths;
 
       return {

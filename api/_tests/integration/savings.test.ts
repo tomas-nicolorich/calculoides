@@ -245,6 +245,25 @@ describe("Savings API Integration", () => {
       // remainingBalance is independent of the override.
       expect(bob?.remainingBalance).toBe(360);
     });
+
+    it("reports varianceMonths = 0 when the projected date lands exactly on the target date", async () => {
+      // Overridden contributions totaling 200/mo pay off the remaining 1000
+      // (targetAmount 1200 - currentAmount 200) in ceil(1000/200) = 5 months,
+      // matching the mock's targetDate (now + 5 months) day-for-day.
+      mockGroupData([
+        { memberId: "m1", customAmount: 200 },
+        { memberId: "m2", customAmount: 0 },
+      ]);
+
+      const res = createMockResponse();
+      await transactionsHandler(buildRequest(), res);
+
+      const body = vi.mocked(res.json).mock.calls[0][0] as {
+        varianceMonths: number;
+      }[];
+
+      expect(body[0].varianceMonths).toBe(0);
+    });
   });
 
   describe("DELETE /api/savings/contribution (savings-contribution-delete) — issue #161", () => {
