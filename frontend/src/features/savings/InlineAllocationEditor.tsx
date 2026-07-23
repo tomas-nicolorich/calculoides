@@ -119,14 +119,16 @@ export function InlineAllocationEditor({
               />
             ) : (
               <div className="text-right flex items-center gap-2 shrink-0">
+                {item.isOverridden && (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-blue-500"
+                    title="Custom allocation"
+                    aria-label="Custom allocation"
+                  />
+                )}
                 <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
                   {fmt(item.actualAmount)}
                 </p>
-                {item.isOverridden && (
-                  <Badge tone="balance" size="sm" uppercase>
-                    Custom
-                  </Badge>
-                )}
               </div>
             )}
           </div>
