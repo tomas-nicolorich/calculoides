@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Avatar,
-  Badge,
-  Card,
-  Button,
-  RowMenu,
-  UserDisplay,
-  ProgressMeter,
-} from "../../shared/ui";
+import { Badge, Card, Button, RowMenu, ProgressMeter } from "../../shared/ui";
 import { Dialog, DialogFooter } from "../../shared/ui/Dialog";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { SavingsGoalForm } from "./SavingsGoalForm";
@@ -19,15 +11,11 @@ interface SavingsGoalListProps {
   onRefresh?: () => void | Promise<void>;
 }
 
-const FOCUS_RING =
-  "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded";
-
 const fmt = (n: number) =>
   `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
   const [goalToEdit, setGoalToEdit] = useState<SavingsGoal | null>(null);
-  const [adjustingGoalId, setAdjustingGoalId] = useState<string | null>(null);
   const [goalToDeleteId, setGoalToDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -48,13 +36,10 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
     }
   };
 
-  // fallow-ignore-next-line complexity
   const renderGoalCard = (goal: SavingsGoal) => {
     const targetDate = new Date(goal.targetDate);
     const isLate = goal.varianceMonths > 0;
     const isNever = goal.isNever;
-
-    const isAdjusting = adjustingGoalId === goal.id;
 
     const projectedLabel = isNever
       ? "Never"
@@ -68,11 +53,6 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
       : isLate
         ? "text-amber-500"
         : "text-emerald-600 dark:text-emerald-400";
-
-    const monthlyTotal = goal.breakdown.reduce(
-      (sum, item) => sum + item.actualAmount,
-      0,
-    );
 
     return (
       <Card key={goal.id} hover className="transition-all duration-300">
@@ -93,35 +73,12 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
               <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
                 {goal.name}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 px-2 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 ${FOCUS_RING}`}
-                onClick={() => {
-                  setAdjustingGoalId(goal.id);
-                }}
-                title="Adjust Allocation"
-                aria-label="Adjust Allocation"
-              >
-                <span className="text-[10px] font-semibold text-slate-400 hover:text-brand-balance transition-colors tracking-wide">
-                  ADJUST
-                </span>
-              </Button>
-              <RowMenu
-                onEdit={() => {
-                  setGoalToEdit(goal);
-                }}
-                onDelete={() => {
-                  setDeleteError(null);
-                  setGoalToDeleteId(goal.id);
-                }}
-              />
             </div>
             <p className="mt-1.5 font-mono tnum text-sm font-semibold text-slate-600 dark:text-slate-300">
               Target {fmt(goal.targetAmount)}
             </p>
           </div>
-          <div className="text-right">
+          <div className="flex items-center gap-2">
             <Badge
               tone={isNever ? "expense" : isLate ? "transfer" : "income"}
               size="sm"
@@ -133,6 +90,15 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
                   ? `Delayed ${goal.varianceMonths.toString()}mo`
                   : "On Track"}
             </Badge>
+            <RowMenu
+              onEdit={() => {
+                setGoalToEdit(goal);
+              }}
+              onDelete={() => {
+                setDeleteError(null);
+                setGoalToDeleteId(goal.id);
+              }}
+            />
           </div>
         </div>
         <div className="mt-1">
@@ -169,58 +135,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             </div>
           </div>
 
-          {isAdjusting ? (
-            <InlineAllocationEditor
-              goal={goal}
-              onSaved={() => {
-                setAdjustingGoalId(null);
-                void onRefresh?.();
-              }}
-              onCancel={() => {
-                setAdjustingGoalId(null);
-              }}
-            />
-          ) : (
-            <div className="space-y-2">
-              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
-                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                  Monthly Allocation · {fmt(monthlyTotal)}/mo
-                </p>
-              </div>
-
-              {goal.breakdown.map((item, index) => (
-                <div
-                  key={item.memberId}
-                  className="flex justify-between items-center py-2 bg-slate-100 dark:bg-slate-800 px-3 rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <Avatar
-                      name={item.user?.name ?? item.user?.email ?? ""}
-                      colorIndex={index}
-                      size="xs"
-                    />
-                    <UserDisplay
-                      user={item.user}
-                      className="font-medium text-slate-700 dark:text-slate-300"
-                    />
-                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1">
-                      {item.percentage.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="text-right flex items-center gap-2">
-                    <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-                      {fmt(item.actualAmount)}
-                    </p>
-                    {item.isOverridden && (
-                      <Badge tone="balance" size="sm" uppercase>
-                        Custom
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <InlineAllocationEditor goal={goal} onRefresh={onRefresh} />
         </div>
       </Card>
     );

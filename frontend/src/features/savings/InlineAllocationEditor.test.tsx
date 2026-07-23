@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { fireEvent } from "@testing-library/react";
 import { InlineAllocationEditor } from "./InlineAllocationEditor";
@@ -117,16 +117,10 @@ describe("InlineAllocationEditor", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the Monthly Allocation label and an Adjust control per member, with no input by default", () => {
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+  it("renders the Monthly Allocation label and a single global Adjust control, with no input by default", () => {
+    render(<InlineAllocationEditor goal={mockGoal} />);
 
-    expect(screen.getByText("Monthly Allocation")).toBeInTheDocument();
+    expect(screen.getByText(/Monthly Allocation/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /^adjust$/i }),
     ).toBeInTheDocument();
@@ -135,15 +129,9 @@ describe("InlineAllocationEditor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("clicking Adjust hides that member's Adjust button and swaps the amount into an input", async () => {
+  it("clicking Adjust hides the Adjust button and swaps every member's amount into an input", async () => {
     const user = userEvent.setup();
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+    render(<InlineAllocationEditor goal={scopedGoal} />);
 
     await user.click(screen.getByRole("button", { name: /^adjust$/i }));
 
@@ -151,20 +139,20 @@ describe("InlineAllocationEditor", () => {
       screen.getByRole("spinbutton", { name: /Alice/i }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole("spinbutton", { name: /Bob/i }),
+    ).toBeInTheDocument();
+    expect(
       screen.queryByRole("button", { name: /^adjust$/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
-    expect(screen.getByText("100.0%")).toBeInTheDocument();
+    expect(screen.getByText("40.0%")).toBeInTheDocument();
   });
 
-  it("renders the allocation hint text", () => {
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+  it("renders the allocation hint text after Adjust is clicked", async () => {
+    const user = userEvent.setup();
+    render(<InlineAllocationEditor goal={mockGoal} />);
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
 
     expect(
       screen.getByText(
@@ -173,19 +161,17 @@ describe("InlineAllocationEditor", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not render an over-ceiling badge when the member's share is within their remaining balance", () => {
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+  it("does not render an over-ceiling badge when the member's share is within their remaining balance", async () => {
+    const user = userEvent.setup();
+    render(<InlineAllocationEditor goal={mockGoal} />);
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
 
     expect(screen.queryByText(/over balance/i)).not.toBeInTheDocument();
   });
 
-  it("renders an amber over-ceiling badge only on the member row whose share exceeds their remaining balance", () => {
+  it("renders an amber over-ceiling badge only on the member row whose share exceeds their remaining balance", async () => {
+    const user = userEvent.setup();
     const goalWithWarning = {
       ...mockGoal,
       breakdown: [
@@ -212,13 +198,9 @@ describe("InlineAllocationEditor", () => {
       ],
     };
 
-    render(
-      <InlineAllocationEditor
-        goal={goalWithWarning}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+    render(<InlineAllocationEditor goal={goalWithWarning} />);
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
 
     const badges = screen.getAllByText(/over balance/i);
     expect(badges).toHaveLength(1);
@@ -247,27 +229,18 @@ describe("InlineAllocationEditor", () => {
       ],
     };
 
-    render(
-      <InlineAllocationEditor
-        goal={goalWithWarning}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+    render(<InlineAllocationEditor goal={goalWithWarning} />);
 
     await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Alice/i });
     expect(input).toHaveValue(500);
   });
 
-  it("renders Save Changes and Cancel controls", () => {
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+  it("renders Save Changes and Cancel controls after Adjust is clicked", async () => {
+    const user = userEvent.setup();
+    render(<InlineAllocationEditor goal={mockGoal} />);
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
 
     expect(
       screen.getByRole("button", { name: /save changes/i }),
@@ -275,19 +248,12 @@ describe("InlineAllocationEditor", () => {
     expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
   });
 
-  it("Save calls session.saveSession(): only the edited member is upserted, the untouched member gets no call, and onSaved fires", async () => {
+  it("Save calls session.saveSession(): only the edited member is upserted, the untouched member gets no call, and onRefresh fires", async () => {
     const user = userEvent.setup();
-    const onSaved = vi.fn();
-    render(
-      <InlineAllocationEditor
-        goal={scopedGoal}
-        onSaved={onSaved}
-        onCancel={vi.fn()}
-      />,
-    );
+    const onRefresh = vi.fn();
+    render(<InlineAllocationEditor goal={scopedGoal} onRefresh={onRefresh} />);
 
-    const bobRow = getRow("Bob");
-    await user.click(within(bobRow).getByRole("button", { name: /^adjust$/i }));
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Bob/i });
     fireEvent.change(input, { target: { value: "300" } });
 
@@ -299,7 +265,7 @@ describe("InlineAllocationEditor", () => {
         "edited-member",
         300,
       );
-      expect(onSaved).toHaveBeenCalled();
+      expect(onRefresh).toHaveBeenCalled();
     });
     expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalledWith(
       "goal-1",
@@ -311,14 +277,9 @@ describe("InlineAllocationEditor", () => {
 
   it("a member reset then saved deletes the prior override row", async () => {
     const user = userEvent.setup();
-    render(
-      <InlineAllocationEditor
-        goal={resetGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+    render(<InlineAllocationEditor goal={resetGoal} />);
 
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     await user.click(
       screen.getByRole("button", { name: /reset to income split/i }),
     );
@@ -335,20 +296,15 @@ describe("InlineAllocationEditor", () => {
 
   it("regression: undo reset before save re-upserts the restored value instead of deleting (#159/#160)", async () => {
     const user = userEvent.setup();
-    render(
-      <InlineAllocationEditor
-        goal={resetGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+    render(<InlineAllocationEditor goal={resetGoal} />);
 
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     await user.click(
       screen.getByRole("button", { name: /reset to income split/i }),
     );
     await user.click(screen.getByRole("button", { name: /undo reset/i }));
 
-    expect(screen.getByText("€350.00")).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /Carol/i })).toHaveValue(350);
 
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
@@ -362,16 +318,9 @@ describe("InlineAllocationEditor", () => {
     expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
   });
 
-  it("Cancel does not save and calls onCancel", async () => {
+  it("Cancel does not save and restores the Adjust button", async () => {
     const user = userEvent.setup();
-    const onCancel = vi.fn();
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={onCancel}
-      />,
-    );
+    render(<InlineAllocationEditor goal={mockGoal} />);
 
     await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Alice/i });
@@ -379,7 +328,9 @@ describe("InlineAllocationEditor", () => {
 
     await user.click(screen.getByRole("button", { name: /^cancel$/i }));
 
-    expect(onCancel).toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: /^adjust$/i }),
+    ).toBeInTheDocument();
     expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
     expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
   });
@@ -389,13 +340,7 @@ describe("InlineAllocationEditor", () => {
       new Error("Save failed"),
     );
     const user = userEvent.setup();
-    render(
-      <InlineAllocationEditor
-        goal={mockGoal}
-        onSaved={vi.fn()}
-        onCancel={vi.fn()}
-      />,
-    );
+    render(<InlineAllocationEditor goal={mockGoal} />);
 
     await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Alice/i });

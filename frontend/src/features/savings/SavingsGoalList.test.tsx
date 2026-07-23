@@ -94,10 +94,13 @@ describe("SavingsGoalList", () => {
     vi.clearAllMocks();
   });
 
-  it("no longer renders a standalone ADJUST button", () => {
+  it("renders exactly one global Adjust button and no standalone 'Adjust Allocation' button", () => {
     render(<SavingsGoalList goals={mockGoals} />);
+    expect(screen.getAllByRole("button", { name: /^adjust$/i })).toHaveLength(
+      1,
+    );
     expect(
-      screen.queryByRole("button", { name: /^adjust$/i }),
+      screen.queryByRole("button", { name: /adjust allocation/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -141,9 +144,6 @@ describe("SavingsGoalList", () => {
       const user = userEvent.setup();
       render(<SavingsGoalList goals={mockGoals} />);
 
-      await user.click(
-        screen.getByRole("button", { name: /adjust allocation/i }),
-      );
       await user.click(screen.getByRole("button", { name: /^adjust$/i }));
       expect(
         screen.getByRole("spinbutton", { name: /Alice/i }),
@@ -265,14 +265,12 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       expect(screen.getByText("Vacation")).toBeInTheDocument();
-      await user.click(
-        screen.getByRole("button", { name: /adjust allocation/i }),
-      );
+      await user.click(screen.getByRole("button", { name: /^adjust$/i }));
 
       expect(screen.getByText("Vacation")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /^adjust$/i }),
-      ).toBeInTheDocument();
+        screen.queryByRole("button", { name: /^adjust$/i }),
+      ).not.toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /reset to income split/i }),
       ).toBeInTheDocument();
@@ -283,9 +281,6 @@ describe("SavingsGoalList", () => {
       const onRefresh = vi.fn();
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
-      await user.click(
-        screen.getByRole("button", { name: /adjust allocation/i }),
-      );
       await user.click(screen.getByRole("button", { name: /^adjust$/i }));
       const input = screen.getByRole("spinbutton", { name: /Alice/i });
       await user.clear(input);
@@ -305,9 +300,7 @@ describe("SavingsGoalList", () => {
       const user = userEvent.setup();
       render(<SavingsGoalList goals={mockGoals} />);
 
-      await user.click(
-        screen.getByRole("button", { name: /adjust allocation/i }),
-      );
+      await user.click(screen.getByRole("button", { name: /^adjust$/i }));
       await user.click(screen.getByRole("button", { name: /^cancel$/i }));
 
       expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalled();
