@@ -1,5 +1,9 @@
 import { useReducer, useEffect, useCallback } from "react";
-import { calculateProjectedMonths, addMonths } from "shared";
+import {
+  calculateProjectedMonths,
+  addMonths,
+  calculateMonthsRemaining,
+} from "shared";
 import type {
   SavingsGoal,
   ContributionSessionPhase,
@@ -9,6 +13,7 @@ import type {
   SessionStartSnapshot,
 } from "./index";
 import { savingsGoalApi } from "./index";
+import { diffContributionPersistence } from "./contributionDiff";
 
 export interface ContributionSession {
   phase: ContributionSessionPhase;
@@ -18,6 +23,7 @@ export interface ContributionSession {
   localProjectedMonths: number | null;
   localProjectedDate: Date | null;
   forecastColor: "neutral" | "green" | "amber" | "red";
+  ceilingWarnings: Record<string, boolean>;
   saveError: string | null;
   overrideMember(memberId: string, amount: number): void;
   resetToIncomeSplit(): void;
@@ -155,14 +161,7 @@ export function useContributionSession(
       : null;
 
   const targetMonths = activeGoal
-    ? (() => {
-        const now = new Date();
-        const target = new Date(activeGoal.targetDate);
-        return (
-          (target.getFullYear() - now.getFullYear()) * 12 +
-          (target.getMonth() - now.getMonth())
-        );
-      })()
+    ? calculateMonthsRemaining(new Date(), new Date(activeGoal.targetDate))
     : 0;
 
   const forecastColor: ContributionSession["forecastColor"] =
@@ -173,6 +172,20 @@ export function useContributionSession(
         : localProjectedMonths <= targetMonths
           ? "green"
           : "amber";
+
+  // Pure derived/selector value — NOT reducer state. Compares each member's
+  // effective share (override, falling back to the proportional income-split
+  // amount) against their live affordability ceiling (remainingBalance).
+  // Never reads or writes overrideAmounts beyond this lookup.
+  const ceilingWarnings: Record<string, boolean> = activeGoal
+    ? Object.fromEntries(
+        activeGoal.breakdown.map((b) => [
+          b.memberId,
+          (state.overrideAmounts[b.memberId] ?? b.proportionalAmount) >
+            b.remainingBalance,
+        ]),
+      )
+    : {};
 
   const overrideMember = useCallback((memberId: string, amount: number) => {
     dispatch({ type: "overrideAmount", memberId, amount });
@@ -196,15 +209,22 @@ export function useContributionSession(
     dispatch({ type: "saveStart" });
     setSaveError(null);
     try {
-      await Promise.all(
-        activeGoal.breakdown.map((b) =>
+      const { toUpsert, toDelete } = diffContributionPersistence(
+        activeGoal.breakdown,
+        state.overrideAmounts,
+      );
+      await Promise.all([
+        ...toUpsert.map((entry) =>
           savingsGoalApi.upsertContribution(
             activeGoal.id,
-            b.memberId,
-            state.overrideAmounts[b.memberId] ?? b.proportionalAmount,
+            entry.memberId,
+            entry.amount,
           ),
         ),
-      );
+        ...toDelete.map((memberId) =>
+          savingsGoalApi.deleteContribution(activeGoal.id, memberId),
+        ),
+      ]);
       dispatch({ type: "saveSuccess" });
       setSaveError(null);
       return true;
@@ -224,6 +244,7 @@ export function useContributionSession(
     localProjectedMonths,
     localProjectedDate,
     forecastColor,
+    ceilingWarnings,
     saveError,
     overrideMember,
     resetToIncomeSplit,

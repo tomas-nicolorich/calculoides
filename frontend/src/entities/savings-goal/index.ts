@@ -3,9 +3,12 @@ import { apiClient } from "../../shared/api/client";
 
 export interface ContributionBreakdown {
   memberId: string;
+  share: number;
+  percentage: number;
   proportionalAmount: number;
   actualAmount: number;
   isOverridden: boolean;
+  remainingBalance: number;
   user?: User;
 }
 
@@ -13,6 +16,7 @@ export interface SavingsGoal {
   id: string;
   groupId: string;
   name: string;
+  icon?: string | null;
   targetAmount: number;
   currentAmount: number;
   targetDate: string;
@@ -53,6 +57,7 @@ export const savingsGoalApi = {
     groupId: string,
     data: {
       name: string;
+      icon?: string | null;
       targetAmount: number;
       currentAmount?: number;
       targetDate: string;
@@ -66,6 +71,7 @@ export const savingsGoalApi = {
     goalId: string,
     data: {
       name: string;
+      icon?: string | null;
       targetAmount: number;
       currentAmount?: number;
       targetDate: string;
@@ -81,6 +87,13 @@ export const savingsGoalApi = {
       {
         method: "POST",
         body: JSON.stringify({ amount }),
+      },
+    ),
+  deleteContribution: (goalId: string, memberId: string) =>
+    apiClient.fetch<undefined>(
+      `/savings/contribution?goalId=${goalId}&memberId=${memberId}`,
+      {
+        method: "DELETE",
       },
     ),
   delete: (goalId: string) =>

@@ -30,7 +30,7 @@ jobs:
 
       - name: Run fallow audit
         id: fallow
-        uses: fallow-rs/fallow@v2
+        uses: fallow-rs/fallow@v3
         with:
           command: audit
           format: sarif
@@ -66,7 +66,7 @@ jobs:
 
       - name: Run fallow dead-code
         id: fallow
-        uses: fallow-rs/fallow@v2
+        uses: fallow-rs/fallow@v3
         with:
           command: dead-code
           format: sarif

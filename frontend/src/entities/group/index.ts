@@ -28,6 +28,11 @@ export const groupApi = {
   getById: (id: string) => apiClient.fetch<Group>(`/groups?id=${id}`),
   getSummary: (groupId: string) =>
     apiClient.fetch<Summary>(`/summary?groupId=${groupId}`),
+  updateMemberIncome: (memberId: string, income: number) =>
+    apiClient.fetch<Member>(`/members/${memberId}/income`, {
+      method: "PUT",
+      body: JSON.stringify({ income }),
+    }),
   transferOwnership: (groupId: string, newOwnerId: string) =>
     apiClient.fetch<undefined>(`/transfer-ownership?groupId=${groupId}`, {
       method: "POST",

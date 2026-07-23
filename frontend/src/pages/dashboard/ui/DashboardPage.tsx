@@ -199,6 +199,7 @@ export function DashboardPage() {
               ...m,
               colorIndex: memberColorIndex.get(m.id) ?? 0,
             }))}
+            onRefresh={handleRefresh}
           />
           <RemainingBalance
             totalRemaining={summary.totalIncome - summary.totalBudget}

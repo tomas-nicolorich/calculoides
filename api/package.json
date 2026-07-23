@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start:api": "vercel dev --listen 3001",
-    "start:api:local": "node --import tsx _src/server.ts",
+    "start:api:local": "exec node --import tsx _src/server.ts",
     "build:api": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest",

@@ -1,168 +1,178 @@
 import { useState } from "react";
-import {
-  Badge,
-  Card,
-  Button,
-  UserDisplay,
-  ProgressMeter,
-} from "../../shared/ui";
-import { SavingsGoal } from "../../entities/savings-goal";
+import { Badge, Card, Button, RowMenu, ProgressMeter } from "../../shared/ui";
+import { Dialog, DialogFooter } from "../../shared/ui/Dialog";
+import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { SavingsGoalForm } from "./SavingsGoalForm";
+import { InlineAllocationEditor } from "./InlineAllocationEditor";
+import { CategoryIconTile } from "../../shared/lib/categoryIcons";
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];
   onRefresh?: () => void | Promise<void>;
 }
 
-const FOCUS_RING =
-  "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded";
+const fmt = (n: number) =>
+  `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
-  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+type GoalStatus = "never" | "late" | "onTrack";
 
-  // fallow-ignore-next-line complexity
-  const renderGoalCard = (goal: SavingsGoal) => {
-    const targetDate = new Date(goal.targetDate);
-    const isLate = goal.varianceMonths > 0;
-    const isNever = goal.isNever;
+function getGoalStatus(goal: SavingsGoal): GoalStatus {
+  if (goal.isNever) return "never";
+  if (goal.varianceMonths > 0) return "late";
+  return "onTrack";
+}
 
-    if (editingGoalId === goal.id) {
-      return (
-        <SavingsGoalForm
-          key={goal.id}
-          groupId={goal.groupId}
-          goal={goal}
-          onSuccess={() => {
-            setEditingGoalId(null);
-            void onRefresh?.();
-          }}
-          onCancel={() => {
-            setEditingGoalId(null);
-          }}
+const STATUS_ICON_CLASS: Record<GoalStatus, string> = {
+  never:
+    "h-9 w-9 bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
+  late: "h-9 w-9 bg-brand-expense/10 text-brand-transfer",
+  onTrack: "h-9 w-9 bg-brand-balance/10 text-brand-balance",
+};
+
+const STATUS_BADGE_TONE: Record<GoalStatus, "expense" | "transfer" | "income"> =
+  {
+    never: "expense",
+    late: "transfer",
+    onTrack: "income",
+  };
+
+const STATUS_METER_TONE: Record<
+  GoalStatus,
+  "expense" | "transfer" | "balance"
+> = {
+  never: "expense",
+  late: "transfer",
+  onTrack: "balance",
+};
+
+const STATUS_PROJECTED_COLOR_CLASS: Record<GoalStatus, string> = {
+  never: "text-red-500",
+  late: "text-amber-500",
+  onTrack: "text-emerald-600 dark:text-emerald-400",
+};
+
+function statusBadgeLabel(status: GoalStatus, varianceMonths: number): string {
+  if (status === "never") return "Never";
+  if (status === "late") return `Delayed ${varianceMonths.toString()}mo`;
+  return "On Track";
+}
+
+function goalProjectedLabel(goal: SavingsGoal): string {
+  if (goal.isNever) return "Never";
+  return new Date(goal.projectedDate).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+interface GoalCardProps {
+  goal: SavingsGoal;
+  onEdit: (goal: SavingsGoal) => void;
+  onDeleteRequest: (goalId: string) => void;
+  onRefresh?: () => void | Promise<void>;
+}
+
+function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
+  const status = getGoalStatus(goal);
+  const targetDate = new Date(goal.targetDate);
+
+  return (
+    <Card key={goal.id} hover className="transition-all duration-300">
+      <div className="flex justify-between items-start pb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <CategoryIconTile
+              icon={goal.icon ?? undefined}
+              size="sm"
+              className={STATUS_ICON_CLASS[status]}
+            />
+            <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+              {goal.name}
+            </span>
+          </div>
+          <p className="mt-1.5 font-mono tnum text-sm font-semibold text-slate-600 dark:text-slate-300">
+            Target {fmt(goal.targetAmount)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge tone={STATUS_BADGE_TONE[status]} size="sm" uppercase>
+            {statusBadgeLabel(status, goal.varianceMonths)}
+          </Badge>
+          <RowMenu
+            onEdit={() => {
+              onEdit(goal);
+            }}
+            onDelete={() => {
+              onDeleteRequest(goal.id);
+            }}
+          />
+        </div>
+      </div>
+      <div className="mt-1">
+        <ProgressMeter
+          value={goal.currentAmount}
+          max={goal.targetAmount}
+          valueLabel={`${fmt(goal.currentAmount)} / ${fmt(goal.targetAmount)}`}
+          tone={STATUS_METER_TONE[status]}
         />
-      );
-    }
-
-    const projectedLabel = isNever
-      ? "Never"
-      : new Date(goal.projectedDate).toLocaleDateString("en-GB");
-
-    const projectedColorClass = isNever
-      ? "text-red-500"
-      : isLate
-        ? "text-amber-500"
-        : "text-emerald-600 dark:text-emerald-400";
-
-    return (
-      <Card
-        key={goal.id}
-        accent={isNever ? "expense" : isLate ? "transfer" : "balance"}
-        hover
-        className="transition-all duration-300"
-      >
-        <div className="flex justify-between items-start pb-2">
+      </div>
+      <div className="space-y-4 mt-4">
+        <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
-                {goal.name}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-6 w-6 p-0 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 ${FOCUS_RING}`}
-                onClick={() => {
-                  setEditingGoalId(goal.id);
-                }}
-                title="Edit Goal Settings"
-                aria-label="Edit Goal Settings"
-              >
-                <span className="text-slate-400 hover:text-brand-balance transition-colors">
-                  ✎
-                </span>
-              </Button>
-            </div>
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              Target:{" "}
-              <span className="font-mono tnum">
-                €{goal.targetAmount.toLocaleString()}
-              </span>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
+              Target Date
             </p>
-            <div className="mt-1">
-              <ProgressMeter
-                value={goal.currentAmount}
-                max={goal.targetAmount}
-                state={isNever ? "blocked" : isLate ? "behind" : "on-track"}
-              />
-            </div>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {targetDate.toLocaleDateString("en-GB", {
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
           </div>
           <div className="text-right">
-            <Badge tone={isNever ? "expense" : isLate ? "transfer" : "income"}>
-              {isNever
-                ? "Never"
-                : isLate
-                  ? `Delayed ${goal.varianceMonths.toString()}mo`
-                  : "On Track"}
-            </Badge>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
+              Projected Completion
+            </p>
+            <p
+              data-testid="forecast-projected-date"
+              className={`text-sm font-semibold ${STATUS_PROJECTED_COLOR_CLASS[status]}`}
+            >
+              {goalProjectedLabel(goal)}
+            </p>
           </div>
         </div>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-            <div>
-              <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
-                Target Date
-              </p>
-              <p className="font-semibold text-slate-700 dark:text-slate-300">
-                {targetDate.toLocaleDateString("en-GB")}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
-                Projected
-              </p>
-              <p
-                data-testid="forecast-projected-date"
-                className={`font-semibold ${projectedColorClass}`}
-              >
-                {projectedLabel}
-              </p>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-1">
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                Monthly Allocation
-              </p>
-            </div>
+        <InlineAllocationEditor goal={goal} onRefresh={onRefresh} />
+      </div>
+    </Card>
+  );
+}
 
-            {goal.breakdown.map((item) => (
-              <div
-                key={item.memberId}
-                className="flex justify-between items-center py-1 bg-slate-50 dark:bg-slate-900/50 border-l-2 border-slate-200 dark:border-slate-700 px-2 rounded-sm"
-              >
-                <UserDisplay
-                  user={item.user}
-                  className="font-medium text-slate-700 dark:text-slate-300"
-                />
-                <div className="text-right">
-                  <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-                    €
-                    {item.actualAmount.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </p>
-                  {item.isOverridden && (
-                    <p className="text-[9px] font-medium text-brand-balance bg-brand-balance/5 dark:bg-brand-balance/10 dark:text-blue-400 border border-brand-balance/10 dark:border-blue-900/30 px-1.5 rounded-full inline-block">
-                      CUSTOM
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-    );
+export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
+  const [goalToEdit, setGoalToEdit] = useState<SavingsGoal | null>(null);
+  const [goalToDeleteId, setGoalToDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async (goalId: string) => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      await savingsGoalApi.delete(goalId);
+      await onRefresh?.();
+      setGoalToDeleteId(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setDeleteError(message || "Failed to delete savings goal");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteRequest = (goalId: string) => {
+    setDeleteError(null);
+    setGoalToDeleteId(goalId);
   };
 
   return (
@@ -171,13 +181,83 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
         Current Goals
       </h2>
       <div className="grid gap-6 md:grid-cols-2">
-        {goals.map(renderGoalCard)}
+        {goals.map((goal) => (
+          <GoalCard
+            key={goal.id}
+            goal={goal}
+            onEdit={setGoalToEdit}
+            onDeleteRequest={handleDeleteRequest}
+            onRefresh={onRefresh}
+          />
+        ))}
         {goals.length === 0 && (
           <p className="text-muted-foreground col-span-full text-center py-8">
             No savings goals found.
           </p>
         )}
       </div>
+
+      <Dialog
+        open={goalToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setGoalToEdit(null);
+        }}
+        title="Edit Goal"
+        description="Update this goal's name, icon, target, or date."
+      >
+        {goalToEdit && (
+          <SavingsGoalForm
+            groupId={goalToEdit.groupId}
+            goal={goalToEdit}
+            onSuccess={() => {
+              setGoalToEdit(null);
+              void onRefresh?.();
+            }}
+            onCancel={() => {
+              setGoalToEdit(null);
+            }}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        open={goalToDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setGoalToDeleteId(null);
+            setDeleteError(null);
+          }
+        }}
+        title="Delete Goal"
+        description="This removes the goal and its earmarking only — your shared balance stays intact."
+      >
+        {deleteError && (
+          <div className="text-[10px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+            {deleteError}
+          </div>
+        )}
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setGoalToDeleteId(null);
+              setDeleteError(null);
+            }}
+            disabled={deleteLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="expense"
+            onClick={() => {
+              if (goalToDeleteId) void handleDelete(goalToDeleteId);
+            }}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? "Deleting..." : "Delete Goal"}
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 }
