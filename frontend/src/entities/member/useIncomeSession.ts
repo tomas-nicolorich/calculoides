@@ -8,13 +8,13 @@ export interface IncomeSessionMember {
   income: number;
 }
 
-export interface IncomeSessionState {
+interface IncomeSessionState {
   phase: IncomeSessionPhase;
   overrideAmounts: Record<string, number>;
   sessionStartSnapshot: Record<string, number>;
 }
 
-export type IncomeSessionAction =
+type IncomeSessionAction =
   | { type: "sessionStart"; snapshot: Record<string, number> }
   | { type: "overrideIncome"; memberId: string; amount: number }
   | { type: "saveStart" }
@@ -38,44 +38,54 @@ const initialState: IncomeSessionState = {
   sessionStartSnapshot: {},
 };
 
+function startSession(snapshot: Record<string, number>): IncomeSessionState {
+  return {
+    phase: "editing",
+    overrideAmounts: snapshot,
+    sessionStartSnapshot: snapshot,
+  };
+}
+
+function overrideIncome(
+  state: IncomeSessionState,
+  memberId: string,
+  amount: number,
+): IncomeSessionState {
+  if (state.phase !== "editing") return state;
+  if (isNaN(amount) || amount < 0) return state;
+  return {
+    ...state,
+    overrideAmounts: { ...state.overrideAmounts, [memberId]: amount },
+  };
+}
+
+function startSave(state: IncomeSessionState): IncomeSessionState {
+  if (state.phase !== "editing") return state;
+  return { ...state, phase: "saving" };
+}
+
+function failSave(state: IncomeSessionState): IncomeSessionState {
+  if (state.phase !== "saving") return state;
+  return { ...state, phase: "editing" };
+}
+
 function reducer(
   state: IncomeSessionState,
   action: IncomeSessionAction,
 ): IncomeSessionState {
   switch (action.type) {
-    case "sessionStart": {
-      const { snapshot } = action;
-      return {
-        phase: "editing",
-        overrideAmounts: snapshot,
-        sessionStartSnapshot: snapshot,
-      };
-    }
-    case "overrideIncome": {
-      if (state.phase !== "editing") return state;
-      if (isNaN(action.amount) || action.amount < 0) return state;
-      return {
-        ...state,
-        overrideAmounts: {
-          ...state.overrideAmounts,
-          [action.memberId]: action.amount,
-        },
-      };
-    }
-    case "saveStart": {
-      if (state.phase !== "editing") return state;
-      return { ...state, phase: "saving" };
-    }
-    case "saveSuccess": {
+    case "sessionStart":
+      return startSession(action.snapshot);
+    case "overrideIncome":
+      return overrideIncome(state, action.memberId, action.amount);
+    case "saveStart":
+      return startSave(state);
+    case "saveSuccess":
       return { ...initialState };
-    }
-    case "saveFailure": {
-      if (state.phase !== "saving") return state;
-      return { ...state, phase: "editing" };
-    }
-    case "cancelSession": {
+    case "saveFailure":
+      return failSave(state);
+    case "cancelSession":
       return { ...initialState, overrideAmounts: state.sessionStartSnapshot };
-    }
     default:
       return state;
   }

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Avatar, Badge, Button, Input, UserDisplay } from "../../shared/ui";
-import { SavingsGoal } from "../../entities/savings-goal";
-import { useContributionSession } from "../../entities/savings-goal/useContributionSession";
+import {
+  SavingsGoal,
+  ContributionBreakdown,
+} from "../../entities/savings-goal";
+import {
+  useContributionSession,
+  ContributionSession,
+} from "../../entities/savings-goal/useContributionSession";
 
 const fmt = (n: number) =>
   `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -12,6 +18,88 @@ const NO_SPINNER_CLASS =
 interface InlineAllocationEditorProps {
   goal: SavingsGoal;
   onRefresh?: () => void | Promise<void>;
+}
+
+interface AllocationRowProps {
+  item: ContributionBreakdown;
+  index: number;
+  isEditing: boolean;
+  loading: boolean;
+  session: ContributionSession;
+}
+
+function AllocationRow({
+  item,
+  index,
+  isEditing,
+  loading,
+  session,
+}: AllocationRowProps) {
+  const amount =
+    session.overrideAmounts[item.memberId] ?? item.proportionalAmount;
+
+  return (
+    <div
+      key={item.memberId}
+      className="flex justify-between items-center py-2 bg-slate-100 dark:bg-slate-800 px-3 rounded-md gap-2"
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <Avatar
+          name={item.user?.name ?? item.user?.email ?? ""}
+          colorIndex={index}
+          size="sm"
+        />
+        <UserDisplay
+          user={item.user}
+          className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300"
+        />
+        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1 shrink-0">
+          {item.percentage.toFixed(1)}%
+        </span>
+        {isEditing && session.ceilingWarnings[item.memberId] && (
+          <Badge
+            tone="transfer"
+            size="sm"
+            uppercase
+            title="Exceeds available balance"
+            aria-label="Exceeds available balance"
+          >
+            Over Balance
+          </Badge>
+        )}
+      </div>
+
+      {isEditing ? (
+        <Input
+          type="number"
+          step="0.01"
+          aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
+          className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
+          disabled={loading}
+          value={amount}
+          onChange={(e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val)) {
+              session.overrideMember(item.memberId, val);
+            }
+          }}
+        />
+      ) : (
+        <div className="text-right flex items-center gap-2 shrink-0">
+          {item.isOverridden && (
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-blue-500"
+              title="Custom allocation"
+              aria-label="Custom allocation"
+            />
+          )}
+          <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
+            {fmt(item.actualAmount)}
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -67,73 +155,16 @@ export function InlineAllocationEditor({
         )}
       </div>
 
-      {goal.breakdown.map((item, index) => {
-        const amount =
-          session.overrideAmounts[item.memberId] ?? item.proportionalAmount;
-
-        return (
-          <div
-            key={item.memberId}
-            className="flex justify-between items-center py-2 bg-slate-100 dark:bg-slate-800 px-3 rounded-md gap-2"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Avatar
-                name={item.user?.name ?? item.user?.email ?? ""}
-                colorIndex={index}
-                size="sm"
-              />
-              <UserDisplay
-                user={item.user}
-                className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300"
-              />
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1 shrink-0">
-                {item.percentage.toFixed(1)}%
-              </span>
-              {isEditing && session.ceilingWarnings[item.memberId] && (
-                <Badge
-                  tone="transfer"
-                  size="sm"
-                  uppercase
-                  title="Exceeds available balance"
-                  aria-label="Exceeds available balance"
-                >
-                  Over Balance
-                </Badge>
-              )}
-            </div>
-
-            {isEditing ? (
-              <Input
-                type="number"
-                step="0.01"
-                aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
-                className={`h-8 w-24 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
-                disabled={loading}
-                value={amount}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) {
-                    session.overrideMember(item.memberId, val);
-                  }
-                }}
-              />
-            ) : (
-              <div className="text-right flex items-center gap-2 shrink-0">
-                {item.isOverridden && (
-                  <span
-                    className="h-1.5 w-1.5 rounded-full bg-blue-500"
-                    title="Custom allocation"
-                    aria-label="Custom allocation"
-                  />
-                )}
-                <p className="font-semibold text-slate-900 dark:text-white font-mono tnum">
-                  {fmt(item.actualAmount)}
-                </p>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {goal.breakdown.map((item, index) => (
+        <AllocationRow
+          key={item.memberId}
+          item={item}
+          index={index}
+          isEditing={isEditing}
+          loading={loading}
+          session={session}
+        />
+      ))}
 
       {isEditing && (
         <>

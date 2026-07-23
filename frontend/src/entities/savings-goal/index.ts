@@ -1,11 +1,6 @@
 import type { User } from "../../shared/api/types";
 import { apiClient } from "../../shared/api/client";
 
-export {
-  diffContributionPersistence,
-  type ContributionPersistenceDiff,
-} from "./contributionDiff";
-
 export interface ContributionBreakdown {
   memberId: string;
   share: number;
