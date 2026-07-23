@@ -180,7 +180,7 @@ build/
 
 # spec kit artifacts — keep local only
 .specify/
-specs/
+/specs/
 .headroom
 headroom_memory.db
 .knowledge
