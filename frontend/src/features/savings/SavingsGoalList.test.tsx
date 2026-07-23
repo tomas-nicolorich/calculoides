@@ -144,6 +144,7 @@ describe("SavingsGoalList", () => {
       await user.click(
         screen.getByRole("button", { name: /adjust allocation/i }),
       );
+      await user.click(screen.getByRole("button", { name: /^adjust$/i }));
       expect(
         screen.getByRole("spinbutton", { name: /Alice/i }),
       ).toBeInTheDocument();
@@ -270,7 +271,7 @@ describe("SavingsGoalList", () => {
 
       expect(screen.getByText("Vacation")).toBeInTheDocument();
       expect(
-        screen.getByRole("spinbutton", { name: /Alice/i }),
+        screen.getByRole("button", { name: /^adjust$/i }),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /reset to income split/i }),
@@ -285,12 +286,11 @@ describe("SavingsGoalList", () => {
       await user.click(
         screen.getByRole("button", { name: /adjust allocation/i }),
       );
+      await user.click(screen.getByRole("button", { name: /^adjust$/i }));
       const input = screen.getByRole("spinbutton", { name: /Alice/i });
       await user.clear(input);
       await user.type(input, "150");
-      await user.click(
-        screen.getByRole("button", { name: /save allocation/i }),
-      );
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
 
       await waitFor(() => {
         expect(savingsGoalApi.upsertContribution).toHaveBeenCalled();

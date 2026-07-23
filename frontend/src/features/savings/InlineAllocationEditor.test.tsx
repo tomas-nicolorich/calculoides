@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { fireEvent } from "@testing-library/react";
 import { InlineAllocationEditor } from "./InlineAllocationEditor";
@@ -90,6 +90,12 @@ const scopedGoal = {
   ],
 };
 
+function getRow(name: string): HTMLElement {
+  const row = screen.getByText(name).closest("div")?.parentElement;
+  if (!row) throw new Error(`Could not find row for "${name}"`);
+  return row;
+}
+
 const resetGoal = {
   ...mockGoal,
   breakdown: [
@@ -111,7 +117,7 @@ describe("InlineAllocationEditor", () => {
     vi.clearAllMocks();
   });
 
-  it("renders per-member allocation inputs for the goal", () => {
+  it("renders the Monthly Allocation label and an Adjust control per member, with no input by default", () => {
     render(
       <InlineAllocationEditor
         goal={mockGoal}
@@ -122,8 +128,33 @@ describe("InlineAllocationEditor", () => {
 
     expect(screen.getByText("Monthly Allocation")).toBeInTheDocument();
     expect(
+      screen.getByRole("button", { name: /^adjust$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("spinbutton", { name: /Alice/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clicking Adjust hides that member's Adjust button and swaps the amount into an input", async () => {
+    const user = userEvent.setup();
+    render(
+      <InlineAllocationEditor
+        goal={mockGoal}
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
+
+    expect(
       screen.getByRole("spinbutton", { name: /Alice/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^adjust$/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByText("100.0%")).toBeInTheDocument();
   });
 
   it("renders the allocation hint text", () => {
@@ -192,17 +223,14 @@ describe("InlineAllocationEditor", () => {
     const badges = screen.getAllByText(/over balance/i);
     expect(badges).toHaveLength(1);
 
-    const aliceRow = screen.getByRole("spinbutton", {
-      name: /alice/i,
-    }).parentElement;
-    const bobRow = screen.getByRole("spinbutton", {
-      name: /bob/i,
-    }).parentElement;
+    const aliceRow = getRow("Alice");
+    const bobRow = getRow("Bob");
     expect(aliceRow).toContainElement(badges[0]);
     expect(bobRow).not.toContainElement(badges[0]);
   });
 
-  it("keeps the allocation input value driven by overrideAmounts/proportionalAmount unaffected by the warning badge", () => {
+  it("keeps the allocation input value driven by overrideAmounts/proportionalAmount unaffected by the warning badge", async () => {
+    const user = userEvent.setup();
     const goalWithWarning = {
       ...mockGoal,
       breakdown: [
@@ -227,11 +255,12 @@ describe("InlineAllocationEditor", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Alice/i });
     expect(input).toHaveValue(500);
   });
 
-  it("renders Save Allocation and Cancel controls", () => {
+  it("renders Save Changes and Cancel controls", () => {
     render(
       <InlineAllocationEditor
         goal={mockGoal}
@@ -241,7 +270,7 @@ describe("InlineAllocationEditor", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /save allocation/i }),
+      screen.getByRole("button", { name: /save changes/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
   });
@@ -257,10 +286,12 @@ describe("InlineAllocationEditor", () => {
       />,
     );
 
+    const bobRow = getRow("Bob");
+    await user.click(within(bobRow).getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Bob/i });
     fireEvent.change(input, { target: { value: "300" } });
 
-    await user.click(screen.getByRole("button", { name: /save allocation/i }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => {
       expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
@@ -291,7 +322,7 @@ describe("InlineAllocationEditor", () => {
     await user.click(
       screen.getByRole("button", { name: /reset to income split/i }),
     );
-    await user.click(screen.getByRole("button", { name: /save allocation/i }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => {
       expect(savingsGoalApi.deleteContribution).toHaveBeenCalledWith(
@@ -317,10 +348,9 @@ describe("InlineAllocationEditor", () => {
     );
     await user.click(screen.getByRole("button", { name: /undo reset/i }));
 
-    const input = screen.getByRole("spinbutton", { name: /Carol/i });
-    expect(input).toHaveValue(350);
+    expect(screen.getByText("€350.00")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /save allocation/i }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => {
       expect(savingsGoalApi.upsertContribution).toHaveBeenCalledWith(
@@ -343,6 +373,7 @@ describe("InlineAllocationEditor", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Alice/i });
     fireEvent.change(input, { target: { value: "150" } });
 
@@ -366,10 +397,11 @@ describe("InlineAllocationEditor", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Alice/i });
     fireEvent.change(input, { target: { value: "150" } });
 
-    await user.click(screen.getByRole("button", { name: /save allocation/i }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Save failed")).toBeInTheDocument();
