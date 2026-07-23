@@ -80,11 +80,11 @@ export function InlineAllocationEditor({
               <Avatar
                 name={item.user?.name ?? item.user?.email ?? ""}
                 colorIndex={index}
-                size="xs"
+                size="sm"
               />
               <UserDisplay
                 user={item.user}
-                className="font-medium text-slate-700 dark:text-slate-300"
+                className="hidden sm:inline font-medium text-slate-700 dark:text-slate-300"
               />
               <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 ml-1 shrink-0">
                 {item.percentage.toFixed(1)}%
