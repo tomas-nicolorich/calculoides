@@ -1,4 +1,4 @@
 echo "Running pre-push tests..."
-npm run lint
-npm run test
-npm run build
+npx turbo run lint --concurrency=1
+npx turbo run test --concurrency=1
+npx turbo run build --concurrency=1
