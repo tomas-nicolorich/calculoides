@@ -13,24 +13,25 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: AvatarSize;
 }
 
-// CDS member palette (see --color-member-* in index.css). `hex` mirrors the
-// same file's literal values so initials contrast can be computed at render
-// time without resolving the CSS custom property; keep both in sync.
+// CDS member palette (see --color-member-* in index.css), pre-darkened so
+// white initials clear WCAG AA against every swatch. `hex` mirrors the same
+// file's literal values so an explicit `color` override can still be
+// contrast-checked at render time without resolving the CSS custom
+// property; keep both in sync.
 const MEMBER_PALETTE = [
-  { var: "var(--color-member-1)", hex: "#10b981" },
-  { var: "var(--color-member-2)", hex: "#3b82f6" },
-  { var: "var(--color-member-3)", hex: "#8b5cf6" },
-  { var: "var(--color-member-4)", hex: "#f59e0b" },
-  { var: "var(--color-member-5)", hex: "#f43f5e" },
-  { var: "var(--color-member-6)", hex: "#06b6d4" },
-  { var: "var(--color-member-7)", hex: "#f97316" },
-  { var: "var(--color-member-8)", hex: "#ec4899" },
-  { var: "var(--color-member-9)", hex: "#6366f1" },
-  { var: "var(--color-member-10)", hex: "#14b8a6" },
+  { var: "var(--color-member-1)", hex: "#047857" },
+  { var: "var(--color-member-2)", hex: "#2563eb" },
+  { var: "var(--color-member-3)", hex: "#7c3aed" },
+  { var: "var(--color-member-4)", hex: "#b45309" },
+  { var: "var(--color-member-5)", hex: "#e11d48" },
+  { var: "var(--color-member-6)", hex: "#0e7490" },
+  { var: "var(--color-member-7)", hex: "#c2410c" },
+  { var: "var(--color-member-8)", hex: "#db2777" },
+  { var: "var(--color-member-9)", hex: "#4f46e5" },
+  { var: "var(--color-member-10)", hex: "#0f766e" },
 ];
 
 const WHITE_TEXT = "#ffffff";
-const DARK_TEXT = "#0f172a"; // slate-900
 
 function srgbChannelToLinear(channel: number): number {
   const c = channel / 255;
@@ -59,17 +60,67 @@ function contrastRatio(hexA: string, hexB: string): number | null {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+function hexToHsl(hex: string): [number, number, number] {
+  const value = hex.replace("#", "");
+  const r = parseInt(value.slice(0, 2), 16) / 255;
+  const g = parseInt(value.slice(2, 4), 16) / 255;
+  const b = parseInt(value.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  switch (max) {
+    case r:
+      h = (g - b) / d + (g < b ? 6 : 0);
+      break;
+    case g:
+      h = (b - r) / d + 2;
+      break;
+    default:
+      h = (r - g) / d + 4;
+  }
+  return [h * 60, s, l];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r0, g0, b0] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  const toHex = (v: number) =>
+    Math.round((v + m) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${toHex(r0)}${toHex(g0)}${toHex(b0)}`;
+}
+
 /**
- * Picks whichever of white/dark text clears WCAG AA's 4.5:1 against this
- * background; if neither does (no member colour in the palette currently
- * falls short of both), picks whichever ratio is higher.
+ * Darkens a background until white text clears WCAG AA's 4.5:1, for
+ * arbitrary `color` overrides that aren't pre-checked like the palette.
  */
-function textColorFor(backgroundHex: string): string {
-  const whiteRatio = contrastRatio(backgroundHex, WHITE_TEXT) ?? 0;
-  const darkRatio = contrastRatio(backgroundHex, DARK_TEXT) ?? 0;
-  if (whiteRatio >= 4.5) return WHITE_TEXT;
-  if (darkRatio >= 4.5) return DARK_TEXT;
-  return whiteRatio >= darkRatio ? WHITE_TEXT : DARK_TEXT;
+function ensureContrastForWhite(backgroundHex: string): string {
+  const [h, s, startL] = hexToHsl(backgroundHex);
+  let l = startL;
+  let candidate = backgroundHex;
+  while (l > 0 && (contrastRatio(candidate, WHITE_TEXT) ?? 5) < 4.5) {
+    l = Math.max(0, l - 0.02);
+    candidate = hslToHex(h, s, l);
+  }
+  return candidate;
 }
 
 const sizes: Record<AvatarSize, string> = {
@@ -97,8 +148,7 @@ export function Avatar({
   ...props
 }: AvatarProps) {
   const palette = MEMBER_PALETTE[(colorIndex ?? 0) % MEMBER_PALETTE.length];
-  const bg = color ?? palette.var;
-  const textColor = textColorFor(color ?? palette.hex);
+  const bg = color ? ensureContrastForWhite(color) : palette.var;
   return (
     <span
       className={cn(
@@ -106,7 +156,7 @@ export function Avatar({
         sizes[size],
         className,
       )}
-      style={{ background: bg, color: textColor, ...style }}
+      style={{ background: bg, color: WHITE_TEXT, ...style }}
       title={name}
       {...props}
     >

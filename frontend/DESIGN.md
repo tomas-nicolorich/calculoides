@@ -9,16 +9,17 @@ colors:
   brand-transfer: "#F59E0B"     # amber-500 — transfers, pending, warnings
   brand-category: "#8B5CF6"     # violet-500 — category tags, neutral accent
   # Member identity palette — stable per-member colour by join order (Avatar, AvatarGroup, MemberBar)
-  member-1: "#10B981"
-  member-2: "#3B82F6"
-  member-3: "#8B5CF6"
-  member-4: "#F59E0B"
-  member-5: "#F43F5E"
-  member-6: "#06B6D4"
-  member-7: "#F97316"
-  member-8: "#EC4899"
-  member-9: "#6366F1"
-  member-10: "#14B8A6"
+  # Darkened from the base Tailwind 500 shades so white avatar initials always clear WCAG AA (4.5:1)
+  member-1: "#047857"
+  member-2: "#2563EB"
+  member-3: "#7C3AED"
+  member-4: "#B45309"
+  member-5: "#E11D48"
+  member-6: "#0E7490"
+  member-7: "#C2410C"
+  member-8: "#DB2777"
+  member-9: "#4F46E5"
+  member-10: "#0F766E"
   # Neutral foundation (Slate scale)
   neutral-50:  "#F8FAFC"
   neutral-100: "#F1F5F9"
@@ -292,7 +293,7 @@ Pill-shaped (`rounded-full`), two sizes. Background uses the matching `well-*` t
 
 ### Avatars
 
-Circular (`rounded-full`), four sizes (24/34/42/50px). Background comes from the 10-color member-identity palette via a stable `colorIndex` (join order) so a member keeps the same color everywhere — Avatar, AvatarGroup, and MemberBar all read from the same palette. `AvatarGroup` overlaps avatars with a 2px card-colored ring and collapses overflow into a `+N` chip past a `max` count.
+Circular (`rounded-full`), four sizes (24/34/42/50px). Background comes from the 10-color member-identity palette via a stable `colorIndex` (join order) so a member keeps the same color everywhere — Avatar, AvatarGroup, and MemberBar all read from the same palette. Initials are always white; the member-identity palette is pre-darkened (see `colors` above) so white text clears WCAG AA against every swatch, and an explicit `color` override is darkened further at render time if needed rather than falling back to dark text. `AvatarGroup` overlaps avatars with a 2px card-colored ring and collapses overflow into a `+N` chip past a `max` count.
 
 ### Member Bar / Progress Meters
 
