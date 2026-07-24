@@ -1,6 +1,7 @@
-import { render, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, waitFor, screen, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { AuthProvider } from "./AuthProvider";
+import { useAuth } from "./AuthContext";
 import { supabase } from "../../shared/api/supabase";
 
 vi.mock("../../shared/api/supabase", () => ({
@@ -126,5 +127,50 @@ describe("AuthProvider /me fetch dedup", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
+  });
+});
+
+function SessionErrorProbe() {
+  const { sessionError } = useAuth();
+  return <div data-testid="session-error-probe">{sessionError ?? ""}</div>;
+}
+
+describe("AuthProvider session-load safety timeout (BUG-007)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+
+    /* eslint-disable @typescript-eslint/no-deprecated -- mocking the deprecated overload the app still uses */
+    (
+      supabase.auth.onAuthStateChange as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => ({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    }));
+    /* eslint-enable @typescript-eslint/no-deprecated */
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sets sessionError (not just loading=false) when the 5s safety timeout fires before getSession() resolves", async () => {
+    // Simulate a hung network call: getSession() never resolves during this test.
+    (supabase.auth.getSession as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise(() => {
+        // intentionally never settles
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <SessionErrorProbe />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(screen.getByTestId("session-error-probe").textContent).not.toBe("");
   });
 });

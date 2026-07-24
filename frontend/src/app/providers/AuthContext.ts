@@ -6,6 +6,10 @@ export interface AuthContextType {
   session: Session | null;
   loading: boolean;
   profileIncomplete: boolean;
+  /** Message describing why the initial session bootstrap failed, if it did. */
+  sessionError: string | null;
+  /** Re-runs the initial session fetch (e.g. after a network failure). */
+  retrySessionLoad: () => void;
   signOut: () => Promise<void>;
 }
 

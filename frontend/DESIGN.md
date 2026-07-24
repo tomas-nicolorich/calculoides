@@ -3,7 +3,7 @@ name: Calculoides Modern
 description: Design system for a household budget management app — financial clarity through semantic color, geometric type, and controlled depth.
 colors:
   # Brand palette — each maps to a financial transaction type
-  brand-balance: "#3B82F6"      # blue-500 — balance, trust, primary actions
+  brand-balance: "#2563EB"      # blue-600 — balance, trust, primary actions
   brand-income:  "#10B981"      # emerald-500 — income, positive states, success
   brand-expense: "#EF4444"      # red-500 — expenses, deletion, danger
   brand-transfer: "#F59E0B"     # amber-500 — transfers, pending, warnings
@@ -62,6 +62,10 @@ typography:
     fontFamily: Geist Mono
     fontVariantNumeric: tabular-nums
     fontFeatureSettings: '"tnum" 1, "zero" 1'
+  caption:
+    fontFamily: Geist
+    fontSize: 11px
+    fontWeight: 500
 rounded:
   sm:   4px    # nested row corners
   md:   6px    # buttons (sm/md sizes)
@@ -180,7 +184,7 @@ The palette is small and disciplined: five semantic brand hues, a ten-color memb
 
 ### Primary
 
-- **Balance Blue** (`#3B82F6`): the system's primary action color — trust, the default account state, primary buttons, primary focus rings.
+- **Balance Blue** (`#2563EB`): the system's primary action color — trust, the default account state, primary buttons, primary focus rings.
 
 ### Secondary
 
@@ -215,6 +219,7 @@ Slate scale, `neutral-50` → `neutral-950`. Light mode: `#F8FAFC` background, `
 - **Heading** (600, 18px, 1.25 lh): card titles, dialog titles, page headers.
 - **Body** (400, 14px, 1.5 lh): descriptions, form labels, list rows.
 - **Mono** (400–600, 14px, tabular-nums): every currency figure and date, without exception.
+- **Caption** (500, 11px, uppercase or plain): avatar initials at `xs` size, `Badge` `sm` size text, grouped-list micro-labels (e.g. `IconPicker` group headers). The one documented step below Body; don't reach for an arbitrary `text-[Npx]` value smaller than this.
 
 ### Named Rules
 

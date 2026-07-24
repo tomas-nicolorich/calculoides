@@ -3,12 +3,13 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { X } from "lucide-react";
+import { useMediaQuery } from "../lib/hooks/useMediaQuery";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface DialogProps {
+interface ResponsiveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -18,7 +19,12 @@ interface DialogProps {
   hideCloseButton?: boolean;
 }
 
-export function Dialog({
+/**
+ * Mobile-aware dialog primitive: centered modal at >=768px, bottom sheet
+ * below that. Use for any dialog reachable from a primary mobile flow
+ * (Dialog.tsx stays desktop-only positioning).
+ */
+export function ResponsiveDialog({
   open,
   onOpenChange,
   title,
@@ -26,7 +32,9 @@ export function Dialog({
   children,
   trigger,
   hideCloseButton,
-}: DialogProps) {
+}: ResponsiveDialogProps) {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
   return (
     <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <BaseDialog.Trigger>{trigger}</BaseDialog.Trigger>}
@@ -34,8 +42,16 @@ export function Dialog({
         <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0" />
         <BaseDialog.Popup
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800",
-            "transition-[transform,opacity,scale] duration-200 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95",
+            "fixed z-50 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-y-auto",
+            isDesktop
+              ? cn(
+                  "left-1/2 top-1/2 max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6",
+                  "transition-[transform,opacity,scale] duration-200 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95",
+                )
+              : cn(
+                  "left-0 right-0 bottom-0 max-h-[90vh] rounded-t-2xl p-6",
+                  "transition-transform duration-200 ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full",
+                ),
           )}
         >
           <div className="flex flex-col space-y-2 text-center sm:text-left">
@@ -58,20 +74,5 @@ export function Dialog({
         </BaseDialog.Popup>
       </BaseDialog.Portal>
     </BaseDialog.Root>
-  );
-}
-
-export function DialogFooter({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6",
-        className,
-      )}
-      {...props}
-    />
   );
 }

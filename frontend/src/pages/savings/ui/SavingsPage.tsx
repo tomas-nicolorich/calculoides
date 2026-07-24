@@ -5,7 +5,7 @@ import { useSavingsGoals } from "../../../shared/api/savingsHooks";
 import { SavingsGoalList } from "../../../features/savings/SavingsGoalList";
 import { SavingsGoalForm } from "../../../features/savings/SavingsGoalForm";
 import { ArrowLeft, Plus } from "lucide-react";
-import { Button, IconButton } from "../../../shared/ui";
+import { Button, IconButton, Spinner } from "../../../shared/ui";
 import { Dialog } from "../../../shared/ui/Dialog";
 
 export function SavingsPage() {
@@ -23,7 +23,7 @@ export function SavingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-balance"></div>
+        <Spinner size="lg" />
       </div>
     );
   }

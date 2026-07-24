@@ -116,7 +116,7 @@ export function IconPicker({
                 )}
                 {filteredGroups.map((group) => (
                   <div key={group.label} className="space-y-1.5">
-                    <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest px-0.5">
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest px-0.5">
                       {group.label}
                     </p>
                     <div className="grid grid-cols-6 gap-1">

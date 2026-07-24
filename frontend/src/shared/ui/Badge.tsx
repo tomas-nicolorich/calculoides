@@ -32,7 +32,7 @@ const tones: Record<BadgeTone, string> = {
 };
 
 const sizes: Record<BadgeSize, string> = {
-  sm: "text-[0.625rem] px-2 py-[3px] tracking-wide",
+  sm: "text-[11px] px-2 py-[3px] tracking-wide",
   md: "text-xs px-2.5 py-1",
 };
 
