@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Edit2 } from "lucide-react";
 import { Card } from "../../../shared/ui/Card";
+import { Avatar } from "../../../shared/ui/Avatar";
 import { IconButton, Input } from "../../../shared/ui";
 import { StatFigure, MemberBar } from "../../../shared/ui/money";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
@@ -112,12 +113,7 @@ export function IncomeOverview({
                 className="flex items-center justify-between gap-2 text-sm"
               >
                 <span className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300 min-w-0">
-                  <span
-                    className="h-3 w-3 flex-none rounded-full"
-                    style={{
-                      background: `var(--color-member-${((m.colorIndex % 10) + 1).toString()})`,
-                    }}
-                  />
+                  <Avatar name={m.name} colorIndex={m.colorIndex} size="xs" />
                   <span className="truncate">{m.name}</span>
                   <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 shrink-0">
                     {(session.shares[m.id] ?? 0).toFixed(1)}%
