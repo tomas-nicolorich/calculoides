@@ -30,16 +30,36 @@ interface BudgetTransfersProps {
 interface TransferRowProps {
   transfer: Transfer;
   members: TransferMember[];
+  index: number;
 }
 
-/** A single transfer row: marker icon + category/amount + from→to sub-line. */
-function TransferRow({ transfer, members }: TransferRowProps) {
-  const from = members.find((m) => m.id === transfer.fromMemberId);
-  const to = members.find((m) => m.id === transfer.toMemberId);
-  const fromName = from?.name ?? transfer.fromMemberName;
-  const toName = to?.name ?? transfer.toMemberName;
+function resolveMemberDisplay(
+  member: TransferMember | undefined,
+  fallbackName: string,
+) {
+  return {
+    name: member?.name ?? fallbackName,
+    colorIndex: member?.colorIndex ?? 0,
+  };
+}
+
+/** A single transfer row: marker icon + from→to sub-line + amount. */
+function TransferRow({ transfer, members, index }: TransferRowProps) {
+  const from = resolveMemberDisplay(
+    members.find((m) => m.id === transfer.fromMemberId),
+    transfer.fromMemberName,
+  );
+  const to = resolveMemberDisplay(
+    members.find((m) => m.id === transfer.toMemberId),
+    transfer.toMemberName,
+  );
   return (
-    <div data-testid="transfer-row" className="flex items-center gap-3 py-2">
+    <div
+      data-testid="transfer-row"
+      className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+        index % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/40" : ""
+      }`}
+    >
       <span
         className="grid place-items-center size-9 shrink-0 rounded-lg bg-brand-transfer/10 text-brand-transfer"
         aria-hidden
@@ -47,26 +67,20 @@ function TransferRow({ transfer, members }: TransferRowProps) {
         <ArrowRightLeft size={18} />
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start gap-2">
-          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-            {transfer.categoryName}
-          </p>
-          <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum">
-            {formatCurrency(transfer.amount)}
-          </span>
-        </div>
+        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+          {transfer.categoryName}
+        </p>
         <p className="flex items-center gap-1 text-xs text-slate-500 truncate">
-          <Avatar
-            size="xs"
-            name={fromName}
-            colorIndex={from?.colorIndex ?? 0}
-          />
-          <span>{fromName.split(" ")[0]}</span>
+          <Avatar size="xs" name={from.name} colorIndex={from.colorIndex} />
+          <span>{from.name.split(" ")[0]}</span>
           <ArrowRight size={12} aria-hidden />
-          <Avatar size="xs" name={toName} colorIndex={to?.colorIndex ?? 0} />
-          <span>{toName.split(" ")[0]}</span>
+          <Avatar size="xs" name={to.name} colorIndex={to.colorIndex} />
+          <span>{to.name.split(" ")[0]}</span>
         </p>
       </div>
+      <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum shrink-0">
+        {formatCurrency(transfer.amount)}
+      </span>
     </div>
   );
 }
@@ -97,11 +111,12 @@ export function BudgetTransfers({
               No recent transfers
             </div>
           ) : (
-            transfers.map((transfer) => (
+            transfers.map((transfer, index) => (
               <TransferRow
                 key={transfer.id}
                 transfer={transfer}
                 members={members}
+                index={index}
               />
             ))
           )}

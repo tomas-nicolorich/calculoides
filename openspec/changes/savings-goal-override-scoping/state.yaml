@@ -1,0 +1,60 @@
+---
+# State tracking for active SDD change: savings-goal-override-scoping
+change_name: savings-goal-override-scoping
+github_issue: "161"
+branch: feat/savings-ceiling-aware-reset
+
+# DAG state: which phases are complete
+phases:
+  proposal: complete
+  spec: complete
+  design: complete
+  tasks: complete
+  apply: complete
+  verify: complete
+  archive: pending
+
+# Blocked by (archive phase cannot proceed until):
+archive_blockers:
+  - reason: "No commit created yet on branch"
+    details: "All work is uncommitted in the working tree (dirty worktree). Archive requires a commit to be created before PR/merge workflow can proceed."
+  - reason: "Diff size exceeds original forecast by ~50%"
+    details: "Verify-report WARNING: actual 976 lines vs ~600 midpoint forecast. Already-accepted size:exception but magnitude should be re-confirmed before archiving."
+
+# Artifact existence flags
+artifacts_present:
+  proposal: true
+  spec: true
+  design: true
+  tasks: true
+  apply_progress: true
+  verify_report: true
+  archive_report: false
+
+# Verification status
+verify_verdict: "PASS WITH WARNINGS"
+critical_issues: 0
+warnings: 2
+suggestions: 0
+
+# Test status (from verify-report)
+test_status:
+  api_tests: "131/131 passed"
+  frontend_tests: "267/267 passed"
+  typecheck: "clean"
+
+# Key metrics
+review_workload:
+  estimated_lines: "550-650"
+  actual_lines: "~976"
+  budget_risk: "High"
+  delivery_strategy: "size:exception (single PR, user-approved)"
+
+# Non-regression checks
+regression_checks:
+  months_remaining_fix: "verified unchanged (#159)"
+  share_percentage_fix: "verified unchanged (#160)"
+  reset_income_split: "verified correct logic, only persistence changed"
+
+# Next action
+next_action: "Create commit, then proceed to archive phase"

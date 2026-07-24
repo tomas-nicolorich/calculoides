@@ -77,6 +77,7 @@ export const SavingsGoalSchema = z.object({
   id: IdSchema,
   groupId: IdSchema,
   name: z.string().min(1, "Goal name is required"),
+  icon: z.string().nullish(),
   targetAmount: z.number().positive("Target amount must be positive"),
   currentAmount: z.number().nonnegative().default(0),
   targetDate: z.coerce.date(),
@@ -86,6 +87,7 @@ export const SavingsGoalSchema = z.object({
 
 export const CreateSavingsGoalSchema = SavingsGoalSchema.pick({
   name: true,
+  icon: true,
   targetAmount: true,
   currentAmount: true,
   targetDate: true,

@@ -27,6 +27,10 @@ export const expenseApi = {
     }),
   delete: (id: string) =>
     apiClient.fetch<undefined>(`/transactions/${id}`, { method: "DELETE" }),
+  deleteAll: (groupId: string) =>
+    apiClient.fetch<undefined>(`/expenses?groupId=${groupId}`, {
+      method: "DELETE",
+    }),
   update: (
     id: string,
     data: {

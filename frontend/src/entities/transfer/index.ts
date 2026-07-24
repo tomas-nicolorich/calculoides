@@ -5,4 +5,8 @@ export const transferApi = {
     apiClient.fetch<undefined>(`/transactions/${id}?type=transfer`, {
       method: "DELETE",
     }),
+  deleteAll: (groupId: string) =>
+    apiClient.fetch<undefined>(`/transfers?groupId=${groupId}`, {
+      method: "DELETE",
+    }),
 };

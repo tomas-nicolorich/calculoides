@@ -23,6 +23,7 @@ import { prisma } from "../utils/prisma";
 import {
   calculateIncomeShares,
   calculateCategoryBalances,
+  calculateMemberBudgetedTotals,
 } from "../services/calculation";
 
 function requireStringParam(
@@ -43,6 +44,21 @@ function parsePagination(query: Record<string, unknown>) {
     parsedLimit: parseInt(limit as string, 10),
     parsedOffset: parseInt(offset as string, 10),
   };
+}
+
+async function requireGroupAccess(
+  groupId: unknown,
+  userId: string,
+  res: ApiResponse,
+): Promise<string | undefined> {
+  const validatedGroupId = IdSchema.parse(groupId);
+  const groups = await GroupService.getGroupsForUser(userId);
+  const group = groups.find((g) => g.id === validatedGroupId);
+  if (!group) {
+    res.status(403).json({ error: "Access denied to this group" });
+    return undefined;
+  }
+  return validatedGroupId;
 }
 
 const CreateTransferSchema = z.object({
@@ -151,6 +167,19 @@ export const routes: RouteConfig = {
     await ExpenseService.deleteExpense(validatedId);
     res.status(204).end();
   },
+  "expenses-delete-all": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
+    const { groupId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
+    await ExpenseService.deleteAllExpenses(validatedGroupId);
+    res.status(204).end();
+  },
 
   // Transfers
   "transfer-delete": async (req: ApiRequest, res: ApiResponse) => {
@@ -194,6 +223,19 @@ export const routes: RouteConfig = {
       pagination: { total, limit: parsedLimit, offset: parsedOffset },
     });
   },
+  "transfers-delete-all": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
+    const { groupId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
+    await TransferService.deleteAllTransfers(validatedGroupId);
+    res.status(204).end();
+  },
 
   // Categories
   "category-create": async (req: ApiRequest, res: ApiResponse) => {
@@ -225,13 +267,12 @@ export const routes: RouteConfig = {
   "categories-list": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
-    const validatedGroupId = IdSchema.parse(groupId);
-    const groups = await GroupService.getGroupsForUser(authReq.user.id);
-    const group = groups.find((g) => g.id === validatedGroupId);
-    if (!group) {
-      res.status(403).json({ error: "Access denied to this group" });
-      return;
-    }
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const categories =
       await BudgetService.listCategoriesWithBalances(validatedGroupId);
     res.status(200).json(categories);
@@ -273,6 +314,7 @@ export const routes: RouteConfig = {
       validatedBody.targetAmount,
       validatedBody.targetDate,
       validatedBody.currentAmount,
+      validatedBody.icon,
     );
     res.status(201).json(goal);
   },
@@ -287,14 +329,16 @@ export const routes: RouteConfig = {
       validatedBody.targetAmount,
       validatedBody.targetDate,
       validatedBody.currentAmount,
+      validatedBody.icon,
     );
     res.status(200).json(goal);
   },
   "savings-goal-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
     const { goalId } = req.query;
     if (!requireStringParam(goalId, "goalId", res)) return;
     const validatedGoalId = IdSchema.parse(goalId);
-    await SavingsService.deleteGoal(validatedGoalId);
+    await SavingsService.deleteGoal(validatedGoalId, authReq.user.id);
     res.status(204).end();
   },
   "savings-contribution-upsert": async (req: ApiRequest, res: ApiResponse) => {
@@ -317,6 +361,22 @@ export const routes: RouteConfig = {
       validatedBody.amount,
     );
     res.status(200).json(contribution);
+  },
+  "savings-contribution-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const { goalId, memberId } = req.query;
+    if (
+      !goalId ||
+      typeof goalId !== "string" ||
+      !memberId ||
+      typeof memberId !== "string"
+    ) {
+      res.status(400).json({ error: "Missing goalId or memberId" });
+      return;
+    }
+    const validatedGoalId = IdSchema.parse(goalId);
+    const validatedMemberId = IdSchema.parse(memberId);
+    await SavingsService.deleteContribution(validatedGoalId, validatedMemberId);
+    res.status(204).end();
   },
   "savings-goals-list": async (req: ApiRequest, res: ApiResponse) => {
     const { groupId } = req.query;
@@ -406,6 +466,32 @@ export const routes: RouteConfig = {
     );
     const totalSpent = expenses.reduce((acc, e) => acc + Number(e.amount), 0);
 
+    // Budgeted totals reuse the shared helper (also used by
+    // SavingsService.getGoalsForGroup) instead of an inline per-member loop —
+    // same calculateCategoryBalances-based computation, single source of truth.
+    const memberBudgetedTotals = calculateMemberBudgetedTotals(
+      memberIncomes,
+      categories.map((c) => ({
+        id: c.id,
+        monthlyBudget: Number(c.monthlyBudget),
+        memberLinks: c.memberLinks,
+      })),
+      expenses.map((e) => ({
+        payerId: e.payerId,
+        categoryId: e.categoryId,
+        amount: Number(e.amount),
+      })),
+      transfers.map((t) => ({
+        categoryId: t.categoryId,
+        fromMemberId: t.fromMemberId,
+        toMemberId: t.toMemberId,
+        amount: Number(t.amount),
+      })),
+    );
+    const budgetedByMemberId = new Map(
+      memberBudgetedTotals.map((b) => [b.memberId, b.budgeted]),
+    );
+
     const membersSummary = group.members.map((m) => {
       const share = shares.find((s) => s.id === m.id);
 
@@ -415,7 +501,6 @@ export const routes: RouteConfig = {
 
       // Calculate remaining quota across all categories
       let totalRemainingQuota = 0;
-      let totalBudgetedQuota = 0;
       categories.forEach((cat) => {
         // Filter members if category is restricted
         const isRestricted = cat.memberLinks.length > 0;
@@ -452,7 +537,6 @@ export const routes: RouteConfig = {
         const memberBalance = balances.find((b) => b.memberId === m.id);
         if (memberBalance) {
           totalRemainingQuota += memberBalance.remainingQuota;
-          totalBudgetedQuota += memberBalance.totalQuota;
         }
       });
 
@@ -464,7 +548,7 @@ export const routes: RouteConfig = {
         share: share?.percentage ?? 0,
         spent: memberExpensesTotal,
         remainingQuota: totalRemainingQuota,
-        budgeted: Number(totalBudgetedQuota.toFixed(2)),
+        budgeted: budgetedByMemberId.get(m.id) ?? 0,
       };
     });
 
@@ -532,7 +616,20 @@ export const routes: RouteConfig = {
 };
 
 routes.expenses = async (req: ApiRequest, res: ApiResponse) => {
-  const actionKey = req.method === "POST" ? "expense-create" : "expenses-list";
+  const actionKey =
+    req.method === "POST"
+      ? "expense-create"
+      : req.method === "DELETE"
+        ? "expenses-delete-all"
+        : "expenses-list";
+  const handler = routes[actionKey];
+  if (handler) return handler(req, res);
+  res.status(405).json({ error: "Method not allowed" });
+};
+
+routes.transfers = async (req: ApiRequest, res: ApiResponse) => {
+  const actionKey =
+    req.method === "DELETE" ? "transfers-delete-all" : "transfers-list";
   const handler = routes[actionKey];
   if (handler) return handler(req, res);
   res.status(405).json({ error: "Method not allowed" });
@@ -564,6 +661,24 @@ routes.savings = async (req: ApiRequest, res: ApiResponse) => {
     actionKey = "savings-goal-update";
   } else if (method === "DELETE") {
     actionKey = "savings-goal-delete";
+  }
+
+  const handler = routes[actionKey];
+  if (handler) {
+    return handler(req, res);
+  }
+
+  res.status(405).json({ error: "Method not allowed" });
+};
+
+routes["savings-contribution"] = async (req: ApiRequest, res: ApiResponse) => {
+  const method = req.method;
+  let actionKey = "";
+
+  if (method === "POST") {
+    actionKey = "savings-contribution-upsert";
+  } else if (method === "DELETE") {
+    actionKey = "savings-contribution-delete";
   }
 
   const handler = routes[actionKey];

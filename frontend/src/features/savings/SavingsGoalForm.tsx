@@ -2,12 +2,57 @@ import { useState } from "react";
 import { Button, Input } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { cn } from "../../shared/lib/utils";
+import {
+  CATEGORY_ICON_KEYS,
+  CategoryIconTile,
+} from "../../shared/lib/categoryIcons";
 
 interface SavingsGoalFormProps {
   groupId: string;
   goal?: SavingsGoal;
   onSuccess?: () => void | Promise<void>;
   onCancel?: () => void;
+}
+
+function IconPicker({
+  icon,
+  setIcon,
+}: {
+  icon: string;
+  setIcon: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+        Icon
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {CATEGORY_ICON_KEYS.map((key) => {
+          const selected = icon === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setIcon(key);
+              }}
+              aria-pressed={selected}
+              aria-label={`Icon: ${key}`}
+              title={key}
+              className={cn(
+                "rounded-xl p-0.5 transition-all",
+                selected
+                  ? "ring-2 ring-brand-balance ring-offset-1 ring-offset-card"
+                  : "opacity-70 hover:opacity-100",
+              )}
+            >
+              <CategoryIconTile icon={key} size="md" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function SavingsGoalForm({
@@ -25,10 +70,9 @@ export function SavingsGoalForm({
     goal?.currentAmount.toString() ?? "0",
   );
   const [targetDate, setTargetDate] = useState(
-    goal?.targetDate
-      ? new Date(goal.targetDate).toISOString().split("T")[0]
-      : "",
+    goal?.targetDate ? new Date(goal.targetDate).toISOString().slice(0, 7) : "",
   );
+  const [icon, setIcon] = useState(goal?.icon ?? "other");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,16 +85,18 @@ export function SavingsGoalForm({
       if (isEditing) {
         await savingsGoalApi.update(goal.id, {
           name,
+          icon,
           targetAmount: Number(targetAmount),
           currentAmount: Number(currentAmount),
-          targetDate: new Date(targetDate).toISOString(),
+          targetDate: new Date(`${targetDate}-01`).toISOString(),
         });
       } else {
         await savingsGoalApi.create(groupId, {
           name,
+          icon,
           targetAmount: Number(targetAmount),
           currentAmount: Number(currentAmount),
-          targetDate: new Date(targetDate).toISOString(),
+          targetDate: new Date(`${targetDate}-01`).toISOString(),
         });
       }
 
@@ -59,6 +105,7 @@ export function SavingsGoalForm({
         setTargetAmount("");
         setCurrentAmount("0");
         setTargetDate("");
+        setIcon("other");
       }
       await onSuccess?.();
     } catch (err) {
@@ -92,6 +139,8 @@ export function SavingsGoalForm({
           required
         />
       </div>
+
+      <IconPicker icon={icon} setIcon={setIcon} />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -133,7 +182,7 @@ export function SavingsGoalForm({
           Target Date
         </label>
         <Input
-          type="date"
+          type="month"
           className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
           value={targetDate}
           onChange={(e) => {
@@ -170,13 +219,7 @@ export function SavingsGoalForm({
           )}
           disabled={loading}
         >
-          {loading
-            ? isEditing
-              ? "Syncing..."
-              : "Working..."
-            : isEditing
-              ? "Update Goal"
-              : "Save Goal"}
+          {loading ? "Syncing..." : isEditing ? "Update Goal" : "Save Goal"}
         </Button>
       </div>
     </form>
