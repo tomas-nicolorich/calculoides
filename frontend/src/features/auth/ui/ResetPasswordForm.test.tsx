@@ -28,6 +28,8 @@ const defaultAuth = {
   session: mockSession,
   loading: false,
   profileIncomplete: false,
+  sessionError: null,
+  retrySessionLoad: vi.fn(),
   signOut: vi.fn(),
 };
 

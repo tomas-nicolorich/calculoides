@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../../../shared/api/supabase";
 import { useNavigate, Link } from "react-router-dom";
 import { Card } from "../../../shared/ui/Card";
-import { Button, Input } from "../../../shared/ui";
+import { Alert, Button, Input, IconButton } from "../../../shared/ui";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -16,17 +18,26 @@ export function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      void navigate("/groups");
+      if (error) {
+        if (error.message === "Invalid login credentials") {
+          setError("Incorrect email or password. Double-check and try again.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+      } else {
+        void navigate("/groups");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -62,6 +73,8 @@ export function LoginForm() {
               setEmail(e.target.value);
             }}
             required
+            autoComplete="email"
+            autoFocus
             className="w-full bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
           />
         </div>
@@ -72,29 +85,36 @@ export function LoginForm() {
           >
             Password
           </label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
-            required
-            className="w-full bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+              }}
+              required
+              autoComplete="current-password"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance pr-10"
+            />
+            <IconButton
+              type="button"
+              size="sm"
+              hover="neutral"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              onClick={() => {
+                setShowPassword((prev) => !prev);
+              }}
+              className="absolute right-1 top-1/2 -translate-y-1/2"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </IconButton>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="rounded"
-              aria-label="Remember me"
-            />
-            Remember me
-          </label>
+        <div className="flex items-center justify-end">
           <Link
             to="/forgot-password"
             className="text-sm text-brand-balance hover:underline font-medium"
@@ -103,17 +123,12 @@ export function LoginForm() {
           </Link>
         </div>
 
-        {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-xl">
-            <p className="text-red-600 dark:text-red-400 text-sm font-medium text-center">
-              {error}
-            </p>
-          </div>
-        )}
+        {error && <Alert>{error}</Alert>}
 
         <Button
           type="submit"
-          className="w-full bg-brand-balance hover:bg-brand-balance/90 text-white shadow-sm font-semibold h-10 mt-6 cursor-pointer"
+          variant="cta"
+          className="w-full h-10 mt-6"
           disabled={loading}
         >
           {loading ? "Signing in..." : "Sign In"}

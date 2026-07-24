@@ -3,22 +3,23 @@ name: Calculoides Modern
 description: Design system for a household budget management app — financial clarity through semantic color, geometric type, and controlled depth.
 colors:
   # Brand palette — each maps to a financial transaction type
-  brand-balance: "#3B82F6"      # blue-500 — balance, trust, primary actions
+  brand-balance: "#2563EB"      # blue-600 — balance, trust, primary actions
   brand-income:  "#10B981"      # emerald-500 — income, positive states, success
   brand-expense: "#EF4444"      # red-500 — expenses, deletion, danger
   brand-transfer: "#F59E0B"     # amber-500 — transfers, pending, warnings
   brand-category: "#8B5CF6"     # violet-500 — category tags, neutral accent
   # Member identity palette — stable per-member colour by join order (Avatar, AvatarGroup, MemberBar)
-  member-1: "#10B981"
-  member-2: "#3B82F6"
-  member-3: "#8B5CF6"
-  member-4: "#F59E0B"
-  member-5: "#F43F5E"
-  member-6: "#06B6D4"
-  member-7: "#F97316"
-  member-8: "#EC4899"
-  member-9: "#6366F1"
-  member-10: "#14B8A6"
+  # Darkened from the base Tailwind 500 shades so white avatar initials always clear WCAG AA (4.5:1)
+  member-1: "#047857"
+  member-2: "#2563EB"
+  member-3: "#7C3AED"
+  member-4: "#B45309"
+  member-5: "#E11D48"
+  member-6: "#0E7490"
+  member-7: "#C2410C"
+  member-8: "#DB2777"
+  member-9: "#4F46E5"
+  member-10: "#0F766E"
   # Neutral foundation (Slate scale)
   neutral-50:  "#F8FAFC"
   neutral-100: "#F1F5F9"
@@ -62,6 +63,10 @@ typography:
     fontFamily: Geist Mono
     fontVariantNumeric: tabular-nums
     fontFeatureSettings: '"tnum" 1, "zero" 1'
+  caption:
+    fontFamily: Geist
+    fontSize: 11px
+    fontWeight: 500
 rounded:
   sm:   4px    # nested row corners
   md:   6px    # buttons (sm/md sizes)
@@ -180,7 +185,7 @@ The palette is small and disciplined: five semantic brand hues, a ten-color memb
 
 ### Primary
 
-- **Balance Blue** (`#3B82F6`): the system's primary action color — trust, the default account state, primary buttons, primary focus rings.
+- **Balance Blue** (`#2563EB`): the system's primary action color — trust, the default account state, primary buttons, primary focus rings.
 
 ### Secondary
 
@@ -215,6 +220,7 @@ Slate scale, `neutral-50` → `neutral-950`. Light mode: `#F8FAFC` background, `
 - **Heading** (600, 18px, 1.25 lh): card titles, dialog titles, page headers.
 - **Body** (400, 14px, 1.5 lh): descriptions, form labels, list rows.
 - **Mono** (400–600, 14px, tabular-nums): every currency figure and date, without exception.
+- **Caption** (500, 11px, uppercase or plain): avatar initials at `xs` size, `Badge` `sm` size text, grouped-list micro-labels (e.g. `IconPicker` group headers). The one documented step below Body; don't reach for an arbitrary `text-[Npx]` value smaller than this.
 
 ### Named Rules
 
@@ -287,7 +293,7 @@ Pill-shaped (`rounded-full`), two sizes. Background uses the matching `well-*` t
 
 ### Avatars
 
-Circular (`rounded-full`), four sizes (24/34/42/50px). Background comes from the 10-color member-identity palette via a stable `colorIndex` (join order) so a member keeps the same color everywhere — Avatar, AvatarGroup, and MemberBar all read from the same palette. `AvatarGroup` overlaps avatars with a 2px card-colored ring and collapses overflow into a `+N` chip past a `max` count.
+Circular (`rounded-full`), four sizes (24/34/42/50px). Background comes from the 10-color member-identity palette via a stable `colorIndex` (join order) so a member keeps the same color everywhere — Avatar, AvatarGroup, and MemberBar all read from the same palette. Initials are always white; the member-identity palette is pre-darkened (see `colors` above) so white text clears WCAG AA against every swatch, and an explicit `color` override is darkened further at render time if needed rather than falling back to dark text. `AvatarGroup` overlaps avatars with a 2px card-colored ring and collapses overflow into a `+N` chip past a `max` count.
 
 ### Member Bar / Progress Meters
 

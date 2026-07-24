@@ -21,7 +21,14 @@ import {
   X,
 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
-import { Button, Card, IconButton, RowMenu, Select } from "../../../shared/ui";
+import {
+  Button,
+  Card,
+  IconButton,
+  RowMenu,
+  Select,
+  Skeleton,
+} from "../../../shared/ui";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { useIsMobile } from "../../../shared/lib/hooks/useIsMobile";
 import type { ExpensesList } from "../../../../../shared/src/types/redesign";
@@ -356,8 +363,38 @@ export function ExpensesPage() {
           )}
 
           {loading || expensesList === null ? (
-            <div className="py-12 flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-balance" />
+            <div aria-hidden="true">
+              {Array.from({ length: 6 }, (_, i) =>
+                isMobile ? (
+                  <div
+                    key={i}
+                    className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-9.5 w-9.5 rounded-lg" />
+                      <div className="min-w-0 flex-1 flex flex-col gap-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-4 w-14" />
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[2.2fr_1.4fr_1.4fr_1fr_64px] items-center px-5 py-3 gap-4 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-[38px] w-[38px] rounded-lg" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-16 justify-self-end" />
+                    <div />
+                  </div>
+                ),
+              )}
             </div>
           ) : expenses.length === 0 ? (
             <div className="py-12 text-center text-sm text-slate-400">

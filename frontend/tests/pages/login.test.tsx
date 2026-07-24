@@ -29,22 +29,27 @@ describe("Login Page & Form Redesign", () => {
     vi.clearAllMocks();
   });
 
-  it("renders nothing when auth is loading", () => {
+  it("shows a verifying-session spinner when auth is loading", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
       loading: true,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: () => Promise.resolve(),
     });
 
-    const { container } = render(
+    render(
       <MemoryRouter>
         <LoginPage />
       </MemoryRouter>,
     );
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByText(/verifying session/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /Sign In/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("redirects to dashboard if user is already logged in", () => {
@@ -58,6 +63,8 @@ describe("Login Page & Form Redesign", () => {
       session: null,
       loading: false,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: () => Promise.resolve(),
     });
 
@@ -79,6 +86,8 @@ describe("Login Page & Form Redesign", () => {
       session: null,
       loading: false,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: () => Promise.resolve(),
     });
 
@@ -93,7 +102,7 @@ describe("Login Page & Form Redesign", () => {
       screen.getByRole("heading", { name: /Sign In/i }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Sign In/i }),
     ).toBeInTheDocument();
@@ -106,6 +115,8 @@ describe("Login Page & Form Redesign", () => {
       session: null,
       loading: false,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: () => Promise.resolve(),
     });
 
@@ -126,7 +137,7 @@ describe("Login Page & Form Redesign", () => {
     fireEvent.change(screen.getByLabelText(/Email/i), {
       target: { value: "user@example.com" },
     });
-    fireEvent.change(screen.getByLabelText(/Password/i), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "password123" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Sign In/i }));
@@ -139,12 +150,14 @@ describe("Login Page & Form Redesign", () => {
     });
   });
 
-  it("renders brand mark, theme toggle, remember-me, forgot-password, and group subtitle", () => {
+  it("renders brand mark, theme toggle, forgot-password, and group subtitle", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
       loading: false,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: () => Promise.resolve(),
     });
 
@@ -159,11 +172,39 @@ describe("Login Page & Form Redesign", () => {
       screen.getByRole("button", { name: /toggle theme/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("checkbox", { name: /remember me/i }),
-    ).toBeChecked();
+      screen.queryByRole("checkbox", { name: /remember me/i }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/forgot password/i)).toBeInTheDocument();
     expect(screen.getByText(/group budget overview/i)).toBeInTheDocument();
     expect(screen.queryByText(/household/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the session bootstrap error with a retry action", () => {
+    const retrySessionLoad = vi.fn();
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      loading: false,
+      profileIncomplete: false,
+      sessionError: "Network request failed",
+      retrySessionLoad,
+      signOut: () => Promise.resolve(),
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "We couldn't verify your session. Please try signing in again.",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Your data is safe — nothing was changed.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(retrySessionLoad).toHaveBeenCalledTimes(1);
   });
 
   it("displays authentication error on failure", async () => {
@@ -172,6 +213,8 @@ describe("Login Page & Form Redesign", () => {
       session: null,
       loading: false,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: () => Promise.resolve(),
     });
 
@@ -193,13 +236,17 @@ describe("Login Page & Form Redesign", () => {
     fireEvent.change(screen.getByLabelText(/Email/i), {
       target: { value: "wrong@example.com" },
     });
-    fireEvent.change(screen.getByLabelText(/Password/i), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "wrongpass" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Sign In/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Invalid login credentials")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Incorrect email or password. Double-check and try again.",
+        ),
+      ).toBeInTheDocument();
     });
   });
 });
