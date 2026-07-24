@@ -46,6 +46,21 @@ function parsePagination(query: Record<string, unknown>) {
   };
 }
 
+async function requireGroupAccess(
+  groupId: unknown,
+  userId: string,
+  res: ApiResponse,
+): Promise<string | undefined> {
+  const validatedGroupId = IdSchema.parse(groupId);
+  const groups = await GroupService.getGroupsForUser(userId);
+  const group = groups.find((g) => g.id === validatedGroupId);
+  if (!group) {
+    res.status(403).json({ error: "Access denied to this group" });
+    return undefined;
+  }
+  return validatedGroupId;
+}
+
 const CreateTransferSchema = z.object({
   categoryId: IdSchema,
   fromMemberId: IdSchema,
@@ -156,13 +171,12 @@ export const routes: RouteConfig = {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
-    const validatedGroupId = IdSchema.parse(groupId);
-    const groups = await GroupService.getGroupsForUser(authReq.user.id);
-    const group = groups.find((g) => g.id === validatedGroupId);
-    if (!group) {
-      res.status(403).json({ error: "Access denied to this group" });
-      return;
-    }
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     await ExpenseService.deleteAllExpenses(validatedGroupId);
     res.status(204).end();
   },
@@ -213,13 +227,12 @@ export const routes: RouteConfig = {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
-    const validatedGroupId = IdSchema.parse(groupId);
-    const groups = await GroupService.getGroupsForUser(authReq.user.id);
-    const group = groups.find((g) => g.id === validatedGroupId);
-    if (!group) {
-      res.status(403).json({ error: "Access denied to this group" });
-      return;
-    }
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     await TransferService.deleteAllTransfers(validatedGroupId);
     res.status(204).end();
   },
@@ -254,13 +267,12 @@ export const routes: RouteConfig = {
   "categories-list": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
-    const validatedGroupId = IdSchema.parse(groupId);
-    const groups = await GroupService.getGroupsForUser(authReq.user.id);
-    const group = groups.find((g) => g.id === validatedGroupId);
-    if (!group) {
-      res.status(403).json({ error: "Access denied to this group" });
-      return;
-    }
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const categories =
       await BudgetService.listCategoriesWithBalances(validatedGroupId);
     res.status(200).json(categories);
