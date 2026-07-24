@@ -124,12 +124,12 @@ export function IncomeOverview({
                   </span>
                 </span>
                 <span className="flex items-center gap-1 shrink-0">
-                  <span className="text-slate-500 dark:text-slate-400">€</span>
                   <Input
                     type="number"
                     step="0.01"
+                    prefix="€"
                     aria-label={`Income for ${m.name}`}
-                    className={`h-8 w-28 text-right text-xs bg-white dark:bg-slate-950 border-brand-balance/30 focus:border-brand-balance ${NO_SPINNER_CLASS}`}
+                    className={`h-8 w-28 font-mono tabular-nums text-xs border-brand-balance/30 focus:border-brand-balance ${NO_SPINNER_CLASS}`}
                     disabled={loading}
                     value={rawInputs[m.id] ?? ""}
                     onChange={(e) => {
