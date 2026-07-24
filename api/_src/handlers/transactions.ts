@@ -46,6 +46,21 @@ function parsePagination(query: Record<string, unknown>) {
   };
 }
 
+async function requireGroupAccess(
+  groupId: unknown,
+  userId: string,
+  res: ApiResponse,
+): Promise<string | undefined> {
+  const validatedGroupId = IdSchema.parse(groupId);
+  const groups = await GroupService.getGroupsForUser(userId);
+  const group = groups.find((g) => g.id === validatedGroupId);
+  if (!group) {
+    res.status(403).json({ error: "Access denied to this group" });
+    return undefined;
+  }
+  return validatedGroupId;
+}
+
 const CreateTransferSchema = z.object({
   categoryId: IdSchema,
   fromMemberId: IdSchema,
@@ -152,6 +167,19 @@ export const routes: RouteConfig = {
     await ExpenseService.deleteExpense(validatedId);
     res.status(204).end();
   },
+  "expenses-delete-all": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
+    const { groupId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
+    await ExpenseService.deleteAllExpenses(validatedGroupId);
+    res.status(204).end();
+  },
 
   // Transfers
   "transfer-delete": async (req: ApiRequest, res: ApiResponse) => {
@@ -195,6 +223,19 @@ export const routes: RouteConfig = {
       pagination: { total, limit: parsedLimit, offset: parsedOffset },
     });
   },
+  "transfers-delete-all": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
+    const { groupId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
+    await TransferService.deleteAllTransfers(validatedGroupId);
+    res.status(204).end();
+  },
 
   // Categories
   "category-create": async (req: ApiRequest, res: ApiResponse) => {
@@ -226,13 +267,12 @@ export const routes: RouteConfig = {
   "categories-list": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
     const { groupId } = req.query;
-    const validatedGroupId = IdSchema.parse(groupId);
-    const groups = await GroupService.getGroupsForUser(authReq.user.id);
-    const group = groups.find((g) => g.id === validatedGroupId);
-    if (!group) {
-      res.status(403).json({ error: "Access denied to this group" });
-      return;
-    }
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const categories =
       await BudgetService.listCategoriesWithBalances(validatedGroupId);
     res.status(200).json(categories);
@@ -576,7 +616,20 @@ export const routes: RouteConfig = {
 };
 
 routes.expenses = async (req: ApiRequest, res: ApiResponse) => {
-  const actionKey = req.method === "POST" ? "expense-create" : "expenses-list";
+  const actionKey =
+    req.method === "POST"
+      ? "expense-create"
+      : req.method === "DELETE"
+        ? "expenses-delete-all"
+        : "expenses-list";
+  const handler = routes[actionKey];
+  if (handler) return handler(req, res);
+  res.status(405).json({ error: "Method not allowed" });
+};
+
+routes.transfers = async (req: ApiRequest, res: ApiResponse) => {
+  const actionKey =
+    req.method === "DELETE" ? "transfers-delete-all" : "transfers-list";
   const handler = routes[actionKey];
   if (handler) return handler(req, res);
   res.status(405).json({ error: "Method not allowed" });
