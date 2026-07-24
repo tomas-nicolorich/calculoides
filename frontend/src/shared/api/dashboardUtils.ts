@@ -34,3 +34,20 @@ export function formatCurrency(amount: number) {
     currency: "EUR",
   }).format(amount);
 }
+
+/**
+ * Same currency formatting, but collapses to compact notation (€2.4M) above
+ * one million so a single stat figure can never grow wide enough to break
+ * the card it sits in. Below the threshold this is identical to
+ * `formatCurrency` — pair with a `title` attribute holding the full value
+ * for hover/accessibility when displaying a compacted figure.
+ */
+export function formatCurrencyCompact(amount: number) {
+  if (Math.abs(amount) < 1_000_000) return formatCurrency(amount);
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
