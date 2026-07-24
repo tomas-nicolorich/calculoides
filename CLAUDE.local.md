@@ -26,7 +26,7 @@
 *~700 tokens/session saved*
 - There is **no `/src` directory at repo root**. TypeScript source lives in `api/src/`, `frontend/src/`, and `shared/`. Never search `calculoides/src` — it does not exist and will always error.
 - The Prisma schema is at `prisma/schema.prisma` (repo root, ~900 lines/36 KB). Grep for specific model names rather than reading the whole file.
-- `DESIGN.md` exists at repo root and starts with YAML frontmatter (design-system tokens: colors, fonts). `cat DESIGN.md` / Read returns a `runtime_error`-wrapped result, but the content IS returned — it is not a real failure, don't retry.
+- `frontend/DESIGN.md` starts with YAML frontmatter (design-system tokens: colors, fonts). `cat frontend/DESIGN.md` / Read returns a `runtime_error`-wrapped result, but the content IS returned — it is not a real failure, don't retry.
 
 ### Test Commands
 *~800 tokens/session saved*
