@@ -30,16 +30,22 @@ interface BudgetTransfersProps {
 interface TransferRowProps {
   transfer: Transfer;
   members: TransferMember[];
+  index: number;
 }
 
-/** A single transfer row: marker icon + category/amount + from→to sub-line. */
-function TransferRow({ transfer, members }: TransferRowProps) {
+/** A single transfer row: marker icon + from→to sub-line + amount. */
+function TransferRow({ transfer, members, index }: TransferRowProps) {
   const from = members.find((m) => m.id === transfer.fromMemberId);
   const to = members.find((m) => m.id === transfer.toMemberId);
   const fromName = from?.name ?? transfer.fromMemberName;
   const toName = to?.name ?? transfer.toMemberName;
   return (
-    <div data-testid="transfer-row" className="flex items-center gap-3 py-2">
+    <div
+      data-testid="transfer-row"
+      className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+        index % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/40" : ""
+      }`}
+    >
       <span
         className="grid place-items-center size-9 shrink-0 rounded-lg bg-brand-transfer/10 text-brand-transfer"
         aria-hidden
@@ -47,14 +53,9 @@ function TransferRow({ transfer, members }: TransferRowProps) {
         <ArrowRightLeft size={18} />
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start gap-2">
-          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-            {transfer.categoryName}
-          </p>
-          <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum">
-            {formatCurrency(transfer.amount)}
-          </span>
-        </div>
+        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+          {transfer.categoryName}
+        </p>
         <p className="flex items-center gap-1 text-xs text-slate-500 truncate">
           <Avatar
             size="xs"
@@ -67,6 +68,9 @@ function TransferRow({ transfer, members }: TransferRowProps) {
           <span>{toName.split(" ")[0]}</span>
         </p>
       </div>
+      <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum shrink-0">
+        {formatCurrency(transfer.amount)}
+      </span>
     </div>
   );
 }
@@ -97,11 +101,12 @@ export function BudgetTransfers({
               No recent transfers
             </div>
           ) : (
-            transfers.map((transfer) => (
+            transfers.map((transfer, index) => (
               <TransferRow
                 key={transfer.id}
                 transfer={transfer}
                 members={members}
+                index={index}
               />
             ))
           )}

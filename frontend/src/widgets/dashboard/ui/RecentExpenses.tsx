@@ -47,13 +47,18 @@ export function RecentExpenses({
               No recent expenses
             </div>
           ) : (
-            expenses.map((expense) => {
+            expenses.map((expense, index) => {
               const payer = members.find((m) => m.id === expense.payerId);
               const payerFirstName = (payer?.name ?? expense.payerName).split(
                 " ",
               )[0];
               return (
-                <div key={expense.id} className="flex items-center gap-4">
+                <div
+                  key={expense.id}
+                  className={`flex items-center gap-4 rounded-lg px-3 py-2 ${
+                    index % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/40" : ""
+                  }`}
+                >
                   <span
                     className="grid place-items-center size-9 shrink-0 rounded-lg bg-brand-expense/10 text-brand-expense"
                     data-testid="expense-marker"
@@ -61,14 +66,9 @@ export function RecentExpenses({
                     <Receipt size={18} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {expense.description}
-                      </p>
-                      <span className="text-sm font-semibold text-brand-expense font-mono tnum">
-                        -{formatCurrency(expense.amount)}
-                      </span>
-                    </div>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {expense.description}
+                    </p>
                     <p className="flex items-center gap-1 mt-1 text-xs text-slate-500 min-w-0">
                       <Avatar
                         size="xs"
@@ -80,6 +80,9 @@ export function RecentExpenses({
                       <span className="truncate">{expense.categoryName}</span>
                     </p>
                   </div>
+                  <span className="text-sm font-semibold text-brand-expense font-mono tnum shrink-0">
+                    -{formatCurrency(expense.amount)}
+                  </span>
                 </div>
               );
             })
