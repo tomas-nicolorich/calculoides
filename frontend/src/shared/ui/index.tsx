@@ -34,6 +34,7 @@ export { Card } from "./Card";
 export { Badge } from "./Badge";
 export { Avatar, AvatarGroup } from "./Avatar";
 export { IconButton } from "./IconButton";
+export { IconPicker } from "./IconPicker";
 export { UserDisplay } from "./UserDisplay";
 export { Select } from "./Select";
 export { ProgressMeter } from "./money/ProgressMeter";

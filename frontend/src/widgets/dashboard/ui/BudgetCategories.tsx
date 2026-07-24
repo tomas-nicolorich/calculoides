@@ -14,13 +14,10 @@ import {
 import { ChevronDown, Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
 import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
-import { Select, Input } from "../../../shared/ui";
+import { Select, Input, IconPicker } from "../../../shared/ui";
 import { cn } from "../../../shared/lib/utils";
 import { Button } from "../../../shared/ui/Button";
-import {
-  CategoryIconTile,
-  CATEGORY_ICON_KEYS,
-} from "../../../shared/lib/categoryIcons";
+import { CategoryIconTile } from "../../../shared/lib/categoryIcons";
 
 export interface MemberRich {
   id: string;
@@ -88,34 +85,7 @@ function CategoryFormFields({
           required
         />
       </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Icon</label>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORY_ICON_KEYS.map((key) => {
-            const selected = icon === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setIcon(key);
-                }}
-                aria-pressed={selected}
-                aria-label={`Icon: ${key}`}
-                title={key}
-                className={cn(
-                  "rounded-xl p-0.5 transition-all",
-                  selected
-                    ? "ring-2 ring-brand-category ring-offset-1 ring-offset-card"
-                    : "opacity-70 hover:opacity-100",
-                )}
-              >
-                <CategoryIconTile icon={key} size="md" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <IconPicker icon={icon} onChange={setIcon} tone="category" />
       <div className="space-y-2">
         <label className="text-sm font-medium">
           Assign to Members (Optional)
