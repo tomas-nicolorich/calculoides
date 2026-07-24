@@ -33,12 +33,26 @@ interface TransferRowProps {
   index: number;
 }
 
+function resolveMemberDisplay(
+  member: TransferMember | undefined,
+  fallbackName: string,
+) {
+  return {
+    name: member?.name ?? fallbackName,
+    colorIndex: member?.colorIndex ?? 0,
+  };
+}
+
 /** A single transfer row: marker icon + from→to sub-line + amount. */
 function TransferRow({ transfer, members, index }: TransferRowProps) {
-  const from = members.find((m) => m.id === transfer.fromMemberId);
-  const to = members.find((m) => m.id === transfer.toMemberId);
-  const fromName = from?.name ?? transfer.fromMemberName;
-  const toName = to?.name ?? transfer.toMemberName;
+  const from = resolveMemberDisplay(
+    members.find((m) => m.id === transfer.fromMemberId),
+    transfer.fromMemberName,
+  );
+  const to = resolveMemberDisplay(
+    members.find((m) => m.id === transfer.toMemberId),
+    transfer.toMemberName,
+  );
   return (
     <div
       data-testid="transfer-row"
@@ -57,15 +71,11 @@ function TransferRow({ transfer, members, index }: TransferRowProps) {
           {transfer.categoryName}
         </p>
         <p className="flex items-center gap-1 text-xs text-slate-500 truncate">
-          <Avatar
-            size="xs"
-            name={fromName}
-            colorIndex={from?.colorIndex ?? 0}
-          />
-          <span>{fromName.split(" ")[0]}</span>
+          <Avatar size="xs" name={from.name} colorIndex={from.colorIndex} />
+          <span>{from.name.split(" ")[0]}</span>
           <ArrowRight size={12} aria-hidden />
-          <Avatar size="xs" name={toName} colorIndex={to?.colorIndex ?? 0} />
-          <span>{toName.split(" ")[0]}</span>
+          <Avatar size="xs" name={to.name} colorIndex={to.colorIndex} />
+          <span>{to.name.split(" ")[0]}</span>
         </p>
       </div>
       <span className="text-sm font-semibold text-slate-900 dark:text-white font-mono tnum shrink-0">
