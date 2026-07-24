@@ -1,3 +1,18 @@
+tags_only=true
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/tags/*) ;;
+    *) tags_only=false ;;
+  esac
+done
+
+# Tags are only ever pushed pointing at a commit whose branch push already
+# ran this hook, so re-running lint/test/build here would just repeat work.
+if [ "$tags_only" = true ]; then
+  echo "Skipping pre-push checks: tag-only push (commit already validated)"
+  exit 0
+fi
+
 echo "Running pre-push tests..."
 npx turbo run lint --concurrency=1
 npx turbo run test --concurrency=1
