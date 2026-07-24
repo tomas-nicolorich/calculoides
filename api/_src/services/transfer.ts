@@ -247,4 +247,20 @@ export const TransferService = {
       where: { id: transferId },
     });
   },
+
+  /**
+   * Deletes every transfer in a group (permanent deletion).
+   */
+  async deleteAllTransfers(groupId: string) {
+    const categories = await prisma.category.findMany({
+      where: { groupId },
+      select: { id: true },
+    });
+
+    return await prisma.transfer.deleteMany({
+      where: {
+        categoryId: { in: categories.map((c) => c.id) },
+      },
+    });
+  },
 };

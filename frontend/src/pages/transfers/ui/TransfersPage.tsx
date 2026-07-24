@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Info,
   SlidersHorizontal,
+  Trash2,
   X,
 } from "lucide-react";
 import {
@@ -35,6 +36,7 @@ export function TransfersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [offset, setOffset] = useState(0);
   const [transferToDelete, setTransferToDelete] = useState<string | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   const { data: summary, refresh: refreshSummary } = useDashboardSummary(
     groupId ?? null,
@@ -100,6 +102,18 @@ export function TransfersPage() {
     }
   };
 
+  const handleDeleteAllTransfers = async () => {
+    if (!groupId) return;
+    try {
+      await transferApi.deleteAll(groupId);
+      refreshTransfers();
+      refreshSummary();
+      setDeleteAllOpen(false);
+    } catch (err) {
+      console.error("Failed to delete all transfers", err);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex items-start justify-between gap-4 flex-wrap">
@@ -123,16 +137,28 @@ export function TransfersPage() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setShowFilters((prev) => !prev);
-          }}
-        >
-          <SlidersHorizontal size={16} className="mr-1.5" />
-          {showFilters ? "Hide Filters" : "Filters"}
-          {activeFilterCount > 0 && ` (${activeFilterCount.toString()})`}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowFilters((prev) => !prev);
+            }}
+          >
+            <SlidersHorizontal size={16} className="mr-1.5" />
+            {showFilters ? "Hide Filters" : "Filters"}
+            {activeFilterCount > 0 && ` (${activeFilterCount.toString()})`}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={transfers.length === 0}
+            onClick={() => {
+              setDeleteAllOpen(true);
+            }}
+          >
+            <Trash2 size={16} className="mr-1.5" />
+            Delete All
+          </Button>
+        </div>
       </header>
 
       {showFilters && (
@@ -399,6 +425,30 @@ export function TransfersPage() {
             }}
           >
             Delete Transfer
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      <Dialog
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        title="Delete All Transfers"
+        description="This will permanently delete every transfer in this group, regardless of any active filters. This action cannot be undone."
+      >
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDeleteAllOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="transfer"
+            onClick={() => void handleDeleteAllTransfers()}
+          >
+            Delete All Transfers
           </Button>
         </DialogFooter>
       </Dialog>

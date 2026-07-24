@@ -152,6 +152,20 @@ export const routes: RouteConfig = {
     await ExpenseService.deleteExpense(validatedId);
     res.status(204).end();
   },
+  "expenses-delete-all": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
+    const { groupId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = IdSchema.parse(groupId);
+    const groups = await GroupService.getGroupsForUser(authReq.user.id);
+    const group = groups.find((g) => g.id === validatedGroupId);
+    if (!group) {
+      res.status(403).json({ error: "Access denied to this group" });
+      return;
+    }
+    await ExpenseService.deleteAllExpenses(validatedGroupId);
+    res.status(204).end();
+  },
 
   // Transfers
   "transfer-delete": async (req: ApiRequest, res: ApiResponse) => {
@@ -194,6 +208,20 @@ export const routes: RouteConfig = {
       transfers,
       pagination: { total, limit: parsedLimit, offset: parsedOffset },
     });
+  },
+  "transfers-delete-all": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as unknown as AuthenticatedRequest;
+    const { groupId } = req.query;
+    if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = IdSchema.parse(groupId);
+    const groups = await GroupService.getGroupsForUser(authReq.user.id);
+    const group = groups.find((g) => g.id === validatedGroupId);
+    if (!group) {
+      res.status(403).json({ error: "Access denied to this group" });
+      return;
+    }
+    await TransferService.deleteAllTransfers(validatedGroupId);
+    res.status(204).end();
   },
 
   // Categories
@@ -576,7 +604,20 @@ export const routes: RouteConfig = {
 };
 
 routes.expenses = async (req: ApiRequest, res: ApiResponse) => {
-  const actionKey = req.method === "POST" ? "expense-create" : "expenses-list";
+  const actionKey =
+    req.method === "POST"
+      ? "expense-create"
+      : req.method === "DELETE"
+        ? "expenses-delete-all"
+        : "expenses-list";
+  const handler = routes[actionKey];
+  if (handler) return handler(req, res);
+  res.status(405).json({ error: "Method not allowed" });
+};
+
+routes.transfers = async (req: ApiRequest, res: ApiResponse) => {
+  const actionKey =
+    req.method === "DELETE" ? "transfers-delete-all" : "transfers-list";
   const handler = routes[actionKey];
   if (handler) return handler(req, res);
   res.status(405).json({ error: "Method not allowed" });

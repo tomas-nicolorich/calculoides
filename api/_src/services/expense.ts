@@ -211,4 +211,20 @@ export const ExpenseService = {
       },
     });
   },
+
+  /**
+   * Deletes every expense in a group (permanent deletion).
+   */
+  async deleteAllExpenses(groupId: string) {
+    const categories = await prisma.category.findMany({
+      where: { groupId },
+      select: { id: true },
+    });
+
+    return await prisma.expense.deleteMany({
+      where: {
+        categoryId: { in: categories.map((c) => c.id) },
+      },
+    });
+  },
 };

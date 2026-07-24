@@ -17,6 +17,7 @@ import {
   Plus,
   Receipt,
   SlidersHorizontal,
+  Trash2,
   X,
 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
@@ -44,6 +45,7 @@ export function ExpensesPage() {
   const [offset, setOffset] = useState(0);
 
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<
     ExpensesList["expenses"][number] | null
@@ -78,6 +80,18 @@ export function ExpensesPage() {
       setExpenseToDelete(null);
     } catch (err) {
       console.error("Failed to delete expense", err);
+    }
+  };
+
+  const handleDeleteAllExpenses = async () => {
+    if (!groupId) return;
+    try {
+      await expenseApi.deleteAll(groupId);
+      refreshExpenses();
+      refreshSummary();
+      setDeleteAllOpen(false);
+    } catch (err) {
+      console.error("Failed to delete all expenses", err);
     }
   };
 
@@ -157,6 +171,16 @@ export function ExpensesPage() {
             <SlidersHorizontal size={16} className="mr-1.5" />
             {showFilters ? "Hide Filters" : "Filters"}
             {activeFilterCount > 0 ? ` (${activeFilterCount.toString()})` : ""}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!summary || expenses.length === 0}
+            onClick={() => {
+              setDeleteAllOpen(true);
+            }}
+          >
+            <Trash2 size={16} className="mr-1.5" />
+            Delete All
           </Button>
           <Button
             variant="expense"
@@ -551,6 +575,30 @@ export function ExpensesPage() {
             }}
           >
             Delete Expense
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      <Dialog
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        title="Delete All Expenses"
+        description="This will permanently delete every expense in this group, regardless of any active filters. This action cannot be undone."
+      >
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDeleteAllOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="expense"
+            onClick={() => void handleDeleteAllExpenses()}
+          >
+            Delete All Expenses
           </Button>
         </DialogFooter>
       </Dialog>
