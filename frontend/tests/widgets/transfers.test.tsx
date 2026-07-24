@@ -74,7 +74,7 @@ describe("BudgetTransfers Widget", () => {
     expect(screen.getByText("No recent transfers")).toBeInTheDocument();
   });
 
-  it("transfer item rows have no background colour", () => {
+  it("zebra-stripes transfer rows, alternating background on even indices", () => {
     render(
       <MemoryRouter>
         <BudgetTransfers
@@ -87,10 +87,9 @@ describe("BudgetTransfers Widget", () => {
 
     const rows = screen.getAllByTestId("transfer-row");
     expect(rows.length).toBe(2);
-    rows.forEach((row) => {
-      expect(row).not.toHaveClass("bg-slate-50");
-      expect(row).not.toHaveClass("bg-slate-800/40");
-    });
+    expect(rows[0]).toHaveClass("bg-slate-50", "dark:bg-slate-800/40");
+    expect(rows[1]).not.toHaveClass("bg-slate-50");
+    expect(rows[1]).not.toHaveClass("dark:bg-slate-800/40");
   });
 
   it("transfer item rows do not have a border class", () => {
