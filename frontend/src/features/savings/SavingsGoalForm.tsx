@@ -1,58 +1,13 @@
 import { useState } from "react";
-import { Button, Input } from "../../shared/ui";
+import { Button, Input, IconPicker } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { cn } from "../../shared/lib/utils";
-import {
-  CATEGORY_ICON_KEYS,
-  CategoryIconTile,
-} from "../../shared/lib/categoryIcons";
 
 interface SavingsGoalFormProps {
   groupId: string;
   goal?: SavingsGoal;
   onSuccess?: () => void | Promise<void>;
   onCancel?: () => void;
-}
-
-function IconPicker({
-  icon,
-  setIcon,
-}: {
-  icon: string;
-  setIcon: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-        Icon
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {CATEGORY_ICON_KEYS.map((key) => {
-          const selected = icon === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setIcon(key);
-              }}
-              aria-pressed={selected}
-              aria-label={`Icon: ${key}`}
-              title={key}
-              className={cn(
-                "rounded-xl p-0.5 transition-all",
-                selected
-                  ? "ring-2 ring-brand-balance ring-offset-1 ring-offset-card"
-                  : "opacity-70 hover:opacity-100",
-              )}
-            >
-              <CategoryIconTile icon={key} size="md" />
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 export function SavingsGoalForm({
@@ -140,7 +95,7 @@ export function SavingsGoalForm({
         />
       </div>
 
-      <IconPicker icon={icon} setIcon={setIcon} />
+      <IconPicker icon={icon} onChange={setIcon} />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
