@@ -2,11 +2,20 @@ import { Plus, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { groupApi, type Group } from "../../../entities/group";
-import { Dialog } from "../../../shared/ui/Dialog";
 import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
 import { Card } from "../../../shared/ui/Card";
-import { Button, Avatar, AvatarGroup } from "../../../shared/ui";
-import { formatCurrency } from "../../../shared/api/dashboardUtils";
+import {
+  Alert,
+  Button,
+  Avatar,
+  AvatarGroup,
+  ResponsiveDialog,
+  Skeleton,
+} from "../../../shared/ui";
+import {
+  formatCurrency,
+  formatCurrencyCompact,
+} from "../../../shared/api/dashboardUtils";
 
 /** Sum of every member's monthly income — the card's "Group Income" figure. */
 function groupIncome(group: Group): number {
@@ -16,17 +25,20 @@ function groupIncome(group: Group): number {
 export function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   const fetchGroups = async () => {
     try {
       const data = await groupApi.list();
       setGroups(data);
+      setError(null);
     } catch (err: unknown) {
       console.error(
         "Failed to fetch groups",
         err instanceof Error ? err.message : String(err),
       );
+      setError("Couldn't load your groups. Please try refreshing.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +62,7 @@ export function GroupsPage() {
         </div>
 
         <Button
-          variant="income"
+          variant="outline"
           onClick={() => {
             setIsCreatingGroup(true);
           }}
@@ -60,7 +72,21 @@ export function GroupsPage() {
         </Button>
       </header>
 
-      <Dialog
+      {error && (
+        <Alert
+          action={{
+            label: "Retry",
+            onClick: () => {
+              setLoading(true);
+              void fetchGroups();
+            },
+          }}
+        >
+          {error}
+        </Alert>
+      )}
+
+      <ResponsiveDialog
         open={isCreatingGroup}
         onOpenChange={setIsCreatingGroup}
         title="Create New Group"
@@ -76,11 +102,34 @@ export function GroupsPage() {
             setIsCreatingGroup(false);
           }}
         />
-      </Dialog>
+      </ResponsiveDialog>
 
       {loading ? (
-        <div className="py-20 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-balance"></div>
+        <div className="flex flex-col gap-4" aria-hidden="true">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-6"
+            >
+              <div className="flex min-w-0 items-center gap-4">
+                <Skeleton className="h-[52px] w-[52px] flex-none rounded-2xl" />
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3.5 w-28" />
+                </div>
+              </div>
+              <div className="flex flex-none items-center justify-between gap-4 sm:justify-end">
+                <div className="flex flex-col items-end gap-2">
+                  <Skeleton className="h-2.5 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex -space-x-2">
+                  <Skeleton className="h-[34px] w-[34px] rounded-full ring-2 ring-card" />
+                  <Skeleton className="h-[34px] w-[34px] rounded-full ring-2 ring-card" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -119,8 +168,11 @@ export function GroupsPage() {
                       <div className="text-[0.625rem] uppercase tracking-[0.12em] text-slate-400">
                         Group Income
                       </div>
-                      <div className="font-mono text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-300">
-                        {formatCurrency(income)}
+                      <div
+                        className="font-mono text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-300"
+                        title={formatCurrency(income)}
+                      >
+                        {formatCurrencyCompact(income)}
                       </div>
                     </div>
                   )}
@@ -145,13 +197,13 @@ export function GroupsPage() {
             );
           })}
 
-          {groups.length === 0 && (
+          {!error && groups.length === 0 && (
             <Card className="py-12 text-center">
               <p className="text-slate-500 mb-6">
                 You are not part of any groups yet.
               </p>
               <Button
-                variant="balance"
+                variant="cta"
                 onClick={() => {
                   setIsCreatingGroup(true);
                 }}

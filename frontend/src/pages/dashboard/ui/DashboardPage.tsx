@@ -14,9 +14,15 @@ import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
-import { Button, IconButton } from "../../../shared/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  IconButton,
+  ResponsiveDialog,
+  Skeleton,
+} from "../../../shared/ui";
 import { Avatar, AvatarGroup } from "../../../shared/ui/Avatar";
-import { Dialog } from "../../../shared/ui/Dialog";
 
 /**
  * Builds the stable per-group member colour index (memberId → palette index)
@@ -51,11 +57,59 @@ export function DashboardPage() {
     refresh: refreshCategories,
   } = useCategoriesList(groupId ?? null);
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
+  const [deleteCategoryError, setDeleteCategoryError] = useState<string | null>(
+    null,
+  );
 
   if (summaryLoading || categoriesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-balance"></div>
+      <div
+        className="p-4 md:p-8 max-w-7xl mx-auto space-y-8"
+        aria-hidden="true"
+      >
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <IconButton bordered disabled aria-label="Back to groups">
+              <ArrowLeft size={20} />
+            </IconButton>
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-[34px] w-[34px] rounded-full" />
+            <Skeleton className="h-9 w-36 rounded-md" />
+          </div>
+        </header>
+
+        <div
+          className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
+          data-testid="dashboard-grid-skeleton"
+        >
+          <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Card key={i}>
+                <Skeleton className="h-4 w-28 mb-4" />
+                <Skeleton className="h-8 w-40 mb-6" />
+                <Skeleton className="h-3 w-full mb-2" />
+                <Skeleton className="h-3 w-5/6" />
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <Skeleton className="h-4 w-32 mb-4" />
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="flex items-center gap-3 py-3">
+                <Skeleton className="h-9 w-9 rounded-xl" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-2.5 w-full" />
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
       </div>
     );
   }
@@ -63,21 +117,21 @@ export function DashboardPage() {
   if (summaryError || categoriesError) {
     return (
       <div className="p-8 text-center space-y-4">
-        <p className="text-red-500 font-medium">
+        <p className="text-brand-expense font-medium">
           Failed to load dashboard data
         </p>
         <p className="text-sm text-slate-500">
           {summaryError ?? categoriesError}
         </p>
-        <button
+        <Button
+          variant="balance"
           onClick={() => {
             refreshSummary();
             refreshCategories();
           }}
-          className="px-4 py-2 bg-brand-balance text-white rounded-xl"
         >
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -102,11 +156,13 @@ export function DashboardPage() {
       await apiClient.fetch(`/transactions?action=category-delete&id=${id}`, {
         method: "DELETE",
       });
+      setDeleteCategoryError(null);
       refreshCategories();
       refreshSummary();
     } catch (err) {
-      console.error("Failed to delete category", err);
-      // Removed alert to comply with SC-006
+      setDeleteCategoryError(
+        err instanceof Error ? err.message : "Failed to delete category",
+      );
     }
   };
 
@@ -117,6 +173,19 @@ export function DashboardPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+      {deleteCategoryError && (
+        <Alert
+          action={{
+            label: "Dismiss",
+            onClick: () => {
+              setDeleteCategoryError(null);
+            },
+          }}
+        >
+          {deleteCategoryError}
+        </Alert>
+      )}
+
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <IconButton
@@ -164,7 +233,7 @@ export function DashboardPage() {
         </div>
       </header>
 
-      <Dialog
+      <ResponsiveDialog
         open={createExpenseOpen}
         onOpenChange={setCreateExpenseOpen}
         title="Add Expense"
@@ -186,7 +255,7 @@ export function DashboardPage() {
             setCreateExpenseOpen(false);
           }}
         />
-      </Dialog>
+      </ResponsiveDialog>
 
       <div
         className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"

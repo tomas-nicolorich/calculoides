@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { ReactNode } from "react";
+import { Spinner } from "../../shared/ui";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, profileIncomplete } = useAuth();
@@ -13,10 +14,12 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-gray-500 animate-pulse">Verifying session...</p>
+          <Spinner size="lg" />
+          <p className="text-slate-400 dark:text-slate-500 animate-pulse">
+            Verifying session...
+          </p>
         </div>
       </div>
     );

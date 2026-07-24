@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { Button, Card, IconButton, RowMenu, Select } from "../../../shared/ui";
-import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
+import {
+  Alert,
+  Button,
+  Card,
+  IconButton,
+  RowMenu,
+  Select,
+  Skeleton,
+} from "../../../shared/ui";
+import { DialogFooter } from "../../../shared/ui/Dialog";
+import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import { CategoryIconTile } from "../../../shared/lib/categoryIcons";
 import { useIsMobile } from "../../../shared/lib/hooks/useIsMobile";
@@ -25,6 +34,18 @@ import { transferApi } from "../../../entities/transfer";
 
 const PAGE_SIZE = 25;
 
+type TransferRow = NonNullable<
+  ReturnType<typeof useTransfersList>["data"]
+>["transfers"][number];
+
+function formatTransferDate(date: string) {
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 // fallow-ignore-next-line complexity
 export function TransfersPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -35,8 +56,12 @@ export function TransfersPage() {
   const [categoryFilterId, setCategoryFilterId] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [viewingTransfer, setViewingTransfer] = useState<TransferRow | null>(
+    null,
+  );
   const [transferToDelete, setTransferToDelete] = useState<string | null>(null);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: summary, refresh: refreshSummary } = useDashboardSummary(
     groupId ?? null,
@@ -97,8 +122,10 @@ export function TransfersPage() {
       refreshTransfers();
       refreshSummary();
       setTransferToDelete(null);
+      setDeleteError(null);
     } catch (err) {
       console.error("Failed to delete transfer", err);
+      setDeleteError("Failed to delete transfer. Please try again.");
     }
   };
 
@@ -109,13 +136,15 @@ export function TransfersPage() {
       refreshTransfers();
       refreshSummary();
       setDeleteAllOpen(false);
+      setDeleteError(null);
     } catch (err) {
       console.error("Failed to delete all transfers", err);
+      setDeleteError("Failed to delete all transfers. Please try again.");
     }
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <IconButton
@@ -149,9 +178,11 @@ export function TransfersPage() {
             {activeFilterCount > 0 && ` (${activeFilterCount.toString()})`}
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
+            className="hover:text-brand-expense"
             disabled={transfers.length === 0}
             onClick={() => {
+              setDeleteError(null);
               setDeleteAllOpen(true);
             }}
           >
@@ -208,7 +239,7 @@ export function TransfersPage() {
 
         {isMobile && transfers.length > 0 && (
           <p className="flex items-center gap-1.5 text-xs text-slate-400 mb-3">
-            <Info size={13} /> Tap any transfer to delete it.
+            <Info size={13} /> Tap a transfer to see its details.
           </p>
         )}
 
@@ -235,8 +266,43 @@ export function TransfersPage() {
           )}
 
           {loading || transfersList === null ? (
-            <div className="py-12 flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-balance" />
+            <div aria-hidden="true">
+              {Array.from({ length: 6 }, (_, i) =>
+                isMobile ? (
+                  <div
+                    key={i}
+                    className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-xl" />
+                      <div className="min-w-0 flex-1 flex flex-col gap-2">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-36" />
+                      </div>
+                      <Skeleton className="h-4 w-14" />
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[2.2fr_2fr_1fr_64px] items-center px-5 py-3 gap-4 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-xl" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-3.5 w-14" />
+                      <Skeleton className="h-3.5 w-4" />
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-3.5 w-14" />
+                    </div>
+                    <Skeleton className="h-4 w-16 justify-self-end" />
+                    <div />
+                  </div>
+                ),
+              )}
             </div>
           ) : transfers.length === 0 ? (
             <div className="py-12 text-center text-sm text-slate-400">
@@ -251,13 +317,14 @@ export function TransfersPage() {
 
               const rowClick = isMobile
                 ? () => {
-                    setTransferToDelete(transfer.id);
+                    setViewingTransfer(transfer);
                   }
                 : undefined;
               const rowKeyDown = isMobile
                 ? (e: React.KeyboardEvent) => {
-                    if (e.key === "Enter") {
-                      setTransferToDelete(transfer.id);
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setViewingTransfer(transfer);
                     }
                   }
                 : undefined;
@@ -282,7 +349,10 @@ export function TransfersPage() {
                         <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                           {transfer.categoryName}
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5 min-w-0">
+                        <div className="font-mono tabular-nums text-xs text-slate-400 mt-0.5">
+                          {formatTransferDate(transfer.date)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1 min-w-0">
                           <Avatar
                             name={transfer.fromMemberName}
                             colorIndex={fromColorIndex}
@@ -323,6 +393,9 @@ export function TransfersPage() {
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                         {transfer.categoryName}
+                      </div>
+                      <div className="font-mono tabular-nums text-xs text-slate-400 mt-0.5">
+                        {formatTransferDate(transfer.date)}
                       </div>
                     </div>
                   </div>
@@ -401,19 +474,92 @@ export function TransfersPage() {
         )}
       </Card>
 
-      <Dialog
+      <ResponsiveDialog
+        open={viewingTransfer !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewingTransfer(null);
+        }}
+        title="Transfer Details"
+      >
+        {viewingTransfer && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <CategoryIconTile
+                icon={viewingTransfer.categoryIcon}
+                className="bg-brand-transfer/10 text-brand-transfer"
+              />
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {viewingTransfer.categoryName}
+                </div>
+                <div className="font-mono tabular-nums text-xs text-slate-400 mt-0.5">
+                  {formatTransferDate(viewingTransfer.date)}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <Avatar
+                name={viewingTransfer.fromMemberName}
+                colorIndex={memberColorIndex.get(viewingTransfer.fromMemberId)}
+                size="sm"
+              />
+              <span>{viewingTransfer.fromMemberName}</span>
+              <span className="text-slate-400">→</span>
+              <Avatar
+                name={viewingTransfer.toMemberName}
+                colorIndex={memberColorIndex.get(viewingTransfer.toMemberId)}
+                size="sm"
+              />
+              <span>{viewingTransfer.toMemberName}</span>
+            </div>
+            <div className="text-2xl font-semibold font-mono tabular-nums text-slate-900 dark:text-white">
+              {formatCurrency(viewingTransfer.amount)}
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setViewingTransfer(null);
+            }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="transfer"
+            onClick={() => {
+              if (viewingTransfer) {
+                setDeleteError(null);
+                setTransferToDelete(viewingTransfer.id);
+                setViewingTransfer(null);
+              }
+            }}
+          >
+            <Trash2 size={16} className="mr-1.5" />
+            Delete Transfer
+          </Button>
+        </DialogFooter>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog
         open={transferToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setTransferToDelete(null);
+          if (!open) {
+            setTransferToDelete(null);
+            setDeleteError(null);
+          }
         }}
         title="Delete Transfer"
         description="Are you sure you want to delete this transfer? This action cannot be undone."
       >
+        {deleteError && <Alert>{deleteError}</Alert>}
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => {
               setTransferToDelete(null);
+              setDeleteError(null);
             }}
           >
             Cancel
@@ -427,19 +573,24 @@ export function TransfersPage() {
             Delete Transfer
           </Button>
         </DialogFooter>
-      </Dialog>
+      </ResponsiveDialog>
 
-      <Dialog
+      <ResponsiveDialog
         open={deleteAllOpen}
-        onOpenChange={setDeleteAllOpen}
+        onOpenChange={(open) => {
+          setDeleteAllOpen(open);
+          if (!open) setDeleteError(null);
+        }}
         title="Delete All Transfers"
         description="This will permanently delete every transfer in this group, regardless of any active filters. This action cannot be undone."
       >
+        {deleteError && <Alert>{deleteError}</Alert>}
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => {
               setDeleteAllOpen(false);
+              setDeleteError(null);
             }}
           >
             Cancel
@@ -451,7 +602,7 @@ export function TransfersPage() {
             Delete All Transfers
           </Button>
         </DialogFooter>
-      </Dialog>
+      </ResponsiveDialog>
     </div>
   );
 }

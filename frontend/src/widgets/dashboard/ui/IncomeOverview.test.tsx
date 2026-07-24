@@ -157,7 +157,7 @@ describe("IncomeOverview", () => {
       ).toBeInTheDocument();
     });
 
-    it("negative/non-numeric input blocks Confirm dispatch with an inline message", async () => {
+    it("negative/non-numeric input blocks Confirm dispatch with an inline message naming the affected member", async () => {
       const user = userEvent.setup();
       render(<IncomeOverview totalIncome={5000} members={members} />);
 
@@ -167,11 +167,28 @@ describe("IncomeOverview", () => {
       });
       fireEvent.change(bobInput, { target: { value: "-50" } });
 
+      expect(bobInput).toHaveAttribute("aria-invalid", "true");
+      const aliceInput = screen.getByRole("spinbutton", {
+        name: /Income for Alice/i,
+      });
+      expect(aliceInput).toHaveAttribute("aria-invalid", "false");
+
       await user.click(screen.getByRole("button", { name: /^confirm$/i }));
 
       expect(groupApi.updateMemberIncome).not.toHaveBeenCalled();
       expect(
-        screen.getByText(/enter a valid non-negative income/i),
+        screen.getByText(/enter a valid non-negative income for bob/i),
+      ).toBeInTheDocument();
+    });
+
+    it("shows a caption warning that editing income re-splits every member's shares", async () => {
+      const user = userEvent.setup();
+      render(<IncomeOverview totalIncome={5000} members={members} />);
+
+      await user.click(screen.getByRole("button", { name: /edit incomes/i }));
+
+      expect(
+        screen.getByText(/re-splits every quota, category, and savings goal/i),
       ).toBeInTheDocument();
     });
 

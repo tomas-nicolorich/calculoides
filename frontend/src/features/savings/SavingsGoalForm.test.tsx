@@ -12,6 +12,10 @@ import { SavingsGoalForm } from "./SavingsGoalForm";
 import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
+// Popover mount/interaction involves real userEvent timers; the 5s default
+// is tight under load, not a sign of an indeterminate hang.
+vi.setConfig({ testTimeout: 15000, hookTimeout: 15000 });
+
 vi.mock("../../shared/api/supabase", () => ({
   supabase: {
     auth: {
@@ -139,16 +143,29 @@ describe("SavingsGoalForm", () => {
     const user = userEvent.setup();
     render(<SavingsGoalForm groupId="group-1" />);
 
-    const otherTile = screen.getByRole("button", { name: "Icon: other" });
+    const trigger = screen.getByRole("button", { name: "Choose icon" });
+    await user.click(trigger);
+
+    const otherTile = await screen.findByRole("button", {
+      name: "Icon: Other",
+    });
     expect(otherTile).toHaveAttribute("aria-pressed", "true");
 
-    const carTile = screen.getByRole("button", { name: "Icon: transport" });
+    const carTile = screen.getByRole("button", { name: "Icon: Transport" });
     expect(carTile).toHaveAttribute("aria-pressed", "false");
 
+    // Selecting an icon closes the popover; the trigger reflects the choice.
     await user.click(carTile);
+    expect(trigger).toHaveTextContent("Transport");
 
-    expect(carTile).toHaveAttribute("aria-pressed", "true");
-    expect(otherTile).toHaveAttribute("aria-pressed", "false");
+    await user.click(trigger);
+    expect(
+      await screen.findByRole("button", { name: "Icon: Transport" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Icon: Other" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it("includes selected icon in create submit payload", async () => {
@@ -159,7 +176,10 @@ describe("SavingsGoalForm", () => {
     await user.type(screen.getAllByPlaceholderText("0.00")[0], "500");
     const monthInput = getMonthInput(container);
     await user.type(monthInput, "2027-06");
-    await user.click(screen.getByRole("button", { name: "Icon: transport" }));
+    await user.click(screen.getByRole("button", { name: "Choose icon" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Icon: Transport" }),
+    );
     await user.click(screen.getByRole("button", { name: /save goal/i }));
 
     await waitFor(() => {
@@ -174,7 +194,10 @@ describe("SavingsGoalForm", () => {
     const user = userEvent.setup();
     render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
 
-    await user.click(screen.getByRole("button", { name: "Icon: transport" }));
+    await user.click(screen.getByRole("button", { name: "Choose icon" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Icon: Transport" }),
+    );
     await user.click(screen.getByRole("button", { name: /update goal/i }));
 
     await waitFor(() => {

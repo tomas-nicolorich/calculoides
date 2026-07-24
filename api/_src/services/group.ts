@@ -53,6 +53,7 @@ export const GroupService = {
 
     return groups.map((group) => ({
       ...group,
+      members: group.members.map((m) => ({ ...m, income: Number(m.income) })),
       role: group.ownerId === userId ? "OWNER" : "MEMBER",
     }));
   },
@@ -88,7 +89,10 @@ export const GroupService = {
       throw new Error("Unauthorized access to group");
     }
 
-    return group;
+    return {
+      ...group,
+      members: group.members.map((m) => ({ ...m, income: Number(m.income) })),
+    };
   },
 
   /**
@@ -96,7 +100,7 @@ export const GroupService = {
    * Mandated by BUG-014 to include user names.
    */
   async getGroupMembers(groupId: string) {
-    return await prisma.groupMember.findMany({
+    const members = await prisma.groupMember.findMany({
       where: { groupId },
       include: {
         user: {
@@ -109,6 +113,7 @@ export const GroupService = {
       },
       orderBy: { joinedAt: "asc" },
     });
+    return members.map((m) => ({ ...m, income: Number(m.income) }));
   },
 
   /**

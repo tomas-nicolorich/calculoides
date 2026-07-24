@@ -12,15 +12,17 @@ import {
   CategoryBalance,
 } from "../../../../../shared/src/types/redesign";
 import { ChevronDown, Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
-import { Dialog, DialogFooter } from "../../../shared/ui/Dialog";
+import { DialogFooter } from "../../../shared/ui/Dialog";
 import { apiClient } from "../../../shared/api/client";
-import { Select, Input } from "../../../shared/ui";
+import {
+  Select,
+  Input,
+  IconPicker,
+  ResponsiveDialog,
+} from "../../../shared/ui";
 import { cn } from "../../../shared/lib/utils";
 import { Button } from "../../../shared/ui/Button";
-import {
-  CategoryIconTile,
-  CATEGORY_ICON_KEYS,
-} from "../../../shared/lib/categoryIcons";
+import { CategoryIconTile } from "../../../shared/lib/categoryIcons";
 
 export interface MemberRich {
   id: string;
@@ -88,34 +90,7 @@ function CategoryFormFields({
           required
         />
       </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Icon</label>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORY_ICON_KEYS.map((key) => {
-            const selected = icon === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setIcon(key);
-                }}
-                aria-pressed={selected}
-                aria-label={`Icon: ${key}`}
-                title={key}
-                className={cn(
-                  "rounded-xl p-0.5 transition-all",
-                  selected
-                    ? "ring-2 ring-brand-category ring-offset-1 ring-offset-card"
-                    : "opacity-70 hover:opacity-100",
-                )}
-              >
-                <CategoryIconTile icon={key} size="md" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <IconPicker icon={icon} onChange={setIcon} tone="category" />
       <div className="space-y-2">
         <label className="text-sm font-medium">
           Assign to Members (Optional)
@@ -132,10 +107,10 @@ function CategoryFormFields({
                 onClick={() => {
                   toggleMember(member.id);
                 }}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                className={`px-3 py-1 rounded-full text-sm border transition-colors ${
                   selectedMemberIds.includes(member.id)
-                    ? "bg-brand-balance text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    ? "bg-brand-balance/10 text-brand-balance border-brand-balance"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-transparent"
                 }`}
               >
                 {member.name}
@@ -244,8 +219,9 @@ function MemberRow({ balance, member, share, onTransfer }: MemberRowProps) {
             <ArrowRightLeft size={14} />
           </button>
           <span
-            className="text-xs rounded-full px-2 py-0.5 font-mono bg-slate-700 dark:bg-slate-800"
+            className="text-xs rounded-full px-2 py-0.5 font-mono tnum"
             style={{
+              backgroundColor: `color-mix(in srgb, var(--color-member-${String((member?.index ?? 0) + 1)}) 14%, transparent)`,
               color: `var(--color-member-${String((member?.index ?? 0) + 1)})`,
             }}
           >
@@ -460,7 +436,7 @@ export function BudgetCategories({
           </Button>
         </div>
 
-        <Dialog
+        <ResponsiveDialog
           open={isAdding}
           onOpenChange={setIsAdding}
           title="Add Category"
@@ -486,9 +462,9 @@ export function BudgetCategories({
               }}
             />
           </form>
-        </Dialog>
+        </ResponsiveDialog>
 
-        <Dialog
+        <ResponsiveDialog
           open={editingCategory !== null}
           onOpenChange={(open) => {
             if (!open) {
@@ -525,10 +501,10 @@ export function BudgetCategories({
               }}
             />
           </form>
-        </Dialog>
+        </ResponsiveDialog>
 
         {/* Transfer Budget dialog — From is locked to the row that was clicked */}
-        <Dialog
+        <ResponsiveDialog
           open={transferCategory !== null}
           onOpenChange={(open) => {
             if (!open) setTransferCategory(null);
@@ -617,7 +593,7 @@ export function BudgetCategories({
               </Button>
             </div>
           </form>
-        </Dialog>
+        </ResponsiveDialog>
 
         {categories.length === 0 && (
           <p className="text-center py-8 text-slate-400 text-sm">
@@ -768,7 +744,7 @@ export function BudgetCategories({
           })}
         </div>
 
-        <Dialog
+        <ResponsiveDialog
           open={categoryToDelete !== null}
           onOpenChange={(open) => {
             if (!open) setCategoryToDelete(null);
@@ -797,7 +773,7 @@ export function BudgetCategories({
               Delete Category
             </button>
           </DialogFooter>
-        </Dialog>
+        </ResponsiveDialog>
       </div>
     </Card>
   );

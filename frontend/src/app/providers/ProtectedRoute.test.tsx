@@ -18,6 +18,8 @@ describe("ProtectedRoute", () => {
       session: {} as unknown as Session,
       loading: false,
       profileIncomplete: false,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: vi.fn(),
     });
     render(
@@ -36,6 +38,8 @@ describe("ProtectedRoute", () => {
       session: {} as unknown as Session,
       loading: false,
       profileIncomplete: true,
+      sessionError: null,
+      retrySessionLoad: vi.fn(),
       signOut: vi.fn(),
     });
     render(

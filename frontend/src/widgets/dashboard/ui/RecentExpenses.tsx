@@ -41,7 +41,7 @@ export function RecentExpenses({
           </Link>
         </div>
 
-        <div className="space-y-4">
+        <div>
           {expenses.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-sm">
               No recent expenses

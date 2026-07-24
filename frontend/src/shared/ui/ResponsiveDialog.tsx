@@ -1,80 +1,78 @@
 import * as React from "react";
-import { Dialog } from "@base-ui/react";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import { X } from "lucide-react";
 import { useMediaQuery } from "../lib/hooks/useMediaQuery";
 
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 interface ResponsiveDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  trigger?: React.ReactElement;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
   children: React.ReactNode;
+  trigger?: React.ReactNode;
   hideCloseButton?: boolean;
 }
 
+/**
+ * Mobile-aware dialog primitive: centered modal at >=768px, bottom sheet
+ * below that. Use for any dialog reachable from a primary mobile flow
+ * (Dialog.tsx stays desktop-only positioning).
+ */
 export function ResponsiveDialog({
   open,
   onOpenChange,
-  trigger,
   title,
   description,
   children,
+  trigger,
   hideCloseButton,
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const [internalOpen, setInternalOpen] = React.useState(false);
-  const isControlled = open !== undefined;
-  const isOpen = isControlled ? open : internalOpen;
-
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(newOpen);
-    }
-    onOpenChange?.(newOpen);
-  };
-
-  const handle = React.useMemo(() => Dialog.createHandle(), []);
-
   return (
-    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange} handle={handle}>
-      {trigger && <Dialog.Trigger render={trigger} handle={handle} />}
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200" />
-        <Dialog.Popup
-          className={`
-            fixed z-50 bg-white dark:bg-slate-900 shadow-xl overflow-hidden
-            animate-in duration-300
-            ${
-              isDesktop
-                ? "left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] rounded-2xl w-full max-w-md zoom-in-95 fade-in"
-                : "left-0 bottom-0 right-0 rounded-t-2xl max-h-[90vh] slide-in-from-bottom flex flex-col"
-            }
-          `}
+    <BaseDialog.Root open={open} onOpenChange={onOpenChange}>
+      {trigger && <BaseDialog.Trigger>{trigger}</BaseDialog.Trigger>}
+      <BaseDialog.Portal>
+        <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0" />
+        <BaseDialog.Popup
+          className={cn(
+            "fixed z-50 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-y-auto",
+            isDesktop
+              ? cn(
+                  "left-1/2 top-1/2 max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6",
+                  "transition-[transform,opacity,scale] duration-200 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95",
+                )
+              : cn(
+                  "left-0 right-0 bottom-0 max-h-[90vh] rounded-t-2xl p-6",
+                  "transition-transform duration-200 ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full",
+                ),
+          )}
         >
-          <div className="flex flex-col h-full max-h-full">
-            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-              <div>
-                <Dialog.Title className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {title}
-                </Dialog.Title>
-                {description && (
-                  <Dialog.Description className="text-sm text-slate-500 mt-1">
-                    {description}
-                  </Dialog.Description>
-                )}
-              </div>
-              {!hideCloseButton && (
-                <Dialog.Close className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0">
-                  <X size={20} />
-                </Dialog.Close>
-              )}
-            </div>
-            <div className="p-4 overflow-y-auto">{children}</div>
+          <div className="flex flex-col space-y-2 text-center sm:text-left">
+            <BaseDialog.Title className="text-lg font-semibold leading-none tracking-tight text-slate-900 dark:text-white">
+              {title}
+            </BaseDialog.Title>
+            {description && (
+              <BaseDialog.Description className="text-sm text-slate-500 dark:text-slate-400">
+                {description}
+              </BaseDialog.Description>
+            )}
           </div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+          <div className="mt-4">{children}</div>
+          {!hideCloseButton && (
+            <BaseDialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none dark:ring-offset-slate-950 dark:focus:ring-slate-300">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </BaseDialog.Close>
+          )}
+        </BaseDialog.Popup>
+      </BaseDialog.Portal>
+    </BaseDialog.Root>
   );
 }

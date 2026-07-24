@@ -1,6 +1,6 @@
 {
   "name": "calculoides",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "packageManager": "npm@10.8.2",
   "type": "module",
