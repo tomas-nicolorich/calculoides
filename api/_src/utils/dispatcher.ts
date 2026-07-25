@@ -9,7 +9,19 @@ export type RouteConfig = Record<
 >;
 
 /**
- * Dispatches a request to a specific handler based on an 'action' query parameter.
+ * Maps HTTP methods to default action names when no ?action= is present.
+ */
+const DEFAULT_BY_METHOD: Record<string, string> = {
+  GET: "list",
+  POST: "create",
+  PUT: "update",
+  PATCH: "update",
+  DELETE: "delete",
+};
+
+/**
+ * Dispatches a request to a specific handler based on an 'action' query parameter,
+ * or falls back to the default action for the HTTP method.
  *
  * @param req - The API Request object
  * @param res - The API Response object
@@ -23,8 +35,13 @@ export async function dispatch(
   defaultAction = "list",
 ): Promise<void> {
   try {
-    // Get action from query parameter, fallback to defaultAction
-    const action = (req.query.action as string | undefined) ?? defaultAction;
+    // Get action from query parameter, fallback to method default, then to defaultAction
+    const method = typeof req.method === "string" ? req.method : "GET";
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const action =
+      (req.query.action as string | undefined) ??
+      DEFAULT_BY_METHOD[method] ??
+      defaultAction;
     const handler = routes[action];
 
     if (!handler) {
