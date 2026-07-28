@@ -11,7 +11,7 @@ export type RouteConfig = Record<
 /**
  * Maps HTTP methods to default action names when no ?action= is present.
  */
-const DEFAULT_BY_METHOD: Record<string, string> = {
+const DEFAULT_BY_METHOD: Partial<Record<string, string>> = {
   GET: "list",
   POST: "create",
   PUT: "update",
@@ -37,7 +37,6 @@ export async function dispatch(
   try {
     // Get action from query parameter, fallback to method default, then to defaultAction
     const method = typeof req.method === "string" ? req.method : "GET";
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const action =
       (req.query.action as string | undefined) ??
       DEFAULT_BY_METHOD[method] ??
