@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Input, IconPicker } from "../../shared/ui";
+import { Button, Input, IconPicker, DatePicker } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { toFriendlySavingsError } from "../../entities/savings-goal/errorMessages";
 import { cn } from "../../shared/lib/utils";
@@ -134,14 +134,10 @@ export function SavingsGoalForm({
         <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
           Target Date
         </label>
-        <Input
-          type="month"
-          className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
+        <DatePicker
           value={targetDate}
-          onChange={(e) => {
-            setTargetDate(e.target.value);
-          }}
-          required
+          onChange={setTargetDate}
+          granularity="month"
         />
       </div>
 
@@ -170,7 +166,7 @@ export function SavingsGoalForm({
             "font-bold text-xs tracking-widest uppercase",
             isEditing ? "flex-1" : "w-full",
           )}
-          disabled={loading}
+          disabled={loading || !targetDate}
         >
           {loading ? "Syncing..." : isEditing ? "Update Goal" : "Save Goal"}
         </Button>

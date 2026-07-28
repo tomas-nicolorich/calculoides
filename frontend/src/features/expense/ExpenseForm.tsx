@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Input, Select } from "../../shared/ui";
+import { Button, Input, Select, DatePicker } from "../../shared/ui";
 import { expenseApi } from "../../entities/expense";
 import type { CategoryWithBalances } from "../../../../shared/src/types/redesign";
 
@@ -122,14 +122,7 @@ export function ExpenseForm({
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Date</label>
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
-            }}
-            required
-          />
+          <DatePicker value={date} onChange={setDate} granularity="day" />
         </div>
       </div>
 
