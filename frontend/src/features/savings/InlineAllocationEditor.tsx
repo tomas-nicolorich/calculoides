@@ -82,7 +82,7 @@ function AllocationAmountDisplay({ item }: { item: ContributionBreakdown }) {
     <div className="text-right flex items-center gap-2 shrink-0">
       {item.isOverridden && (
         <span
-          className="h-1.5 w-1.5 rounded-full bg-blue-500"
+          className="h-1.5 w-1.5 rounded-full bg-brand-balance"
           title="Custom allocation"
           aria-label="Custom allocation"
         />
@@ -178,15 +178,19 @@ export function InlineAllocationEditor({
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
-        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-          Monthly Allocation · {fmt(monthlyTotal)}/mo
+        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          Monthly Allocation ·{" "}
+          <span className="font-mono tnum normal-case tracking-normal">
+            {fmt(monthlyTotal)}
+          </span>
+          /mo
         </p>
         {!isEditing && (
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-[10px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20"
+            className="h-6 px-2 text-[11px] font-semibold text-brand-balance bg-transparent hover:bg-brand-balance/10 dark:hover:bg-brand-balance/20"
             onClick={() => {
               setIsEditing(true);
             }}
@@ -237,13 +241,13 @@ export function InlineAllocationEditor({
             </Button>
           )}
 
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
             Editing a member&apos;s monthly amount recalculates the projected
             completion date.
           </p>
 
           {session.saveError && (
-            <div className="text-[10px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+            <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
               {session.saveError}
             </div>
           )}

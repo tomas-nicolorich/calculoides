@@ -6,7 +6,8 @@ import { SavingsGoalList } from "../../../features/savings/SavingsGoalList";
 import { SavingsGoalForm } from "../../../features/savings/SavingsGoalForm";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button, IconButton, Spinner } from "../../../shared/ui";
-import { Dialog } from "../../../shared/ui/Dialog";
+import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
+import { toFriendlySavingsError } from "../../../entities/savings-goal/errorMessages";
 
 export function SavingsPage() {
   const navigate = useNavigate();
@@ -15,12 +16,12 @@ export function SavingsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const {
     data: goals,
-    loading,
+    isInitialLoading,
     error,
     refresh,
   } = useSavingsGoals(groupId ?? null);
 
-  if (loading) {
+  if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
@@ -62,7 +63,7 @@ export function SavingsPage() {
 
       {error && (
         <div className="bg-destructive/10 text-destructive p-4 rounded-xl border border-destructive/20">
-          {error}
+          {toFriendlySavingsError(error)}
         </div>
       )}
 
@@ -73,7 +74,7 @@ export function SavingsPage() {
         }}
       />
 
-      <Dialog
+      <ResponsiveDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
         title="New Savings Goal"
@@ -89,7 +90,7 @@ export function SavingsPage() {
             setCreateOpen(false);
           }}
         />
-      </Dialog>
+      </ResponsiveDialog>
     </div>
   );
 }

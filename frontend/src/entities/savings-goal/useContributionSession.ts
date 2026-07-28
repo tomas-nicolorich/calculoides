@@ -14,6 +14,7 @@ import type {
 } from "./index";
 import { savingsGoalApi } from "./index";
 import { diffContributionPersistence } from "./contributionDiff";
+import { toFriendlySavingsError } from "./errorMessages";
 
 export interface ContributionSession {
   phase: ContributionSessionPhase;
@@ -229,7 +230,7 @@ export function useContributionSession(
       setSaveError(null);
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Save failed";
+      const message = toFriendlySavingsError(err);
       dispatch({ type: "saveFailure", error: message });
       setSaveError(message);
       return false;

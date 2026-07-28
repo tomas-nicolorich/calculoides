@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Input, IconPicker } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
+import { toFriendlySavingsError } from "../../entities/savings-goal/errorMessages";
 import { cn } from "../../shared/lib/utils";
 
 interface SavingsGoalFormProps {
@@ -64,10 +65,7 @@ export function SavingsGoalForm({
       }
       await onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(
-        message || `Failed to ${isEditing ? "update" : "create"} savings goal`,
-      );
+      setError(toFriendlySavingsError(err));
     } finally {
       setLoading(false);
     }
@@ -148,7 +146,7 @@ export function SavingsGoalForm({
       </div>
 
       {error && (
-        <div className="text-[10px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+        <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
           {error}
         </div>
       )}

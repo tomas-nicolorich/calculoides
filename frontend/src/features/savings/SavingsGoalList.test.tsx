@@ -237,7 +237,11 @@ describe("SavingsGoalList", () => {
   it("shows the monthly allocation total in the section header", () => {
     render(<SavingsGoalList goals={mockGoals} />);
     expect(
-      screen.getByText(/Monthly Allocation · €100\.00\/mo/),
+      screen.getByText(
+        (_content, element) =>
+          element?.tagName.toLowerCase() === "p" &&
+          element.textContent.includes("Monthly Allocation · €100.00/mo"),
+      ),
     ).toBeInTheDocument();
   });
 
@@ -418,7 +422,9 @@ describe("SavingsGoalList", () => {
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
-      expect(await screen.findByText("Network error")).toBeInTheDocument();
+      expect(
+        await screen.findByText("Something went wrong. Please try again."),
+      ).toBeInTheDocument();
       expect(onRefresh).not.toHaveBeenCalled();
     });
 
@@ -432,13 +438,17 @@ describe("SavingsGoalList", () => {
       await user.click(screen.getByRole("button", { name: /row options/i }));
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
-      expect(await screen.findByText("Network error")).toBeInTheDocument();
+      expect(
+        await screen.findByText("Something went wrong. Please try again."),
+      ).toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: /^cancel$/i }));
       await user.click(screen.getByRole("button", { name: /row options/i }));
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
 
-      expect(screen.queryByText("Network error")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Something went wrong. Please try again."),
+      ).not.toBeInTheDocument();
     });
 
     it("keeps the confirmation dialog open while onRefresh is pending, closing it only once onRefresh resolves", async () => {
