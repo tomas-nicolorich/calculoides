@@ -12,6 +12,29 @@ import {
 const fmt = (n: number) =>
   `€${n.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const FORECAST_COLOR_CLASS: Record<
+  ContributionSession["forecastColor"],
+  string
+> = {
+  green: "text-brand-income",
+  amber: "text-brand-transfer",
+  red: "text-brand-expense",
+  neutral: "text-slate-500 dark:text-slate-400",
+};
+
+function formatLiveProjectedDate(session: ContributionSession): string {
+  if (
+    session.localProjectedMonths === Infinity ||
+    session.localProjectedDate === null
+  ) {
+    return "Never";
+  }
+  return session.localProjectedDate.toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 const NO_SPINNER_CLASS =
   "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
@@ -244,6 +267,14 @@ export function InlineAllocationEditor({
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
             Editing a member&apos;s monthly amount recalculates the projected
             completion date.
+          </p>
+          <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+            Projected completion:{" "}
+            <span
+              className={`font-mono tnum font-semibold ${FORECAST_COLOR_CLASS[session.forecastColor]}`}
+            >
+              {formatLiveProjectedDate(session)}
+            </span>
           </p>
 
           {session.saveError && (

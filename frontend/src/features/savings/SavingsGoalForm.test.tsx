@@ -181,7 +181,7 @@ describe("SavingsGoalForm", () => {
 
     await user.type(screen.getByPlaceholderText(/e.g. New Sofa/i), "Trip");
     await user.type(screen.getAllByPlaceholderText("0.00")[0], "500");
-    await pickMonthNextYear(user, /select month/i, "Jun");
+    await pickMonthNextYear(user, /target date/i, "Jun");
     await user.click(screen.getByRole("button", { name: "Choose icon" }));
     await user.click(
       await screen.findByRole("button", { name: "Icon: Transport" }),
@@ -218,8 +218,8 @@ describe("SavingsGoalForm", () => {
     render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
 
     expect(
-      screen.getByRole("button", { name: /Dec 2026/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("button", { name: /target date/i }),
+    ).toHaveTextContent("Dec 2026");
   });
 
   it("submits an ISO date built from the picked month", async () => {
@@ -228,7 +228,7 @@ describe("SavingsGoalForm", () => {
 
     // The popover opens on the existing target's year (2026), so "Next
     // year" deterministically lands on 2027 regardless of the real date.
-    await pickMonthNextYear(user, /Dec 2026/i, "Mar");
+    await pickMonthNextYear(user, /target date/i, "Mar");
 
     await user.click(screen.getByRole("button", { name: /update goal/i }));
 

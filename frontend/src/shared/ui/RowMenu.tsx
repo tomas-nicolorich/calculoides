@@ -48,14 +48,23 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
       setOpen(false);
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
     document.addEventListener("mousedown", handleOutsideClick);
     window.addEventListener("scroll", handleScrollOrResize, true);
     window.addEventListener("resize", handleScrollOrResize);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
       window.removeEventListener("scroll", handleScrollOrResize, true);
       window.removeEventListener("resize", handleScrollOrResize);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
 
@@ -67,6 +76,8 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
         className="inline-grid place-items-center rounded-lg border border-transparent bg-transparent text-slate-400 dark:text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-balance focus-visible:ring-offset-2 focus-visible:ring-offset-card active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 cursor-pointer h-7 w-7 hover:text-brand-balance"
         onClick={handleToggle}
         aria-label="Row options"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
         <MoreVertical size={16} />
       </button>
@@ -75,6 +86,7 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
         createPortal(
           <div
             ref={menuRef}
+            role="menu"
             style={{
               position: "absolute",
               top: `${coords.top.toString()}px`,
@@ -88,6 +100,7 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
           >
             {onEdit && (
               <button
+                role="menuitem"
                 onClick={() => {
                   setOpen(false);
                   onEdit();
@@ -99,6 +112,7 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
               </button>
             )}
             <button
+              role="menuitem"
               onClick={() => {
                 setOpen(false);
                 onDelete();

@@ -7,6 +7,7 @@ import { toFriendlySavingsError } from "../../entities/savings-goal/errorMessage
 import { SavingsGoalForm } from "./SavingsGoalForm";
 import { InlineAllocationEditor } from "./InlineAllocationEditor";
 import { CategoryIconTile } from "../../shared/lib/categoryIcons";
+import { cn } from "../../shared/lib/utils";
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];
@@ -25,8 +26,7 @@ function getGoalStatus(goal: SavingsGoal): GoalStatus {
 }
 
 const STATUS_ICON_CLASS: Record<GoalStatus, string> = {
-  never:
-    "h-9 w-9 bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
+  never: "h-9 w-9 bg-brand-expense/10 text-brand-expense",
   late: "h-9 w-9 bg-brand-transfer/10 text-brand-transfer",
   onTrack: "h-9 w-9 bg-brand-income/10 text-brand-income",
 };
@@ -50,7 +50,7 @@ const STATUS_METER_STATE: Record<
 const STATUS_PROJECTED_COLOR_CLASS: Record<GoalStatus, string> = {
   never: "text-red-500",
   late: "text-amber-500",
-  onTrack: "text-emerald-600 dark:text-emerald-400",
+  onTrack: "text-emerald-700 dark:text-emerald-400",
 };
 
 function statusBadgeLabel(status: GoalStatus, varianceMonths: number): string {
@@ -82,13 +82,16 @@ function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
     <Card key={goal.id} hover className="transition-all duration-300">
       <div className="flex justify-between items-start pb-2">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <CategoryIconTile
               icon={goal.icon ?? undefined}
               size="sm"
               className={STATUS_ICON_CLASS[status]}
             />
-            <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+            <span
+              className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white"
+              title={goal.name}
+            >
               {goal.name}
             </span>
           </div>
@@ -181,7 +184,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
       <h2 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-200">
         Current Goals
       </h2>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={cn("grid gap-6", goals.length > 1 && "md:grid-cols-2")}>
         {goals.map((goal) => (
           <GoalCard
             key={goal.id}

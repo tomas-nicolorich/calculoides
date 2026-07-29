@@ -79,10 +79,14 @@ export function SavingsGoalForm({
       className="space-y-5"
     >
       <div className="space-y-2">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+        <label
+          htmlFor="savings-goal-name"
+          className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest"
+        >
           Goal Name
         </label>
         <Input
+          id="savings-goal-name"
           placeholder="e.g. New Sofa, Vacation"
           className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance transition-all"
           value={name}
@@ -97,10 +101,14 @@ export function SavingsGoalForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          <label
+            htmlFor="savings-goal-target-amount"
+            className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest"
+          >
             Target (€)
           </label>
           <Input
+            id="savings-goal-target-amount"
             type="number"
             step="0.01"
             placeholder="0.00"
@@ -114,10 +122,14 @@ export function SavingsGoalForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          <label
+            htmlFor="savings-goal-current-amount"
+            className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest"
+          >
             Saved So Far
           </label>
           <Input
+            id="savings-goal-current-amount"
             type="number"
             step="0.01"
             placeholder="0.00"
@@ -131,10 +143,14 @@ export function SavingsGoalForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+        <label
+          htmlFor="savings-goal-target-date"
+          className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest"
+        >
           Target Date
         </label>
         <DatePicker
+          id="savings-goal-target-date"
           value={targetDate}
           onChange={setTargetDate}
           granularity="month"

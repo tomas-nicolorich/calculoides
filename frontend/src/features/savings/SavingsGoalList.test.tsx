@@ -113,7 +113,7 @@ describe("SavingsGoalList", () => {
         name: /row options/i,
       });
       await user.click(menuButtons[goalIndex]);
-      const editButtons = screen.getAllByRole("button", { name: /^edit$/i });
+      const editButtons = screen.getAllByRole("menuitem", { name: /^edit$/i });
       await user.click(editButtons[editButtons.length - 1]);
     }
 
@@ -320,7 +320,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
 
       expect(
         screen.getByRole("heading", { name: "Delete Goal" }),
@@ -333,7 +333,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
 
       expect(
         screen.getByText(/shared balance stays intact/i),
@@ -346,7 +346,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       expect(savingsGoalApi.delete).toHaveBeenCalledTimes(1);
@@ -359,7 +359,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /^cancel$/i }));
 
       expect(savingsGoalApi.delete).not.toHaveBeenCalled();
@@ -371,7 +371,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       expect(savingsGoalApi.delete).toHaveBeenCalledWith("goal-1");
@@ -394,7 +394,7 @@ describe("SavingsGoalList", () => {
         name: /row options/i,
       });
       await user.click(rowOptionButtons[0]);
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       // Only goal 1's id was ever passed to the delete API — goal 2 was never referenced.
@@ -419,7 +419,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       expect(
@@ -436,7 +436,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
       expect(
         await screen.findByText("Something went wrong. Please try again."),
@@ -444,7 +444,7 @@ describe("SavingsGoalList", () => {
 
       await user.click(screen.getByRole("button", { name: /^cancel$/i }));
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
 
       expect(
         screen.queryByText("Something went wrong. Please try again."),
@@ -463,7 +463,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       await waitFor(() => {

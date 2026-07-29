@@ -14,6 +14,8 @@ interface DatePickerProps {
   granularity?: DatePickerGranularity;
   placeholder?: string;
   disabled?: boolean;
+  /** Forwarded to the trigger button so a `<label htmlFor>` can target it. */
+  id?: string;
 }
 
 function pad(n: number) {
@@ -85,6 +87,7 @@ export function DatePicker({
   granularity = "day",
   placeholder,
   disabled,
+  id,
 }: DatePickerProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [open, setOpen] = useState(false);
@@ -160,7 +163,11 @@ export function DatePicker({
   if (isDesktop) {
     return (
       <Popover.Root open={open} onOpenChange={setOpen}>
-        <Popover.Trigger disabled={disabled} className={triggerClassName}>
+        <Popover.Trigger
+          id={id}
+          disabled={disabled}
+          className={triggerClassName}
+        >
           {triggerContent}
         </Popover.Trigger>
         <Popover.Portal>
@@ -181,7 +188,11 @@ export function DatePicker({
 
   return (
     <BaseDialog.Root open={open} onOpenChange={setOpen}>
-      <BaseDialog.Trigger disabled={disabled} className={triggerClassName}>
+      <BaseDialog.Trigger
+        id={id}
+        disabled={disabled}
+        className={triggerClassName}
+      >
         {triggerContent}
       </BaseDialog.Trigger>
       <BaseDialog.Portal>
