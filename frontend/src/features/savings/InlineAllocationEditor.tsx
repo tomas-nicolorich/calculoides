@@ -114,9 +114,11 @@ function AllocationAmountInput({
   const [prevAmount, setPrevAmount] = useState(amount);
   const [text, setText] = useState(String(amount));
 
-  if (prevAmount !== amount && parseFloat(text) !== amount) {
+  if (amount !== prevAmount) {
     setPrevAmount(amount);
-    setText(String(amount));
+    if (parseFloat(text) !== amount) {
+      setText(String(amount));
+    }
   }
 
   return (
