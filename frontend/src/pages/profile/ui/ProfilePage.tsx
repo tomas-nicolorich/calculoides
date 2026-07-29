@@ -12,9 +12,9 @@ import { FallbackNameHint } from "./FallbackNameHint";
 const DISPLAY_NAME_MAX_LENGTH = 100;
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
-  const profileForm = useProfileForm(user);
+  const profileForm = useProfileForm(user, session);
   const passwordForm = usePasswordChangeForm(user?.email);
 
   const toggleShowPasswords = () => {
