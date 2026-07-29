@@ -45,26 +45,26 @@ colors:
   well-category: "rgba(139,92,246,0.10)"
 typography:
   display:
-    fontFamily: Geist
+    fontFamily: Manrope
     fontSize: 30px         # text-3xl
     fontWeight: 600
     lineHeight: 1.1
   heading:
-    fontFamily: Geist
+    fontFamily: Manrope
     fontSize: 18px         # text-lg
     fontWeight: 600
     lineHeight: 1.25
   body:
-    fontFamily: Geist
+    fontFamily: Manrope
     fontSize: 14px         # text-sm
     fontWeight: 400
     lineHeight: 1.5
   mono:
-    fontFamily: Geist Mono
+    fontFamily: JetBrains Mono
     fontVariantNumeric: tabular-nums
     fontFeatureSettings: '"tnum" 1, "zero" 1'
   caption:
-    fontFamily: Geist
+    fontFamily: Manrope
     fontSize: 11px
     fontWeight: 500
 rounded:
@@ -170,12 +170,12 @@ components:
 
 Calculoides treats color as vocabulary, not decoration. Every financial concept in the product — balance, income, expense, transfer, category — has exactly one color, and that color means the same thing everywhere it appears: a button, a stat figure, a progress meter, a category icon well, a chromatic glow. A user who has never read a label can still tell a positive figure from a warning at a glance. This is the system's one aesthetic risk, and it is deliberate: **clarity first, personality second**.
 
-Around that ledger, the rest of the system stays quiet on purpose. Geometric, single-family type (Geist) keeps text calm; tabular Geist Mono keeps every currency column aligned and honest. Slate neutrals carry structure without competing with the semantic palette. Depth is soft and slate-tinted rather than pure black, except for one deliberate flourish — the chromatic glow — reserved for the handful of moments (the primary CTA, an active stat figure) that most deserve emphasis.
+Around that ledger, the rest of the system stays quiet on purpose. Geometric, single-family type (Manrope) keeps text calm; tabular JetBrains Mono keeps every currency column aligned and honest. Slate neutrals carry structure without competing with the semantic palette. Depth is soft and slate-tinted rather than pure black, except for one deliberate flourish — the chromatic glow — reserved for the handful of moments (the primary CTA, an active stat figure) that most deserve emphasis.
 
 **Key Characteristics:**
 - One color per financial meaning, used consistently across every surface that shows it
 - A distinct, stable per-member identity palette (10 colors) layered on top of the transaction-type palette, for group/avatar contexts
-- Geist + Geist Mono as the only two type families; mono reserved exclusively for money and dates
+- Manrope + JetBrains Mono as the only two type families; mono reserved exclusively for money and dates
 - Slate-tinted shadows everywhere except one un-tinted outlier (see Elevation & Depth) — a gap to close, not a second system
 - Soft, consistent radii; no sharp corners on any interactive element
 
@@ -209,10 +209,10 @@ Slate scale, `neutral-50` → `neutral-950`. Light mode: `#F8FAFC` background, `
 
 ## Typography
 
-**Display / Body Font:** Geist (with `ui-sans-serif, system-ui` fallback stack)
-**Mono Font:** Geist Mono (with `ui-monospace, "SF Mono", Menlo, Consolas` fallback stack)
+**Display / Body Font:** Manrope (with `ui-sans-serif, system-ui` fallback stack)
+**Mono Font:** JetBrains Mono (with `ui-monospace, "SF Mono", Menlo, Consolas` fallback stack)
 
-**Character:** A single geometric sans carries all text so the system reads as one calm voice; Geist Mono's tabular figures are the only typographic "special effect," reserved entirely for money.
+**Character:** A single geometric sans carries all text so the system reads as one calm voice; JetBrains Mono's tabular figures are the only typographic "special effect," reserved entirely for money.
 
 ### Hierarchy
 
@@ -224,7 +224,7 @@ Slate scale, `neutral-50` → `neutral-950`. Light mode: `#F8FAFC` background, `
 
 ### Named Rules
 
-**The No-Estimation Rule.** Monetary amounts always render in Geist Mono with `font-variant-numeric: tabular-nums` and `font-feature-settings: "tnum" 1, "zero" 1`. This keeps currency columns aligned in tables and disambiguates `0` from `O` — never render a number in the display/body proportional face.
+**The No-Estimation Rule.** Monetary amounts always render in JetBrains Mono with `font-variant-numeric: tabular-nums` and `font-feature-settings: "tnum" 1, "zero" 1`. This keeps currency columns aligned in tables and disambiguates `0` from `O` — never render a number in the display/body proportional face.
 
 ## Layout
 
@@ -285,7 +285,7 @@ White surface (`#FFFFFF` / `slate-900` dark), `rounded-2xl` (16px), 24px padding
 
 ### Stat Figures
 
-Monetary values in Geist Mono at display scale (`sm` 18px / `md` 24px / `lg` 30px, default `lg`). Tone prop (`balance` / `income` / `expense` / `transfer` / `primary`) sets the figure color; `primary` (default) uses plain neutral text for values with no inherent direction.
+Monetary values in JetBrains Mono at display scale (`sm` 18px / `md` 24px / `lg` 30px, default `lg`). Tone prop (`balance` / `income` / `expense` / `transfer` / `primary`) sets the figure color; `primary` (default) uses plain neutral text for values with no inherent direction.
 
 ### Badges / Chips
 
@@ -317,7 +317,7 @@ Two primitives exist; pick deliberately:
 ### Do:
 - **Do** use a brand color to assert a specific financial meaning — balance, income, expense, transfer, category — never for plain decoration.
 - **Do** use the member-identity palette (10 stable colors, keyed by join-order `colorIndex`) everywhere a specific person needs to stay visually consistent — Avatar, AvatarGroup, MemberBar.
-- **Do** render every monetary value in Geist Mono with tabular figures.
+- **Do** render every monetary value in JetBrains Mono with tabular figures.
 - **Do** reserve the chromatic glow + `cta` button variant for one primary action per screen.
 - **Do** use `ResponsiveDialog` (not `Dialog`) for any modal reachable from a primary mobile flow.
 
