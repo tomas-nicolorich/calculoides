@@ -23,7 +23,17 @@ const FORECAST_COLOR_CLASS: Record<
   neutral: "text-slate-500 dark:text-slate-400",
 };
 
-function formatLiveProjectedDate(session: ContributionSession): string {
+function formatLiveProjectedDate(
+  goal: SavingsGoal,
+  session: ContributionSession,
+): string {
+  if (session.localProjectedMonths === null) {
+    if (goal.isNever) return "Never";
+    return new Date(goal.projectedDate).toLocaleDateString("en-GB", {
+      month: "long",
+      year: "numeric",
+    });
+  }
   if (
     session.localProjectedMonths === Infinity ||
     session.localProjectedDate === null
@@ -101,6 +111,14 @@ function AllocationAmountInput({
   amount: number;
   onChange: (value: number) => void;
 }) {
+  const [prevAmount, setPrevAmount] = useState(amount);
+  const [text, setText] = useState(String(amount));
+
+  if (prevAmount !== amount && parseFloat(text) !== amount) {
+    setPrevAmount(amount);
+    setText(String(amount));
+  }
+
   return (
     <Input
       type="number"
@@ -109,9 +127,14 @@ function AllocationAmountInput({
       aria-label={`Override amount for ${item.user?.name ?? item.memberId}`}
       className={`h-8 w-24 text-right text-xs border-brand-balance/30 focus:border-brand-balance shrink-0 ${NO_SPINNER_CLASS}`}
       disabled={loading}
-      value={amount}
+      value={text}
       onChange={(e) => {
+        setText(e.target.value);
         handleAmountInputChange(e, onChange);
+      }}
+      onBlur={() => {
+        const val = parseFloat(text);
+        if (isNaN(val) || val < 0) setText(String(amount));
       }}
     />
   );
@@ -194,9 +217,9 @@ export function InlineAllocationEditor({
   goal,
   onRefresh,
 }: InlineAllocationEditorProps) {
-  const session = useContributionSession(goal);
-  const loading = session.phase === "saving";
   const [isEditing, setIsEditing] = useState(false);
+  const session = useContributionSession(isEditing ? goal : null);
+  const loading = session.phase === "saving";
 
   const monthlyTotal = goal.breakdown.reduce(
     (sum, item) =>
@@ -294,7 +317,7 @@ export function InlineAllocationEditor({
             <span
               className={`font-mono tnum font-semibold ${FORECAST_COLOR_CLASS[session.forecastColor]}`}
             >
-              {formatLiveProjectedDate(session)}
+              {formatLiveProjectedDate(goal, session)}
             </span>
           </p>
 

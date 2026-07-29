@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useCallback } from "react";
+import { useReducer, useState, useCallback } from "react";
 import {
   calculateProjectedMonths,
   addMonths,
@@ -135,21 +135,28 @@ export function useContributionSession(
     (_: string | null, next: string | null) => next,
     null,
   );
+  const [prevActiveGoalId, setPrevActiveGoalId] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Seeds/tears down the session synchronously during render (not in a
+  // useEffect) so the very first render where activeGoal flips non-null
+  // already has overrideAmounts populated. An effect-based version runs one
+  // commit late, so AllocationAmountInput mounts on its initial render
+  // showing proportionalAmount instead of any existing override.
+  const activeGoalId = activeGoal?.id ?? null;
+  if (activeGoalId !== prevActiveGoalId) {
+    setPrevActiveGoalId(activeGoalId);
     if (activeGoal === null) {
       dispatch({ type: "cancelSession" });
       setSaveError(null);
-      return;
+    } else {
+      const snapshot: SessionStartSnapshot = Object.fromEntries(
+        activeGoal.breakdown
+          .filter((b) => b.isOverridden)
+          .map((b) => [b.memberId, b.actualAmount]),
+      );
+      dispatch({ type: "sessionStart", snapshot });
     }
-    const snapshot: SessionStartSnapshot = Object.fromEntries(
-      activeGoal.breakdown
-        .filter((b) => b.isOverridden)
-        .map((b) => [b.memberId, b.actualAmount]),
-    );
-    dispatch({ type: "sessionStart", snapshot });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGoal?.id]); // intentional: only re-run when the goal ID changes, not on every reference update
+  }
 
   const localProjectedMonths =
     activeGoal && state.phase !== "idle"
