@@ -111,6 +111,7 @@ export function SavingsGoalForm({
             id="savings-goal-target-amount"
             type="number"
             step="0.01"
+            min="0"
             placeholder="0.00"
             className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
             value={targetAmount}
@@ -132,6 +133,7 @@ export function SavingsGoalForm({
             id="savings-goal-current-amount"
             type="number"
             step="0.01"
+            min="0"
             placeholder="0.00"
             className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
             value={currentAmount}
@@ -155,6 +157,11 @@ export function SavingsGoalForm({
           onChange={setTargetDate}
           granularity="month"
         />
+        {!targetDate && (
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            Required to save this goal
+          </p>
+        )}
       </div>
 
       {error && (

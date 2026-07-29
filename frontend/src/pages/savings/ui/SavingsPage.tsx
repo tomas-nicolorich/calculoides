@@ -65,7 +65,7 @@ export function SavingsPage() {
 
   if (isInitialLoading) {
     return (
-      <div className="p-4 max-w-4xl mx-auto space-y-8" aria-hidden="true">
+      <div className="p-4 max-w-6xl mx-auto space-y-8" aria-hidden="true">
         <header className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <IconButton bordered disabled aria-label="Back to Dashboard">
@@ -91,7 +91,7 @@ export function SavingsPage() {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="p-4 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <IconButton

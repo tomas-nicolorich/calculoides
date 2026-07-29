@@ -75,7 +75,7 @@ function reducer(
     }
     case "overrideAmount": {
       if (state.phase !== "editing") return state;
-      if (isNaN(action.amount)) return state;
+      if (isNaN(action.amount) || action.amount < 0) return state;
       const newOverrides = {
         ...state.overrideAmounts,
         [action.memberId]: action.amount,

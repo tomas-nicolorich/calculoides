@@ -70,7 +70,7 @@ export function HamburgerMenu() {
                     className="text-slate-400 group-hover:text-brand-balance"
                   />
                   <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Savings Goal
+                    Savings Goals
                   </span>
                 </Menu.Item>
               )}
