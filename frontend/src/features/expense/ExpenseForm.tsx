@@ -93,8 +93,11 @@ export function ExpenseForm({
       className="space-y-4"
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium">Description</label>
+        <label htmlFor="expense-description" className="text-sm font-medium">
+          Description
+        </label>
         <Input
+          id="expense-description"
           placeholder="e.g. Groceries, Electricity bill"
           value={description}
           onChange={(e) => {
@@ -106,8 +109,11 @@ export function ExpenseForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Amount (€)</label>
+          <label htmlFor="expense-amount" className="text-sm font-medium">
+            Amount (€)
+          </label>
           <Input
+            id="expense-amount"
             type="number"
             step="0.01"
             min="0.01"
@@ -121,14 +127,34 @@ export function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Date</label>
-          <DatePicker value={date} onChange={setDate} granularity="day" />
+          <label
+            id="expense-date-label"
+            htmlFor="expense-date"
+            className="text-sm font-medium"
+          >
+            Date
+          </label>
+          <DatePicker
+            id="expense-date"
+            labelId="expense-date-label"
+            value={date}
+            onChange={setDate}
+            granularity="day"
+          />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Category</label>
+        <label
+          id="expense-category-label"
+          htmlFor="expense-category"
+          className="text-sm font-medium"
+        >
+          Category
+        </label>
         <Select
+          id="expense-category"
+          labelId="expense-category-label"
           value={categoryId}
           onValueChange={setCategoryId}
           placeholder="Select category..."
@@ -141,8 +167,16 @@ export function ExpenseForm({
 
       {members.length > 0 && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Paid By</label>
+          <label
+            id="expense-payer-label"
+            htmlFor="expense-payer"
+            className="text-sm font-medium"
+          >
+            Paid By
+          </label>
           <Select
+            id="expense-payer"
+            labelId="expense-payer-label"
             value={payerId}
             onValueChange={setPayerId}
             placeholder="Select member"
@@ -152,7 +186,7 @@ export function ExpenseForm({
       )}
 
       {error && (
-        <div className="text-[10px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+        <div className="text-xs font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
           {error}
         </div>
       )}

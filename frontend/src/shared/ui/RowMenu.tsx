@@ -1,7 +1,7 @@
-import * as React from "react";
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
+import { Popover } from "@base-ui/react/popover";
 import { MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { IconButton } from "./IconButton";
 
 interface RowMenuProps {
   onEdit?: () => void;
@@ -10,121 +10,59 @@ interface RowMenuProps {
 
 export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
   const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
-
-  const updatePosition = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.right + window.scrollX - 120,
-      });
-    }
-  };
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    updatePosition();
-    setOpen((prev) => !prev);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    const handleScrollOrResize = () => {
-      setOpen(false);
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
 
   return (
-    <div className="relative inline-block text-left">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="inline-grid place-items-center rounded-lg border border-transparent bg-transparent text-slate-400 dark:text-slate-500 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-balance focus-visible:ring-offset-2 focus-visible:ring-offset-card active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 cursor-pointer h-7 w-7 hover:text-brand-balance"
-        onClick={handleToggle}
-        aria-label="Row options"
-        aria-haspopup="menu"
-        aria-expanded={open}
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
+        render={
+          <IconButton size="sm" hover="balance" aria-label="Row options" />
+        }
       >
         <MoreVertical size={16} />
-      </button>
+      </Popover.Trigger>
 
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
+      <Popover.Portal>
+        <Popover.Positioner
+          positionMethod="fixed"
+          className="z-50 outline-none"
+          sideOffset={4}
+          align="end"
+          collisionPadding={16}
+        >
+          <Popover.Popup
             role="menu"
-            style={{
-              position: "absolute",
-              top: `${coords.top.toString()}px`,
-              left: `${coords.left.toString()}px`,
-              width: "120px",
-            }}
-            className="z-50 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg py-1 animate-in fade-in duration-100"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            aria-label="Row options"
+            className="w-32 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 p-1 animate-in fade-in-50 zoom-in-95 duration-100 focus:outline-none"
           >
             {onEdit && (
               <button
+                type="button"
                 role="menuitem"
                 onClick={() => {
                   setOpen(false);
                   onEdit();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left outline-none cursor-pointer"
               >
                 <Edit2 size={14} />
                 <span>Edit</span>
               </button>
             )}
             <button
+              type="button"
               role="menuitem"
               onClick={() => {
                 setOpen(false);
                 onDelete();
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-brand-expense hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+              className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-sm text-brand-expense hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left outline-none cursor-pointer"
             >
               <Trash2 size={14} />
               <span>Delete</span>
             </button>
-          </div>,
-          document.body,
-        )}
-    </div>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }

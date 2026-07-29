@@ -16,6 +16,12 @@ interface DatePickerProps {
   disabled?: boolean;
   /** Forwarded to the trigger button so a `<label htmlFor>` can target it. */
   id?: string;
+  /**
+   * id of an external `<label>`. Combined with the trigger's own display
+   * node via aria-labelledby so the accessible name is "<label> <selected
+   * date>" instead of the label text alone overriding the selection.
+   */
+  labelId?: string;
 }
 
 function pad(n: number) {
@@ -107,8 +113,12 @@ export function DatePicker({
   placeholder,
   disabled,
   id,
+  labelId,
 }: DatePickerProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const valueId = id ? `${id}-value` : undefined;
+  const ariaLabelledBy =
+    labelId && valueId ? `${labelId} ${valueId}` : undefined;
   const [open, setOpen] = useState(false);
 
   const today = new Date();
@@ -156,6 +166,7 @@ export function DatePicker({
     <>
       <Calendar size={16} className="shrink-0 text-slate-400" />
       <span
+        id={valueId}
         className={cn(
           "flex-1 truncate font-mono tnum",
           selected
@@ -173,6 +184,7 @@ export function DatePicker({
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger
           id={id}
+          aria-labelledby={ariaLabelledBy}
           disabled={disabled}
           className={triggerClassName}
         >
@@ -198,6 +210,7 @@ export function DatePicker({
     <BaseDialog.Root open={open} onOpenChange={setOpen}>
       <BaseDialog.Trigger
         id={id}
+        aria-labelledby={ariaLabelledBy}
         disabled={disabled}
         className={triggerClassName}
       >
