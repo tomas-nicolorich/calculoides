@@ -204,7 +204,12 @@ export function DatePicker({
         {triggerContent}
       </BaseDialog.Trigger>
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0" />
+        <BaseDialog.Backdrop
+          onClick={() => {
+            setOpen(false);
+          }}
+          className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0"
+        />
         <BaseDialog.Popup className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 pb-6 shadow-xl transition-transform duration-200 ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 dark:bg-slate-700" />
           <BaseDialog.Close
@@ -213,7 +218,7 @@ export function DatePicker({
           >
             <X size={18} />
           </BaseDialog.Close>
-          {body}
+          <div className="mt-6">{body}</div>
         </BaseDialog.Popup>
       </BaseDialog.Portal>
     </BaseDialog.Root>
@@ -340,7 +345,7 @@ function DayGrid({
 
           return (
             <button
-              key={formatDayValue(day)}
+              key={`${formatMonthValue(viewDate)}-${formatDayValue(day)}`}
               type="button"
               disabled={state.isDisabled}
               onClick={() => {
@@ -438,7 +443,7 @@ function MonthGrid({
 
           return (
             <button
-              key={monthLabel}
+              key={`${year.toString()}-${monthLabel}`}
               type="button"
               disabled={state.isPast}
               onClick={() => {
