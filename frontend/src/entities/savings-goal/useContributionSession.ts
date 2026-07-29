@@ -158,26 +158,32 @@ export function useContributionSession(
     }
   }
 
+  const now = new Date();
+
   const localProjectedMonths =
     activeGoal && state.phase !== "idle"
       ? computeProjectedMonths(activeGoal, state.overrideAmounts)
       : null;
 
   const localProjectedDate =
-    localProjectedMonths !== null
-      ? addMonths(new Date(), localProjectedMonths)
-      : null;
+    localProjectedMonths !== null ? addMonths(now, localProjectedMonths) : null;
 
   const targetMonths = activeGoal
-    ? calculateMonthsRemaining(new Date(), new Date(activeGoal.targetDate))
+    ? calculateMonthsRemaining(now, new Date(activeGoal.targetDate))
     : 0;
 
+  // Mirrors the backend's varianceMonths (api/_src/services/savings.ts):
+  // it re-derives the projected month count via calculateMonthsRemaining
+  // on the projected date rather than comparing the raw month count —
+  // skipping that rebasing flips the color a month early on the
+  // on-target boundary.
   const forecastColor: ContributionSession["forecastColor"] =
     state.phase === "idle" || localProjectedMonths === null
       ? "neutral"
       : localProjectedMonths === Infinity
         ? "red"
-        : localProjectedMonths <= targetMonths
+        : calculateMonthsRemaining(now, addMonths(now, localProjectedMonths)) <=
+            targetMonths
           ? "green"
           : "amber";
 
