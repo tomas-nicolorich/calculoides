@@ -63,12 +63,17 @@ export function Dialog({
 
 export function DialogFooter({
   className,
+  destructive,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  /** Keep Cancel first on mobile instead of reversing above the destructive action. */
+  destructive?: boolean;
+}) {
   return (
     <div
       className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6",
+        "flex gap-2 sm:flex-row sm:justify-end mt-6",
+        destructive ? "flex-col" : "flex-col-reverse",
         className,
       )}
       {...props}

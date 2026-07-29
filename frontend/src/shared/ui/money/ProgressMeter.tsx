@@ -82,8 +82,11 @@ export function ProgressMeter({
         className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
       >
         <div
-          className="h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${pct.toString()}%`, background: fill }}
+          className="h-full w-full origin-left rounded-full transition-transform duration-500 ease-out"
+          style={{
+            transform: `scaleX(${(pct / 100).toString()})`,
+            background: fill,
+          }}
         />
       </div>
     </div>

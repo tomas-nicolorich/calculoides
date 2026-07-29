@@ -26,7 +26,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const variants: Record<ButtonVariant, string> = {
   balance: "bg-brand-balance text-white hover:bg-[#2f73e0]",
   income: "bg-brand-income text-white hover:bg-[#0ea271]",
-  expense: "bg-brand-expense text-white hover:bg-[#dc3a3a]",
+  // Darker than brand-expense so white button text clears WCAG AA (4.5:1);
+  // the plain brand-expense hex stays reserved for tints/icons/text-on-white.
+  expense: "bg-[#dc2626] text-white hover:bg-[#c11f1f]",
   transfer: "bg-brand-transfer text-white hover:bg-[#e0900a]",
   // Hero action: brand glow + lift. One per screen.
   cta: "bg-brand-balance text-white rounded-2xl shadow-[var(--glow-balance)] hover:scale-[1.02]",

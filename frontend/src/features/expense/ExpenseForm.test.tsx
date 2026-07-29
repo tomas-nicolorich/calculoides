@@ -19,6 +19,21 @@ vi.mock("../../shared/ui", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),
+  DatePicker: ({
+    value,
+    onChange,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+  }) => (
+    <input
+      aria-label="date"
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+      }}
+    />
+  ),
   Select: ({
     options,
     placeholder,

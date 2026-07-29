@@ -5,28 +5,47 @@ export interface AlertAction {
   onClick: () => void;
 }
 
+export type AlertTone = "error" | "success";
+
 export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Optional action rendered below the message (e.g. a "Try again" retry). */
   action?: AlertAction;
+  /** Semantic tone: "error" (default, assertive) or "success" (polite). */
+  tone?: AlertTone;
 }
 
-// Shared tinted error surface for inline alerts (session errors, form
-// validation errors, etc.) — centralizes the red-50/red-950 markup that was
-// previously hand-duplicated across LoginPage and LoginForm.
-export function Alert({ action, className, children, ...props }: AlertProps) {
+const toneStyles: Record<AlertTone, { surface: string; text: string }> = {
+  error: {
+    surface:
+      "bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50",
+    text: "text-red-600 dark:text-red-400",
+  },
+  success: {
+    surface:
+      "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+};
+
+// Shared tinted surface for inline alerts (session errors, form validation
+// errors, success confirmations, etc.) — centralizes markup that was
+// previously hand-duplicated across LoginPage, LoginForm, and ProfilePage.
+export function Alert({
+  action,
+  tone = "error",
+  className,
+  children,
+  ...props
+}: AlertProps) {
+  const styles = toneStyles[tone];
   return (
     <div
       role="alert"
-      aria-live="assertive"
-      className={cn(
-        "p-3 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-xl text-center",
-        className,
-      )}
+      aria-live={tone === "error" ? "assertive" : "polite"}
+      className={cn("p-3 rounded-xl text-center", styles.surface, className)}
       {...props}
     >
-      <div className="text-red-600 dark:text-red-400 text-sm font-medium">
-        {children}
-      </div>
+      <div className={cn("text-sm font-medium", styles.text)}>{children}</div>
       {action && (
         <button
           type="button"

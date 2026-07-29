@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useCallback } from "react";
+import { useReducer, useState, useCallback } from "react";
 import {
   calculateProjectedMonths,
   addMonths,
@@ -14,6 +14,7 @@ import type {
 } from "./index";
 import { savingsGoalApi } from "./index";
 import { diffContributionPersistence } from "./contributionDiff";
+import { toFriendlySavingsError } from "./errorMessages";
 
 export interface ContributionSession {
   phase: ContributionSessionPhase;
@@ -55,6 +56,35 @@ function computeProjectedMonths(
   );
 }
 
+function buildSessionStartSnapshot(goal: SavingsGoal): SessionStartSnapshot {
+  return Object.fromEntries(
+    goal.breakdown
+      .filter((b) => b.isOverridden)
+      .map((b) => [b.memberId, b.actualAmount]),
+  );
+}
+
+/**
+ * Mirrors the backend's varianceMonths (api/_src/services/savings.ts): it
+ * re-derives the projected month count via calculateMonthsRemaining on the
+ * projected date rather than comparing the raw month count — skipping that
+ * rebasing flips the color a month early on the on-target boundary.
+ */
+function computeForecastColor(
+  now: Date,
+  phase: ContributionSessionPhase,
+  localProjectedMonths: number | null,
+  targetMonths: number,
+): ContributionSession["forecastColor"] {
+  if (phase === "idle" || localProjectedMonths === null) return "neutral";
+  if (localProjectedMonths === Infinity) return "red";
+  const rebasedMonths = calculateMonthsRemaining(
+    now,
+    addMonths(now, localProjectedMonths),
+  );
+  return rebasedMonths <= targetMonths ? "green" : "amber";
+}
+
 // fallow-ignore-next-line complexity
 function reducer(
   state: ContributionSessionState,
@@ -74,7 +104,7 @@ function reducer(
     }
     case "overrideAmount": {
       if (state.phase !== "editing") return state;
-      if (isNaN(action.amount)) return state;
+      if (isNaN(action.amount) || action.amount < 0) return state;
       const newOverrides = {
         ...state.overrideAmounts,
         [action.memberId]: action.amount,
@@ -134,21 +164,28 @@ export function useContributionSession(
     (_: string | null, next: string | null) => next,
     null,
   );
+  const [prevActiveGoalId, setPrevActiveGoalId] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Seeds/tears down the session synchronously during render (not in a
+  // useEffect) so the very first render where activeGoal flips non-null
+  // already has overrideAmounts populated. An effect-based version runs one
+  // commit late, so AllocationAmountInput mounts on its initial render
+  // showing proportionalAmount instead of any existing override.
+  const activeGoalId = activeGoal?.id ?? null;
+  if (activeGoalId !== prevActiveGoalId) {
+    setPrevActiveGoalId(activeGoalId);
     if (activeGoal === null) {
       dispatch({ type: "cancelSession" });
       setSaveError(null);
-      return;
+    } else {
+      dispatch({
+        type: "sessionStart",
+        snapshot: buildSessionStartSnapshot(activeGoal),
+      });
     }
-    const snapshot: SessionStartSnapshot = Object.fromEntries(
-      activeGoal.breakdown
-        .filter((b) => b.isOverridden)
-        .map((b) => [b.memberId, b.actualAmount]),
-    );
-    dispatch({ type: "sessionStart", snapshot });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGoal?.id]); // intentional: only re-run when the goal ID changes, not on every reference update
+  }
+
+  const now = new Date();
 
   const localProjectedMonths =
     activeGoal && state.phase !== "idle"
@@ -156,22 +193,18 @@ export function useContributionSession(
       : null;
 
   const localProjectedDate =
-    localProjectedMonths !== null
-      ? addMonths(new Date(), localProjectedMonths)
-      : null;
+    localProjectedMonths !== null ? addMonths(now, localProjectedMonths) : null;
 
   const targetMonths = activeGoal
-    ? calculateMonthsRemaining(new Date(), new Date(activeGoal.targetDate))
+    ? calculateMonthsRemaining(now, new Date(activeGoal.targetDate))
     : 0;
 
-  const forecastColor: ContributionSession["forecastColor"] =
-    state.phase === "idle" || localProjectedMonths === null
-      ? "neutral"
-      : localProjectedMonths === Infinity
-        ? "red"
-        : localProjectedMonths <= targetMonths
-          ? "green"
-          : "amber";
+  const forecastColor = computeForecastColor(
+    now,
+    state.phase,
+    localProjectedMonths,
+    targetMonths,
+  );
 
   // Pure derived/selector value — NOT reducer state. Compares each member's
   // effective share (override, falling back to the proportional income-split
@@ -229,7 +262,7 @@ export function useContributionSession(
       setSaveError(null);
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Save failed";
+      const message = toFriendlySavingsError(err);
       dispatch({ type: "saveFailure", error: message });
       setSaveError(message);
       return false;
