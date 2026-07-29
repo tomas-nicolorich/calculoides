@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useMediaQuery } from "../lib/hooks/useMediaQuery";
 
@@ -16,6 +16,12 @@ interface DatePickerProps {
   disabled?: boolean;
   /** Forwarded to the trigger button so a `<label htmlFor>` can target it. */
   id?: string;
+  /**
+   * id of an external `<label>`. Combined with the trigger's own display
+   * node via aria-labelledby so the accessible name is "<label> <selected
+   * date>" instead of the label text alone overriding the selection.
+   */
+  labelId?: string;
 }
 
 function pad(n: number) {
@@ -107,8 +113,12 @@ export function DatePicker({
   placeholder,
   disabled,
   id,
+  labelId,
 }: DatePickerProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const valueId = id ? `${id}-value` : undefined;
+  const ariaLabelledBy =
+    labelId && valueId ? `${labelId} ${valueId}` : undefined;
   const [open, setOpen] = useState(false);
 
   const today = new Date();
@@ -156,6 +166,7 @@ export function DatePicker({
     <>
       <Calendar size={16} className="shrink-0 text-slate-400" />
       <span
+        id={valueId}
         className={cn(
           "flex-1 truncate font-mono tnum",
           selected
@@ -173,6 +184,7 @@ export function DatePicker({
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger
           id={id}
+          aria-labelledby={ariaLabelledBy}
           disabled={disabled}
           className={triggerClassName}
         >
@@ -181,11 +193,11 @@ export function DatePicker({
         <Popover.Portal>
           <Popover.Positioner
             positionMethod="fixed"
-            className="z-50 w-[var(--anchor-width,18rem)] max-w-[var(--available-width)]"
+            className="z-50 max-w-[var(--available-width)]"
             sideOffset={4}
             collisionPadding={16}
           >
-            <Popover.Popup className="w-72 max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 animate-in fade-in-50 zoom-in-95 duration-100">
+            <Popover.Popup className="w-80 max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 animate-in fade-in-50 zoom-in-95 duration-100">
               {body}
             </Popover.Popup>
           </Popover.Positioner>
@@ -198,16 +210,28 @@ export function DatePicker({
     <BaseDialog.Root open={open} onOpenChange={setOpen}>
       <BaseDialog.Trigger
         id={id}
+        aria-labelledby={ariaLabelledBy}
         disabled={disabled}
         className={triggerClassName}
       >
         {triggerContent}
       </BaseDialog.Trigger>
       <BaseDialog.Portal>
-        <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0" />
+        <BaseDialog.Backdrop
+          onClick={() => {
+            setOpen(false);
+          }}
+          className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0"
+        />
         <BaseDialog.Popup className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 pb-6 shadow-xl transition-transform duration-200 ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 dark:bg-slate-700" />
-          {body}
+          <BaseDialog.Close
+            aria-label="Close"
+            className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-balance"
+          >
+            <X size={18} />
+          </BaseDialog.Close>
+          <div className="mt-6">{body}</div>
         </BaseDialog.Popup>
       </BaseDialog.Portal>
     </BaseDialog.Root>
@@ -334,7 +358,7 @@ function DayGrid({
 
           return (
             <button
-              key={formatDayValue(day)}
+              key={`${formatMonthValue(viewDate)}-${formatDayValue(day)}`}
               type="button"
               disabled={state.isDisabled}
               onClick={() => {
@@ -432,7 +456,7 @@ function MonthGrid({
 
           return (
             <button
-              key={monthLabel}
+              key={`${year.toString()}-${monthLabel}`}
               type="button"
               disabled={state.isPast}
               onClick={() => {
