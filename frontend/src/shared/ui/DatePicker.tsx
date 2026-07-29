@@ -181,7 +181,7 @@ export function DatePicker({
         <Popover.Portal>
           <Popover.Positioner
             positionMethod="fixed"
-            className="z-50 w-[var(--anchor-width,20rem)] max-w-[var(--available-width)]"
+            className="z-50 max-w-[var(--available-width)]"
             sideOffset={4}
             collisionPadding={16}
           >
