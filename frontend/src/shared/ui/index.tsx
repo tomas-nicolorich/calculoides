@@ -38,9 +38,11 @@ export { ResponsiveDialog } from "./ResponsiveDialog";
 export { Avatar, AvatarGroup } from "./Avatar";
 export { IconButton } from "./IconButton";
 export { IconPicker } from "./IconPicker";
+export { DatePicker } from "./DatePicker";
 export { UserDisplay } from "./UserDisplay";
 export { Select } from "./Select";
 export { ProgressMeter } from "./money/ProgressMeter";
+// fallow-ignore-next-line unused-export
 export { FilterPanel } from "./FilterPanel";
 export { RowMenu } from "./RowMenu";
 export { Spinner } from "./Spinner";

@@ -1,13 +1,20 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-function getMonthInput(container: HTMLElement): HTMLInputElement {
-  const input = container.querySelector<HTMLInputElement>(
-    'input[type="month"]',
-  );
-  if (!input) throw new Error("month input not found");
-  return input;
+// Opens the DatePicker, jumps forward one year (deterministic regardless of
+// the real current date — the popover's initial view year is always either
+// today's year or, when editing, the existing target's year), and picks the
+// given month. Mirrors driving the real Base UI popover, not a native input.
+async function pickMonthNextYear(
+  user: ReturnType<typeof userEvent.setup>,
+  triggerName: RegExp,
+  monthLabel: string,
+) {
+  await user.click(screen.getByRole("button", { name: triggerName }));
+  await user.click(await screen.findByRole("button", { name: "Next year" }));
+  await user.click(screen.getByRole("button", { name: monthLabel }));
 }
+
 import { SavingsGoalForm } from "./SavingsGoalForm";
 import { savingsGoalApi } from "../../entities/savings-goal";
 import { vi, describe, it, expect, beforeEach } from "vitest";
@@ -170,12 +177,11 @@ describe("SavingsGoalForm", () => {
 
   it("includes selected icon in create submit payload", async () => {
     const user = userEvent.setup();
-    const { container } = render(<SavingsGoalForm groupId="group-1" />);
+    render(<SavingsGoalForm groupId="group-1" />);
 
     await user.type(screen.getByPlaceholderText(/e.g. New Sofa/i), "Trip");
     await user.type(screen.getAllByPlaceholderText("0.00")[0], "500");
-    const monthInput = getMonthInput(container);
-    await user.type(monthInput, "2027-06");
+    await pickMonthNextYear(user, /target date/i, "Jun");
     await user.click(screen.getByRole("button", { name: "Choose icon" }));
     await user.click(
       await screen.findByRole("button", { name: "Icon: Transport" }),
@@ -208,25 +214,21 @@ describe("SavingsGoalForm", () => {
     });
   });
 
-  it("renders month input with YYYY-MM value derived from goal.targetDate", () => {
-    const { container } = render(
-      <SavingsGoalForm groupId="group-1" goal={mockGoal} />,
-    );
+  it("renders the date picker trigger with the month/year derived from goal.targetDate", () => {
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
 
-    const monthInput = getMonthInput(container);
-    expect(monthInput).not.toBeNull();
-    expect(monthInput.value).toBe("2026-12");
+    expect(
+      screen.getByRole("button", { name: /target date/i }),
+    ).toHaveTextContent("Dec 2026");
   });
 
-  it("submits an ISO date built from the typed month value", async () => {
+  it("submits an ISO date built from the picked month", async () => {
     const user = userEvent.setup();
-    const { container } = render(
-      <SavingsGoalForm groupId="group-1" goal={mockGoal} />,
-    );
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
 
-    const monthInput = getMonthInput(container);
-    await user.clear(monthInput);
-    await user.type(monthInput, "2027-03");
+    // The popover opens on the existing target's year (2026), so "Next
+    // year" deterministically lands on 2027 regardless of the real date.
+    await pickMonthNextYear(user, /target date/i, "Mar");
 
     await user.click(screen.getByRole("button", { name: /update goal/i }));
 

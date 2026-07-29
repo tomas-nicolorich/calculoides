@@ -88,8 +88,9 @@ describe("ExpenseForm Edit and Delete Flow", () => {
     const amountInput = screen.getByPlaceholderText("0.00");
     expect((amountInput as HTMLInputElement).value).toBe("50");
 
-    const dateInput = screen.getByDisplayValue("2026-06-26");
-    expect((dateInput as HTMLInputElement).value).toBe("2026-06-26");
+    expect(
+      screen.getByRole("button", { name: /26 Jun 2026/i }),
+    ).toBeInTheDocument();
 
     // Change description
     await user.clear(descInput);

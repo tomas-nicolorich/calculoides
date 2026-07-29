@@ -113,7 +113,7 @@ describe("SavingsGoalList", () => {
         name: /row options/i,
       });
       await user.click(menuButtons[goalIndex]);
-      const editButtons = screen.getAllByRole("button", { name: /^edit$/i });
+      const editButtons = screen.getAllByRole("menuitem", { name: /^edit$/i });
       await user.click(editButtons[editButtons.length - 1]);
     }
 
@@ -237,7 +237,11 @@ describe("SavingsGoalList", () => {
   it("shows the monthly allocation total in the section header", () => {
     render(<SavingsGoalList goals={mockGoals} />);
     expect(
-      screen.getByText(/Monthly Allocation · €100\.00\/mo/),
+      screen.getByText(
+        (_content, element) =>
+          element?.tagName.toLowerCase() === "p" &&
+          element.textContent.includes("Monthly Allocation · €100.00/mo"),
+      ),
     ).toBeInTheDocument();
   });
 
@@ -316,7 +320,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
 
       expect(
         screen.getByRole("heading", { name: "Delete Goal" }),
@@ -329,7 +333,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
 
       expect(
         screen.getByText(/shared balance stays intact/i),
@@ -342,7 +346,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       expect(savingsGoalApi.delete).toHaveBeenCalledTimes(1);
@@ -355,7 +359,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /^cancel$/i }));
 
       expect(savingsGoalApi.delete).not.toHaveBeenCalled();
@@ -367,7 +371,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       expect(savingsGoalApi.delete).toHaveBeenCalledWith("goal-1");
@@ -390,7 +394,7 @@ describe("SavingsGoalList", () => {
         name: /row options/i,
       });
       await user.click(rowOptionButtons[0]);
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       // Only goal 1's id was ever passed to the delete API — goal 2 was never referenced.
@@ -415,10 +419,12 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
-      expect(await screen.findByText("Network error")).toBeInTheDocument();
+      expect(
+        await screen.findByText("Something went wrong. Please try again."),
+      ).toBeInTheDocument();
       expect(onRefresh).not.toHaveBeenCalled();
     });
 
@@ -430,15 +436,19 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
-      expect(await screen.findByText("Network error")).toBeInTheDocument();
+      expect(
+        await screen.findByText("Something went wrong. Please try again."),
+      ).toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: /^cancel$/i }));
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
 
-      expect(screen.queryByText("Network error")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Something went wrong. Please try again."),
+      ).not.toBeInTheDocument();
     });
 
     it("keeps the confirmation dialog open while onRefresh is pending, closing it only once onRefresh resolves", async () => {
@@ -453,7 +463,7 @@ describe("SavingsGoalList", () => {
       render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
-      await user.click(screen.getByRole("button", { name: /^delete$/i }));
+      await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
       await user.click(screen.getByRole("button", { name: /delete goal/i }));
 
       await waitFor(() => {

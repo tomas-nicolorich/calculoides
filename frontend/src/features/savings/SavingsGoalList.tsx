@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Badge, Card, Button, RowMenu, ProgressMeter } from "../../shared/ui";
-import { Dialog, DialogFooter } from "../../shared/ui/Dialog";
+import { DialogFooter } from "../../shared/ui/Dialog";
+import { ResponsiveDialog } from "../../shared/ui/ResponsiveDialog";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
+import { toFriendlySavingsError } from "../../entities/savings-goal/errorMessages";
 import { SavingsGoalForm } from "./SavingsGoalForm";
 import { InlineAllocationEditor } from "./InlineAllocationEditor";
 import { CategoryIconTile } from "../../shared/lib/categoryIcons";
+import { cn } from "../../shared/lib/utils";
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];
@@ -23,10 +26,9 @@ function getGoalStatus(goal: SavingsGoal): GoalStatus {
 }
 
 const STATUS_ICON_CLASS: Record<GoalStatus, string> = {
-  never:
-    "h-9 w-9 bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
-  late: "h-9 w-9 bg-brand-expense/10 text-brand-transfer",
-  onTrack: "h-9 w-9 bg-brand-balance/10 text-brand-balance",
+  never: "h-9 w-9 bg-brand-expense/10 text-brand-expense",
+  late: "h-9 w-9 bg-brand-transfer/10 text-brand-transfer",
+  onTrack: "h-9 w-9 bg-brand-income/10 text-brand-income",
 };
 
 const STATUS_BADGE_TONE: Record<GoalStatus, "expense" | "transfer" | "income"> =
@@ -36,19 +38,19 @@ const STATUS_BADGE_TONE: Record<GoalStatus, "expense" | "transfer" | "income"> =
     onTrack: "income",
   };
 
-const STATUS_METER_TONE: Record<
+const STATUS_METER_STATE: Record<
   GoalStatus,
-  "expense" | "transfer" | "balance"
+  "blocked" | "behind" | "on-track"
 > = {
-  never: "expense",
-  late: "transfer",
-  onTrack: "balance",
+  never: "blocked",
+  late: "behind",
+  onTrack: "on-track",
 };
 
 const STATUS_PROJECTED_COLOR_CLASS: Record<GoalStatus, string> = {
   never: "text-red-500",
   late: "text-amber-500",
-  onTrack: "text-emerald-600 dark:text-emerald-400",
+  onTrack: "text-emerald-700 dark:text-emerald-400",
 };
 
 function statusBadgeLabel(status: GoalStatus, varianceMonths: number): string {
@@ -80,13 +82,16 @@ function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
     <Card key={goal.id} hover className="transition-all duration-300">
       <div className="flex justify-between items-start pb-2">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <CategoryIconTile
               icon={goal.icon ?? undefined}
               size="sm"
               className={STATUS_ICON_CLASS[status]}
             />
-            <span className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+            <span
+              className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white"
+              title={goal.name}
+            >
               {goal.name}
             </span>
           </div>
@@ -113,7 +118,7 @@ function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
           value={goal.currentAmount}
           max={goal.targetAmount}
           valueLabel={`${fmt(goal.currentAmount)} / ${fmt(goal.targetAmount)}`}
-          tone={STATUS_METER_TONE[status]}
+          state={STATUS_METER_STATE[status]}
         />
       </div>
       <div className="space-y-4 mt-4">
@@ -122,7 +127,7 @@ function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-0.5">
               Target Date
             </p>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <p className="font-mono tnum text-sm font-semibold text-slate-700 dark:text-slate-300">
               {targetDate.toLocaleDateString("en-GB", {
                 month: "long",
                 year: "numeric",
@@ -135,7 +140,7 @@ function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
             </p>
             <p
               data-testid="forecast-projected-date"
-              className={`text-sm font-semibold ${STATUS_PROJECTED_COLOR_CLASS[status]}`}
+              className={`font-mono tnum text-sm font-semibold ${STATUS_PROJECTED_COLOR_CLASS[status]}`}
             >
               {goalProjectedLabel(goal)}
             </p>
@@ -163,8 +168,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
       await onRefresh?.();
       setGoalToDeleteId(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setDeleteError(message || "Failed to delete savings goal");
+      setDeleteError(toFriendlySavingsError(err));
     } finally {
       setDeleteLoading(false);
     }
@@ -180,7 +184,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
       <h2 className="text-xl font-semibold tracking-tight text-slate-800 dark:text-slate-200">
         Current Goals
       </h2>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={cn("grid gap-6", goals.length > 1 && "md:grid-cols-2")}>
         {goals.map((goal) => (
           <GoalCard
             key={goal.id}
@@ -197,7 +201,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
         )}
       </div>
 
-      <Dialog
+      <ResponsiveDialog
         open={goalToEdit !== null}
         onOpenChange={(open) => {
           if (!open) setGoalToEdit(null);
@@ -218,9 +222,9 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             }}
           />
         )}
-      </Dialog>
+      </ResponsiveDialog>
 
-      <Dialog
+      <ResponsiveDialog
         open={goalToDeleteId !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -232,7 +236,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
         description="This removes the goal and its earmarking only — your shared balance stays intact."
       >
         {deleteError && (
-          <div className="text-[10px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+          <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
             {deleteError}
           </div>
         )}
@@ -257,7 +261,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             {deleteLoading ? "Deleting..." : "Delete Goal"}
           </Button>
         </DialogFooter>
-      </Dialog>
+      </ResponsiveDialog>
     </div>
   );
 }

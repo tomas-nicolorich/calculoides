@@ -148,6 +148,15 @@ describe("InlineAllocationEditor", () => {
     expect(screen.getByText("40.0%")).toBeInTheDocument();
   });
 
+  it("regression: clicking Adjust shows a member's existing custom amount, not the proportional/percentage amount", async () => {
+    const user = userEvent.setup();
+    render(<InlineAllocationEditor goal={resetGoal} />);
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
+
+    expect(screen.getByRole("spinbutton", { name: /Carol/i })).toHaveValue(350);
+  });
+
   it("renders the allocation hint text after Adjust is clicked", async () => {
     const user = userEvent.setup();
     render(<InlineAllocationEditor goal={mockGoal} />);
@@ -248,6 +257,21 @@ describe("InlineAllocationEditor", () => {
     expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
   });
 
+  it("regression: clicking Save immediately after Adjust with no edits still closes the editor (no stuck button)", async () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(<InlineAllocationEditor goal={mockGoal} onRefresh={onRefresh} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^adjust$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /^adjust$/i }),
+      ).toBeInTheDocument();
+    });
+    expect(onRefresh).toHaveBeenCalled();
+  });
+
   it("Save calls session.saveSession(): only the edited member is upserted, the untouched member gets no call, and onRefresh fires", async () => {
     const user = userEvent.setup();
     const onRefresh = vi.fn();
@@ -335,6 +359,40 @@ describe("InlineAllocationEditor", () => {
     expect(savingsGoalApi.deleteContribution).not.toHaveBeenCalled();
   });
 
+  it("regression: re-opening the editor after a save shows a live date instead of Never", async () => {
+    const user = userEvent.setup();
+    render(<InlineAllocationEditor goal={mockGoal} />);
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
+    const input = screen.getByRole("spinbutton", { name: /Alice/i });
+    fireEvent.change(input, { target: { value: "150" } });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    await waitFor(() => {
+      expect(savingsGoalApi.upsertContribution).toHaveBeenCalled();
+    });
+
+    await user.click(screen.getByRole("button", { name: /^adjust$/i }));
+
+    expect(screen.getByText(/Projected completion:/i)).not.toHaveTextContent(
+      "Never",
+    );
+  });
+
+  it("regression: clearing an allocation input to type a new value doesn't get stuck at one character", () => {
+    render(<InlineAllocationEditor goal={mockGoal} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^adjust$/i }));
+    const input: HTMLInputElement = screen.getByRole("spinbutton", {
+      name: /Alice/i,
+    });
+
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+
+    fireEvent.change(input, { target: { value: "200" } });
+    expect(input.value).toBe("200");
+  });
+
   it("renders session.saveError when saveSession() rejects", async () => {
     vi.mocked(savingsGoalApi.upsertContribution).mockRejectedValueOnce(
       new Error("Save failed"),
@@ -349,7 +407,9 @@ describe("InlineAllocationEditor", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Save failed")).toBeInTheDocument();
+      expect(
+        screen.getByText("Something went wrong. Please try again."),
+      ).toBeInTheDocument();
     });
   });
 });

@@ -7,7 +7,8 @@
     "**/prisma/client/**",
     "frontend/dist/**",
     "api/dist/**",
-    "api/_src/handlers/users.ts"
+    "api/_src/handlers/users.ts",
+    "frontend/scripts/screenshot.mjs"
   ],
   "duplicates": {
     "minOccurrences": 3
