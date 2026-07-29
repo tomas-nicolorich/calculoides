@@ -56,6 +56,35 @@ function computeProjectedMonths(
   );
 }
 
+function buildSessionStartSnapshot(goal: SavingsGoal): SessionStartSnapshot {
+  return Object.fromEntries(
+    goal.breakdown
+      .filter((b) => b.isOverridden)
+      .map((b) => [b.memberId, b.actualAmount]),
+  );
+}
+
+/**
+ * Mirrors the backend's varianceMonths (api/_src/services/savings.ts): it
+ * re-derives the projected month count via calculateMonthsRemaining on the
+ * projected date rather than comparing the raw month count — skipping that
+ * rebasing flips the color a month early on the on-target boundary.
+ */
+function computeForecastColor(
+  now: Date,
+  phase: ContributionSessionPhase,
+  localProjectedMonths: number | null,
+  targetMonths: number,
+): ContributionSession["forecastColor"] {
+  if (phase === "idle" || localProjectedMonths === null) return "neutral";
+  if (localProjectedMonths === Infinity) return "red";
+  const rebasedMonths = calculateMonthsRemaining(
+    now,
+    addMonths(now, localProjectedMonths),
+  );
+  return rebasedMonths <= targetMonths ? "green" : "amber";
+}
+
 // fallow-ignore-next-line complexity
 function reducer(
   state: ContributionSessionState,
@@ -149,12 +178,10 @@ export function useContributionSession(
       dispatch({ type: "cancelSession" });
       setSaveError(null);
     } else {
-      const snapshot: SessionStartSnapshot = Object.fromEntries(
-        activeGoal.breakdown
-          .filter((b) => b.isOverridden)
-          .map((b) => [b.memberId, b.actualAmount]),
-      );
-      dispatch({ type: "sessionStart", snapshot });
+      dispatch({
+        type: "sessionStart",
+        snapshot: buildSessionStartSnapshot(activeGoal),
+      });
     }
   }
 
@@ -172,20 +199,12 @@ export function useContributionSession(
     ? calculateMonthsRemaining(now, new Date(activeGoal.targetDate))
     : 0;
 
-  // Mirrors the backend's varianceMonths (api/_src/services/savings.ts):
-  // it re-derives the projected month count via calculateMonthsRemaining
-  // on the projected date rather than comparing the raw month count —
-  // skipping that rebasing flips the color a month early on the
-  // on-target boundary.
-  const forecastColor: ContributionSession["forecastColor"] =
-    state.phase === "idle" || localProjectedMonths === null
-      ? "neutral"
-      : localProjectedMonths === Infinity
-        ? "red"
-        : calculateMonthsRemaining(now, addMonths(now, localProjectedMonths)) <=
-            targetMonths
-          ? "green"
-          : "amber";
+  const forecastColor = computeForecastColor(
+    now,
+    state.phase,
+    localProjectedMonths,
+    targetMonths,
+  );
 
   // Pure derived/selector value — NOT reducer state. Compares each member's
   // effective share (override, falling back to the proportional income-split

@@ -1,143 +1,64 @@
-import { Alert, Card, Button, IconButton, Input } from "../../../shared/ui";
-import {
-  ArrowLeft,
-  User as UserIcon,
-  Lock,
-  Save,
-  Eye,
-  EyeOff,
-} from "lucide-react";
-import { useState, useEffect } from "react";
+import { Card, Button, IconButton, Input } from "../../../shared/ui";
+import { ArrowLeft, User as UserIcon, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
-import { supabase } from "../../../shared/api/supabase";
+import { useProfileForm } from "./useProfileForm";
+import { usePasswordChangeForm } from "./usePasswordChangeForm";
+import { PasswordField } from "./PasswordField";
+import { PasswordVisibilityToggle } from "./PasswordVisibilityToggle";
+import { FormStatus } from "./FormStatus";
+import { FallbackNameHint } from "./FallbackNameHint";
 
 const DISPLAY_NAME_MAX_LENGTH = 100;
-const PASSWORD_MIN_LENGTH = 6;
 
 export function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const profileForm = useProfileForm(user);
+  const passwordForm = usePasswordChangeForm(user?.email);
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPasswords, setShowPasswords] = useState(false);
-
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileSuccess, setProfileSuccess] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
-
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-
-  const usedFallbackName = !(
-    (user?.user_metadata.name as string | undefined) ??
-    (user?.user_metadata.full_name as string | undefined)
-  );
-
-  useEffect(() => {
-    if (user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setName(
-        (user.user_metadata.name as string | undefined) ??
-          (user.user_metadata.full_name as string | undefined) ??
-          user.email ??
-          "",
-      );
-    }
-  }, [user]);
-
-  const handleUpdateProfile = async (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setProfileError("Display name can't be empty.");
-      return;
-    }
-
-    setProfileLoading(true);
-    setProfileSuccess(false);
-    setProfileError(null);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { name: trimmedName },
-      });
-      if (error) throw error;
-      setName(trimmedName);
-      setProfileSuccess(true);
-    } catch {
-      setProfileError("We couldn't save your changes. Please try again.");
-    } finally {
-      setProfileLoading(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      setPasswordError("Enter your current password.");
-      return;
-    }
-    if (newPassword.length < PASSWORD_MIN_LENGTH) {
-      setPasswordError(
-        `New password must be at least ${String(PASSWORD_MIN_LENGTH)} characters long.`,
-      );
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords don't match.");
-      return;
-    }
-
-    setPasswordLoading(true);
-    setPasswordSuccess(false);
-    setPasswordError(null);
-    try {
-      if (!user?.email) throw new Error("Missing account email");
-
-      const { error: reauthError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      });
-      if (reauthError) {
-        setPasswordError("Current password is incorrect.");
-        return;
-      }
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      if (error) throw error;
-
-      setPasswordSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch {
-      setPasswordError("We couldn't update your password. Please try again.");
-    } finally {
-      setPasswordLoading(false);
-    }
+  const toggleShowPasswords = () => {
+    passwordForm.setShowPasswords((prev) => !prev);
   };
 
   const passwordToggle = (
-    <IconButton
-      type="button"
-      size="sm"
-      hover="neutral"
-      aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
-      aria-pressed={showPasswords}
-      onClick={() => {
-        setShowPasswords((prev) => !prev);
-      }}
-      className="absolute right-1 top-1/2 -translate-y-1/2"
-    >
-      {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
-    </IconButton>
+    <PasswordVisibilityToggle
+      show={passwordForm.showPasswords}
+      onToggle={toggleShowPasswords}
+    />
   );
+
+  const goBack = () => {
+    void navigate(-1);
+  };
+
+  const onProfileSubmit = (e: React.SyntheticEvent) => {
+    void profileForm.submit(e);
+  };
+
+  const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    profileForm.setName(e.target.value);
+    profileForm.clearStatus();
+  };
+
+  const onPasswordSubmit = (e: React.SyntheticEvent) => {
+    void passwordForm.submit(e);
+  };
+
+  const onCurrentPasswordChange = (value: string) => {
+    passwordForm.setCurrentPassword(value);
+    passwordForm.clearStatus();
+  };
+
+  const onNewPasswordChange = (value: string) => {
+    passwordForm.setNewPassword(value);
+    passwordForm.clearStatus();
+  };
+
+  const onConfirmPasswordChange = (value: string) => {
+    passwordForm.setConfirmPassword(value);
+    passwordForm.clearStatus();
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-8">
@@ -145,9 +66,7 @@ export function ProfilePage() {
         <IconButton
           bordered
           hover="balance"
-          onClick={() => {
-            void navigate(-1);
-          }}
+          onClick={goBack}
           aria-label="Back to Dashboard"
         >
           <ArrowLeft size={20} />
@@ -163,12 +82,7 @@ export function ProfilePage() {
       </header>
 
       <Card title="Personal Information">
-        <form
-          onSubmit={(e) => {
-            void handleUpdateProfile(e);
-          }}
-          className="space-y-6"
-        >
+        <form onSubmit={onProfileSubmit} className="space-y-6">
           <div className="flex flex-col gap-2">
             <label
               htmlFor="display-name"
@@ -184,155 +98,79 @@ export function ProfilePage() {
               <Input
                 id="display-name"
                 type="text"
-                value={name}
+                value={profileForm.name}
                 maxLength={DISPLAY_NAME_MAX_LENGTH}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setProfileSuccess(false);
-                  setProfileError(null);
-                }}
+                onChange={onNameChange}
                 className="pl-10"
               />
             </div>
-            {usedFallbackName && (
-              <p className="text-xs text-slate-500">
-                We didn't find a display name on your account, so we're showing
-                your email for now — feel free to set one.
-              </p>
-            )}
+            <FallbackNameHint show={profileForm.usedFallbackName} />
           </div>
 
-          {profileSuccess && (
-            <Alert tone="success">Profile updated successfully!</Alert>
-          )}
-          {profileError && <Alert>{profileError}</Alert>}
+          <FormStatus
+            success={profileForm.success}
+            successMessage="Profile updated successfully!"
+            error={profileForm.error}
+          />
 
           <Button
             type="submit"
             variant="outline"
-            disabled={profileLoading || !name.trim()}
+            disabled={profileForm.submitDisabled}
             className="w-full gap-2"
           >
             <Save size={18} />
-            <span>{profileLoading ? "Saving..." : "Update Profile"}</span>
+            <span>{profileForm.loading ? "Saving..." : "Update Profile"}</span>
           </Button>
         </form>
       </Card>
 
       <Card title="Security">
-        <form
-          onSubmit={(e) => {
-            void handleChangePassword(e);
-          }}
-          className="space-y-6"
-        >
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="current-password"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Current Password
-            </label>
-            <div className="relative">
-              <Lock
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
-              />
-              <Input
-                id="current-password"
-                type={showPasswords ? "text" : "password"}
-                placeholder="••••••••"
-                value={currentPassword}
-                autoComplete="current-password"
-                onChange={(e) => {
-                  setCurrentPassword(e.target.value);
-                  setPasswordSuccess(false);
-                  setPasswordError(null);
-                }}
-                className="pl-10 pr-10"
-              />
-              {passwordToggle}
-            </div>
-          </div>
+        <form onSubmit={onPasswordSubmit} className="space-y-6">
+          <PasswordField
+            id="current-password"
+            label="Current Password"
+            value={passwordForm.currentPassword}
+            onChange={onCurrentPasswordChange}
+            showPassword={passwordForm.showPasswords}
+            autoComplete="current-password"
+            toggle={passwordToggle}
+          />
 
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="new-password"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              New Password
-            </label>
-            <p className="text-xs text-slate-500">
-              At least {PASSWORD_MIN_LENGTH} characters.
-            </p>
-            <div className="relative">
-              <Lock
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
-              />
-              <Input
-                id="new-password"
-                type={showPasswords ? "text" : "password"}
-                placeholder="••••••••"
-                value={newPassword}
-                autoComplete="new-password"
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  setPasswordSuccess(false);
-                  setPasswordError(null);
-                }}
-                className="pl-10 pr-10"
-              />
-              {passwordToggle}
-            </div>
-          </div>
+          <PasswordField
+            id="new-password"
+            label="New Password"
+            hint={`At least ${String(passwordForm.minLength)} characters.`}
+            value={passwordForm.newPassword}
+            onChange={onNewPasswordChange}
+            showPassword={passwordForm.showPasswords}
+            autoComplete="new-password"
+            toggle={passwordToggle}
+          />
 
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="confirm-password"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Confirm New Password
-            </label>
-            <div className="relative">
-              <Lock
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
-              />
-              <Input
-                id="confirm-password"
-                type={showPasswords ? "text" : "password"}
-                placeholder="••••••••"
-                value={confirmPassword}
-                autoComplete="new-password"
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setPasswordSuccess(false);
-                  setPasswordError(null);
-                }}
-                className="pl-10 pr-10"
-              />
-              {passwordToggle}
-            </div>
-          </div>
+          <PasswordField
+            id="confirm-password"
+            label="Confirm New Password"
+            value={passwordForm.confirmPassword}
+            onChange={onConfirmPasswordChange}
+            showPassword={passwordForm.showPasswords}
+            autoComplete="new-password"
+            toggle={passwordToggle}
+          />
 
-          {passwordSuccess && (
-            <Alert tone="success">Password updated successfully!</Alert>
-          )}
-          {passwordError && <Alert>{passwordError}</Alert>}
+          <FormStatus
+            success={passwordForm.success}
+            successMessage="Password updated successfully!"
+            error={passwordForm.error}
+          />
 
           <Button
             type="submit"
             variant="balance"
-            disabled={
-              passwordLoading ||
-              !currentPassword ||
-              !newPassword ||
-              !confirmPassword
-            }
+            disabled={passwordForm.submitDisabled}
             className="w-full"
           >
-            {passwordLoading ? "Changing..." : "Change Password"}
+            {passwordForm.loading ? "Changing..." : "Change Password"}
           </Button>
         </form>
       </Card>

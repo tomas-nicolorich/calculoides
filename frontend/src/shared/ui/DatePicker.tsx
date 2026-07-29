@@ -5,7 +5,7 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useMediaQuery } from "../lib/hooks/useMediaQuery";
 
-export type DatePickerGranularity = "day" | "month";
+type DatePickerGranularity = "day" | "month";
 
 interface DatePickerProps {
   value: string;
@@ -52,6 +52,25 @@ function isSameDay(a: Date, b: Date): boolean {
 
 function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function formatDisplayLabel(
+  selected: Date | null,
+  granularity: DatePickerGranularity,
+  placeholder: string | undefined,
+): string {
+  if (!selected) {
+    return (
+      placeholder ?? (granularity === "day" ? "Select date" : "Select month")
+    );
+  }
+  return granularity === "day"
+    ? selected.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : selected.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 }
 
 function buildDayGrid(viewDate: Date): Date[] {
@@ -105,18 +124,7 @@ export function DatePicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]); // intentional: only reset the visible month/year when the popover opens
 
-  const displayLabel = selected
-    ? granularity === "day"
-      ? selected.toLocaleDateString("en-GB", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
-      : selected.toLocaleDateString("en-GB", {
-          month: "short",
-          year: "numeric",
-        })
-    : (placeholder ?? (granularity === "day" ? "Select date" : "Select month"));
+  const displayLabel = formatDisplayLabel(selected, granularity, placeholder);
 
   const commit = (date: Date) => {
     onChange(
@@ -214,6 +222,52 @@ interface GridProps {
   onSelect: (date: Date) => void;
 }
 
+interface DayCellState {
+  inMonth: boolean;
+  isFuture: boolean;
+  isToday: boolean;
+  isSelected: boolean;
+  isDisabled: boolean;
+}
+
+function getDayCellState(
+  day: Date,
+  viewDate: Date,
+  todayMidnight: Date,
+  selected: Date | null,
+): DayCellState {
+  const inMonth = isSameMonth(day, viewDate);
+  const isFuture = day > todayMidnight;
+  const isToday = isSameDay(day, todayMidnight);
+  const isSelected = selected ? isSameDay(day, selected) : false;
+  return {
+    inMonth,
+    isFuture,
+    isToday,
+    isSelected,
+    isDisabled: !inMonth || isFuture,
+  };
+}
+
+function dayCellClassName({
+  inMonth,
+  isFuture,
+  isSelected,
+}: DayCellState): string {
+  return cn(
+    "relative grid h-9 w-9 place-items-center rounded-lg font-mono tnum text-sm transition-colors",
+    !inMonth && "invisible",
+    inMonth &&
+      !isFuture &&
+      !isSelected &&
+      "cursor-pointer text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
+    isFuture &&
+      inMonth &&
+      "cursor-not-allowed text-slate-300 dark:text-slate-700",
+    isSelected && "bg-brand-balance font-semibold text-white",
+  );
+}
+
 function DayGrid({
   viewDate,
   selected,
@@ -276,35 +330,20 @@ function DayGrid({
 
       <div className="grid grid-cols-7 gap-1 px-1">
         {days.map((day) => {
-          const inMonth = isSameMonth(day, viewDate);
-          const isFuture = day > todayMidnight;
-          const isToday = isSameDay(day, todayMidnight);
-          const isSelected = selected ? isSameDay(day, selected) : false;
-          const isDisabled = !inMonth || isFuture;
+          const state = getDayCellState(day, viewDate, todayMidnight, selected);
 
           return (
             <button
               key={formatDayValue(day)}
               type="button"
-              disabled={isDisabled}
+              disabled={state.isDisabled}
               onClick={() => {
                 onSelect(day);
               }}
-              className={cn(
-                "relative grid h-9 w-9 place-items-center rounded-lg font-mono tnum text-sm transition-colors",
-                !inMonth && "invisible",
-                inMonth &&
-                  !isFuture &&
-                  !isSelected &&
-                  "cursor-pointer text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
-                isFuture &&
-                  inMonth &&
-                  "cursor-not-allowed text-slate-300 dark:text-slate-700",
-                isSelected && "bg-brand-balance font-semibold text-white",
-              )}
+              className={dayCellClassName(state)}
             >
               {day.getDate()}
-              {isToday && !isSelected && (
+              {state.isToday && !state.isSelected && (
                 <span className="absolute bottom-1 h-1 w-1 rounded-full bg-brand-balance" />
               )}
             </button>
@@ -312,6 +351,40 @@ function DayGrid({
         })}
       </div>
     </div>
+  );
+}
+
+interface MonthCellState {
+  isPast: boolean;
+  isSelected: boolean;
+  isCurrent: boolean;
+}
+
+function getMonthCellState(
+  cellDate: Date,
+  year: number,
+  monthIndex: number,
+  today: Date,
+  selected: Date | null,
+): MonthCellState {
+  const isPast =
+    year < today.getFullYear() ||
+    (year === today.getFullYear() && monthIndex < today.getMonth());
+  return {
+    isPast,
+    isSelected: selected ? isSameMonth(cellDate, selected) : false,
+    isCurrent: isSameMonth(cellDate, today),
+  };
+}
+
+function monthCellClassName({ isPast, isSelected }: MonthCellState): string {
+  return cn(
+    "relative rounded-lg py-2.5 font-mono tnum text-sm transition-colors",
+    !isPast &&
+      !isSelected &&
+      "cursor-pointer text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
+    isPast && "cursor-not-allowed text-slate-300 dark:text-slate-700",
+    isSelected && "bg-brand-balance font-semibold text-white",
   );
 }
 
@@ -355,32 +428,20 @@ function MonthGrid({
       <div className="grid grid-cols-3 gap-1.5 px-1">
         {MONTH_LABELS.map((monthLabel, i) => {
           const cellDate = new Date(year, i, 1);
-          const isPast =
-            year < today.getFullYear() ||
-            (year === today.getFullYear() && i < today.getMonth());
-          const isSelected = selected ? isSameMonth(cellDate, selected) : false;
-          const isCurrent = isSameMonth(cellDate, today);
+          const state = getMonthCellState(cellDate, year, i, today, selected);
 
           return (
             <button
               key={monthLabel}
               type="button"
-              disabled={isPast}
+              disabled={state.isPast}
               onClick={() => {
                 onSelect(cellDate);
               }}
-              className={cn(
-                "relative rounded-lg py-2.5 font-mono tnum text-sm transition-colors",
-                !isPast &&
-                  !isSelected &&
-                  "cursor-pointer text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
-                isPast &&
-                  "cursor-not-allowed text-slate-300 dark:text-slate-700",
-                isSelected && "bg-brand-balance font-semibold text-white",
-              )}
+              className={monthCellClassName(state)}
             >
               {monthLabel}
-              {isCurrent && !isSelected && (
+              {state.isCurrent && !state.isSelected && (
                 <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-brand-balance" />
               )}
             </button>
