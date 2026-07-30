@@ -13,7 +13,7 @@ import { ExpensesPage } from "../pages/expenses/ui/ExpensesPage";
 import { ProfilePage } from "../pages/profile/ui/ProfilePage";
 import { TransfersPage } from "../pages/transfers/ui/TransfersPage";
 import { SavingsPage } from "../pages/savings/ui/SavingsPage";
-import { Layout } from "./ui/Layout";
+import { AppShell } from "./ui/AppShell";
 
 function App() {
   return (
@@ -30,7 +30,7 @@ function App() {
               path="/*"
               element={
                 <ProtectedRoute>
-                  <Layout>
+                  <AppShell>
                     <Routes>
                       <Route
                         path="dashboard/:groupId"
@@ -55,7 +55,7 @@ function App() {
                         element={<Navigate to="/groups" replace />}
                       />
                     </Routes>
-                  </Layout>
+                  </AppShell>
                 </ProtectedRoute>
               }
             />

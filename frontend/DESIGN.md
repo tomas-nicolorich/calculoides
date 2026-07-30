@@ -301,7 +301,12 @@ Circular (`rounded-full`), four sizes (24/34/42/50px). Background comes from the
 
 ### Navigation
 
-A single hamburger-trigger dropdown (Base UI `Menu`), not a persistent nav bar or sidebar. Trigger is a bordered `IconButton` (`lg`, neutral hover) in the sticky header. Popup: `rounded-2xl`, `w-64`, grouped items with a leading Lucide icon (neutral, tinting to `brand-balance` on hover) and a label; the destructive "Sign Out" item hover-tints red instead. See the Named Rule above regarding this popup's un-tinted shadow.
+A persistent shell (`AppShell`) wraps every authenticated route, branching once on the `640px` breakpoint (`useIsMobile`) rather than duplicating chrome per page. A single `NAV_ITEMS` table (label, Lucide icon, route pattern, group-scoping) drives every surface, so desktop and mobile can never drift on labels, icons, or routes.
+
+- **Desktop** — a `SidebarNav` rail, collapsible between `232px` (expanded) and `68px` (collapsed, icon-only with a Base UI `Tooltip` on hover), state persisted to `localStorage`. Brand mark top, nav items below (`aria-current="page"` on the item whose route pattern matches the current path, via `matchPath` — never exact-string comparison), and theme toggle / collapse control / Sign Out pinned to the bottom of the rail in both states.
+- **Mobile (≤639px)** — a sticky top bar (brand + an `AccountMenu` dropdown for Profile, theme toggle, and Sign Out) plus a fixed bottom tab bar rendering the same `NAV_ITEMS` as icon+label tabs; `<main>` reserves bottom padding so content never sits under the fixed bar.
+- Both `AccountMenu` (Base UI `Menu`, same popup treatment as before: `rounded-2xl`, `w-64`, leading Lucide icon tinting to `brand-balance` on hover, destructive Sign Out hover-tinting red) and the sidebar reuse the same `NAV_ITEMS` data — no surface hand-duplicates a route.
+- The shell renders even with zero groups; group-scoped nav items that require an active group stay hidden until one is selected (see Groups feature docs for the current per-route group-selection flow).
 
 ### Dialogs / Modals
 
