@@ -42,20 +42,20 @@ Covers: Persistent Shell Chrome, Desktop Sidebar Collapse, Active Route Highligh
 ## Slice 2 (PR 2): Group-List State + Switcher + D4 Persistence
 Covers: Group Switcher, Active Group Persistence, Conditional Savings Nav Item.
 
-- [ ] 2.1 RED — `ActiveGroupSync` rules: clear stale id (Stored group no longer valid), no auto-pick when unset.
-- [ ] 2.2 RED — `groupSwitchTarget`: pattern re-bind, fallback `/dashboard/:id`.
-- [ ] 2.3 RED — extend `navigation.test.tsx`: switcher many groups+Show More (Many groups), single group (Single group), zero groups (Zero groups).
-- [ ] 2.4 RED — restore-on-login (Restore valid group on login), sign-out clears key (Sign-out clears active group).
-- [ ] 2.5 RED — extend `tests/pages/groups.test.tsx`: `GroupsPage` no longer fetches on mount, reads `useGroupList()`.
-- [ ] 2.6 GREEN — modify `entities/group/index.ts`: `groupApi.list(signal?)`.
-- [ ] 2.7 GREEN — create `app/providers/GroupListContext.tsx` (`useApiQuery<Group[]>`, A1).
-- [ ] 2.8 GREEN — modify `app/providers/ActiveGroupContext.tsx`: `ACTIVE_GROUP_STORAGE_KEY`, restore-in-initializer (A2), persist/clear effects (A4), drop unmount-nulling cleanup, add `useActiveGroupSetter`.
-- [ ] 2.9 GREEN — create `app/providers/ActiveGroupSync.tsx` (A3, satisfies 2.1).
-- [ ] 2.10 GREEN — create `widgets/navigation/ui/GroupSwitcher.tsx` (first 3 groups, Show More, empty state).
-- [ ] 2.11 GREEN — wire `GroupSwitcher` into `SidebarNav`/`MobileTopBar`; gate Savings on `groupId` presence.
-- [ ] 2.12 GREEN — modify `App.tsx`: `ProtectedRoute > GroupListProvider > [ActiveGroupSync, AppShell > Routes]`.
-- [ ] 2.13 GREEN — refactor `pages/groups/ui/GroupsPage.tsx` onto `useGroupList()`; `onCreated`/retry -> `refresh()`. Confirm 2.1-2.5 pass.
-- [ ] 2.14 REFACTOR — remove leftover local group-fetch state now owned by `GroupListContext`.
+- [x] 2.1 RED — `ActiveGroupSync` rules: clear stale id (Stored group no longer valid), no auto-pick when unset.
+- [x] 2.2 RED — `groupSwitchTarget`: pattern re-bind, fallback `/dashboard/:id`.
+- [x] 2.3 RED — extend `navigation.test.tsx`: switcher many groups+Show More (Many groups), single group (Single group), zero groups (Zero groups).
+- [x] 2.4 RED — restore-on-login (Restore valid group on login), sign-out clears key (Sign-out clears active group).
+- [x] 2.5 RED — extend `tests/pages/groups.test.tsx`: `GroupsPage` no longer fetches on mount, reads `useGroupList()`.
+- [x] 2.6 GREEN — modify `entities/group/index.ts`: `groupApi.list(signal?)`.
+- [x] 2.7 GREEN — create `app/providers/GroupListContext.tsx` (`useApiQuery<Group[]>`, A1).
+- [x] 2.8 GREEN — modify `app/providers/ActiveGroupContext.tsx`: `ACTIVE_GROUP_STORAGE_KEY`, restore-in-initializer (A2), persist/clear effects (A4), drop unmount-nulling cleanup, add `useActiveGroupSetter`.
+- [x] 2.9 GREEN — create `app/providers/ActiveGroupSync.tsx` (A3, satisfies 2.1).
+- [x] 2.10 GREEN — create `widgets/navigation/ui/GroupSwitcher.tsx` (first 3 groups, Show More, empty state).
+- [x] 2.11 GREEN — wire `GroupSwitcher` into `SidebarNav`/`MobileTopBar`; gate Savings on `groupId` presence.
+- [x] 2.12 GREEN — modify `App.tsx`: `ProtectedRoute > GroupListProvider > [ActiveGroupSync, AppShell > Routes]`.
+- [x] 2.13 GREEN — refactor `pages/groups/ui/GroupsPage.tsx` onto `useGroupList()`; `onCreated`/retry -> `refresh()`. Confirm 2.1-2.5 pass.
+- [x] 2.14 REFACTOR — remove leftover local group-fetch state now owned by `GroupListContext`.
 
 ## Slice 3 (PR 3): Mobile Add Expense FAB
 Covers: Mobile Add Expense FAB.
