@@ -60,11 +60,11 @@ Covers: Group Switcher, Active Group Persistence, Conditional Savings Nav Item.
 ## Slice 3 (PR 3): Mobile Add Expense FAB
 Covers: Mobile Add Expense FAB.
 
-- [ ] 3.1 RED — extend `tests/pages/dashboard.test.tsx`: mobile hides header, shows FAB opening existing dialog (Dashboard on mobile); desktop unaffected (Desktop unaffected).
-- [ ] 3.2 RED — extend `tests/pages/expenses-page.test.tsx`: mirror 3.1, incl. `disabled={!summary}`.
-- [ ] 3.3 RED — add `AddExpenseFab` a11y spec (fixed position, `aria-label`, no dialog logic); include guard that other pages never render it (Other pages never show the FAB).
-- [ ] 3.4 GREEN — create `shared/ui/AddExpenseFab.tsx` (presentational, A6).
-- [ ] 3.5 GREEN — modify `shared/ui/index.tsx`: export `AddExpenseFab`.
-- [ ] 3.6 GREEN — modify `pages/dashboard/ui/DashboardPage.tsx`: `useIsMobile`, hide header on mobile, render FAB -> `setCreateExpenseOpen(true)`.
-- [ ] 3.7 GREEN — modify `pages/expenses/ui/ExpensesPage.tsx`: hide header CTA on mobile, render FAB -> `setExpenseDialog({mode:"form",expense:null})`; empty-state button unchanged. Confirm 3.1-3.3 pass.
-- [ ] 3.8 REFACTOR — verify no orphan FAB usage elsewhere.
+- [x] 3.1 RED — extend `tests/pages/dashboard.test.tsx`: mobile hides header, shows FAB opening existing dialog (Dashboard on mobile); desktop unaffected (Desktop unaffected).
+- [x] 3.2 RED — extend `tests/pages/expenses-page.test.tsx`: mirror 3.1, incl. `disabled={!summary}`.
+- [x] 3.3 RED — add `AddExpenseFab` a11y spec (fixed position, `aria-label`, no dialog logic); include guard that other pages never render it (Other pages never show the FAB).
+- [x] 3.4 GREEN — create `shared/ui/AddExpenseFab.tsx` (presentational, A6).
+- [x] 3.5 GREEN — modify `shared/ui/index.tsx`: export `AddExpenseFab`.
+- [x] 3.6 GREEN — modify `pages/dashboard/ui/DashboardPage.tsx`: `useIsMobile`, hide header on mobile, render FAB -> `setCreateExpenseOpen(true)`.
+- [x] 3.7 GREEN — modify `pages/expenses/ui/ExpensesPage.tsx`: hide header CTA on mobile, render FAB -> `setExpenseDialog({mode:"form",expense:null})`; empty-state button unchanged. Confirm 3.1-3.3 pass.
+- [x] 3.8 REFACTOR — verify no orphan FAB usage elsewhere.
