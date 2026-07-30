@@ -19,7 +19,8 @@ interface Invitation {
 }
 
 export const groupApi = {
-  list: () => apiClient.fetch<Group[]>("/groups"),
+  list: (signal?: AbortSignal) =>
+    apiClient.fetch<Group[]>("/groups", { signal }),
   create: (name: string) =>
     apiClient.fetch<Group>("/groups", {
       method: "POST",
