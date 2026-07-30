@@ -35,7 +35,10 @@ export function SidebarNav() {
           collapsed && "justify-center px-0",
         )}
       >
-        <Link to="/groups" className="flex items-center gap-2 outline-none">
+        <Link
+          to="/groups"
+          className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand-balance focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+        >
           <Logo className="w-8 h-8" />
           {!collapsed && (
             <span className="text-lg font-bold text-slate-900 dark:text-white">
@@ -65,9 +68,7 @@ export function SidebarNav() {
       </nav>
 
       <div className="flex flex-col gap-1 px-2 py-3 border-t border-slate-100 dark:border-slate-800">
-        <div className={cn(collapsed && "overflow-hidden")}>
-          <ThemeToggle />
-        </div>
+        <ThemeToggle collapsed={collapsed} />
 
         <button
           type="button"

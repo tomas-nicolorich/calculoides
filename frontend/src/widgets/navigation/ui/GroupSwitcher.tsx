@@ -1,5 +1,5 @@
 import { Menu } from "@base-ui/react";
-import { ChevronDown, Users } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   useActiveGroup,
@@ -61,7 +61,7 @@ export function GroupSwitcher({
             type="button"
             aria-label="Switch group"
             className={cn(
-              "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors outline-none",
+              "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance",
               collapsed && "justify-center px-0",
               variant === "pill" &&
                 "w-auto rounded-full border border-slate-200 dark:border-slate-800",
@@ -69,14 +69,11 @@ export function GroupSwitcher({
           />
         }
       >
-        <Users size={18} className="shrink-0 text-brand-balance" />
+        <ChevronsUpDown size={18} className="shrink-0 text-brand-balance" />
         {!collapsed && (
           <span className="min-w-0 flex-1 truncate text-left">
             {triggerLabel}
           </span>
-        )}
-        {!collapsed && (
-          <ChevronDown size={16} className="shrink-0 text-slate-400" />
         )}
       </Menu.Trigger>
 
@@ -101,7 +98,7 @@ export function GroupSwitcher({
                     onClick={() => {
                       handleSelect(group.id);
                     }}
-                    className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance"
                   >
                     <span className="truncate font-medium">{group.name}</span>
                     <span className="shrink-0 text-xs text-slate-400">
@@ -115,7 +112,7 @@ export function GroupSwitcher({
                     render={
                       <Link
                         to="/groups"
-                        className="flex items-center justify-center p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none text-sm font-medium text-brand-balance"
+                        className="flex items-center justify-center p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance text-sm font-medium text-brand-balance"
                       />
                     }
                   >

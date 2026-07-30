@@ -1,6 +1,10 @@
 import { Tooltip } from "@base-ui/react";
 import { Link } from "react-router-dom";
-import type { NavItem } from "../model/navItems";
+import {
+  NAV_ACTIVE_TONE_TEXT,
+  NAV_ACTIVE_TONE_WELL,
+  type NavItem,
+} from "../model/navItems";
 import { cn } from "../../../shared/lib/utils";
 
 interface NavItemLinkProps {
@@ -18,10 +22,10 @@ export function NavItemLink({
 }: NavItemLinkProps) {
   const Icon = item.icon;
   const className = cn(
-    "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors outline-none",
+    "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance",
     collapsed && "justify-center px-0",
     active
-      ? "bg-brand-balance/10 text-brand-balance"
+      ? cn(NAV_ACTIVE_TONE_WELL[item.tone], NAV_ACTIVE_TONE_TEXT[item.tone])
       : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800",
   );
 
@@ -45,6 +49,7 @@ export function NavItemLink({
           <Link
             to={item.to(groupId)}
             aria-current={active ? "page" : undefined}
+            aria-label={item.label}
             className={className}
           />
         }

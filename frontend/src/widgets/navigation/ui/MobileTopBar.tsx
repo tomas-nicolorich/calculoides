@@ -9,7 +9,7 @@ export function MobileTopBar() {
       <div className="px-4 h-16 flex items-center gap-3">
         <Link
           to="/groups"
-          className="flex shrink-0 items-center gap-2 outline-none"
+          className="flex shrink-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand-balance focus-visible:ring-offset-2"
         >
           <Logo className="w-8 h-8" />
         </Link>

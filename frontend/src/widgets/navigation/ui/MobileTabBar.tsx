@@ -1,6 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { useActiveGroup } from "../../../app/providers/ActiveGroupContext";
-import { NAV_ITEMS, matchNavItem } from "../model/navItems";
+import {
+  NAV_ACTIVE_TONE_TEXT,
+  NAV_ITEMS,
+  matchNavItem,
+} from "../model/navItems";
 import { cn } from "../../../shared/lib/utils";
 
 export function MobileTabBar() {
@@ -27,9 +31,9 @@ export function MobileTabBar() {
             to={item.to(groupId)}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors outline-none",
+              "flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance",
               active
-                ? "text-brand-balance"
+                ? NAV_ACTIVE_TONE_TEXT[item.tone]
                 : "text-slate-500 dark:text-slate-400",
             )}
           >

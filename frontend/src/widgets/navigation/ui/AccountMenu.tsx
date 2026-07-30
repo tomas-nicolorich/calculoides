@@ -51,7 +51,7 @@ export function AccountMenu() {
                     render={
                       <Link
                         to={item.to(groupId)}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none group"
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance group"
                       />
                     }
                   >
@@ -74,7 +74,7 @@ export function AccountMenu() {
 
               <Menu.Item
                 onClick={() => void signOut()}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer outline-none group"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-balance group"
               >
                 <LogOut
                   size={18}
