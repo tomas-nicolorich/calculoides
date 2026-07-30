@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import {
+  AddExpenseFab,
   Button,
   Card,
   DatePicker,
@@ -220,18 +221,29 @@ export function ExpensesPage() {
             <Trash2 size={16} className="mr-1.5" />
             Delete All
           </Button>
-          <Button
-            variant="cta"
-            disabled={!summary}
-            onClick={() => {
-              setExpenseDialog({ mode: "form", expense: null });
-            }}
-          >
-            <Plus size={16} className="mr-1" />
-            Add Expense
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="cta"
+              disabled={!summary}
+              onClick={() => {
+                setExpenseDialog({ mode: "form", expense: null });
+              }}
+            >
+              <Plus size={16} className="mr-1" />
+              Add Expense
+            </Button>
+          )}
         </div>
       </header>
+
+      {isMobile && (
+        <AddExpenseFab
+          disabled={!summary}
+          onClick={() => {
+            setExpenseDialog({ mode: "form", expense: null });
+          }}
+        />
+      )}
 
       <ResponsiveDialog
         open={expenseDialog.mode !== "closed"}

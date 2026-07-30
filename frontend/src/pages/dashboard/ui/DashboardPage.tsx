@@ -14,7 +14,9 @@ import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
+import { useIsMobile } from "../../../shared/lib/hooks/useIsMobile";
 import {
+  AddExpenseFab,
   Alert,
   Button,
   Card,
@@ -44,6 +46,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
+  const isMobile = useIsMobile();
   const {
     data: summary,
     loading: summaryLoading,
@@ -221,17 +224,27 @@ export function DashboardPage() {
               ))}
             </AvatarGroup>
           )}
-          <Button
-            variant="expense"
-            onClick={() => {
-              setCreateExpenseOpen(true);
-            }}
-          >
-            <Plus size={16} className="mr-1" />
-            Add Expense
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="expense"
+              onClick={() => {
+                setCreateExpenseOpen(true);
+              }}
+            >
+              <Plus size={16} className="mr-1" />
+              Add Expense
+            </Button>
+          )}
         </div>
       </header>
+
+      {isMobile && (
+        <AddExpenseFab
+          onClick={() => {
+            setCreateExpenseOpen(true);
+          }}
+        />
+      )}
 
       <ResponsiveDialog
         open={createExpenseOpen}
