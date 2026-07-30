@@ -47,3 +47,4 @@ export { FilterPanel } from "./FilterPanel";
 export { RowMenu } from "./RowMenu";
 export { Spinner } from "./Spinner";
 export { Skeleton } from "./Skeleton";
+export { AddExpenseFab } from "./AddExpenseFab";
