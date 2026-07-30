@@ -5,6 +5,7 @@ import { useActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { useSidebarCollapsed } from "../model/useSidebarCollapsed";
 import { NAV_ITEMS, matchNavItem } from "../model/navItems";
 import { NavItemLink } from "./NavItemLink";
+import { GroupSwitcher } from "./GroupSwitcher";
 import { Logo } from "../../../shared/ui";
 import { ThemeToggle } from "../../../features/theme-toggle/ui/ThemeToggle";
 import { cn } from "../../../shared/lib/utils";
@@ -42,6 +43,10 @@ export function SidebarNav() {
             </span>
           )}
         </Link>
+      </div>
+
+      <div className="px-2 pb-2">
+        <GroupSwitcher variant="sidebar" collapsed={collapsed} />
       </div>
 
       <nav

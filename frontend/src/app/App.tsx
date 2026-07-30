@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./providers/AuthProvider";
 import { ActiveGroupProvider } from "./providers/ActiveGroupContext";
+import { ActiveGroupSync } from "./providers/ActiveGroupSync";
+import { GroupListProvider } from "./providers/GroupListContext";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
@@ -30,32 +32,35 @@ function App() {
               path="/*"
               element={
                 <ProtectedRoute>
-                  <AppShell>
-                    <Routes>
-                      <Route
-                        path="dashboard/:groupId"
-                        element={<DashboardPage />}
-                      />
-                      <Route path="groups" element={<GroupsPage />} />
-                      <Route
-                        path="expenses/:groupId"
-                        element={<ExpensesPage />}
-                      />
-                      <Route path="profile" element={<ProfilePage />} />
-                      <Route
-                        path="transfers/:groupId"
-                        element={<TransfersPage />}
-                      />
-                      <Route
-                        path="savings/:groupId"
-                        element={<SavingsPage />}
-                      />
-                      <Route
-                        path="*"
-                        element={<Navigate to="/groups" replace />}
-                      />
-                    </Routes>
-                  </AppShell>
+                  <GroupListProvider>
+                    <ActiveGroupSync />
+                    <AppShell>
+                      <Routes>
+                        <Route
+                          path="dashboard/:groupId"
+                          element={<DashboardPage />}
+                        />
+                        <Route path="groups" element={<GroupsPage />} />
+                        <Route
+                          path="expenses/:groupId"
+                          element={<ExpensesPage />}
+                        />
+                        <Route path="profile" element={<ProfilePage />} />
+                        <Route
+                          path="transfers/:groupId"
+                          element={<TransfersPage />}
+                        />
+                        <Route
+                          path="savings/:groupId"
+                          element={<SavingsPage />}
+                        />
+                        <Route
+                          path="*"
+                          element={<Navigate to="/groups" replace />}
+                        />
+                      </Routes>
+                    </AppShell>
+                  </GroupListProvider>
                 </ProtectedRoute>
               }
             />
