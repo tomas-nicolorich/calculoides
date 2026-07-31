@@ -1,6 +1,5 @@
-import { Card, Button, IconButton, Input } from "../../../shared/ui";
-import { ArrowLeft, User as UserIcon, Save } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Card, Button, Input } from "../../../shared/ui";
+import { User as UserIcon, Save } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { useProfileForm } from "./useProfileForm";
 import { usePasswordChangeForm } from "./usePasswordChangeForm";
@@ -13,7 +12,6 @@ const DISPLAY_NAME_MAX_LENGTH = 100;
 
 export function ProfilePage() {
   const { user, session } = useAuth();
-  const navigate = useNavigate();
   const profileForm = useProfileForm(user, session);
   const passwordForm = usePasswordChangeForm(user?.email);
 
@@ -27,10 +25,6 @@ export function ProfilePage() {
       onToggle={toggleShowPasswords}
     />
   );
-
-  const goBack = () => {
-    void navigate(-1);
-  };
 
   const onProfileSubmit = (e: React.SyntheticEvent) => {
     void profileForm.submit(e);
@@ -62,23 +56,13 @@ export function ProfilePage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-8">
-      <header className="flex items-center gap-4">
-        <IconButton
-          bordered
-          hover="balance"
-          onClick={goBack}
-          aria-label="Back to Dashboard"
-        >
-          <ArrowLeft size={20} />
-        </IconButton>
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
-            Profile
-          </h1>
-          <p className="text-slate-500">
-            Manage your personal information and security
-          </p>
-        </div>
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+          Profile
+        </h1>
+        <p className="text-slate-500">
+          Manage your personal information and security
+        </p>
       </header>
 
       <Card title="Personal Information">

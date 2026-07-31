@@ -15,7 +15,6 @@ import { CategoryIconTile } from "../../../shared/lib/categoryIcons";
 import { useIsMobile } from "../../../shared/lib/hooks/useIsMobile";
 import { Avatar } from "../../../shared/ui/Avatar";
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Info,
@@ -28,7 +27,7 @@ import {
   useDashboardSummary,
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { transferApi } from "../../../entities/transfer";
 
@@ -50,7 +49,6 @@ function formatTransferDate(date: string) {
 export function TransfersPage() {
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [memberId, setMemberId] = useState("");
   const [categoryFilterId, setCategoryFilterId] = useState("");
@@ -146,25 +144,13 @@ export function TransfersPage() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
       <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <IconButton
-            bordered
-            hover="balance"
-            onClick={() => {
-              void navigate(-1);
-            }}
-            aria-label="Back to Dashboard"
-          >
-            <ArrowLeft size={20} />
-          </IconButton>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Budget Transfers
-            </h1>
-            <p className="text-slate-500">
-              History of transfers for {summary?.groupName}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            Budget Transfers
+          </h1>
+          <p className="text-slate-500">
+            History of transfers for {summary?.groupName}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button

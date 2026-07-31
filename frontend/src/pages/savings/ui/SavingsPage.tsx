@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { useSavingsGoals } from "../../../shared/api/savingsHooks";
 import { SavingsGoalList } from "../../../features/savings/SavingsGoalList";
 import { SavingsGoalForm } from "../../../features/savings/SavingsGoalForm";
-import { ArrowLeft, Plus } from "lucide-react";
-import { Alert, Button, Card, IconButton, Skeleton } from "../../../shared/ui";
+import { Plus } from "lucide-react";
+import { Alert, Button, Card, Skeleton } from "../../../shared/ui";
 import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { toFriendlySavingsError } from "../../../entities/savings-goal/errorMessages";
 
@@ -52,7 +52,6 @@ function GoalCardSkeleton() {
 }
 
 export function SavingsPage() {
-  const navigate = useNavigate();
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
   const [createOpen, setCreateOpen] = useState(false);
@@ -67,14 +66,9 @@ export function SavingsPage() {
     return (
       <div className="p-4 max-w-6xl mx-auto space-y-8" aria-hidden="true">
         <header className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <IconButton bordered disabled aria-label="Back to Dashboard">
-              <ArrowLeft size={20} />
-            </IconButton>
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-56" />
-            </div>
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-56" />
           </div>
           <Skeleton className="h-9 w-40 rounded-md" />
         </header>
@@ -93,25 +87,13 @@ export function SavingsPage() {
   return (
     <div className="p-4 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <IconButton
-            bordered
-            hover="balance"
-            onClick={() => {
-              void navigate(-1);
-            }}
-            aria-label="Back to Dashboard"
-          >
-            <ArrowLeft size={20} />
-          </IconButton>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Savings Goals
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              Plan and track your group savings goals
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Savings Goals
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">
+            Plan and track your group savings goals
+          </p>
         </div>
         <Button
           variant="cta"
