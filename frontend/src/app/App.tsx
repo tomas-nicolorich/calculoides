@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./providers/AuthProvider";
 import { ActiveGroupProvider } from "./providers/ActiveGroupContext";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
@@ -18,6 +19,7 @@ import { Layout } from "./ui/Layout";
 function App() {
   return (
     <BrowserRouter>
+      <Analytics />
       <AuthProvider>
         <ActiveGroupProvider>
           <Routes>
