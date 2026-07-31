@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AuthProvider } from "./providers/AuthProvider";
 import { ActiveGroupProvider } from "./providers/ActiveGroupContext";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
@@ -62,6 +63,7 @@ function App() {
           </Routes>
         </ActiveGroupProvider>
       </AuthProvider>
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
