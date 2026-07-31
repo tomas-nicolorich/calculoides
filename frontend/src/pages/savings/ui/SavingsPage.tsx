@@ -64,7 +64,10 @@ export function SavingsPage() {
 
   if (isInitialLoading) {
     return (
-      <div className="p-4 max-w-6xl mx-auto space-y-8" aria-hidden="true">
+      <div
+        className="p-4 md:p-8 max-w-6xl mx-auto space-y-8"
+        aria-hidden="true"
+      >
         <header className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
