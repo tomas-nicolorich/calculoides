@@ -6,11 +6,10 @@ import {
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Info,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
 import {
+  AddExpenseFab,
   Button,
   Card,
   DatePicker,
@@ -48,7 +48,6 @@ export function ExpensesPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
-  const navigate = useNavigate();
   const PAGE_SIZE = 25;
   const isMobile = useIsMobile();
 
@@ -178,25 +177,13 @@ export function ExpensesPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <IconButton
-            bordered
-            hover="balance"
-            onClick={() => {
-              void navigate(-1);
-            }}
-            aria-label="Back to Dashboard"
-          >
-            <ArrowLeft size={20} />
-          </IconButton>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              All Expenses
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Every recorded spend for this group
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            All Expenses
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Every recorded spend for this group
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <Button
@@ -220,18 +207,29 @@ export function ExpensesPage() {
             <Trash2 size={16} className="mr-1.5" />
             Delete All
           </Button>
-          <Button
-            variant="cta"
-            disabled={!summary}
-            onClick={() => {
-              setExpenseDialog({ mode: "form", expense: null });
-            }}
-          >
-            <Plus size={16} className="mr-1" />
-            Add Expense
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="cta"
+              disabled={!summary}
+              onClick={() => {
+                setExpenseDialog({ mode: "form", expense: null });
+              }}
+            >
+              <Plus size={16} className="mr-1" />
+              Add Expense
+            </Button>
+          )}
         </div>
       </header>
+
+      {isMobile && (
+        <AddExpenseFab
+          disabled={!summary}
+          onClick={() => {
+            setExpenseDialog({ mode: "form", expense: null });
+          }}
+        />
+      )}
 
       <ResponsiveDialog
         open={expenseDialog.mode !== "closed"}

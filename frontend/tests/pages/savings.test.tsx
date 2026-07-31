@@ -66,10 +66,5 @@ describe("Savings Page", () => {
     expect(
       screen.getByRole("button", { name: /Add Savings Goal/i }),
     ).toBeInTheDocument();
-
-    // Check for back button
-    expect(
-      screen.getByRole("button", { name: /Back to Dashboard/i }),
-    ).toBeInTheDocument();
   });
 });

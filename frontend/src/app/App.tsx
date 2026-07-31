@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./providers/AuthProvider";
 import { ActiveGroupProvider } from "./providers/ActiveGroupContext";
+import { ActiveGroupSync } from "./providers/ActiveGroupSync";
+import { GroupListProvider } from "./providers/GroupListContext";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
 import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
@@ -13,7 +15,7 @@ import { ExpensesPage } from "../pages/expenses/ui/ExpensesPage";
 import { ProfilePage } from "../pages/profile/ui/ProfilePage";
 import { TransfersPage } from "../pages/transfers/ui/TransfersPage";
 import { SavingsPage } from "../pages/savings/ui/SavingsPage";
-import { Layout } from "./ui/Layout";
+import { AppShell } from "./ui/AppShell";
 
 function App() {
   return (
@@ -30,32 +32,35 @@ function App() {
               path="/*"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route
-                        path="dashboard/:groupId"
-                        element={<DashboardPage />}
-                      />
-                      <Route path="groups" element={<GroupsPage />} />
-                      <Route
-                        path="expenses/:groupId"
-                        element={<ExpensesPage />}
-                      />
-                      <Route path="profile" element={<ProfilePage />} />
-                      <Route
-                        path="transfers/:groupId"
-                        element={<TransfersPage />}
-                      />
-                      <Route
-                        path="savings/:groupId"
-                        element={<SavingsPage />}
-                      />
-                      <Route
-                        path="*"
-                        element={<Navigate to="/groups" replace />}
-                      />
-                    </Routes>
-                  </Layout>
+                  <GroupListProvider>
+                    <ActiveGroupSync />
+                    <AppShell>
+                      <Routes>
+                        <Route
+                          path="dashboard/:groupId"
+                          element={<DashboardPage />}
+                        />
+                        <Route path="groups" element={<GroupsPage />} />
+                        <Route
+                          path="expenses/:groupId"
+                          element={<ExpensesPage />}
+                        />
+                        <Route path="profile" element={<ProfilePage />} />
+                        <Route
+                          path="transfers/:groupId"
+                          element={<TransfersPage />}
+                        />
+                        <Route
+                          path="savings/:groupId"
+                          element={<SavingsPage />}
+                        />
+                        <Route
+                          path="*"
+                          element={<Navigate to="/groups" replace />}
+                        />
+                      </Routes>
+                    </AppShell>
+                  </GroupListProvider>
                 </ProtectedRoute>
               }
             />
