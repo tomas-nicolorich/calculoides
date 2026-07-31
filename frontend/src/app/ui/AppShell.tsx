@@ -3,21 +3,27 @@ import { useIsMobile } from "../../shared/lib/hooks/useIsMobile";
 import { SidebarNav } from "../../widgets/navigation/ui/SidebarNav";
 import { MobileTopBar } from "../../widgets/navigation/ui/MobileTopBar";
 import { MobileTabBar } from "../../widgets/navigation/ui/MobileTabBar";
+import { useActiveGroup } from "../providers/ActiveGroupContext";
+import { cn } from "../../shared/lib/utils";
 
 /**
  * Single persistent shell for every authenticated route (D3): branches
  * once on `useIsMobile()` into desktop sidebar chrome or mobile top
- * bar + tab bar chrome. `<main>` reserves bottom padding so mobile content
- * never sits under the fixed tab bar.
+ * bar + tab bar chrome. `<main>` reserves bottom padding only while the tab
+ * bar renders (it hides entirely with no active group) so content never
+ * sits under the fixed bar, and never leaves a dead gap when it's gone.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
+  const groupId = useActiveGroup();
 
   if (isMobile) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
         <MobileTopBar />
-        <main className="pb-20 animate-in fade-in duration-500">
+        <main
+          className={cn("animate-in fade-in duration-500", groupId && "pb-20")}
+        >
           {children}
         </main>
         <MobileTabBar />

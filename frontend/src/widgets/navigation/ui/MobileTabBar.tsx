@@ -12,10 +12,9 @@ export function MobileTabBar() {
   const groupId = useActiveGroup();
   const activeItem = matchNavItem(location.pathname);
 
-  const items = NAV_ITEMS.filter(
-    (item) =>
-      item.surfaces.includes("tabBar") && (!item.requiresGroup || groupId),
-  );
+  if (!groupId) return null;
+
+  const items = NAV_ITEMS.filter((item) => item.surfaces.includes("tabBar"));
 
   return (
     <nav

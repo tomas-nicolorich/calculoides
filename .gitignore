@@ -78,6 +78,10 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Vercel
 .vercel
 
+# Playwright verification screenshots
+.playwright-mcp/
+/*.png
+
 # Project tooling & agent state
 .claude/**
 !.claude/settings.json

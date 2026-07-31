@@ -226,7 +226,7 @@ export function DashboardPage() {
           )}
           {!isMobile && (
             <Button
-              variant="expense"
+              variant="cta"
               onClick={() => {
                 setCreateExpenseOpen(true);
               }}

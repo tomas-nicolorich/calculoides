@@ -30,8 +30,8 @@ export function AddExpenseFab({
       className={cn(
         "fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40",
         "inline-grid h-14 w-14 place-items-center rounded-full",
-        "bg-brand-expense text-white shadow-lg shadow-black/20",
-        "transition-all hover:bg-brand-expense/90 active:scale-[0.98]",
+        "bg-brand-balance text-white shadow-[var(--glow-balance)]",
+        "transition-all hover:bg-brand-balance/90 active:scale-[0.98]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-balance focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
       )}

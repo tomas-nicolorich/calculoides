@@ -25,7 +25,7 @@ export function SidebarNav() {
   return (
     <aside
       className={cn(
-        "sticky top-0 h-screen flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all",
+        "sticky top-0 h-screen flex flex-col overflow-x-hidden border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all",
         collapsed ? "w-[68px]" : "w-[232px]",
       )}
     >

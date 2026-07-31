@@ -19,7 +19,7 @@ export interface NavItem {
   pattern: string;
   /** Resolves the concrete href; falls back to `/groups` when no group is active. */
   to: (groupId: string | null) => string;
-  /** Whether this item is hidden while no group is active (Savings only for now). */
+  /** Whether this item is hidden while no group is active. */
   requiresGroup: boolean;
   /** Which chrome surfaces render this item. */
   surfaces: readonly NavSurface[];
@@ -33,7 +33,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: LayoutDashboard,
     pattern: "/dashboard/:groupId",
     to: (groupId) => (groupId ? `/dashboard/${groupId}` : "/groups"),
-    requiresGroup: false,
+    requiresGroup: true,
     surfaces: ["sidebar", "tabBar"],
     tone: "balance",
   },
@@ -42,7 +42,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: Receipt,
     pattern: "/expenses/:groupId",
     to: (groupId) => (groupId ? `/expenses/${groupId}` : "/groups"),
-    requiresGroup: false,
+    requiresGroup: true,
     surfaces: ["sidebar", "tabBar"],
     tone: "expense",
   },
@@ -51,7 +51,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: ArrowLeftRight,
     pattern: "/transfers/:groupId",
     to: (groupId) => (groupId ? `/transfers/${groupId}` : "/groups"),
-    requiresGroup: false,
+    requiresGroup: true,
     surfaces: ["sidebar", "tabBar"],
     tone: "transfer",
   },
