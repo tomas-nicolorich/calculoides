@@ -9,9 +9,9 @@ import { BudgetCategories } from "../../../widgets/dashboard/ui/BudgetCategories
 import { BudgetTransfers } from "../../../widgets/dashboard/ui/BudgetTransfers";
 import { RecentExpenses } from "../../../widgets/dashboard/ui/RecentExpenses";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { apiClient } from "../../../shared/api/client";
 import { useIsMobile } from "../../../shared/lib/hooks/useIsMobile";
@@ -20,7 +20,6 @@ import {
   Alert,
   Button,
   Card,
-  IconButton,
   ResponsiveDialog,
   Skeleton,
 } from "../../../shared/ui";
@@ -42,7 +41,6 @@ export function buildMemberColorIndex(
 }
 
 export function DashboardPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
@@ -71,14 +69,9 @@ export function DashboardPage() {
         aria-hidden="true"
       >
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <IconButton bordered disabled aria-label="Back to groups">
-              <ArrowLeft size={20} />
-            </IconButton>
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-32" />
           </div>
           <div className="flex items-center gap-4">
             <Skeleton className="h-[34px] w-[34px] rounded-full" />
@@ -190,25 +183,13 @@ export function DashboardPage() {
       )}
 
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <IconButton
-            bordered
-            hover="balance"
-            onClick={() => {
-              void navigate("/groups");
-            }}
-            aria-label="Back to groups"
-          >
-            <ArrowLeft size={20} />
-          </IconButton>
-          <div>
-            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-              {summary.groupName}
-            </h1>
-            <p className="text-slate-500">
-              Shared budget · {summary.members.length} members
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+            {summary.groupName}
+          </h1>
+          <p className="text-slate-500">
+            Shared budget · {summary.members.length} members
+          </p>
         </div>
 
         <div className="flex items-center gap-4">
