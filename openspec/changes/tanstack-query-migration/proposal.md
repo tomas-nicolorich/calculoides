@@ -84,13 +84,13 @@ Frontend-only, no schema or API change. Revert per slice, newest first. Revertin
 
 ## Success Criteria
 
-- [ ] Navigating Dashboard → Expenses → Dashboard within the stale window issues no new network request for already-cached data.
-- [ ] Returning to a backgrounded tab after the stale window refetches and shows another member's edit without a manual reload.
-- [ ] No component passes a `refresh`/`onRefresh` data-reload closure to a mutating child; invalidation goes through query keys.
-- [ ] Signing out and signing in as a different user on the same device renders no data from the previous user.
-- [ ] `useApiQuery.ts` is deleted and has no remaining references.
-- [ ] The migrated read hooks and `GroupListContext` have unit tests where they had none.
-- [ ] `npm test`, `npm run lint`, `npm run typecheck` pass; `ActiveGroupSync.test.tsx` and the entity-API-mocking widget tests pass unchanged.
+- [x] Navigating Dashboard → Expenses → Dashboard within the stale window issues no new network request for already-cached data.
+- [x] Returning to a backgrounded tab after the stale window refetches and shows another member's edit without a manual reload.
+- [x] No component passes a `refresh`/`onRefresh` data-reload closure to a mutating child; invalidation goes through query keys.
+- [x] Signing out and signing in as a different user on the same device renders no data from the previous user.
+- [x] `useApiQuery.ts` is deleted and has no remaining references.
+- [x] The migrated read hooks and `GroupListContext` have unit tests where they had none.
+- [x] `npm test`, `npm run lint`, `npm run typecheck` pass; `ActiveGroupSync.test.tsx` and the entity-API-mocking widget tests pass unchanged (one documented exception: `BudgetCategories.test.tsx`, per D3's mutation normalization).
 
 ## Downstream (open for spec/design)
 
