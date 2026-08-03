@@ -51,12 +51,12 @@ Chain strategy: feature-branch-chain
 
 ## Slice 2b (PR3): `savingsHooks.ts` + `GroupListContext.tsx` + delete `useApiQuery.ts`
 
-- [ ] 2b.1 RED — create `frontend/src/shared/api/savingsHooks.test.ts`: `useSavingsGoals` — disabled on `groupId === null`, first load, error → string, cache hit on remount, `refresh()` refetches.
-- [ ] 2b.2 GREEN — rewrite `frontend/src/shared/api/savingsHooks.ts`: `useSavingsGoals` on `useQuery({ queryKey: queryKeys.savingsGoals(…) })`, `toApiQueryResult`. Confirm 2b.1 passes.
-- [ ] 2b.3 RED — create `frontend/src/app/providers/GroupListContext.test.tsx`: `useGroupList()` throws outside provider, groups list loads and is cached across remounts, `refresh()` refetches, error → string. Use `QueryWrapper` from `queryTestUtils.tsx`.
-- [ ] 2b.4 GREEN — modify `frontend/src/app/providers/GroupListContext.tsx` (A9): replace `useApiQuery` with `useQuery({ queryKey: queryKeys.groups(), queryFn: ({signal}) => groupApi.list(signal), enabled: !!user?.id })`, map via `toApiQueryResult`; `GroupListContextValue` shape unchanged. Confirm 2b.3 passes.
-- [ ] 2b.5 GREEN — delete `frontend/src/shared/api/useApiQuery.ts`; grep confirms zero remaining imports.
-- [ ] 2b.6 REFACTOR — confirm `ActiveGroupSync.test.tsx` and `frontend/tests/pages/groups.test.tsx` pass unchanged; run full `npm run typecheck`/`npm test`/`npm run lint`.
+- [x] 2b.1 RED — create `frontend/src/shared/api/savingsHooks.test.ts`: `useSavingsGoals` — disabled on `groupId === null`, first load, error → string, cache hit on remount, `refresh()` refetches.
+- [x] 2b.2 GREEN — rewrite `frontend/src/shared/api/savingsHooks.ts`: `useSavingsGoals` on `useQuery({ queryKey: queryKeys.savingsGoals(…) })`, `toApiQueryResult`. Confirm 2b.1 passes.
+- [x] 2b.3 RED — create `frontend/src/app/providers/GroupListContext.test.tsx`: `useGroupList()` throws outside provider, groups list loads and is cached across remounts, `refresh()` refetches, error → string. Use `QueryWrapper` from `queryTestUtils.tsx`.
+- [x] 2b.4 GREEN — modify `frontend/src/app/providers/GroupListContext.tsx` (A9): replace `useApiQuery` with `useQuery({ queryKey: queryKeys.groups(), queryFn: ({signal}) => groupApi.list(signal), enabled: !!user?.id })`, map via `toApiQueryResult`; `GroupListContextValue` shape unchanged. Confirm 2b.3 passes.
+- [x] 2b.5 GREEN — delete `frontend/src/shared/api/useApiQuery.ts`; grep confirms zero remaining imports.
+- [x] 2b.6 REFACTOR — confirm `ActiveGroupSync.test.tsx` and `frontend/tests/pages/groups.test.tsx` pass unchanged; run full `npm run typecheck`/`npm test`/`npm run lint`.
 
 ## Slice 3a (PR4): Category + Transfer Entity Modules + `BudgetCategories.tsx` + Dashboard Category-Delete
 
