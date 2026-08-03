@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge, Card, Button, RowMenu, ProgressMeter } from "../../shared/ui";
 import { DialogFooter } from "../../shared/ui/Dialog";
 import { ResponsiveDialog } from "../../shared/ui/ResponsiveDialog";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { toFriendlySavingsError } from "../../entities/savings-goal/errorMessages";
+import { queryKeys } from "../../shared/api/queryKeys";
 import { SavingsGoalForm } from "./SavingsGoalForm";
 import { InlineAllocationEditor } from "./InlineAllocationEditor";
 import { CategoryIconTile } from "../../shared/lib/categoryIcons";
@@ -11,7 +13,6 @@ import { cn } from "../../shared/lib/utils";
 
 interface SavingsGoalListProps {
   goals: SavingsGoal[];
-  onRefresh?: () => void | Promise<void>;
 }
 
 const fmt = (n: number) =>
@@ -71,10 +72,9 @@ interface GoalCardProps {
   goal: SavingsGoal;
   onEdit: (goal: SavingsGoal) => void;
   onDeleteRequest: (goalId: string) => void;
-  onRefresh?: () => void | Promise<void>;
 }
 
-function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
+function GoalCard({ goal, onEdit, onDeleteRequest }: GoalCardProps) {
   const status = getGoalStatus(goal);
   const targetDate = new Date(goal.targetDate);
 
@@ -147,35 +147,40 @@ function GoalCard({ goal, onEdit, onDeleteRequest, onRefresh }: GoalCardProps) {
           </div>
         </div>
 
-        <InlineAllocationEditor goal={goal} onRefresh={onRefresh} />
+        <InlineAllocationEditor goal={goal} />
       </div>
     </Card>
   );
 }
 
-export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
+export function SavingsGoalList({ goals }: SavingsGoalListProps) {
+  const qc = useQueryClient();
   const [goalToEdit, setGoalToEdit] = useState<SavingsGoal | null>(null);
   const [goalToDeleteId, setGoalToDeleteId] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleDelete = async (goalId: string) => {
-    setDeleteLoading(true);
-    setDeleteError(null);
+  const deleteGoal = useMutation({
+    mutationFn: (goal: SavingsGoal) => savingsGoalApi.delete(goal.id),
+    onSuccess: (_data, goal) =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(goal.groupId) }),
+  });
+  const deleteLoading = deleteGoal.isPending;
+  const deleteError = deleteGoal.error
+    ? toFriendlySavingsError(deleteGoal.error)
+    : null;
 
+  const goalToDelete = goals.find((g) => g.id === goalToDeleteId) ?? null;
+
+  const handleDelete = async (goal: SavingsGoal) => {
     try {
-      await savingsGoalApi.delete(goalId);
-      await onRefresh?.();
+      await deleteGoal.mutateAsync(goal);
       setGoalToDeleteId(null);
-    } catch (err) {
-      setDeleteError(toFriendlySavingsError(err));
-    } finally {
-      setDeleteLoading(false);
+    } catch {
+      // deleteError derives from deleteGoal.error above.
     }
   };
 
   const handleDeleteRequest = (goalId: string) => {
-    setDeleteError(null);
+    deleteGoal.reset();
     setGoalToDeleteId(goalId);
   };
 
@@ -191,7 +196,6 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             goal={goal}
             onEdit={setGoalToEdit}
             onDeleteRequest={handleDeleteRequest}
-            onRefresh={onRefresh}
           />
         ))}
         {goals.length === 0 && (
@@ -215,7 +219,6 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             goal={goalToEdit}
             onSuccess={() => {
               setGoalToEdit(null);
-              void onRefresh?.();
             }}
             onCancel={() => {
               setGoalToEdit(null);
@@ -229,7 +232,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
         onOpenChange={(open) => {
           if (!open) {
             setGoalToDeleteId(null);
-            setDeleteError(null);
+            deleteGoal.reset();
           }
         }}
         title="Delete Goal"
@@ -245,7 +248,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
             variant="outline"
             onClick={() => {
               setGoalToDeleteId(null);
-              setDeleteError(null);
+              deleteGoal.reset();
             }}
             disabled={deleteLoading}
           >
@@ -254,7 +257,7 @@ export function SavingsGoalList({ goals, onRefresh }: SavingsGoalListProps) {
           <Button
             variant="expense"
             onClick={() => {
-              if (goalToDeleteId) void handleDelete(goalToDeleteId);
+              if (goalToDelete) void handleDelete(goalToDelete);
             }}
             disabled={deleteLoading}
           >

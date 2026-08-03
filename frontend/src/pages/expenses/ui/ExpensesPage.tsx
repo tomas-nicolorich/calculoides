@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import {
   useExpensesList,
@@ -20,6 +21,8 @@ import {
   X,
 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
+import { queryKeys } from "../../../shared/api/queryKeys";
+import { toErrorMessage } from "../../../shared/api/toErrorMessage";
 import {
   AddExpenseFab,
   Button,
@@ -63,26 +66,34 @@ export function ExpensesPage() {
   });
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deleteAllConfirmText, setDeleteAllConfirmText] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const invalidateGroup = () =>
+    qc.invalidateQueries({ queryKey: queryKeys.group(groupId ?? "") });
+
+  const deleteExpense = useMutation({
+    mutationFn: (id: string) => expenseApi.delete(id),
+    onSuccess: invalidateGroup,
+  });
+  const deleteAllExpenses = useMutation({
+    mutationFn: (groupId: string) => expenseApi.deleteAll(groupId),
+    onSuccess: invalidateGroup,
+  });
+  const deleting = deleteExpense.isPending || deleteAllExpenses.isPending;
+  const deleteError = toErrorMessage(
+    deleteExpense.error ?? deleteAllExpenses.error,
+  );
 
   const closeExpenseDialog = () => {
     setExpenseDialog({ mode: "closed" });
-    setDeleteError(null);
+    deleteExpense.reset();
   };
 
-  const {
-    data: summary,
-    loading: summaryLoading,
-    refresh: refreshSummary,
-  } = useDashboardSummary(groupId ?? null);
+  const { data: summary, loading: summaryLoading } = useDashboardSummary(
+    groupId ?? null,
+  );
 
   const { data: categories } = useCategoriesList(groupId ?? null);
-  const {
-    data: expensesList,
-    loading,
-    refresh: refreshExpenses,
-  } = useExpensesList(
+  const { data: expensesList, loading } = useExpensesList(
     groupId ?? null,
     categoryFilterId || undefined,
     memberId || undefined,
@@ -93,38 +104,22 @@ export function ExpensesPage() {
   );
 
   const handleDeleteExpense = async (id: string) => {
-    setDeleting(true);
-    setDeleteError(null);
     try {
-      await expenseApi.delete(id);
-      refreshExpenses();
-      refreshSummary();
+      await deleteExpense.mutateAsync(id);
       closeExpenseDialog();
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete expense.",
-      );
-    } finally {
-      setDeleting(false);
+    } catch {
+      // deleteError derives from deleteExpense.error above.
     }
   };
 
   const handleDeleteAllExpenses = async () => {
     if (!groupId) return;
-    setDeleting(true);
-    setDeleteError(null);
     try {
-      await expenseApi.deleteAll(groupId);
-      refreshExpenses();
-      refreshSummary();
+      await deleteAllExpenses.mutateAsync(groupId);
       setDeleteAllOpen(false);
       setDeleteAllConfirmText("");
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete expenses.",
-      );
-    } finally {
-      setDeleting(false);
+    } catch {
+      // deleteError derives from deleteAllExpenses.error above.
     }
   };
 
@@ -201,7 +196,7 @@ export function ExpensesPage() {
             disabled={!summary || expenses.length === 0}
             onClick={() => {
               setDeleteAllOpen(true);
-              setDeleteError(null);
+              deleteAllExpenses.reset();
             }}
           >
             <Trash2 size={16} className="mr-1.5" />
@@ -289,14 +284,12 @@ export function ExpensesPage() {
             expense={editingExpense ?? undefined}
             onSuccess={() => {
               closeExpenseDialog();
-              refreshExpenses();
-              refreshSummary();
             }}
             onCancel={closeExpenseDialog}
             onDelete={
               isMobile && editingExpense
                 ? () => {
-                    setDeleteError(null);
+                    deleteExpense.reset();
                     setExpenseDialog({
                       mode: "delete",
                       expense: editingExpense,
@@ -622,7 +615,7 @@ export function ExpensesPage() {
                         setExpenseDialog({ mode: "form", expense });
                       }}
                       onDelete={() => {
-                        setDeleteError(null);
+                        deleteExpense.reset();
                         setExpenseDialog({ mode: "delete", expense });
                       }}
                     />
@@ -676,7 +669,7 @@ export function ExpensesPage() {
           setDeleteAllOpen(open);
           if (!open) {
             setDeleteAllConfirmText("");
-            setDeleteError(null);
+            deleteAllExpenses.reset();
           }
         }}
         title="Delete All Expenses"
@@ -708,6 +701,7 @@ export function ExpensesPage() {
             onClick={() => {
               setDeleteAllOpen(false);
               setDeleteAllConfirmText("");
+              deleteAllExpenses.reset();
             }}
           >
             Cancel

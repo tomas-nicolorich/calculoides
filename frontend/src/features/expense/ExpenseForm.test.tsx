@@ -1,6 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { ExpenseForm } from "./ExpenseForm";
+import { QueryWrapper } from "../../test/queryTestUtils";
 import { vi, describe, it, expect } from "vitest";
+
+function render(ui: ReactElement) {
+  return rtlRender(<QueryWrapper>{ui}</QueryWrapper>);
+}
 
 vi.mock("../../entities/expense", () => ({
   expenseApi: {

@@ -64,7 +64,6 @@ export function GroupsPage() {
         <CreateGroupForm
           onCreated={() => {
             setIsCreatingGroup(false);
-            refresh();
           }}
           onCancel={() => {
             setIsCreatingGroup(false);

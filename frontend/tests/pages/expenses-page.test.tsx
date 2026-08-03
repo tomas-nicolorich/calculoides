@@ -1,5 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { render as rtlRender, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ExpenseForm } from "@/features/expense/ExpenseForm";
@@ -7,6 +8,11 @@ import { ExpensesPage } from "@/pages/expenses/ui/ExpensesPage";
 import { expenseApi } from "@/entities/expense";
 import { useIsMobile } from "@/shared/lib/hooks/useIsMobile";
 import { useDashboardSummary } from "@/shared/api/dashboardHooks";
+import { QueryWrapper } from "@/test/queryTestUtils";
+
+function render(ui: ReactElement) {
+  return rtlRender(<QueryWrapper>{ui}</QueryWrapper>);
+}
 
 vi.mock("@/entities/expense", () => ({
   expenseApi: {

@@ -1,7 +1,10 @@
+import { createElement, type ReactNode } from "react";
 import { renderHook, act } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { useIncomeSession } from "./useIncomeSession";
 import type { IncomeSessionMember } from "./useIncomeSession";
+import { QueryWrapper, createTestQueryClient } from "../../test/queryTestUtils";
+import { queryKeys } from "../../shared/api/queryKeys";
 
 const mockUpdateMemberIncome =
   vi.fn<(memberId: string, income: number) => Promise<unknown>>();
@@ -33,11 +36,15 @@ const mockMembers: IncomeSessionMember[] = [
   { id: "m2", income: 1000 },
 ];
 
-function makeHook() {
+function makeHook(client = createTestQueryClient()) {
   return renderHook(
     ({ members }: { members: IncomeSessionMember[] | null }) =>
-      useIncomeSession(members),
-    { initialProps: { members: null as IncomeSessionMember[] | null } },
+      useIncomeSession(members, "group-1"),
+    {
+      initialProps: { members: null as IncomeSessionMember[] | null },
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryWrapper, { client, children }),
+    },
   );
 }
 
@@ -94,8 +101,10 @@ describe("useIncomeSession", () => {
     expect(result.current.overrideAmounts).toEqual({ m1: 3000, m2: 1000 });
   });
 
-  it("saveSession calls updateMemberIncome only for changed members and resolves to idle", async () => {
-    const { result, rerender } = makeHook();
+  it("saveSession calls updateMemberIncome only for changed members, invalidates the group query, and resolves to idle", async () => {
+    const client = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+    const { result, rerender } = makeHook(client);
     rerender({ members: mockMembers });
 
     act(() => {
@@ -108,6 +117,9 @@ describe("useIncomeSession", () => {
 
     expect(mockUpdateMemberIncome).toHaveBeenCalledTimes(1);
     expect(mockUpdateMemberIncome).toHaveBeenCalledWith("m2", 1500);
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.group("group-1"),
+    });
     expect(result.current.phase).toBe("idle");
     expect(result.current.saveError).toBeNull();
   });

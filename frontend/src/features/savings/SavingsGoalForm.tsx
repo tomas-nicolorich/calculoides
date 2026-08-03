@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Input, IconPicker, DatePicker } from "../../shared/ui";
 import { savingsGoalApi, SavingsGoal } from "../../entities/savings-goal";
 import { toFriendlySavingsError } from "../../entities/savings-goal/errorMessages";
+import { queryKeys } from "../../shared/api/queryKeys";
 import { cn } from "../../shared/lib/utils";
 
 interface SavingsGoalFormProps {
@@ -11,6 +13,14 @@ interface SavingsGoalFormProps {
   onCancel?: () => void;
 }
 
+interface SavingsGoalInput {
+  name: string;
+  icon: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string;
+}
+
 export function SavingsGoalForm({
   groupId,
   goal,
@@ -18,6 +28,7 @@ export function SavingsGoalForm({
   onCancel,
 }: SavingsGoalFormProps) {
   const isEditing = !!goal;
+  const qc = useQueryClient();
   const [name, setName] = useState(goal?.name ?? "");
   const [targetAmount, setTargetAmount] = useState(
     goal?.targetAmount.toString() ?? "",
@@ -29,34 +40,42 @@ export function SavingsGoalForm({
     goal?.targetDate ? new Date(goal.targetDate).toISOString().slice(0, 7) : "",
   );
   const [icon, setIcon] = useState(goal?.icon ?? "other");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const createGoal = useMutation({
+    mutationFn: (input: SavingsGoalInput) =>
+      savingsGoalApi.create(groupId, input),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
+  });
+  const updateGoal = useMutation({
+    mutationFn: (input: SavingsGoalInput) =>
+      savingsGoalApi.update(goal?.id ?? "", input),
+    onSuccess: () =>
+      qc.invalidateQueries({
+        queryKey: queryKeys.group(goal?.groupId ?? groupId),
+      }),
+  });
+
+  const loading = createGoal.isPending || updateGoal.isPending;
+  const mutationError = createGoal.error ?? updateGoal.error;
+  const error = mutationError ? toFriendlySavingsError(mutationError) : null;
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+
+    const input: SavingsGoalInput = {
+      name,
+      icon,
+      targetAmount: Number(targetAmount),
+      currentAmount: Number(currentAmount),
+      targetDate: new Date(`${targetDate}-01`).toISOString(),
+    };
 
     try {
       if (isEditing) {
-        await savingsGoalApi.update(goal.id, {
-          name,
-          icon,
-          targetAmount: Number(targetAmount),
-          currentAmount: Number(currentAmount),
-          targetDate: new Date(`${targetDate}-01`).toISOString(),
-        });
+        await updateGoal.mutateAsync(input);
       } else {
-        await savingsGoalApi.create(groupId, {
-          name,
-          icon,
-          targetAmount: Number(targetAmount),
-          currentAmount: Number(currentAmount),
-          targetDate: new Date(`${targetDate}-01`).toISOString(),
-        });
-      }
-
-      if (!isEditing) {
+        await createGoal.mutateAsync(input);
         setName("");
         setTargetAmount("");
         setCurrentAmount("0");
@@ -64,10 +83,8 @@ export function SavingsGoalForm({
         setIcon("other");
       }
       await onSuccess?.();
-    } catch (err) {
-      setError(toFriendlySavingsError(err));
-    } finally {
-      setLoading(false);
+    } catch {
+      // error derives from createGoal.error / updateGoal.error above.
     }
   };
 

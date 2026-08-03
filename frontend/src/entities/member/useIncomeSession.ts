@@ -1,5 +1,7 @@
 import { useReducer, useEffect, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { groupApi } from "../group/index";
+import { queryKeys } from "../../shared/api/queryKeys";
 
 export type IncomeSessionPhase = "idle" | "editing" | "saving";
 
@@ -101,7 +103,20 @@ function reducer(
  */
 export function useIncomeSession(
   members: IncomeSessionMember[] | null,
+  groupId: string,
 ): IncomeSession {
+  const qc = useQueryClient();
+  const saveIncomes = useMutation({
+    mutationFn: async (changed: { memberId: string; amount: number }[]) => {
+      await Promise.all(
+        changed.map(({ memberId, amount }) =>
+          groupApi.updateMemberIncome(memberId, amount),
+        ),
+      );
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
+  });
   const [state, dispatch] = useReducer(reducer, initialState);
   const [saveError, setSaveError] = useReducer(
     (_: string | null, next: string | null) => next,
@@ -148,14 +163,13 @@ export function useIncomeSession(
     dispatch({ type: "saveStart" });
     setSaveError(null);
     try {
-      const changed = Object.entries(state.overrideAmounts).filter(
-        ([memberId, amount]) => state.sessionStartSnapshot[memberId] !== amount,
-      );
-      await Promise.all(
-        changed.map(([memberId, amount]) =>
-          groupApi.updateMemberIncome(memberId, amount),
-        ),
-      );
+      const changed = Object.entries(state.overrideAmounts)
+        .filter(
+          ([memberId, amount]) =>
+            state.sessionStartSnapshot[memberId] !== amount,
+        )
+        .map(([memberId, amount]) => ({ memberId, amount }));
+      await saveIncomes.mutateAsync(changed);
       dispatch({ type: "saveSuccess" });
       setSaveError(null);
       return true;
@@ -165,7 +179,12 @@ export function useIncomeSession(
       setSaveError(message);
       return false;
     }
-  }, [state.phase, state.overrideAmounts, state.sessionStartSnapshot]);
+  }, [
+    state.phase,
+    state.overrideAmounts,
+    state.sessionStartSnapshot,
+    saveIncomes,
+  ]);
 
   return {
     phase: state.phase,

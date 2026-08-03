@@ -23,20 +23,20 @@ interface IncomeOverviewProps {
      */
     colorIndex?: number;
   }[];
-  /** Invoked after a successful save so the dashboard can refetch summary
-   * data (shares, quotas, ceilings) without a full page reload. */
-  onRefresh?: () => void | Promise<void>;
+  /** Group whose summary/budget queries are invalidated after a successful
+   * income save (shares, quotas, and ceilings all derive from income). */
+  groupId: string;
 }
 
 export function IncomeOverview({
   totalIncome,
   members,
-  onRefresh,
+  groupId,
 }: IncomeOverviewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
 
-  const session = useIncomeSession(isEditing ? members : null);
+  const session = useIncomeSession(isEditing ? members : null, groupId);
   const loading = session.phase === "saving";
 
   const withIndex = members.map((m, i) => ({
@@ -81,7 +81,6 @@ export function IncomeOverview({
     if (await session.saveSession()) {
       setRawInputs({});
       setIsEditing(false);
-      await onRefresh?.();
     }
   };
 

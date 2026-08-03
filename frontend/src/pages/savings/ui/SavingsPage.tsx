@@ -122,12 +122,7 @@ export function SavingsPage() {
         </Alert>
       )}
 
-      <SavingsGoalList
-        goals={goals}
-        onRefresh={() => {
-          refresh();
-        }}
-      />
+      <SavingsGoalList goals={goals} />
 
       <ResponsiveDialog
         open={createOpen}
@@ -139,7 +134,6 @@ export function SavingsPage() {
           groupId={groupId ?? ""}
           onSuccess={() => {
             setCreateOpen(false);
-            refresh();
           }}
           onCancel={() => {
             setCreateOpen(false);

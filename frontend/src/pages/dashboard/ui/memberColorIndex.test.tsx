@@ -1,9 +1,15 @@
-import { render, screen, within } from "@testing-library/react";
+import { render as rtlRender, screen, within } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, it, expect } from "vitest";
 import { buildMemberColorIndex } from "./DashboardPage";
 import { IncomeOverview } from "../../../widgets/dashboard/ui/IncomeOverview";
 import { RemainingBalance } from "../../../widgets/dashboard/ui/RemainingBalance";
 import { Avatar, AvatarGroup } from "../../../shared/ui/Avatar";
+import { QueryWrapper } from "../../../test/queryTestUtils";
+
+function render(ui: ReactElement) {
+  return rtlRender(<QueryWrapper>{ui}</QueryWrapper>);
+}
 
 // Members in join order; the third name starts with a unique letter so its
 // initial is addressable on its own across every panel.
@@ -59,7 +65,11 @@ describe("stable member colour across panels", () => {
     // IncomeOverview now uses MemberBar (colour dots + full name, no avatar initials).
     // Verify that it at least renders Zoe's name in the legend.
     const income = render(
-      <IncomeOverview totalIncome={6000} members={withIndex} />,
+      <IncomeOverview
+        totalIncome={6000}
+        members={withIndex}
+        groupId="group-1"
+      />,
     );
     expect(within(income.container).getByText("Zoe")).toBeInTheDocument();
 

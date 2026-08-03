@@ -1,7 +1,9 @@
+import { createElement, type ReactNode } from "react";
 import { renderHook, act } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { useContributionSession } from "./useContributionSession";
 import type { SavingsGoal } from "./index";
+import { QueryWrapper, createTestQueryClient } from "../../test/queryTestUtils";
 
 const mockUpsertContribution =
   vi.fn<
@@ -71,9 +73,14 @@ const mockGoal: SavingsGoal = {
 };
 
 function makeHook() {
+  const client = createTestQueryClient();
   return renderHook(
     ({ goal }: { goal: SavingsGoal | null }) => useContributionSession(goal),
-    { initialProps: { goal: null as SavingsGoal | null } },
+    {
+      initialProps: { goal: null as SavingsGoal | null },
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryWrapper, { client, children }),
+    },
   );
 }
 
@@ -335,7 +342,10 @@ describe("useContributionSession", () => {
   });
 
   it("forecastColor is neutral when phase is idle", () => {
-    const { result } = renderHook(() => useContributionSession(null));
+    const { result } = renderHook(() => useContributionSession(null), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryWrapper, { children }),
+    });
     expect(result.current.forecastColor).toBe("neutral");
   });
 

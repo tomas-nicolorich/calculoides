@@ -163,11 +163,6 @@ export function DashboardPage() {
     }
   };
 
-  const handleRefresh = () => {
-    refreshCategories();
-    refreshSummary();
-  };
-
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       {deleteCategoryError && (
@@ -244,7 +239,6 @@ export function DashboardPage() {
           }
           onSuccess={() => {
             setCreateExpenseOpen(false);
-            handleRefresh();
           }}
           onCancel={() => {
             setCreateExpenseOpen(false);
@@ -263,7 +257,7 @@ export function DashboardPage() {
               ...m,
               colorIndex: memberColorIndex.get(m.id) ?? 0,
             }))}
-            onRefresh={handleRefresh}
+            groupId={groupId ?? ""}
           />
           <RemainingBalance
             totalRemaining={summary.totalIncome - summary.totalBudget}
