@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useDashboardSummary,
   useCategoriesList,
@@ -13,7 +14,9 @@ import { useParams } from "react-router-dom";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { Plus } from "lucide-react";
 import { useAuth } from "../../../app/providers/AuthContext";
-import { apiClient } from "../../../shared/api/client";
+import { categoryApi } from "../../../entities/category";
+import { queryKeys } from "../../../shared/api/queryKeys";
+import { toErrorMessage } from "../../../shared/api/toErrorMessage";
 import { useIsMobile } from "../../../shared/lib/hooks/useIsMobile";
 import {
   AddExpenseFab,
@@ -45,6 +48,7 @@ export function DashboardPage() {
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
   const isMobile = useIsMobile();
+  const qc = useQueryClient();
   const {
     data: summary,
     loading: summaryLoading,
@@ -58,9 +62,13 @@ export function DashboardPage() {
     refresh: refreshCategories,
   } = useCategoriesList(groupId ?? null);
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
-  const [deleteCategoryError, setDeleteCategoryError] = useState<string | null>(
-    null,
-  );
+
+  const deleteCategory = useMutation({
+    mutationFn: (id: string) => categoryApi.delete(id),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId ?? "") }),
+  });
+  const deleteCategoryError = toErrorMessage(deleteCategory.error);
 
   if (summaryLoading || categoriesLoading) {
     return (
@@ -149,16 +157,9 @@ export function DashboardPage() {
 
   const handleDeleteCategory = async (id: string) => {
     try {
-      await apiClient.fetch(`/transactions?action=category-delete&id=${id}`, {
-        method: "DELETE",
-      });
-      setDeleteCategoryError(null);
-      refreshCategories();
-      refreshSummary();
-    } catch (err) {
-      setDeleteCategoryError(
-        err instanceof Error ? err.message : "Failed to delete category",
-      );
+      await deleteCategory.mutateAsync(id);
+    } catch {
+      // deleteCategoryError derives from deleteCategory.error above.
     }
   };
 
@@ -174,7 +175,7 @@ export function DashboardPage() {
           action={{
             label: "Dismiss",
             onClick: () => {
-              setDeleteCategoryError(null);
+              deleteCategory.reset();
             },
           }}
         >
@@ -306,7 +307,6 @@ export function DashboardPage() {
             share: m.share,
             index: i,
           }))}
-          onRefresh={handleRefresh}
         />
       </div>
     </div>

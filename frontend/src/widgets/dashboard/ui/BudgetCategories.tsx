@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "../../../shared/ui/Card";
 import { Avatar } from "../../../shared/ui/Avatar";
 import { ProgressMeter } from "../../../shared/ui/money";
@@ -13,7 +14,10 @@ import {
 } from "../../../../../shared/src/types/redesign";
 import { ChevronDown, Edit2, Trash2, Plus, ArrowRightLeft } from "lucide-react";
 import { DialogFooter } from "../../../shared/ui/Dialog";
-import { apiClient } from "../../../shared/api/client";
+import { categoryApi } from "../../../entities/category";
+import { transferApi } from "../../../entities/transfer";
+import { queryKeys } from "../../../shared/api/queryKeys";
+import { toErrorMessage } from "../../../shared/api/toErrorMessage";
 import {
   Select,
   Input,
@@ -262,7 +266,6 @@ interface BudgetCategoriesProps {
   onDelete: (id: string) => void;
   groupId: string;
   members: MemberRich[];
-  onRefresh: () => void;
 }
 
 export function BudgetCategories({
@@ -271,8 +274,8 @@ export function BudgetCategories({
   onDelete,
   groupId,
   members,
-  onRefresh,
 }: BudgetCategoriesProps) {
+  const qc = useQueryClient();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [editingCategory, setEditingCategory] =
@@ -286,8 +289,59 @@ export function BudgetCategories({
   const [monthlyBudget, setMonthlyBudget] = useState("");
   const [icon, setIcon] = useState("other");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+
+  const createCategory = useMutation({
+    mutationFn: (input: {
+      name: string;
+      monthlyBudget: number;
+      icon: string;
+      memberIds?: string[];
+    }) => categoryApi.create(groupId, input),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
+  });
+  const updateCategory = useMutation({
+    mutationFn: ({
+      id,
+      input,
+    }: {
+      id: string;
+      input: {
+        name: string;
+        monthlyBudget: number;
+        icon: string;
+        memberIds?: string[];
+      };
+    }) => categoryApi.update(id, input),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
+  });
+  const transferBudget = useMutation({
+    mutationFn: ({
+      categoryId,
+      fromMemberId,
+      toMemberId,
+      amount,
+    }: {
+      categoryId: string;
+      fromMemberId: string;
+      toMemberId: string;
+      amount: number;
+    }) => transferApi.create(categoryId, fromMemberId, toMemberId, amount),
+    onSuccess: () => {
+      // Fire-and-forget: the transfer dialog closes immediately, no
+      // dialog-close race to guard against (unlike create/update below).
+      void qc.invalidateQueries({ queryKey: queryKeys.group(groupId) });
+    },
+  });
+
+  const formLoading =
+    createCategory.isPending ||
+    updateCategory.isPending ||
+    transferBudget.isPending;
+  const formError = toErrorMessage(
+    createCategory.error ?? updateCategory.error ?? transferBudget.error,
+  );
 
   const [transferCategory, setTransferCategory] = useState<{
     id: string;
@@ -314,94 +368,60 @@ export function BudgetCategories({
 
   const handleAddSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    setFormLoading(true);
-    setFormError(null);
     try {
-      await apiClient.fetch(
-        `/transactions?action=category-create&groupId=${groupId}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            name,
-            monthlyBudget: Number(monthlyBudget),
-            icon,
-            memberIds:
-              selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
-          }),
-        },
-      );
+      await createCategory.mutateAsync({
+        name,
+        monthlyBudget: Number(monthlyBudget),
+        icon,
+        memberIds: selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
+      });
       setIsAdding(false);
       setName("");
       setMonthlyBudget("");
       setIcon("other");
       setSelectedMemberIds([]);
-      onRefresh();
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Failed to create category",
-      );
-    } finally {
-      setFormLoading(false);
+    } catch {
+      // formError derives from createCategory.error below.
     }
   };
 
   const handleEditSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!editingCategory) return;
-    setFormLoading(true);
-    setFormError(null);
     try {
-      await apiClient.fetch(
-        `/transactions?action=category-update&id=${editingCategory.id}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            name,
-            monthlyBudget: Number(monthlyBudget),
-            icon,
-            memberIds:
-              selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
-          }),
+      await updateCategory.mutateAsync({
+        id: editingCategory.id,
+        input: {
+          name,
+          monthlyBudget: Number(monthlyBudget),
+          icon,
+          memberIds:
+            selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
         },
-      );
+      });
       setEditingCategory(null);
       setName("");
       setMonthlyBudget("");
       setSelectedMemberIds([]);
-      onRefresh();
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Failed to update category",
-      );
-    } finally {
-      setFormLoading(false);
+    } catch {
+      // formError derives from updateCategory.error below.
     }
   };
 
   const handleTransferSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!transferCategory) return;
-    setFormLoading(true);
-    setFormError(null);
     try {
-      await apiClient.fetch("/transactions?action=transfer-create", {
-        method: "POST",
-        body: JSON.stringify({
-          categoryId: transferCategory.id,
-          fromMemberId: transferFromMemberId,
-          toMemberId: transferToMemberId,
-          amount: Number(transferAmount),
-        }),
+      await transferBudget.mutateAsync({
+        categoryId: transferCategory.id,
+        fromMemberId: transferFromMemberId,
+        toMemberId: transferToMemberId,
+        amount: Number(transferAmount),
       });
       setTransferCategory(null);
       setTransferAmount("");
-      onRefresh();
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Failed to transfer budget",
-      );
-    } finally {
-      setFormLoading(false);
+    } catch {
+      // formError derives from transferBudget.error below.
     }
   };
 
@@ -472,7 +492,7 @@ export function BudgetCategories({
               setName("");
               setMonthlyBudget("");
               setSelectedMemberIds([]);
-              setFormError(null);
+              updateCategory.reset();
             }
           }}
           title="Edit Category"
@@ -692,7 +712,7 @@ export function BudgetCategories({
                             setTransferFromMemberId(balance.memberId);
                             setTransferToMemberId("");
                             setTransferAmount("");
-                            setFormError(null);
+                            transferBudget.reset();
                           }}
                         />
                       ))}
@@ -713,7 +733,7 @@ export function BudgetCategories({
                               ? assignedMemberIds
                               : [],
                           );
-                          setFormError(null);
+                          updateCategory.reset();
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-brand-balance hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                         aria-label="Edit category"
