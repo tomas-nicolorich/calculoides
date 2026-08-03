@@ -43,11 +43,11 @@ Chain strategy: feature-branch-chain
 
 ## Slice 2a (PR2): `dashboardHooks.ts` on `useQuery`
 
-- [ ] 2a.1 Create `frontend/src/shared/api/apiQueryResult.ts`: `ApiQueryResult<T>` interface (A1, 5 required fields + optional `isFetching?`/`refetch?`) and `toApiQueryResult<T>(q, fallback)` (A2/A3/A4/A5 mapping).
-- [ ] 2a.2 RED — `apiQueryResult.test.ts`: maps `isLoading`→`loading`/`isInitialLoading`, `error`→string via `toErrorMessage`, `data ?? fallback`, `refresh()` calls `q.refetch()`, passes through `isFetching`/`refetch`.
-- [ ] 2a.3 RED — create `frontend/src/shared/api/dashboardHooks.test.ts`: for each of `useDashboardSummary`, `useCategoriesList`, `useExpensesList`, `useTransfersList` — disabled when `groupId === null` (`loading === false`, no fetch call), first load, error → string, cache hit on remount (no second `apiClient.fetch` call), `refresh()` triggers a refetch; for the two paginated hooks (`useExpensesList`, `useTransfersList`) assert page 1 rows persist while page 2 loads (`placeholderData`).
-- [ ] 2a.4 GREEN — rewrite `frontend/src/shared/api/dashboardHooks.ts`: each hook backed by `useQuery({ queryKey: queryKeys.…, queryFn: ({signal}) => …, enabled: groupId !== null })`, `placeholderData: keepPreviousData` on `useExpensesList`/`useTransfersList` (A8), return `toApiQueryResult(q, fallback)` — signatures unchanged. Confirm 2a.3 passes.
-- [ ] 2a.5 REFACTOR — remove now-dead local fetcher wiring inside `dashboardHooks.ts`; confirm `frontend/src/widgets/dashboard/*` and `frontend/src/pages/dashboard/*` tests still pass unchanged (they mock the hook module).
+- [x] 2a.1 Create `frontend/src/shared/api/apiQueryResult.ts`: `ApiQueryResult<T>` interface (A1, 5 required fields + optional `isFetching?`/`refetch?`) and `toApiQueryResult<T>(q, fallback)` (A2/A3/A4/A5 mapping).
+- [x] 2a.2 RED — `apiQueryResult.test.ts`: maps `isLoading`→`loading`/`isInitialLoading`, `error`→string via `toErrorMessage`, `data ?? fallback`, `refresh()` calls `q.refetch()`, passes through `isFetching`/`refetch`.
+- [x] 2a.3 RED — create `frontend/src/shared/api/dashboardHooks.test.ts`: for each of `useDashboardSummary`, `useCategoriesList`, `useExpensesList`, `useTransfersList` — disabled when `groupId === null` (`loading === false`, no fetch call), first load, error → string, cache hit on remount (no second `apiClient.fetch` call), `refresh()` triggers a refetch; for the two paginated hooks (`useExpensesList`, `useTransfersList`) assert page 1 rows persist while page 2 loads (`placeholderData`).
+- [x] 2a.4 GREEN — rewrite `frontend/src/shared/api/dashboardHooks.ts`: each hook backed by `useQuery({ queryKey: queryKeys.…, queryFn: ({signal}) => …, enabled: groupId !== null })`, `placeholderData: keepPreviousData` on `useExpensesList`/`useTransfersList` (A8), return `toApiQueryResult(q, fallback)` — signatures unchanged. Confirm 2a.3 passes.
+- [x] 2a.5 REFACTOR — remove now-dead local fetcher wiring inside `dashboardHooks.ts`; confirm `frontend/src/widgets/dashboard/*` and `frontend/src/pages/dashboard/*` tests still pass unchanged (they mock the hook module).
 
 ## Slice 2b (PR3): `savingsHooks.ts` + `GroupListContext.tsx` + delete `useApiQuery.ts`
 
