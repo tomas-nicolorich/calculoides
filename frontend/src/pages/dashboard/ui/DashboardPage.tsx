@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  QueryClient,
+} from "@tanstack/react-query";
+import type { User } from "@supabase/supabase-js";
 import {
   useDashboardSummary,
   useCategoriesList,
@@ -28,6 +33,10 @@ import {
   Skeleton,
 } from "../../../shared/ui";
 import { Avatar, AvatarGroup } from "../../../shared/ui/Avatar";
+import type {
+  DashboardSummary,
+  CategoryWithBalances,
+} from "../../../../../shared/src/types/redesign";
 
 /**
  * Builds the stable per-group member colour index (memberId → palette index)
@@ -89,66 +98,175 @@ function DashboardSkeleton() {
   );
 }
 
-export function DashboardPage() {
-  const { user } = useAuth();
-  const { groupId } = useParams<{ groupId: string }>();
-  useSetActiveGroup(groupId);
+function DashboardErrorState({
+  error,
+  onRetry,
+}: {
+  error: string | null;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="p-8 text-center space-y-4">
+      <p className="text-brand-expense font-medium">
+        Failed to load dashboard data
+      </p>
+      <p className="text-sm text-slate-500">{error}</p>
+      <Button variant="balance" onClick={onRetry}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
+function DashboardHeader({
+  summary,
+  groupId,
+  isMobile,
+  memberColorIndex,
+  onAddExpense,
+}: {
+  summary: DashboardSummary;
+  groupId: string;
+  isMobile: boolean;
+  memberColorIndex: Map<string, number>;
+  onAddExpense: () => void;
+}) {
+  return (
+    <>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+            {summary.groupName}
+          </h1>
+          <p className="text-slate-500">
+            Shared budget · {summary.members.length} members
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <ReloadButton queryKey={queryKeys.group(groupId)} />
+          {summary.members.length > 0 && (
+            <AvatarGroup max={3} size="sm">
+              {summary.members.map((m) => (
+                <Avatar
+                  key={m.id}
+                  size="sm"
+                  name={m.name}
+                  colorIndex={memberColorIndex.get(m.id) ?? 0}
+                />
+              ))}
+            </AvatarGroup>
+          )}
+          {!isMobile && (
+            <Button variant="cta" onClick={onAddExpense}>
+              <Plus size={16} className="mr-1" />
+              Add Expense
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {isMobile && <AddExpenseFab onClick={onAddExpense} />}
+    </>
+  );
+}
+
+function DashboardWidgetsGrid({
+  summary,
+  categories,
+  groupId,
+  isOwner,
+  memberColorIndex,
+  onDeleteCategory,
+}: {
+  summary: DashboardSummary;
+  categories: CategoryWithBalances[];
+  groupId: string;
+  isOwner: boolean;
+  memberColorIndex: Map<string, number>;
+  onDeleteCategory: (id: string) => void;
+}) {
+  return (
+    <div
+      className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
+      data-testid="dashboard-grid"
+    >
+      <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
+        <IncomeOverview
+          totalIncome={summary.totalIncome}
+          members={summary.members.map((m) => ({
+            ...m,
+            colorIndex: memberColorIndex.get(m.id) ?? 0,
+          }))}
+          groupId={groupId}
+        />
+        <RemainingBalance
+          totalRemaining={summary.totalIncome - summary.totalBudget}
+          members={summary.members.map((m) => ({
+            ...m,
+            colorIndex: memberColorIndex.get(m.id) ?? 0,
+          }))}
+        />
+        <RecentExpenses
+          expenses={summary.recentExpenses}
+          groupId={groupId}
+          members={summary.members.map((m) => ({
+            id: m.id,
+            name: m.name,
+            colorIndex: memberColorIndex.get(m.id) ?? 0,
+          }))}
+          categories={categories}
+        />
+        <BudgetTransfers
+          groupId={groupId}
+          transfers={summary.recentTransfers}
+          members={summary.members.map((m) => ({
+            id: m.id,
+            name: m.name,
+            colorIndex: memberColorIndex.get(m.id) ?? 0,
+          }))}
+        />
+      </div>
+
+      <BudgetCategories
+        categories={categories}
+        isOwner={isOwner}
+        onDelete={onDeleteCategory}
+        groupId={groupId}
+        members={summary.members.map((m, i) => ({
+          id: m.id,
+          name: m.name,
+          income: m.income,
+          share: m.share,
+          index: i,
+        }))}
+      />
+    </div>
+  );
+}
+
+function DashboardContent({
+  summary,
+  categories,
+  groupId,
+  user,
+  qc,
+}: {
+  summary: DashboardSummary;
+  categories: CategoryWithBalances[];
+  groupId: string;
+  user: User | null;
+  qc: QueryClient;
+}) {
   const isMobile = useIsMobile();
-  const qc = useQueryClient();
-  const {
-    data: summary,
-    loading: summaryLoading,
-    error: summaryError,
-    refresh: refreshSummary,
-  } = useDashboardSummary(groupId ?? null);
-  const {
-    data: categories,
-    loading: categoriesLoading,
-    error: categoriesError,
-    refresh: refreshCategories,
-  } = useCategoriesList(groupId ?? null);
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
 
   const deleteCategory = useMutation({
     mutationFn: (id: string) => categoryApi.delete(id),
     onSuccess: () =>
-      qc.invalidateQueries({ queryKey: queryKeys.group(groupId ?? "") }),
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
   });
   const deleteCategoryError = toErrorMessage(deleteCategory.error);
-
-  if (summaryLoading || categoriesLoading) {
-    return <DashboardSkeleton />;
-  }
-
-  if (summaryError || categoriesError) {
-    return (
-      <div className="p-8 text-center space-y-4">
-        <p className="text-brand-expense font-medium">
-          Failed to load dashboard data
-        </p>
-        <p className="text-sm text-slate-500">
-          {summaryError ?? categoriesError}
-        </p>
-        <Button
-          variant="balance"
-          onClick={() => {
-            refreshSummary();
-            refreshCategories();
-          }}
-        >
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
-  if (!summary) {
-    return (
-      <div className="p-8 text-center text-slate-500">
-        No dashboard data available. Please select a group.
-      </div>
-    );
-  }
 
   const isOwner = user?.id === summary.ownerId;
 
@@ -180,51 +298,15 @@ export function DashboardPage() {
         </Alert>
       )}
 
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-            {summary.groupName}
-          </h1>
-          <p className="text-slate-500">
-            Shared budget · {summary.members.length} members
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
-          {summary.members.length > 0 && (
-            <AvatarGroup max={3} size="sm">
-              {summary.members.map((m) => (
-                <Avatar
-                  key={m.id}
-                  size="sm"
-                  name={m.name}
-                  colorIndex={memberColorIndex.get(m.id) ?? 0}
-                />
-              ))}
-            </AvatarGroup>
-          )}
-          {!isMobile && (
-            <Button
-              variant="cta"
-              onClick={() => {
-                setCreateExpenseOpen(true);
-              }}
-            >
-              <Plus size={16} className="mr-1" />
-              Add Expense
-            </Button>
-          )}
-        </div>
-      </header>
-
-      {isMobile && (
-        <AddExpenseFab
-          onClick={() => {
-            setCreateExpenseOpen(true);
-          }}
-        />
-      )}
+      <DashboardHeader
+        summary={summary}
+        groupId={groupId}
+        isMobile={isMobile}
+        memberColorIndex={memberColorIndex}
+        onAddExpense={() => {
+          setCreateExpenseOpen(true);
+        }}
+      />
 
       <ResponsiveDialog
         open={createExpenseOpen}
@@ -234,7 +316,7 @@ export function DashboardPage() {
         hideCloseButton
       >
         <ExpenseForm
-          groupId={groupId ?? ""}
+          groupId={groupId}
           categories={categories}
           members={summary.members}
           defaultPayerId={
@@ -249,63 +331,69 @@ export function DashboardPage() {
         />
       </ResponsiveDialog>
 
-      <div
-        className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
-        data-testid="dashboard-grid"
-      >
-        <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
-          <IncomeOverview
-            totalIncome={summary.totalIncome}
-            members={summary.members.map((m) => ({
-              ...m,
-              colorIndex: memberColorIndex.get(m.id) ?? 0,
-            }))}
-            groupId={groupId ?? ""}
-          />
-          <RemainingBalance
-            totalRemaining={summary.totalIncome - summary.totalBudget}
-            members={summary.members.map((m) => ({
-              ...m,
-              colorIndex: memberColorIndex.get(m.id) ?? 0,
-            }))}
-          />
-          <RecentExpenses
-            expenses={summary.recentExpenses}
-            groupId={groupId ?? ""}
-            members={summary.members.map((m) => ({
-              id: m.id,
-              name: m.name,
-              colorIndex: memberColorIndex.get(m.id) ?? 0,
-            }))}
-            categories={categories}
-          />
-          <BudgetTransfers
-            groupId={groupId ?? ""}
-            transfers={summary.recentTransfers}
-            members={summary.members.map((m) => ({
-              id: m.id,
-              name: m.name,
-              colorIndex: memberColorIndex.get(m.id) ?? 0,
-            }))}
-          />
-        </div>
-
-        <BudgetCategories
-          categories={categories}
-          isOwner={isOwner}
-          onDelete={(id) => {
-            void handleDeleteCategory(id);
-          }}
-          groupId={groupId ?? ""}
-          members={summary.members.map((m, i) => ({
-            id: m.id,
-            name: m.name,
-            income: m.income,
-            share: m.share,
-            index: i,
-          }))}
-        />
-      </div>
+      <DashboardWidgetsGrid
+        summary={summary}
+        categories={categories}
+        groupId={groupId}
+        isOwner={isOwner}
+        memberColorIndex={memberColorIndex}
+        onDeleteCategory={(id) => {
+          void handleDeleteCategory(id);
+        }}
+      />
     </div>
+  );
+}
+
+export function DashboardPage() {
+  const { user } = useAuth();
+  const { groupId } = useParams<{ groupId: string }>();
+  useSetActiveGroup(groupId);
+  const qc = useQueryClient();
+  const {
+    data: summary,
+    loading: summaryLoading,
+    error: summaryError,
+    refresh: refreshSummary,
+  } = useDashboardSummary(groupId ?? null);
+  const {
+    data: categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    refresh: refreshCategories,
+  } = useCategoriesList(groupId ?? null);
+
+  if (summaryLoading || categoriesLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (summaryError || categoriesError) {
+    return (
+      <DashboardErrorState
+        error={summaryError ?? categoriesError}
+        onRetry={() => {
+          refreshSummary();
+          refreshCategories();
+        }}
+      />
+    );
+  }
+
+  if (!summary) {
+    return (
+      <div className="p-8 text-center text-slate-500">
+        No dashboard data available. Please select a group.
+      </div>
+    );
+  }
+
+  return (
+    <DashboardContent
+      summary={summary}
+      categories={categories}
+      groupId={groupId ?? ""}
+      user={user}
+      qc={qc}
+    />
   );
 }
