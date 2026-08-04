@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   IconButton,
+  ReloadButton,
   RowMenu,
   Select,
   Skeleton,
@@ -156,6 +157,7 @@ export function TransfersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
           <Button
             variant="outline"
             onClick={() => {

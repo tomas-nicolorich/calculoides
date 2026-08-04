@@ -37,6 +37,7 @@ export { Alert } from "./Alert";
 export { ResponsiveDialog } from "./ResponsiveDialog";
 export { Avatar, AvatarGroup } from "./Avatar";
 export { IconButton } from "./IconButton";
+export { ReloadButton } from "./ReloadButton";
 export { IconPicker } from "./IconPicker";
 export { DatePicker } from "./DatePicker";
 export { UserDisplay } from "./UserDisplay";

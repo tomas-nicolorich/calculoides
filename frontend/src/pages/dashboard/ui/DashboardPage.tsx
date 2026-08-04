@@ -23,6 +23,7 @@ import {
   Alert,
   Button,
   Card,
+  ReloadButton,
   ResponsiveDialog,
   Skeleton,
 } from "../../../shared/ui";
@@ -189,6 +190,7 @@ export function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
           {summary.members.length > 0 && (
             <AvatarGroup max={3} size="sm">
               {summary.members.map((m) => (

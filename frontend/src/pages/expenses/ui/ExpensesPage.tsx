@@ -30,6 +30,7 @@ import {
   DatePicker,
   IconButton,
   Input,
+  ReloadButton,
   ResponsiveDialog,
   RowMenu,
   Select,
@@ -181,6 +182,7 @@ export function ExpensesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
           <Button
             variant="outline"
             onClick={() => {

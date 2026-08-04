@@ -254,7 +254,7 @@ export function ExpenseForm({
         )}
         <Button
           type="submit"
-          variant="expense"
+          variant="balance"
           className={onDelete ? "" : "flex-1"}
           disabled={loading || !categoryId}
         >
