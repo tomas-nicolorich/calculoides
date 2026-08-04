@@ -57,14 +57,9 @@ const routes: RouteConfig = {
   },
   "remove-member": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as AuthenticatedRequest;
-    const { id, groupId } = req.query;
-    if (
-      !id ||
-      typeof id !== "string" ||
-      !groupId ||
-      typeof groupId !== "string"
-    ) {
-      res.status(400).json({ error: "Missing memberId or groupId" });
+    const { id } = req.query;
+    if (!id || typeof id !== "string") {
+      res.status(400).json({ error: "Missing memberId" });
       return;
     }
 
@@ -77,7 +72,10 @@ const routes: RouteConfig = {
       return;
     }
 
-    const isOwner = await GroupService.isOwner(groupId, authReq.user.id);
+    // Authorization is derived from the member's own groupId, never from a
+    // caller-supplied one — otherwise an owner of group A could pass group
+    // A's id alongside a memberId from group B and remove that member.
+    const isOwner = await GroupService.isOwner(member.groupId, authReq.user.id);
     const isSelf = member.userId === authReq.user.id;
 
     if (!isOwner && !isSelf) {
@@ -87,7 +85,7 @@ const routes: RouteConfig = {
       return;
     }
 
-    await GroupService.removeMember(groupId, id);
+    await GroupService.removeMember(member.groupId, id);
     res.status(204).end();
   },
 };

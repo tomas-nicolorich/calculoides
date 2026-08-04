@@ -153,6 +153,9 @@ export const GroupService = {
   /**
    * Removes a member from the group.
    * If the member is the owner, triggers automatic succession.
+   * `groupId` must be the member's actual group — verified here rather than
+   * trusted from the caller, since the caller-side authorization check is
+   * typically performed against a separately supplied groupId.
    */
   async removeMember(groupId: string, memberId: string) {
     const member = await prisma.groupMember.findUnique({
@@ -161,6 +164,9 @@ export const GroupService = {
     });
 
     if (!member) throw new Error("Member not found");
+    if (member.groupId !== groupId) {
+      throw new Error("Member does not belong to this group");
+    }
 
     const isOwner = member.group.ownerId === member.userId;
 
