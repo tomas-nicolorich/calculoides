@@ -67,9 +67,7 @@ export const ExpenseService = {
           },
         },
       },
-      orderBy: {
-        date: "desc",
-      },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     });
   },
 
@@ -115,7 +113,7 @@ export const ExpenseService = {
     const [expenses, total] = await prisma.$transaction([
       prisma.expense.findMany({
         where,
-        orderBy: { date: "desc" },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         take: limit,
         skip: offset,
         include: {

@@ -12,6 +12,7 @@ vi.mock("../../_src/utils/prisma", () => ({
       findMany: vi.fn(),
       delete: vi.fn(),
       updateMany: vi.fn(),
+      count: vi.fn(),
     },
     category: {
       findMany: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("../../_src/utils/prisma", () => ({
     groupMember: {
       findFirst: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -62,6 +64,34 @@ describe("ExpenseService Integration", () => {
     );
 
     expect(result.id).toBe("exp-1");
+  });
+
+  it("should order listExpenses by date desc, then createdAt desc as a tiebreak", async () => {
+    vi.mocked(prisma.$transaction).mockImplementation(async (ops: unknown) =>
+      Promise.all(ops as Promise<unknown>[]),
+    );
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.expense.count).mockResolvedValue(0);
+
+    await ExpenseService.listExpenses("group-1");
+
+    expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      }),
+    );
+  });
+
+  it("should order getExpensesByCategory by date desc, then createdAt desc as a tiebreak", async () => {
+    vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
+
+    await ExpenseService.getExpensesByCategory("cat-1");
+
+    expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      }),
+    );
   });
 
   it("should delete an expense permanently", async () => {
