@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "../../../shared/api/dashboardUtils";
 import {
   useExpensesList,
@@ -6,11 +7,10 @@ import {
   useCategoriesList,
 } from "../../../shared/api/dashboardHooks";
 import { ExpenseForm } from "../../../features/expense/ExpenseForm";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAuth } from "../../../app/providers/AuthContext";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Info,
@@ -21,12 +21,16 @@ import {
   X,
 } from "lucide-react";
 import { expenseApi } from "../../../entities/expense";
+import { queryKeys } from "../../../shared/api/queryKeys";
+import { toErrorMessage } from "../../../shared/api/toErrorMessage";
 import {
+  AddExpenseFab,
   Button,
   Card,
   DatePicker,
   IconButton,
   Input,
+  ReloadButton,
   ResponsiveDialog,
   RowMenu,
   Select,
@@ -48,7 +52,6 @@ export function ExpensesPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
   useSetActiveGroup(groupId);
-  const navigate = useNavigate();
   const PAGE_SIZE = 25;
   const isMobile = useIsMobile();
 
@@ -64,26 +67,34 @@ export function ExpensesPage() {
   });
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deleteAllConfirmText, setDeleteAllConfirmText] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const invalidateGroup = () =>
+    qc.invalidateQueries({ queryKey: queryKeys.group(groupId ?? "") });
+
+  const deleteExpense = useMutation({
+    mutationFn: (id: string) => expenseApi.delete(id),
+    onSuccess: invalidateGroup,
+  });
+  const deleteAllExpenses = useMutation({
+    mutationFn: (groupId: string) => expenseApi.deleteAll(groupId),
+    onSuccess: invalidateGroup,
+  });
+  const deleting = deleteExpense.isPending || deleteAllExpenses.isPending;
+  const deleteError = toErrorMessage(
+    deleteExpense.error ?? deleteAllExpenses.error,
+  );
 
   const closeExpenseDialog = () => {
     setExpenseDialog({ mode: "closed" });
-    setDeleteError(null);
+    deleteExpense.reset();
   };
 
-  const {
-    data: summary,
-    loading: summaryLoading,
-    refresh: refreshSummary,
-  } = useDashboardSummary(groupId ?? null);
+  const { data: summary, loading: summaryLoading } = useDashboardSummary(
+    groupId ?? null,
+  );
 
   const { data: categories } = useCategoriesList(groupId ?? null);
-  const {
-    data: expensesList,
-    loading,
-    refresh: refreshExpenses,
-  } = useExpensesList(
+  const { data: expensesList, loading } = useExpensesList(
     groupId ?? null,
     categoryFilterId || undefined,
     memberId || undefined,
@@ -94,38 +105,22 @@ export function ExpensesPage() {
   );
 
   const handleDeleteExpense = async (id: string) => {
-    setDeleting(true);
-    setDeleteError(null);
     try {
-      await expenseApi.delete(id);
-      refreshExpenses();
-      refreshSummary();
+      await deleteExpense.mutateAsync(id);
       closeExpenseDialog();
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete expense.",
-      );
-    } finally {
-      setDeleting(false);
+    } catch {
+      // deleteError derives from deleteExpense.error above.
     }
   };
 
   const handleDeleteAllExpenses = async () => {
     if (!groupId) return;
-    setDeleting(true);
-    setDeleteError(null);
     try {
-      await expenseApi.deleteAll(groupId);
-      refreshExpenses();
-      refreshSummary();
+      await deleteAllExpenses.mutateAsync(groupId);
       setDeleteAllOpen(false);
       setDeleteAllConfirmText("");
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete expenses.",
-      );
-    } finally {
-      setDeleting(false);
+    } catch {
+      // deleteError derives from deleteAllExpenses.error above.
     }
   };
 
@@ -178,27 +173,16 @@ export function ExpensesPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <IconButton
-            bordered
-            hover="balance"
-            onClick={() => {
-              void navigate(-1);
-            }}
-            aria-label="Back to Dashboard"
-          >
-            <ArrowLeft size={20} />
-          </IconButton>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              All Expenses
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Every recorded spend for this group
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            All Expenses
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Every recorded spend for this group
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
           <Button
             variant="outline"
             onClick={() => {
@@ -214,24 +198,35 @@ export function ExpensesPage() {
             disabled={!summary || expenses.length === 0}
             onClick={() => {
               setDeleteAllOpen(true);
-              setDeleteError(null);
+              deleteAllExpenses.reset();
             }}
           >
             <Trash2 size={16} className="mr-1.5" />
             Delete All
           </Button>
-          <Button
-            variant="cta"
-            disabled={!summary}
-            onClick={() => {
-              setExpenseDialog({ mode: "form", expense: null });
-            }}
-          >
-            <Plus size={16} className="mr-1" />
-            Add Expense
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="cta"
+              disabled={!summary}
+              onClick={() => {
+                setExpenseDialog({ mode: "form", expense: null });
+              }}
+            >
+              <Plus size={16} className="mr-1" />
+              Add Expense
+            </Button>
+          )}
         </div>
       </header>
+
+      {isMobile && (
+        <AddExpenseFab
+          disabled={!summary}
+          onClick={() => {
+            setExpenseDialog({ mode: "form", expense: null });
+          }}
+        />
+      )}
 
       <ResponsiveDialog
         open={expenseDialog.mode !== "closed"}
@@ -291,14 +286,12 @@ export function ExpensesPage() {
             expense={editingExpense ?? undefined}
             onSuccess={() => {
               closeExpenseDialog();
-              refreshExpenses();
-              refreshSummary();
             }}
             onCancel={closeExpenseDialog}
             onDelete={
               isMobile && editingExpense
                 ? () => {
-                    setDeleteError(null);
+                    deleteExpense.reset();
                     setExpenseDialog({
                       mode: "delete",
                       expense: editingExpense,
@@ -624,7 +617,7 @@ export function ExpensesPage() {
                         setExpenseDialog({ mode: "form", expense });
                       }}
                       onDelete={() => {
-                        setDeleteError(null);
+                        deleteExpense.reset();
                         setExpenseDialog({ mode: "delete", expense });
                       }}
                     />
@@ -678,7 +671,7 @@ export function ExpensesPage() {
           setDeleteAllOpen(open);
           if (!open) {
             setDeleteAllConfirmText("");
-            setDeleteError(null);
+            deleteAllExpenses.reset();
           }
         }}
         title="Delete All Expenses"
@@ -710,6 +703,7 @@ export function ExpensesPage() {
             onClick={() => {
               setDeleteAllOpen(false);
               setDeleteAllConfirmText("");
+              deleteAllExpenses.reset();
             }}
           >
             Cancel

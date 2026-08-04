@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Input, Select, DatePicker } from "../../shared/ui";
 import { expenseApi } from "../../entities/expense";
+import { queryKeys } from "../../shared/api/queryKeys";
 import type { CategoryWithBalances } from "../../../../shared/src/types/redesign";
 
 interface ExpenseFormProps {
@@ -23,6 +25,7 @@ interface ExpenseFormProps {
 
 // fallow-ignore-next-line complexity
 export function ExpenseForm({
+  groupId,
   categories,
   members,
   defaultPayerId,
@@ -32,6 +35,7 @@ export function ExpenseForm({
   onDelete,
 }: ExpenseFormProps) {
   const today = new Date().toISOString().split("T")[0];
+  const qc = useQueryClient();
 
   const [description, setDescription] = useState(expense?.description ?? "");
   const [amount, setAmount] = useState(
@@ -44,25 +48,62 @@ export function ExpenseForm({
   const [payerId, setPayerId] = useState(
     expense?.payerId ?? defaultPayerId ?? "",
   );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const invalidateGroup = () =>
+    qc.invalidateQueries({ queryKey: queryKeys.group(groupId) });
+
+  const logExpense = useMutation({
+    mutationFn: (input: {
+      categoryId: string;
+      description: string;
+      amount: number;
+      date?: string;
+      payerId?: string;
+    }) => expenseApi.log(input),
+    onSuccess: invalidateGroup,
+  });
+  const updateExpense = useMutation({
+    mutationFn: ({
+      id,
+      input,
+    }: {
+      id: string;
+      input: {
+        description: string;
+        amount: number;
+        date: string;
+        categoryId: string;
+        payerId: string;
+      };
+    }) => expenseApi.update(id, input),
+    onSuccess: invalidateGroup,
+  });
+
+  const loading = logExpense.isPending || updateExpense.isPending;
+  const mutationError = logExpense.error ?? updateExpense.error;
+  const error = mutationError
+    ? mutationError instanceof Error
+      ? mutationError.message || "Failed to save expense"
+      : String(mutationError)
+    : null;
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
 
     try {
       if (expense) {
-        await expenseApi.update(expense.id, {
-          description,
-          amount: Number(amount),
-          categoryId,
-          date: new Date(date).toISOString(),
-          payerId,
+        await updateExpense.mutateAsync({
+          id: expense.id,
+          input: {
+            description,
+            amount: Number(amount),
+            categoryId,
+            date: new Date(date).toISOString(),
+            payerId,
+          },
         });
       } else {
-        await expenseApi.log({
+        await logExpense.mutateAsync({
           description,
           amount: Number(amount),
           categoryId,
@@ -77,11 +118,8 @@ export function ExpenseForm({
       setDate(today);
       setPayerId(defaultPayerId ?? "");
       await onSuccess?.();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message || "Failed to save expense");
-    } finally {
-      setLoading(false);
+    } catch {
+      // error derives from logExpense.error / updateExpense.error above.
     }
   };
 
@@ -216,7 +254,7 @@ export function ExpenseForm({
         )}
         <Button
           type="submit"
-          variant="expense"
+          variant="balance"
           className={onDelete ? "" : "flex-1"}
           disabled={loading || !categoryId}
         >

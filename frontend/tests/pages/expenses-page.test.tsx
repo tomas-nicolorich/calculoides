@@ -1,18 +1,53 @@
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { ExpenseForm } from "@/features/expense/ExpenseForm";
+import { ExpensesPage } from "@/pages/expenses/ui/ExpensesPage";
 import { expenseApi } from "@/entities/expense";
+import { useIsMobile } from "@/shared/lib/hooks/useIsMobile";
+import { useDashboardSummary } from "@/shared/api/dashboardHooks";
+import { QueryWrapper } from "@/test/queryTestUtils";
+
+function render(ui: ReactElement) {
+  return rtlRender(<QueryWrapper>{ui}</QueryWrapper>);
+}
 
 vi.mock("@/entities/expense", () => ({
   expenseApi: {
     log: vi.fn().mockResolvedValue(undefined),
     update: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    deleteAll: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
+// `useIsMobile` defaults to desktop (false) so it's unaffected by these
+// overrides unless a test explicitly opts into mobile.
 vi.mock("@/shared/lib/hooks/useIsMobile", () => ({
   useIsMobile: vi.fn(() => false),
+}));
+
+vi.mock("@/app/providers/AuthContext", () => ({
+  useAuth: () => ({
+    user: { id: "1", email: "test@example.com" },
+    signOut: vi.fn(),
+  }),
+}));
+
+vi.mock("@/app/providers/ActiveGroupContext", () => ({
+  useSetActiveGroup: vi.fn(),
+}));
+
+vi.mock("@/shared/api/dashboardHooks", () => ({
+  useDashboardSummary: vi.fn(),
+  useCategoriesList: () => ({ data: [], loading: false }),
+  useExpensesList: () => ({
+    data: { expenses: [], pagination: { total: 0, limit: 25, offset: 0 } },
+    loading: false,
+    refresh: vi.fn(),
+  }),
 }));
 
 interface Option {
@@ -130,5 +165,108 @@ describe("ExpenseForm Edit and Delete Flow", () => {
 
     await user.click(deleteBtn);
     expect(onDelete).toHaveBeenCalled();
+  });
+});
+
+describe("ExpensesPage — mobile Add Expense FAB", () => {
+  beforeEach(() => {
+    vi.mocked(useDashboardSummary).mockReturnValue({
+      data: {
+        groupName: "Test Group",
+        ownerId: "1",
+        totalIncome: 5000,
+        totalBudget: 4000,
+        totalSpent: 1000,
+        members: [
+          {
+            id: "mem-1",
+            userId: "1",
+            name: "Alice",
+            income: 3000,
+            share: 60,
+            spent: 500,
+            remainingQuota: 1000,
+            budgeted: 3000,
+          },
+        ],
+        recentExpenses: [],
+        recentTransfers: [],
+      },
+      loading: false,
+      error: null,
+      refresh: vi.fn(),
+      isInitialLoading: false,
+    });
+  });
+
+  it("hides the header Add Expense button and shows a FAB that opens the existing add-expense dialog on mobile", async () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <ExpensesPage />
+      </MemoryRouter>,
+    );
+
+    const header = screen
+      .getByRole("heading", { name: /All Expenses/i })
+      .closest("header");
+    if (!header) throw new Error("Expenses header not found");
+
+    expect(
+      within(header).queryByRole("button", { name: /Add Expense/i }),
+    ).not.toBeInTheDocument();
+
+    const fab = screen.getByRole("button", { name: /Add Expense/i });
+    expect(fab).toBeInTheDocument();
+
+    await user.click(fab);
+
+    expect(
+      screen.getByPlaceholderText("e.g. Groceries, Electricity bill"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the header Add Expense button and renders no FAB on desktop", () => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+
+    render(
+      <MemoryRouter>
+        <ExpensesPage />
+      </MemoryRouter>,
+    );
+
+    const header = screen
+      .getByRole("heading", { name: /All Expenses/i })
+      .closest("header");
+    if (!header) throw new Error("Expenses header not found");
+
+    expect(
+      within(header).getByRole("button", { name: /Add Expense/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /Add Expense/i }),
+    ).toHaveLength(1);
+  });
+
+  it("disables the mobile FAB while the dashboard summary is still loading", () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    vi.mocked(useDashboardSummary).mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      refresh: vi.fn(),
+      isInitialLoading: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <ExpensesPage />
+      </MemoryRouter>,
+    );
+
+    const fab = screen.getByRole("button", { name: /Add Expense/i });
+    expect(fab).toBeDisabled();
   });
 });

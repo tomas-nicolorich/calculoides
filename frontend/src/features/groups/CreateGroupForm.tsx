@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Input } from "../../shared/ui";
 import { groupApi } from "../../entities/group";
+import { queryKeys } from "../../shared/api/queryKeys";
 
 export function CreateGroupForm({
   onCreated,
@@ -9,24 +11,29 @@ export function CreateGroupForm({
   onCreated: () => void;
   onCancel?: () => void;
 }) {
+  const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const createGroup = useMutation({
+    mutationFn: (name: string) => groupApi.create(name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.groups() }),
+  });
+  const isLoading = createGroup.isPending;
+  const error = createGroup.error
+    ? createGroup.error instanceof Error
+      ? createGroup.error.message
+      : "An error occurred"
+    : null;
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
 
     try {
-      await groupApi.create(name);
+      await createGroup.mutateAsync(name);
       setName("");
       onCreated();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "An error occurred";
-      setError(message);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      // error derives from createGroup.error above.
     }
   };
 

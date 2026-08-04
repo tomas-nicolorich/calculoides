@@ -417,9 +417,6 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = Object.fromEntries(
   CATEGORY_ICON_GROUPS.flatMap((group) => Object.entries(group.icons)),
 );
 
-/** Ordered list of icon keys, for rendering the picker grid. */
-export const CATEGORY_ICON_KEYS = Object.keys(CATEGORY_ICONS);
-
 /**
  * Resolve a stored icon key to a lucide component. Unknown, legacy (emoji),
  * or undefined values fall back to `Folder` so nothing renders broken.

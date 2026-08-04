@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { DashboardPage } from "@/pages/dashboard/ui/DashboardPage";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryWrapper } from "@/test/queryTestUtils";
 
 vi.mock("@/app/providers/ActiveGroupContext", () => ({
   useSetActiveGroup: vi.fn(),
@@ -53,12 +54,17 @@ vi.mock("@/shared/api/dashboardHooks", () => ({
 describe("Expenses Navigation", () => {
   it("navigates to expenses page when clicking View All from Expenses card", () => {
     render(
-      <MemoryRouter initialEntries={["/dashboard/123"]}>
-        <Routes>
-          <Route path="/dashboard/:groupId" element={<DashboardPage />} />
-          <Route path="/expenses" element={<div>Expenses Page Content</div>} />
-        </Routes>
-      </MemoryRouter>,
+      <QueryWrapper>
+        <MemoryRouter initialEntries={["/dashboard/123"]}>
+          <Routes>
+            <Route path="/dashboard/:groupId" element={<DashboardPage />} />
+            <Route
+              path="/expenses"
+              element={<div>Expenses Page Content</div>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryWrapper>,
     );
 
     const expensesHeading = screen.getByRole("heading", { name: /Expenses/i });

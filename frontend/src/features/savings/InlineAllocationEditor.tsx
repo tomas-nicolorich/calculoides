@@ -51,7 +51,6 @@ const NO_SPINNER_CLASS =
 
 interface InlineAllocationEditorProps {
   goal: SavingsGoal;
-  onRefresh?: () => void | Promise<void>;
 }
 
 interface AllocationRowProps {
@@ -215,10 +214,7 @@ function AllocationRow({
  * Adjust toggle swaps every row's amount for an input at once instead of a
  * per-member toggle, so entering edit mode barely changes the list's shape.
  */
-export function InlineAllocationEditor({
-  goal,
-  onRefresh,
-}: InlineAllocationEditorProps) {
+export function InlineAllocationEditor({ goal }: InlineAllocationEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const session = useContributionSession(isEditing ? goal : null);
   const loading = session.phase === "saving";
@@ -235,7 +231,6 @@ export function InlineAllocationEditor({
   const handleSave = async () => {
     if (await session.saveSession()) {
       setIsEditing(false);
-      await onRefresh?.();
     }
   };
 

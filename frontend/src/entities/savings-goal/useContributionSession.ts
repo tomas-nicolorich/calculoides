@@ -1,4 +1,5 @@
 import { useReducer, useState, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   calculateProjectedMonths,
   addMonths,
@@ -15,6 +16,7 @@ import type {
 import { savingsGoalApi } from "./index";
 import { diffContributionPersistence } from "./contributionDiff";
 import { toFriendlySavingsError } from "./errorMessages";
+import { queryKeys } from "../../shared/api/queryKeys";
 
 export interface ContributionSession {
   phase: ContributionSessionPhase;
@@ -156,9 +158,39 @@ function reducer(
   }
 }
 
+interface SaveContributionsInput {
+  goalId: string;
+  groupId: string;
+  toUpsert: { memberId: string; amount: number }[];
+  toDelete: string[];
+}
+
 export function useContributionSession(
   activeGoal: SavingsGoal | null,
 ): ContributionSession {
+  const qc = useQueryClient();
+  const saveContributions = useMutation({
+    mutationFn: async ({
+      goalId,
+      toUpsert,
+      toDelete,
+    }: SaveContributionsInput) => {
+      await Promise.all([
+        ...toUpsert.map((entry) =>
+          savingsGoalApi.upsertContribution(
+            goalId,
+            entry.memberId,
+            entry.amount,
+          ),
+        ),
+        ...toDelete.map((memberId) =>
+          savingsGoalApi.deleteContribution(goalId, memberId),
+        ),
+      ]);
+    },
+    onSuccess: (_data, { groupId }) =>
+      qc.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
+  });
   const [state, dispatch] = useReducer(reducer, initialState);
   const [saveError, setSaveError] = useReducer(
     (_: string | null, next: string | null) => next,
@@ -246,18 +278,12 @@ export function useContributionSession(
         activeGoal.breakdown,
         state.overrideAmounts,
       );
-      await Promise.all([
-        ...toUpsert.map((entry) =>
-          savingsGoalApi.upsertContribution(
-            activeGoal.id,
-            entry.memberId,
-            entry.amount,
-          ),
-        ),
-        ...toDelete.map((memberId) =>
-          savingsGoalApi.deleteContribution(activeGoal.id, memberId),
-        ),
-      ]);
+      await saveContributions.mutateAsync({
+        goalId: activeGoal.id,
+        groupId: activeGoal.groupId,
+        toUpsert,
+        toDelete,
+      });
       dispatch({ type: "saveSuccess" });
       setSaveError(null);
       return true;
@@ -267,7 +293,7 @@ export function useContributionSession(
       setSaveError(message);
       return false;
     }
-  }, [activeGoal, state.phase, state.overrideAmounts]);
+  }, [activeGoal, state.phase, state.overrideAmounts, saveContributions]);
 
   return {
     phase: state.phase,

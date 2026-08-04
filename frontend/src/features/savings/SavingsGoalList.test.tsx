@@ -1,7 +1,16 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  render as rtlRender,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import { SavingsGoalList } from "./SavingsGoalList";
 import { savingsGoalApi } from "../../entities/savings-goal";
+import { QueryWrapper, createTestQueryClient } from "../../test/queryTestUtils";
+import { queryKeys } from "../../shared/api/queryKeys";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 vi.mock("../../shared/api/supabase", () => ({
@@ -40,6 +49,13 @@ vi.mock("../../shared/ui", async (importOriginal) => {
     }) => <span>{user?.name ?? user?.email}</span>,
   };
 });
+
+function render(
+  ui: ReactElement,
+  client: QueryClient = createTestQueryClient(),
+) {
+  return rtlRender(<QueryWrapper client={client}>{ui}</QueryWrapper>);
+}
 
 const mockGoals = [
   {
@@ -282,8 +298,7 @@ describe("SavingsGoalList", () => {
 
     it("Save in the inline editor persists the override and closes the editor", async () => {
       const user = userEvent.setup();
-      const onRefresh = vi.fn();
-      render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+      render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /^adjust$/i }));
       const input = screen.getByRole("spinbutton", { name: /Alice/i });
@@ -297,7 +312,6 @@ describe("SavingsGoalList", () => {
       expect(
         screen.queryByRole("spinbutton", { name: /Alice/i }),
       ).not.toBeInTheDocument();
-      expect(onRefresh).toHaveBeenCalled();
     });
 
     it("Cancel in the inline editor discards changes without saving", async () => {
@@ -340,10 +354,11 @@ describe("SavingsGoalList", () => {
       ).toBeInTheDocument();
     });
 
-    it("confirming delete calls savingsGoalApi.delete(goalId) exactly once and triggers onRefresh", async () => {
+    it("confirming delete calls savingsGoalApi.delete(goalId) exactly once and invalidates the group query", async () => {
       const user = userEvent.setup();
-      const onRefresh = vi.fn();
-      render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+      const client = createTestQueryClient();
+      const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+      render(<SavingsGoalList goals={mockGoals} />, client);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
       await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
@@ -351,7 +366,11 @@ describe("SavingsGoalList", () => {
 
       expect(savingsGoalApi.delete).toHaveBeenCalledTimes(1);
       expect(savingsGoalApi.delete).toHaveBeenCalledWith("goal-1");
-      expect(onRefresh).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: queryKeys.group("group-1"),
+        });
+      });
     });
 
     it("cancelling the confirmation makes no delete call and the goal remains listed", async () => {
@@ -410,13 +429,12 @@ describe("SavingsGoalList", () => {
       expect(screen.queryByText("Custom")).not.toBeInTheDocument();
     });
 
-    it("shows an error and does not call onRefresh when savingsGoalApi.delete rejects", async () => {
+    it("shows an error and leaves the goal listed when savingsGoalApi.delete rejects", async () => {
       const user = userEvent.setup();
-      const onRefresh = vi.fn();
       vi.mocked(savingsGoalApi.delete).mockRejectedValueOnce(
         new Error("Network error"),
       );
-      render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+      render(<SavingsGoalList goals={mockGoals} />);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
       await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
@@ -425,7 +443,7 @@ describe("SavingsGoalList", () => {
       expect(
         await screen.findByText("Something went wrong. Please try again."),
       ).toBeInTheDocument();
-      expect(onRefresh).not.toHaveBeenCalled();
+      expect(screen.getByText("Vacation")).toBeInTheDocument();
     });
 
     it("clears a stale delete error when the dialog is reopened after Cancel", async () => {
@@ -451,16 +469,17 @@ describe("SavingsGoalList", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("keeps the confirmation dialog open while onRefresh is pending, closing it only once onRefresh resolves", async () => {
+    it("keeps the confirmation dialog open while the group query invalidation is pending, closing it only once invalidation resolves", async () => {
       const user = userEvent.setup();
-      let resolveRefresh: (() => void) | undefined;
-      const onRefresh = vi.fn(
+      const client = createTestQueryClient();
+      let resolveInvalidate: (() => void) | undefined;
+      vi.spyOn(client, "invalidateQueries").mockImplementation(
         () =>
           new Promise<void>((resolve) => {
-            resolveRefresh = resolve;
+            resolveInvalidate = resolve;
           }),
       );
-      render(<SavingsGoalList goals={mockGoals} onRefresh={onRefresh} />);
+      render(<SavingsGoalList goals={mockGoals} />, client);
 
       await user.click(screen.getByRole("button", { name: /row options/i }));
       await user.click(screen.getByRole("menuitem", { name: /^delete$/i }));
@@ -473,7 +492,7 @@ describe("SavingsGoalList", () => {
         screen.getByRole("heading", { name: "Delete Goal" }),
       ).toBeInTheDocument();
 
-      resolveRefresh?.();
+      resolveInvalidate?.();
 
       await waitFor(() => {
         expect(

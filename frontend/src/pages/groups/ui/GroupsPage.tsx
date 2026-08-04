@@ -1,7 +1,8 @@
 import { Plus, Users, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { groupApi, type Group } from "../../../entities/group";
+import { useState } from "react";
+import type { Group } from "../../../entities/group";
+import { useGroupList } from "../../../app/providers/GroupListContext";
 import { CreateGroupForm } from "../../../features/groups/CreateGroupForm";
 import { Card } from "../../../shared/ui/Card";
 import {
@@ -9,6 +10,7 @@ import {
   Button,
   Avatar,
   AvatarGroup,
+  ReloadButton,
   ResponsiveDialog,
   Skeleton,
 } from "../../../shared/ui";
@@ -16,6 +18,7 @@ import {
   formatCurrency,
   formatCurrencyCompact,
 } from "../../../shared/api/dashboardUtils";
+import { queryKeys } from "../../../shared/api/queryKeys";
 
 /** Sum of every member's monthly income — the card's "Group Income" figure. */
 function groupIncome(group: Group): number {
@@ -23,31 +26,8 @@ function groupIncome(group: Group): number {
 }
 
 export function GroupsPage() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { groups, loading, error, refresh } = useGroupList();
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-
-  const fetchGroups = async () => {
-    try {
-      const data = await groupApi.list();
-      setGroups(data);
-      setError(null);
-    } catch (err: unknown) {
-      console.error(
-        "Failed to fetch groups",
-        err instanceof Error ? err.message : String(err),
-      );
-      setError("Couldn't load your groups. Please try refreshing.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchGroups();
-  }, []);
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
@@ -61,29 +41,22 @@ export function GroupsPage() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => {
-            setIsCreatingGroup(true);
-          }}
-        >
-          <Plus size={18} />
-          <span>New Group</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ReloadButton queryKey={queryKeys.groups()} />
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsCreatingGroup(true);
+            }}
+          >
+            <Plus size={18} />
+            <span>New Group</span>
+          </Button>
+        </div>
       </header>
 
       {error && (
-        <Alert
-          action={{
-            label: "Retry",
-            onClick: () => {
-              setLoading(true);
-              void fetchGroups();
-            },
-          }}
-        >
-          {error}
-        </Alert>
+        <Alert action={{ label: "Retry", onClick: refresh }}>{error}</Alert>
       )}
 
       <ResponsiveDialog
@@ -96,7 +69,6 @@ export function GroupsPage() {
         <CreateGroupForm
           onCreated={() => {
             setIsCreatingGroup(false);
-            void fetchGroups();
           }}
           onCancel={() => {
             setIsCreatingGroup(false);
