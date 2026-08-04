@@ -12,6 +12,7 @@ export const ExpenseService = {
     description: string,
     amount: number,
     date: Date = new Date(),
+    callerUserId: string,
   ): Promise<Prisma.ExpenseGetPayload<Record<string, never>>> {
     // Check if payerIdOrUserId is already a GroupMember ID or a User ID
     // We first try to find the category to get the groupId
@@ -21,6 +22,12 @@ export const ExpenseService = {
     });
 
     if (!category) throw new Error("Category not found");
+
+    const callerMembership = await prisma.groupMember.findFirst({
+      where: { groupId: category.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!callerMembership) throw new Error("Not a member of this group");
 
     // Try to find if payerIdOrUserId is a userId in this group
     const membership = await prisma.groupMember.findFirst({
@@ -182,8 +189,21 @@ export const ExpenseService = {
 
   /**
    * Deletes an expense (Permanent deletion per specification).
+   * Validates that the caller is a member of the expense's group.
    */
-  async deleteExpense(expenseId: string) {
+  async deleteExpense(expenseId: string, callerUserId: string) {
+    const expense = await prisma.expense.findUnique({
+      where: { id: expenseId },
+      include: { category: { select: { groupId: true } } },
+    });
+    if (!expense) throw new Error("Expense not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: expense.category.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!membership) throw new Error("Not a member of this group");
+
     return await prisma.expense.delete({
       where: { id: expenseId },
     });

@@ -50,18 +50,24 @@ describe("expense-delete handler", () => {
 
   const uuid = "00000000-0000-0000-0000-000000000000";
 
+  const callerUserId = "11111111-1111-1111-1111-111111111111";
+
   it("should extract id from query", async () => {
     mockRequest = {
       query: { action: "expense-delete", id: uuid },
       headers: {},
-    };
+      user: { id: callerUserId },
+    } as unknown as Partial<ApiRequest>;
 
     await transactionsHandler(
       mockRequest as ApiRequest,
       mockResponse as ApiResponse,
     );
 
-    expect(mockedExpenseService.deleteExpense).toHaveBeenCalledWith(uuid);
+    expect(mockedExpenseService.deleteExpense).toHaveBeenCalledWith(
+      uuid,
+      callerUserId,
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(204);
   });
 
@@ -69,7 +75,8 @@ describe("expense-delete handler", () => {
     mockRequest = {
       query: { action: "expense-delete" },
       headers: {},
-    };
+      user: { id: callerUserId },
+    } as unknown as Partial<ApiRequest>;
     // Simulate params added by server/dispatcher
     (mockRequest as ApiRequest & { params?: Record<string, string> }).params = {
       id: uuid,
@@ -80,7 +87,10 @@ describe("expense-delete handler", () => {
       mockResponse as ApiResponse,
     );
 
-    expect(mockedExpenseService.deleteExpense).toHaveBeenCalledWith(uuid);
+    expect(mockedExpenseService.deleteExpense).toHaveBeenCalledWith(
+      uuid,
+      callerUserId,
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(204);
   });
 

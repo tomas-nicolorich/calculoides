@@ -16,10 +16,14 @@ vi.mock("../../_src/utils/prisma", () => ({
     category: {
       update: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
     categoryMember: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+    },
+    groupMember: {
+      findFirst: vi.fn(),
     },
     transfer: {
       findMany: vi.fn(),
@@ -46,11 +50,18 @@ describe("Budget & Transfer Services Extensions", () => {
       vi.mocked(prisma.category.update).mockResolvedValue(
         updatedData as unknown as Category,
       );
+      vi.mocked(prisma.category.findUnique).mockResolvedValue({
+        groupId: "group-123",
+      } as unknown as Category);
+      vi.mocked(prisma.groupMember.findFirst).mockResolvedValue({
+        id: "member-1",
+      } as unknown as Prisma.GroupMemberGetPayload<Record<string, never>>);
 
       const result = await BudgetService.updateCategory(
         categoryId,
         updatedData.name,
         updatedData.monthlyBudget,
+        "user-123",
         updatedData.icon,
         ["member-1", "member-2"],
       );

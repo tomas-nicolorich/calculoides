@@ -50,19 +50,24 @@ describe("transfer-delete handler", () => {
   });
 
   const uuid = "00000000-0000-0000-0000-000000000000";
+  const callerUserId = "11111111-1111-1111-1111-111111111111";
 
   it("should extract id from query", async () => {
     mockRequest = {
       query: { action: "transfer-delete", id: uuid },
       headers: {},
-    };
+      user: { id: callerUserId },
+    } as unknown as Partial<ApiRequest>;
 
     await transactionsHandler(
       mockRequest as ApiRequest,
       mockResponse as ApiResponse,
     );
 
-    expect(mockedTransferService.deleteTransfer).toHaveBeenCalledWith(uuid);
+    expect(mockedTransferService.deleteTransfer).toHaveBeenCalledWith(
+      uuid,
+      callerUserId,
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(204);
   });
 
@@ -70,7 +75,8 @@ describe("transfer-delete handler", () => {
     mockRequest = {
       query: { action: "transfer-delete" },
       headers: {},
-    };
+      user: { id: callerUserId },
+    } as unknown as Partial<ApiRequest>;
     (mockRequest as ApiRequest & { params?: Record<string, string> }).params = {
       id: uuid,
     };
@@ -80,7 +86,10 @@ describe("transfer-delete handler", () => {
       mockResponse as ApiResponse,
     );
 
-    expect(mockedTransferService.deleteTransfer).toHaveBeenCalledWith(uuid);
+    expect(mockedTransferService.deleteTransfer).toHaveBeenCalledWith(
+      uuid,
+      callerUserId,
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(204);
   });
 
@@ -103,14 +112,18 @@ describe("transfer-delete handler", () => {
       method: "DELETE",
       query: { action: "transaction", id: uuid, type: "transfer" },
       headers: {},
-    };
+      user: { id: callerUserId },
+    } as unknown as Partial<ApiRequest>;
 
     await transactionsHandler(
       mockRequest as ApiRequest,
       mockResponse as ApiResponse,
     );
 
-    expect(mockedTransferService.deleteTransfer).toHaveBeenCalledWith(uuid);
+    expect(mockedTransferService.deleteTransfer).toHaveBeenCalledWith(
+      uuid,
+      callerUserId,
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(204);
   });
 });

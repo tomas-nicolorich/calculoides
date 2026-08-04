@@ -10,6 +10,7 @@ vi.mock("../../_src/utils/prisma", () => ({
     expense: {
       create: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       delete: vi.fn(),
       updateMany: vi.fn(),
       count: vi.fn(),
@@ -61,6 +62,7 @@ describe("ExpenseService Integration", () => {
       expenseData.description,
       expenseData.amount,
       new Date(expenseData.date),
+      "member-1",
     );
 
     expect(result.id).toBe("exp-1");
@@ -96,11 +98,18 @@ describe("ExpenseService Integration", () => {
 
   it("should delete an expense permanently", async () => {
     const expenseId = "exp-1";
+    vi.mocked(prisma.expense.findUnique).mockResolvedValue({
+      id: expenseId,
+      category: { groupId: "group-1" },
+    } as unknown as Expense);
+    vi.mocked(prisma.groupMember.findFirst).mockResolvedValue({
+      id: "member-1",
+    } as unknown as GroupMember);
     vi.mocked(prisma.expense.delete).mockResolvedValue({
       id: expenseId,
     } as unknown as Expense);
 
-    await ExpenseService.deleteExpense(expenseId);
+    await ExpenseService.deleteExpense(expenseId, "user-1");
 
     expect(vi.mocked(prisma.expense.delete)).toHaveBeenCalledWith({
       where: { id: expenseId },

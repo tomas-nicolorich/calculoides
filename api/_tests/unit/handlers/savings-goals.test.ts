@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { transactionsHandler } from "../../../_src/handlers/transactions";
 import { SavingsService } from "../../../_src/services/savings";
+import { GroupService } from "../../../_src/services/group";
 import { RouteConfig } from "../../../_src/utils/dispatcher";
 import { ApiRequest, ApiResponse } from "../../../_src/middleware/handler";
 
 const mockedSavingsService = SavingsService as unknown as Record<string, Mock>;
+const mockedGroupService = GroupService as unknown as Record<string, Mock>;
 
 // Mock dependencies
 vi.mock("../../../_src/services/savings");
+vi.mock("../../../_src/services/group");
 vi.mock("../../../_src/middleware/handler", () => ({
   withAuth: vi.fn(<T>(handler: T): T => handler),
   withErrorHandling: vi.fn(<T>(handler: T): T => handler),
@@ -48,9 +51,13 @@ describe("Savings Goal Handlers", () => {
   describe("savings-goals-list", () => {
     it("should return goals for a valid groupId", async () => {
       const groupId = "550e8400-e29b-41d4-a716-446655440000";
-      req = { query: { action: "savings-goals-list", groupId } };
+      req = {
+        query: { action: "savings-goals-list", groupId },
+        user: { id: "user-1" },
+      } as unknown as Partial<ApiRequest>;
       const mockGoals = [{ id: "1", name: "Test Goal" }];
       mockedSavingsService.getGoalsForGroup.mockResolvedValue(mockGoals);
+      mockedGroupService.getGroupsForUser.mockResolvedValue([{ id: groupId }]);
 
       await transactionsHandler(req as ApiRequest, res as ApiResponse);
 
@@ -83,7 +90,8 @@ describe("Savings Goal Handlers", () => {
           targetDate,
           currentAmount: 100,
         },
-      };
+        user: { id: "user-1" },
+      } as unknown as Partial<ApiRequest>;
       const mockGoal = { id: goalId, name: "Updated Goal" };
       mockedSavingsService.updateGoal.mockResolvedValue(mockGoal);
 
@@ -95,6 +103,7 @@ describe("Savings Goal Handlers", () => {
         1000,
         expect.any(Date),
         100,
+        "user-1",
         undefined,
       );
       expect(statusMock).toHaveBeenCalledWith(200);
@@ -143,7 +152,8 @@ describe("Savings Goal Handlers", () => {
         method: "POST",
         query: { action: "savings-contribution", goalId, memberId },
         body: { amount: 42 },
-      };
+        user: { id: "user-1" },
+      } as unknown as Partial<ApiRequest>;
 
       await transactionsHandler(req as ApiRequest, res as ApiResponse);
 
@@ -151,6 +161,7 @@ describe("Savings Goal Handlers", () => {
         goalId,
         memberId,
         42,
+        "user-1",
       );
       expect(statusMock).toHaveBeenCalledWith(200);
     });
@@ -160,13 +171,15 @@ describe("Savings Goal Handlers", () => {
       req = {
         method: "DELETE",
         query: { action: "savings-contribution", goalId, memberId },
-      };
+        user: { id: "user-1" },
+      } as unknown as Partial<ApiRequest>;
 
       await transactionsHandler(req as ApiRequest, res as ApiResponse);
 
       expect(mockedSavingsService.deleteContribution).toHaveBeenCalledWith(
         goalId,
         memberId,
+        "user-1",
       );
       expect(statusMock).toHaveBeenCalledWith(204);
     });
@@ -191,13 +204,15 @@ describe("Savings Goal Handlers", () => {
       mockedSavingsService.deleteContribution.mockResolvedValue(undefined);
       req = {
         query: { action: "savings-contribution-delete", goalId, memberId },
-      };
+        user: { id: "user-1" },
+      } as unknown as Partial<ApiRequest>;
 
       await transactionsHandler(req as ApiRequest, res as ApiResponse);
 
       expect(mockedSavingsService.deleteContribution).toHaveBeenCalledWith(
         goalId,
         memberId,
+        "user-1",
       );
       expect(statusMock).toHaveBeenCalledWith(204);
     });
