@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "../shared/api/queryClient";
 import { AuthProvider } from "./providers/AuthProvider";
 import { ActiveGroupProvider } from "./providers/ActiveGroupContext";
 import { ActiveGroupSync } from "./providers/ActiveGroupSync";
@@ -19,55 +21,60 @@ import { AppShell } from "./ui/AppShell";
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ActiveGroupProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/complete-profile" element={<CompleteProfilePage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <GroupListProvider>
-                    <ActiveGroupSync />
-                    <AppShell>
-                      <Routes>
-                        <Route
-                          path="dashboard/:groupId"
-                          element={<DashboardPage />}
-                        />
-                        <Route path="groups" element={<GroupsPage />} />
-                        <Route
-                          path="expenses/:groupId"
-                          element={<ExpensesPage />}
-                        />
-                        <Route path="profile" element={<ProfilePage />} />
-                        <Route
-                          path="transfers/:groupId"
-                          element={<TransfersPage />}
-                        />
-                        <Route
-                          path="savings/:groupId"
-                          element={<SavingsPage />}
-                        />
-                        <Route
-                          path="*"
-                          element={<Navigate to="/groups" replace />}
-                        />
-                      </Routes>
-                    </AppShell>
-                  </GroupListProvider>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </ActiveGroupProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <ActiveGroupProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route
+                path="/complete-profile"
+                element={<CompleteProfilePage />}
+              />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <GroupListProvider>
+                      <ActiveGroupSync />
+                      <AppShell>
+                        <Routes>
+                          <Route
+                            path="dashboard/:groupId"
+                            element={<DashboardPage />}
+                          />
+                          <Route path="groups" element={<GroupsPage />} />
+                          <Route
+                            path="expenses/:groupId"
+                            element={<ExpensesPage />}
+                          />
+                          <Route path="profile" element={<ProfilePage />} />
+                          <Route
+                            path="transfers/:groupId"
+                            element={<TransfersPage />}
+                          />
+                          <Route
+                            path="savings/:groupId"
+                            element={<SavingsPage />}
+                          />
+                          <Route
+                            path="*"
+                            element={<Navigate to="/groups" replace />}
+                          />
+                        </Routes>
+                      </AppShell>
+                    </GroupListProvider>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </ActiveGroupProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

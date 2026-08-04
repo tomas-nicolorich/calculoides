@@ -1,7 +1,13 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
+import type { QueryClient } from "@tanstack/react-query";
 import { BudgetCategories } from "./BudgetCategories";
 import type { CategoryWithBalances } from "../../../../../shared/src/types/redesign";
+import {
+  QueryWrapper,
+  createTestQueryClient,
+} from "../../../test/queryTestUtils";
+import { queryKeys } from "../../../shared/api/queryKeys";
 
 vi.mock("../../../shared/api/supabase", () => ({
   supabase: {
@@ -73,16 +79,20 @@ function makeCategory(
   };
 }
 
-function renderWidget(categories: CategoryWithBalances[]) {
+function renderWidget(
+  categories: CategoryWithBalances[],
+  client: QueryClient = createTestQueryClient(),
+) {
   return render(
-    <BudgetCategories
-      categories={categories}
-      isOwner
-      onDelete={vi.fn()}
-      groupId="group-1"
-      members={members}
-      onRefresh={vi.fn()}
-    />,
+    <QueryWrapper client={client}>
+      <BudgetCategories
+        categories={categories}
+        isOwner
+        onDelete={vi.fn()}
+        groupId="group-1"
+        members={members}
+      />
+    </QueryWrapper>,
   );
 }
 
@@ -546,18 +556,10 @@ describe("BudgetCategories transfer dialog", () => {
     expect(options).not.toContain("Alice Smith");
   });
 
-  it("submit button reads 'Send Transfer' and calls apiClient.fetch with correct payload", async () => {
-    const onRefresh = vi.fn();
-    render(
-      <BudgetCategories
-        categories={[categoryWithBalances]}
-        isOwner
-        onDelete={vi.fn()}
-        groupId="group-1"
-        members={members}
-        onRefresh={onRefresh}
-      />,
-    );
+  it("submit button reads 'Send Transfer', calls apiClient.fetch with correct payload, and invalidates the group query", async () => {
+    const client = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+    renderWidget([categoryWithBalances], client);
 
     openTransferForAlice();
 
@@ -589,7 +591,9 @@ describe("BudgetCategories transfer dialog", () => {
     });
 
     await waitFor(() => {
-      expect(onRefresh).toHaveBeenCalled();
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.group("group-1"),
+      });
     });
   });
 
@@ -619,6 +623,62 @@ describe("BudgetCategories transfer dialog", () => {
       (btn) => !btn.textContent.trim() && btn.querySelector("svg") !== null,
     );
     expect(iconOnlyButtons).toHaveLength(0);
+  });
+});
+
+describe("BudgetCategories mutations — cache invalidation", () => {
+  it("create: submits the Add Category form, calls apiClient.fetch, and invalidates the group query", async () => {
+    const client = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+    renderWidget([], client);
+
+    fireEvent.click(screen.getByRole("button", { name: /New Category/i }));
+    fireEvent.change(screen.getByPlaceholderText("e.g. Rent, Groceries"), {
+      target: { value: "Rent" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("0.00"), {
+      target: { value: "1000" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Category" }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/transactions?action=category-create&groupId=group-1",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.group("group-1"),
+      });
+    });
+  });
+
+  it("update: submits the Edit Category form, calls apiClient.fetch, and invalidates the group query", async () => {
+    const client = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+    renderWidget([makeCategory({ id: "cat-7", name: "Rent" })], client);
+
+    fireEvent.click(screen.getByRole("button", { name: /rent/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit category" }));
+    fireEvent.change(screen.getByPlaceholderText("e.g. Rent, Groceries"), {
+      target: { value: "Rent Updated" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/transactions?action=category-update&id=cat-7",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.group("group-1"),
+      });
+    });
   });
 });
 
@@ -694,17 +754,24 @@ describe("BudgetCategories zero-income exclusion (#130)", () => {
 
   it("keeps zero-income members selectable (not greyed) in the assign-members picker", () => {
     render(
-      <BudgetCategories
-        categories={[makeCategory()]}
-        isOwner
-        onDelete={vi.fn()}
-        groupId="group-1"
-        members={[
-          { id: "m1", name: "Alice Smith", income: 3000, share: 100, index: 0 },
-          { id: "m2", name: "Bob Jones", income: 0, share: 0, index: 1 },
-        ]}
-        onRefresh={vi.fn()}
-      />,
+      <QueryWrapper>
+        <BudgetCategories
+          categories={[makeCategory()]}
+          isOwner
+          onDelete={vi.fn()}
+          groupId="group-1"
+          members={[
+            {
+              id: "m1",
+              name: "Alice Smith",
+              income: 3000,
+              share: 100,
+              index: 0,
+            },
+            { id: "m2", name: "Bob Jones", income: 0, share: 0, index: 1 },
+          ]}
+        />
+      </QueryWrapper>,
     );
     fireEvent.click(screen.getByRole("button", { name: /New Category/i }));
 

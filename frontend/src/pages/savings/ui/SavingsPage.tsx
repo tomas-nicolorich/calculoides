@@ -5,9 +5,16 @@ import { useSavingsGoals } from "../../../shared/api/savingsHooks";
 import { SavingsGoalList } from "../../../features/savings/SavingsGoalList";
 import { SavingsGoalForm } from "../../../features/savings/SavingsGoalForm";
 import { Plus } from "lucide-react";
-import { Alert, Button, Card, Skeleton } from "../../../shared/ui";
+import {
+  Alert,
+  Button,
+  Card,
+  ReloadButton,
+  Skeleton,
+} from "../../../shared/ui";
 import { ResponsiveDialog } from "../../../shared/ui/ResponsiveDialog";
 import { toFriendlySavingsError } from "../../../entities/savings-goal/errorMessages";
+import { queryKeys } from "../../../shared/api/queryKeys";
 
 function GoalCardSkeleton() {
   return (
@@ -98,15 +105,18 @@ export function SavingsPage() {
             Plan and track your group savings goals
           </p>
         </div>
-        <Button
-          variant="cta"
-          onClick={() => {
-            setCreateOpen(true);
-          }}
-        >
-          <Plus size={16} className="mr-1" />
-          Add Savings Goal
-        </Button>
+        <div className="flex items-center gap-2">
+          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
+          <Button
+            variant="cta"
+            onClick={() => {
+              setCreateOpen(true);
+            }}
+          >
+            <Plus size={16} className="mr-1" />
+            Add Savings Goal
+          </Button>
+        </div>
       </header>
 
       {error && (
@@ -122,12 +132,7 @@ export function SavingsPage() {
         </Alert>
       )}
 
-      <SavingsGoalList
-        goals={goals}
-        onRefresh={() => {
-          refresh();
-        }}
-      />
+      <SavingsGoalList goals={goals} />
 
       <ResponsiveDialog
         open={createOpen}
@@ -139,7 +144,6 @@ export function SavingsPage() {
           groupId={groupId ?? ""}
           onSuccess={() => {
             setCreateOpen(false);
-            refresh();
           }}
           onCancel={() => {
             setCreateOpen(false);

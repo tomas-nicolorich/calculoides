@@ -10,6 +10,7 @@ import {
   Button,
   Avatar,
   AvatarGroup,
+  ReloadButton,
   ResponsiveDialog,
   Skeleton,
 } from "../../../shared/ui";
@@ -17,6 +18,7 @@ import {
   formatCurrency,
   formatCurrencyCompact,
 } from "../../../shared/api/dashboardUtils";
+import { queryKeys } from "../../../shared/api/queryKeys";
 
 /** Sum of every member's monthly income — the card's "Group Income" figure. */
 function groupIncome(group: Group): number {
@@ -39,15 +41,18 @@ export function GroupsPage() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => {
-            setIsCreatingGroup(true);
-          }}
-        >
-          <Plus size={18} />
-          <span>New Group</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ReloadButton queryKey={queryKeys.groups()} />
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsCreatingGroup(true);
+            }}
+          >
+            <Plus size={18} />
+            <span>New Group</span>
+          </Button>
+        </div>
       </header>
 
       {error && (
@@ -64,7 +69,6 @@ export function GroupsPage() {
         <CreateGroupForm
           onCreated={() => {
             setIsCreatingGroup(false);
-            refresh();
           }}
           onCancel={() => {
             setIsCreatingGroup(false);

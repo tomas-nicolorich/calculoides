@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../shared/api/supabase";
 import { AuthContext } from "./AuthContext";
 
@@ -9,11 +10,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileIncomplete, setProfileIncomplete] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  // A6: read the client from context (not the module `queryClient`
+  // singleton) so a test wrapping this provider in its own client observes
+  // clears on *that* client.
+  const queryClient = useQueryClient();
   // Supabase re-emits 'SIGNED_IN' (via _recoverAndRefresh) every time the
   // tab regains focus with a still-valid cached session, not just on real
   // login. Dedupe the /me profile check by user id instead of trusting the
   // event name, so recovering the same user doesn't refetch.
   const checkedUserIdRef = useRef<string | null>(null);
+  // A7: mirrors checkedUserIdRef's dedupe pattern but for a different
+  // purpose — clearing the cache on an owner change (privacy, D5), not
+  // deduping the /me fetch. Kept separate so gating one control never
+  // silently gates the other. `undefined` means "no auth event observed
+  // yet"; it is distinct from `null` (observed and signed-out) so the
+  // very first event (mount) only establishes the baseline and never
+  // clears an already-empty cache.
+  const cacheOwnerIdRef = useRef<string | null | undefined>(undefined);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetches the initial session. Extracted so both the mount effect and a
@@ -106,6 +119,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
+
+      // D5/A7: clear the entire cache when the signed-in owner changes —
+      // session becomes null (sign-out) or a different user's session
+      // arrives — but never on the first observation since mount, and
+      // never when the owner id is unchanged (token refresh, or Supabase
+      // re-emitting SIGNED_IN for the same user on tab refocus).
+      const newOwnerId = newSession?.user.id ?? null;
+      if (cacheOwnerIdRef.current === undefined) {
+        cacheOwnerIdRef.current = newOwnerId;
+      } else if (cacheOwnerIdRef.current !== newOwnerId) {
+        queryClient.clear();
+        cacheOwnerIdRef.current = newOwnerId;
+      }
+
       if (!newSession?.access_token || !newSession.user.id) {
         checkedUserIdRef.current = null;
         setProfileIncomplete(false);
@@ -138,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       subscription.unsubscribe();
     };
-  }, [loadInitialSession]);
+  }, [loadInitialSession, queryClient]);
 
   const signOut = async () => {
     await supabase.auth.signOut();

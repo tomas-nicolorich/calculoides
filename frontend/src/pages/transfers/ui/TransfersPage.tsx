@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   Button,
   Card,
   IconButton,
+  ReloadButton,
   RowMenu,
   Select,
   Skeleton,
@@ -30,6 +32,8 @@ import {
 import { useParams } from "react-router-dom";
 import { useSetActiveGroup } from "../../../app/providers/ActiveGroupContext";
 import { transferApi } from "../../../entities/transfer";
+import { queryKeys } from "../../../shared/api/queryKeys";
+import { toErrorMessage } from "../../../shared/api/toErrorMessage";
 
 const PAGE_SIZE = 25;
 
@@ -59,17 +63,25 @@ export function TransfersPage() {
   );
   const [transferToDelete, setTransferToDelete] = useState<string | null>(null);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const qc = useQueryClient();
+  const invalidateGroup = () =>
+    qc.invalidateQueries({ queryKey: queryKeys.group(groupId ?? "") });
 
-  const { data: summary, refresh: refreshSummary } = useDashboardSummary(
-    groupId ?? null,
+  const deleteTransfer = useMutation({
+    mutationFn: (id: string) => transferApi.delete(id),
+    onSuccess: invalidateGroup,
+  });
+  const deleteAllTransfers = useMutation({
+    mutationFn: (groupId: string) => transferApi.deleteAll(groupId),
+    onSuccess: invalidateGroup,
+  });
+  const deleteError = toErrorMessage(
+    deleteTransfer.error ?? deleteAllTransfers.error,
   );
+
+  const { data: summary } = useDashboardSummary(groupId ?? null);
   const { data: categories } = useCategoriesList(groupId ?? null);
-  const {
-    data: transfersList,
-    loading,
-    refresh: refreshTransfers,
-  } = useTransfersList(
+  const { data: transfersList, loading } = useTransfersList(
     groupId ?? null,
     categoryFilterId || undefined,
     memberId || undefined,
@@ -116,28 +128,20 @@ export function TransfersPage() {
 
   const handleDeleteTransfer = async (id: string) => {
     try {
-      await transferApi.delete(id);
-      refreshTransfers();
-      refreshSummary();
+      await deleteTransfer.mutateAsync(id);
       setTransferToDelete(null);
-      setDeleteError(null);
-    } catch (err) {
-      console.error("Failed to delete transfer", err);
-      setDeleteError("Failed to delete transfer. Please try again.");
+    } catch {
+      // deleteError derives from deleteTransfer.error above.
     }
   };
 
   const handleDeleteAllTransfers = async () => {
     if (!groupId) return;
     try {
-      await transferApi.deleteAll(groupId);
-      refreshTransfers();
-      refreshSummary();
+      await deleteAllTransfers.mutateAsync(groupId);
       setDeleteAllOpen(false);
-      setDeleteError(null);
-    } catch (err) {
-      console.error("Failed to delete all transfers", err);
-      setDeleteError("Failed to delete all transfers. Please try again.");
+    } catch {
+      // deleteError derives from deleteAllTransfers.error above.
     }
   };
 
@@ -153,6 +157,7 @@ export function TransfersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ReloadButton queryKey={queryKeys.group(groupId ?? "")} />
           <Button
             variant="outline"
             onClick={() => {
@@ -168,7 +173,7 @@ export function TransfersPage() {
             className="hover:text-brand-expense"
             disabled={transfers.length === 0}
             onClick={() => {
-              setDeleteError(null);
+              deleteAllTransfers.reset();
               setDeleteAllOpen(true);
             }}
           >
@@ -516,7 +521,7 @@ export function TransfersPage() {
             variant="transfer"
             onClick={() => {
               if (viewingTransfer) {
-                setDeleteError(null);
+                deleteTransfer.reset();
                 setTransferToDelete(viewingTransfer.id);
                 setViewingTransfer(null);
               }
@@ -533,7 +538,7 @@ export function TransfersPage() {
         onOpenChange={(open) => {
           if (!open) {
             setTransferToDelete(null);
-            setDeleteError(null);
+            deleteTransfer.reset();
           }
         }}
         title="Delete Transfer"
@@ -545,7 +550,7 @@ export function TransfersPage() {
             variant="outline"
             onClick={() => {
               setTransferToDelete(null);
-              setDeleteError(null);
+              deleteTransfer.reset();
             }}
           >
             Cancel
@@ -565,7 +570,7 @@ export function TransfersPage() {
         open={deleteAllOpen}
         onOpenChange={(open) => {
           setDeleteAllOpen(open);
-          if (!open) setDeleteError(null);
+          if (!open) deleteAllTransfers.reset();
         }}
         title="Delete All Transfers"
         description="This will permanently delete every transfer in this group, regardless of any active filters. This action cannot be undone."
@@ -576,7 +581,7 @@ export function TransfersPage() {
             variant="outline"
             onClick={() => {
               setDeleteAllOpen(false);
-              setDeleteError(null);
+              deleteAllTransfers.reset();
             }}
           >
             Cancel

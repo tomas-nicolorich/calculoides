@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { SavingsPage } from "@/pages/savings/ui/SavingsPage";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryWrapper } from "@/test/queryTestUtils";
 
 vi.mock("@/app/providers/ActiveGroupContext", () => ({
   useSetActiveGroup: vi.fn(),
@@ -42,11 +43,13 @@ vi.mock("@/shared/api/savingsHooks", () => ({
 describe("Savings Page", () => {
   it("renders the Savings Goal page with redesigned elements", () => {
     render(
-      <MemoryRouter initialEntries={["/savings/group-1"]}>
-        <Routes>
-          <Route path="/savings/:groupId" element={<SavingsPage />} />
-        </Routes>
-      </MemoryRouter>,
+      <QueryWrapper>
+        <MemoryRouter initialEntries={["/savings/group-1"]}>
+          <Routes>
+            <Route path="/savings/:groupId" element={<SavingsPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryWrapper>,
     );
 
     // Check for title and header

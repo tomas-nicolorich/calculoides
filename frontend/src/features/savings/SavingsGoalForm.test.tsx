@@ -1,5 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
+import { QueryWrapper, createTestQueryClient } from "../../test/queryTestUtils";
+import { queryKeys } from "../../shared/api/queryKeys";
 
 // Opens the DatePicker, jumps forward one year (deterministic regardless of
 // the real current date — the popover's initial view year is always either
@@ -59,6 +63,13 @@ vi.mock("../../shared/ui", async (importOriginal) => {
     }) => <span>{user?.name ?? user?.email}</span>,
   };
 });
+
+function render(
+  ui: ReactElement,
+  client: QueryClient = createTestQueryClient(),
+) {
+  return rtlRender(<QueryWrapper client={client}>{ui}</QueryWrapper>);
+}
 
 const mockGoal = {
   id: "goal-1",
@@ -175,9 +186,11 @@ describe("SavingsGoalForm", () => {
     );
   });
 
-  it("includes selected icon in create submit payload", async () => {
+  it("includes selected icon in create submit payload and invalidates the group query on success", async () => {
     const user = userEvent.setup();
-    render(<SavingsGoalForm groupId="group-1" />);
+    const client = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+    render(<SavingsGoalForm groupId="group-1" />, client);
 
     await user.type(screen.getByPlaceholderText(/e.g. New Sofa/i), "Trip");
     await user.type(screen.getAllByPlaceholderText("0.00")[0], "500");
@@ -194,11 +207,18 @@ describe("SavingsGoalForm", () => {
         expect.objectContaining({ icon: "transport", name: "Trip" }),
       );
     });
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.group("group-1"),
+      });
+    });
   });
 
-  it("includes selected icon in update submit payload", async () => {
+  it("includes selected icon in update submit payload and invalidates the group query on success", async () => {
     const user = userEvent.setup();
-    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />);
+    const client = createTestQueryClient();
+    const invalidateSpy = vi.spyOn(client, "invalidateQueries");
+    render(<SavingsGoalForm groupId="group-1" goal={mockGoal} />, client);
 
     await user.click(screen.getByRole("button", { name: "Choose icon" }));
     await user.click(
@@ -211,6 +231,11 @@ describe("SavingsGoalForm", () => {
         "goal-1",
         expect.objectContaining({ icon: "transport" }),
       );
+    });
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.group("group-1"),
+      });
     });
   });
 

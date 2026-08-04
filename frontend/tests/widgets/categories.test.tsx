@@ -4,6 +4,7 @@ import {
   BudgetCategories,
   MemberRich,
 } from "@/widgets/dashboard/ui/BudgetCategories";
+import { QueryWrapper } from "@/test/queryTestUtils";
 import { describe, it, expect, vi } from "vitest";
 import { CategoryWithBalances } from "../../../shared/src/types/redesign";
 
@@ -69,15 +70,16 @@ function renderWidget(
   overrides: Partial<React.ComponentProps<typeof BudgetCategories>> = {},
 ) {
   return render(
-    <BudgetCategories
-      isOwner={true}
-      categories={[categoryWithBalances]}
-      onDelete={vi.fn()}
-      groupId="g1"
-      members={defaultMembers}
-      onRefresh={vi.fn()}
-      {...overrides}
-    />,
+    <QueryWrapper>
+      <BudgetCategories
+        isOwner={true}
+        categories={[categoryWithBalances]}
+        onDelete={vi.fn()}
+        groupId="g1"
+        members={defaultMembers}
+        {...overrides}
+      />
+    </QueryWrapper>,
   );
 }
 

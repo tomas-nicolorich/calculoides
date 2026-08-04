@@ -1,9 +1,15 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { fireEvent } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { InlineAllocationEditor } from "./InlineAllocationEditor";
 import { savingsGoalApi } from "../../entities/savings-goal";
+import { QueryWrapper } from "../../test/queryTestUtils";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+
+function render(ui: ReactElement) {
+  return rtlRender(<QueryWrapper>{ui}</QueryWrapper>);
+}
 
 vi.mock("../../shared/api/supabase", () => ({
   supabase: {
@@ -258,8 +264,7 @@ describe("InlineAllocationEditor", () => {
   });
 
   it("regression: clicking Save immediately after Adjust with no edits still closes the editor (no stuck button)", async () => {
-    const onRefresh = vi.fn().mockResolvedValue(undefined);
-    render(<InlineAllocationEditor goal={mockGoal} onRefresh={onRefresh} />);
+    render(<InlineAllocationEditor goal={mockGoal} />);
 
     fireEvent.click(screen.getByRole("button", { name: /^adjust$/i }));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
@@ -269,13 +274,11 @@ describe("InlineAllocationEditor", () => {
         screen.getByRole("button", { name: /^adjust$/i }),
       ).toBeInTheDocument();
     });
-    expect(onRefresh).toHaveBeenCalled();
   });
 
-  it("Save calls session.saveSession(): only the edited member is upserted, the untouched member gets no call, and onRefresh fires", async () => {
+  it("Save calls session.saveSession(): only the edited member is upserted, the untouched member gets no call", async () => {
     const user = userEvent.setup();
-    const onRefresh = vi.fn();
-    render(<InlineAllocationEditor goal={scopedGoal} onRefresh={onRefresh} />);
+    render(<InlineAllocationEditor goal={scopedGoal} />);
 
     await user.click(screen.getByRole("button", { name: /^adjust$/i }));
     const input = screen.getByRole("spinbutton", { name: /Bob/i });
@@ -289,7 +292,6 @@ describe("InlineAllocationEditor", () => {
         "edited-member",
         300,
       );
-      expect(onRefresh).toHaveBeenCalled();
     });
     expect(savingsGoalApi.upsertContribution).not.toHaveBeenCalledWith(
       "goal-1",

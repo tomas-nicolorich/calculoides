@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { groupApi, type Group } from "@/entities/group";
 import { useGroupList } from "@/app/providers/GroupListContext";
+import { QueryWrapper } from "@/test/queryTestUtils";
 
 /**
  * Slice 2 (task 2.5): `GroupsPage` no longer owns its own fetch — it reads
@@ -35,9 +36,11 @@ describe("Groups Page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <GroupsPage />
-      </MemoryRouter>,
+      <QueryWrapper>
+        <MemoryRouter>
+          <GroupsPage />
+        </MemoryRouter>
+      </QueryWrapper>,
     );
 
     expect(screen.getByText("Broken Group")).toBeInTheDocument();
@@ -60,9 +63,11 @@ describe("Groups Page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <GroupsPage />
-      </MemoryRouter>,
+      <QueryWrapper>
+        <MemoryRouter>
+          <GroupsPage />
+        </MemoryRouter>
+      </QueryWrapper>,
     );
 
     expect(screen.getByText("Household")).toBeInTheDocument();
@@ -78,9 +83,11 @@ describe("Groups Page", () => {
     });
 
     render(
-      <MemoryRouter>
-        <GroupsPage />
-      </MemoryRouter>,
+      <QueryWrapper>
+        <MemoryRouter>
+          <GroupsPage />
+        </MemoryRouter>
+      </QueryWrapper>,
     );
 
     expect(screen.queryByText("Broken Group")).not.toBeInTheDocument();
@@ -97,9 +104,11 @@ describe("Groups Page", () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter>
-        <GroupsPage />
-      </MemoryRouter>,
+      <QueryWrapper>
+        <MemoryRouter>
+          <GroupsPage />
+        </MemoryRouter>
+      </QueryWrapper>,
     );
 
     await user.click(screen.getByRole("button", { name: /retry/i }));

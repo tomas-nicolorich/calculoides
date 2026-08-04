@@ -1,6 +1,8 @@
-import { createContext, useCallback, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { groupApi, type Group } from "../../entities/group";
-import { useApiQuery } from "../../shared/api/useApiQuery";
+import { queryKeys } from "../../shared/api/queryKeys";
+import { toApiQueryResult } from "../../shared/api/apiQueryResult";
 import { useAuth } from "./AuthContext";
 
 interface GroupListContextValue {
@@ -17,20 +19,22 @@ const EMPTY_GROUPS: Group[] = [];
 /**
  * Owns the fetched group list, separate from `ActiveGroupContext` (D1 — the
  * "which group" list and "which group is active" concerns stay
- * independent). Keyed on the signed-in user's id via `useApiQuery` (A1) so
- * a re-login refetches.
+ * independent). Keyed on `["groups"]` (D6), which gets a 5-minute
+ * `staleTime` override from `createQueryClient` (D2); enabled only for a
+ * signed-in user (A9). The cache is cleared on sign-out/owner change by
+ * `AuthProvider` (D5/A7), so the flat key doesn't need to carry the user id
+ * itself.
  */
 export function GroupListProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
-  const fetchGroups = useCallback(
-    (_userId: string, signal: AbortSignal) => groupApi.list(signal),
-    [],
-  );
-
-  const { data, loading, error, refresh } = useApiQuery<Group[]>(
-    user?.id ?? null,
-    fetchGroups,
+  const q = useQuery({
+    queryKey: queryKeys.groups(),
+    queryFn: ({ signal }) => groupApi.list(signal),
+    enabled: !!user?.id,
+  });
+  const { data, loading, error, refresh } = toApiQueryResult<Group[]>(
+    q,
     EMPTY_GROUPS,
   );
 
