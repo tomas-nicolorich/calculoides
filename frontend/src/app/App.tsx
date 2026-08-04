@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../shared/api/queryClient";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AuthProvider } from "./providers/AuthProvider";
 import { ActiveGroupProvider } from "./providers/ActiveGroupContext";
 import { ActiveGroupSync } from "./providers/ActiveGroupSync";
@@ -73,6 +74,7 @@ function App() {
             </Routes>
           </ActiveGroupProvider>
         </AuthProvider>
+        <SpeedInsights />
       </BrowserRouter>
     </QueryClientProvider>
   );
