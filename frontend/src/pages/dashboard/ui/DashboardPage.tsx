@@ -44,6 +44,51 @@ export function buildMemberColorIndex(
   return new Map(members.map((m, i) => [m.id, i]));
 }
 
+function DashboardSkeleton() {
+  return (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8" aria-hidden="true">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-[34px] w-[34px] rounded-full" />
+          <Skeleton className="h-9 w-36 rounded-md" />
+        </div>
+      </header>
+
+      <div
+        className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
+        data-testid="dashboard-grid-skeleton"
+      >
+        <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Card key={i}>
+              <Skeleton className="h-4 w-28 mb-4" />
+              <Skeleton className="h-8 w-40 mb-6" />
+              <Skeleton className="h-3 w-full mb-2" />
+              <Skeleton className="h-3 w-5/6" />
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <Skeleton className="h-4 w-32 mb-4" />
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 py-3">
+              <Skeleton className="h-9 w-9 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-2.5 w-full" />
+              </div>
+            </div>
+          ))}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
   const { groupId } = useParams<{ groupId: string }>();
@@ -72,51 +117,7 @@ export function DashboardPage() {
   const deleteCategoryError = toErrorMessage(deleteCategory.error);
 
   if (summaryLoading || categoriesLoading) {
-    return (
-      <div
-        className="p-4 md:p-8 max-w-7xl mx-auto space-y-8"
-        aria-hidden="true"
-      >
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-[34px] w-[34px] rounded-full" />
-            <Skeleton className="h-9 w-36 rounded-md" />
-          </div>
-        </header>
-
-        <div
-          className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
-          data-testid="dashboard-grid-skeleton"
-        >
-          <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
-            {Array.from({ length: 4 }, (_, i) => (
-              <Card key={i}>
-                <Skeleton className="h-4 w-28 mb-4" />
-                <Skeleton className="h-8 w-40 mb-6" />
-                <Skeleton className="h-3 w-full mb-2" />
-                <Skeleton className="h-3 w-5/6" />
-              </Card>
-            ))}
-          </div>
-          <Card>
-            <Skeleton className="h-4 w-32 mb-4" />
-            {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="flex items-center gap-3 py-3">
-                <Skeleton className="h-9 w-9 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3.5 w-24" />
-                  <Skeleton className="h-2.5 w-full" />
-                </div>
-              </div>
-            ))}
-          </Card>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (summaryError || categoriesError) {

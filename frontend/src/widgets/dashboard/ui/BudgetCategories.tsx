@@ -268,6 +268,7 @@ interface BudgetCategoriesProps {
   members: MemberRich[];
 }
 
+// fallow-ignore-next-line complexity
 export function BudgetCategories({
   categories,
   isOwner,

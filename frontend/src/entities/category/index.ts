@@ -1,7 +1,7 @@
 import { apiClient } from "../../shared/api/client";
 import type { CategoryWithBalances } from "../../../../shared/src/types/redesign";
 
-export interface CategoryInput {
+interface CategoryInput {
   name: string;
   monthlyBudget: number;
   icon: string;
