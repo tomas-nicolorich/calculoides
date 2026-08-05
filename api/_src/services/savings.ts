@@ -112,8 +112,21 @@ export const SavingsService = {
     targetAmount: number,
     targetDate: Date,
     currentAmount: number,
+    callerUserId: string,
     icon?: string | null,
   ) {
+    const existing = await prisma.savingsGoal.findUnique({
+      where: { id: goalId },
+      select: { groupId: true },
+    });
+    if (!existing) throw new Error("Savings goal not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: existing.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!membership) throw new Error("Not a member of this group");
+
     return await prisma.savingsGoal.update({
       where: { id: goalId },
       data: {
@@ -288,7 +301,12 @@ export const SavingsService = {
    * Upserts a custom contribution amount for a goal.
    * Mandated by BUG-022 to include defensive validation for goalId and memberId.
    */
-  async upsertContribution(goalId: string, memberId: string, amount: number) {
+  async upsertContribution(
+    goalId: string,
+    memberId: string,
+    amount: number,
+    callerUserId: string,
+  ) {
     // BUG-022: Defensive validation
     const [goal, member] = await Promise.all([
       prisma.savingsGoal.findUnique({ where: { id: goalId } }),
@@ -302,6 +320,16 @@ export const SavingsService = {
     if (goal.groupId !== member.groupId) {
       throw new Error(
         "Member does not belong to the group associated with this savings goal",
+      );
+    }
+
+    const callerMembership = await prisma.groupMember.findFirst({
+      where: { groupId: goal.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!callerMembership) {
+      throw new Error(
+        "User does not belong to the group associated with this savings goal",
       );
     }
 
@@ -345,7 +373,11 @@ export const SavingsService = {
    * member's actualAmount reverts to the computed proportional base on the
    * next read. Idempotent: a no-op (no throw) when no override row exists.
    */
-  async deleteContribution(goalId: string, memberId: string) {
+  async deleteContribution(
+    goalId: string,
+    memberId: string,
+    callerUserId: string,
+  ) {
     const [goal, member] = await Promise.all([
       prisma.savingsGoal.findUnique({ where: { id: goalId } }),
       prisma.groupMember.findUnique({ where: { id: memberId } }),
@@ -357,6 +389,16 @@ export const SavingsService = {
     if (goal.groupId !== member.groupId) {
       throw new Error(
         "Member does not belong to the group associated with this savings goal",
+      );
+    }
+
+    const callerMembership = await prisma.groupMember.findFirst({
+      where: { groupId: goal.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!callerMembership) {
+      throw new Error(
+        "User does not belong to the group associated with this savings goal",
       );
     }
 

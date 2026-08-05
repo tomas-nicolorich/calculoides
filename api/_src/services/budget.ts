@@ -142,9 +142,22 @@ export const BudgetService = {
     categoryId: string,
     name: string,
     monthlyBudget: number,
+    callerUserId: string,
     icon?: string,
     memberIds?: string[],
   ): Promise<Category> {
+    const existing = await prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { groupId: true },
+    });
+    if (!existing) throw new Error("Category not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: existing.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!membership) throw new Error("Not a member of this group");
+
     return await prisma.$transaction(async (tx) => {
       const category = await tx.category.update({
         where: { id: categoryId },

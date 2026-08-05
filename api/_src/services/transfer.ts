@@ -114,7 +114,20 @@ export const TransferService = {
     fromMemberId: string,
     toMemberId: string,
     amount: number,
+    callerUserId: string,
   ) {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { groupId: true },
+    });
+    if (!category) throw new Error("Category not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: category.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!membership) throw new Error("Not a member of this group");
+
     const [fromId, toId] = await resolveTransferMemberIds(
       categoryId,
       fromMemberId,
@@ -132,7 +145,19 @@ export const TransferService = {
     });
   },
 
-  async getTransfersForCategory(categoryId: string) {
+  async getTransfersForCategory(categoryId: string, callerUserId: string) {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { groupId: true },
+    });
+    if (!category) throw new Error("Category not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: category.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!membership) throw new Error("Not a member of this group");
+
     return await prisma.transfer.findMany({
       where: { categoryId },
       include: {
@@ -241,8 +266,21 @@ export const TransferService = {
 
   /**
    * Deletes a transfer (permanent deletion, mirroring deleteExpense).
+   * Validates that the caller is a member of the transfer's group.
    */
-  async deleteTransfer(transferId: string) {
+  async deleteTransfer(transferId: string, callerUserId: string) {
+    const transfer = await prisma.transfer.findUnique({
+      where: { id: transferId },
+      include: { category: { select: { groupId: true } } },
+    });
+    if (!transfer) throw new Error("Transfer not found");
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: transfer.category.groupId, userId: callerUserId },
+      select: { id: true },
+    });
+    if (!membership) throw new Error("Not a member of this group");
+
     return await prisma.transfer.delete({
       where: { id: transferId },
     });

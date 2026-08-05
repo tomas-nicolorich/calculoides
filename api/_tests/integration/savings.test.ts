@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import transactionsHandler from "../../transactions";
 import { prisma } from "../../_src/utils/prisma";
 import { getUserFromSession } from "../../_src/services/auth";
+import { GroupService } from "../../_src/services/group";
 import { SavingsGoal, Prisma } from "@prisma/client";
 import { User } from "@supabase/supabase-js";
 import { ApiRequest } from "../../_src/middleware/handler";
@@ -52,11 +53,21 @@ vi.mock("../../_src/services/group", () => ({
 }));
 
 describe("Savings API Integration", () => {
+  const GROUP_ID = "550e8400-e29b-41d4-a716-446655440001";
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getUserFromSession).mockResolvedValue({
       id: "user-1",
     } as unknown as User);
+    // Caller is a member of GROUP_ID by default — individual tests override
+    // this where they need to exercise the not-a-member path.
+    vi.mocked(GroupService.getGroupsForUser).mockResolvedValue([
+      { id: GROUP_ID },
+    ] as unknown as Awaited<ReturnType<typeof GroupService.getGroupsForUser>>);
+    vi.mocked(prisma.groupMember.findFirst).mockResolvedValue({
+      id: "member-caller",
+    } as unknown as Awaited<ReturnType<typeof prisma.groupMember.findFirst>>);
   });
 
   describe("POST /api/savings", () => {

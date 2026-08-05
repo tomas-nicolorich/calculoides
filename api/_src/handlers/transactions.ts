@@ -61,6 +61,71 @@ async function requireGroupAccess(
   return validatedGroupId;
 }
 
+// Shared by every mutation whose service layer throws a plain "<Resource> not
+// found" / "Not a member of this group" Error to signal 404/403 - keeps that
+// mapping in one place instead of a try/catch repeated per route.
+async function handleKnownErrors(
+  res: ApiResponse,
+  notFoundMessage: string,
+  handler: () => Promise<void>,
+): Promise<void> {
+  try {
+    await handler();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === notFoundMessage) {
+      res.status(404).json({ error: msg });
+    } else if (msg === "Not a member of this group") {
+      res.status(403).json({ error: msg });
+    } else {
+      throw err;
+    }
+  }
+}
+
+function requireGoalAndMemberIds(
+  query: Record<string, unknown>,
+  res: ApiResponse,
+): { goalId: string; memberId: string } | undefined {
+  const { goalId, memberId } = query;
+  if (
+    !goalId ||
+    typeof goalId !== "string" ||
+    !memberId ||
+    typeof memberId !== "string"
+  ) {
+    res.status(400).json({ error: "Missing goalId or memberId" });
+    return undefined;
+  }
+  return { goalId, memberId };
+}
+
+// Savings-contribution errors report both the acting member's and the
+// goal-owning member's mismatch separately, so this mapping is distinct from
+// handleKnownErrors' single "Not a member of this group" case.
+async function handleSavingsContributionErrors(
+  res: ApiResponse,
+  handler: () => Promise<void>,
+): Promise<void> {
+  try {
+    await handler();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === "Savings goal not found" || msg === "Group member not found") {
+      res.status(404).json({ error: msg });
+    } else if (
+      msg ===
+        "Member does not belong to the group associated with this savings goal" ||
+      msg ===
+        "User does not belong to the group associated with this savings goal"
+    ) {
+      res.status(403).json({ error: msg });
+    } else {
+      throw err;
+    }
+  }
+}
+
 const CreateTransferSchema = z.object({
   categoryId: IdSchema,
   fromMemberId: IdSchema,
@@ -90,11 +155,18 @@ interface ExpenseListItem {
 export const routes: RouteConfig = {
   // Expenses
   "expenses-list": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { groupId, categoryId, memberId, from, to } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const { parsedLimit, parsedOffset } = parsePagination(req.query);
     const { expenses, total } = await ExpenseService.listExpenses(
-      groupId,
+      validatedGroupId,
       categoryId as string | undefined,
       memberId as string | undefined,
       parsedLimit,
@@ -125,14 +197,17 @@ export const routes: RouteConfig = {
   "expense-create": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as AuthenticatedRequest;
     const validatedBody = CreateExpenseSchema.parse(req.body);
-    const expense = await ExpenseService.logExpense(
-      validatedBody.categoryId,
-      validatedBody.payerId ?? authReq.user.id,
-      validatedBody.description,
-      validatedBody.amount,
-      validatedBody.date,
-    );
-    res.status(201).json(expense);
+    await handleKnownErrors(res, "Category not found", async () => {
+      const expense = await ExpenseService.logExpense(
+        validatedBody.categoryId,
+        validatedBody.payerId ?? authReq.user.id,
+        validatedBody.description,
+        validatedBody.amount,
+        validatedBody.date,
+        authReq.user.id,
+      );
+      res.status(201).json(expense);
+    });
   },
   "expense-update": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as AuthenticatedRequest;
@@ -141,31 +216,25 @@ export const routes: RouteConfig = {
       (req as ApiRequest & { params?: Record<string, string> }).params?.id;
     const validatedId = IdSchema.parse(id);
     const validatedBody = UpdateExpenseSchema.parse(req.body);
-    try {
+    await handleKnownErrors(res, "Expense not found", async () => {
       const updated = await ExpenseService.updateExpense(
         validatedId,
         validatedBody,
         authReq.user.id,
       );
       res.status(200).json(updated);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "Expense not found") {
-        res.status(404).json({ error: msg });
-      } else if (msg === "Not a member of this group") {
-        res.status(403).json({ error: msg });
-      } else {
-        throw err;
-      }
-    }
+    });
   },
   "expense-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const id =
       req.query.id ??
       (req as ApiRequest & { params?: Record<string, string> }).params?.id;
     const validatedId = IdSchema.parse(id);
-    await ExpenseService.deleteExpense(validatedId);
-    res.status(204).end();
+    await handleKnownErrors(res, "Expense not found", async () => {
+      await ExpenseService.deleteExpense(validatedId, authReq.user.id);
+      res.status(204).end();
+    });
   },
   "expenses-delete-all": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
@@ -183,36 +252,55 @@ export const routes: RouteConfig = {
 
   // Transfers
   "transfer-delete": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const id =
       req.query.id ??
       (req as ApiRequest & { params?: Record<string, string> }).params?.id;
     const validatedId = IdSchema.parse(id);
-    await TransferService.deleteTransfer(validatedId);
-    res.status(204).end();
+    await handleKnownErrors(res, "Transfer not found", async () => {
+      await TransferService.deleteTransfer(validatedId, authReq.user.id);
+      res.status(204).end();
+    });
   },
   "transfer-create": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const validatedBody = CreateTransferSchema.parse(req.body);
-    const transfer = await TransferService.createTransfer(
-      validatedBody.categoryId,
-      validatedBody.fromMemberId,
-      validatedBody.toMemberId,
-      validatedBody.amount,
-    );
-    res.status(201).json(transfer);
+    await handleKnownErrors(res, "Category not found", async () => {
+      const transfer = await TransferService.createTransfer(
+        validatedBody.categoryId,
+        validatedBody.fromMemberId,
+        validatedBody.toMemberId,
+        validatedBody.amount,
+        authReq.user.id,
+      );
+      res.status(201).json(transfer);
+    });
   },
   "transfers-by-category": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { categoryId } = req.query;
     const validatedCategoryId = IdSchema.parse(categoryId);
-    const transfers =
-      await TransferService.getTransfersForCategory(validatedCategoryId);
-    res.status(200).json(transfers);
+    await handleKnownErrors(res, "Category not found", async () => {
+      const transfers = await TransferService.getTransfersForCategory(
+        validatedCategoryId,
+        authReq.user.id,
+      );
+      res.status(200).json(transfers);
+    });
   },
   "transfers-list": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { groupId, categoryId, memberId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const { parsedLimit, parsedOffset } = parsePagination(req.query);
     const { transfers, total } = await TransferService.listTransfers(
-      groupId,
+      validatedGroupId,
       categoryId as string | undefined,
       memberId as string | undefined,
       parsedLimit,
@@ -239,8 +327,14 @@ export const routes: RouteConfig = {
 
   // Categories
   "category-create": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { groupId } = req.query;
-    const validatedGroupId = IdSchema.parse(groupId);
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const validatedBody = CreateCategorySchema.parse(req.body);
     const category = await BudgetService.createCategory(
       validatedGroupId,
@@ -252,17 +346,21 @@ export const routes: RouteConfig = {
     res.status(201).json(category);
   },
   "category-update": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { id } = req.query;
     const validatedId = IdSchema.parse(id);
     const validatedBody = CreateCategorySchema.parse(req.body);
-    const category = await BudgetService.updateCategory(
-      validatedId,
-      validatedBody.name,
-      validatedBody.monthlyBudget,
-      validatedBody.icon ?? undefined,
-      validatedBody.memberIds,
-    );
-    res.status(200).json(category);
+    await handleKnownErrors(res, "Category not found", async () => {
+      const category = await BudgetService.updateCategory(
+        validatedId,
+        validatedBody.name,
+        validatedBody.monthlyBudget,
+        authReq.user.id,
+        validatedBody.icon ?? undefined,
+        validatedBody.memberIds,
+      );
+      res.status(200).json(category);
+    });
   },
   "categories-list": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
@@ -304,9 +402,15 @@ export const routes: RouteConfig = {
 
   // Savings
   "savings-goal-create": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { groupId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
-    const validatedGroupId = IdSchema.parse(groupId);
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const validatedBody = CreateSavingsGoalSchema.parse(req.body);
     const goal = await SavingsService.createGoal(
       validatedGroupId,
@@ -319,19 +423,23 @@ export const routes: RouteConfig = {
     res.status(201).json(goal);
   },
   "savings-goal-update": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { goalId } = req.query;
     if (!requireStringParam(goalId, "goalId", res)) return;
     const validatedGoalId = IdSchema.parse(goalId);
     const validatedBody = CreateSavingsGoalSchema.parse(req.body);
-    const goal = await SavingsService.updateGoal(
-      validatedGoalId,
-      validatedBody.name,
-      validatedBody.targetAmount,
-      validatedBody.targetDate,
-      validatedBody.currentAmount,
-      validatedBody.icon,
-    );
-    res.status(200).json(goal);
+    await handleKnownErrors(res, "Savings goal not found", async () => {
+      const goal = await SavingsService.updateGoal(
+        validatedGoalId,
+        validatedBody.name,
+        validatedBody.targetAmount,
+        validatedBody.targetDate,
+        validatedBody.currentAmount,
+        authReq.user.id,
+        validatedBody.icon,
+      );
+      res.status(200).json(goal);
+    });
   },
   "savings-goal-delete": async (req: ApiRequest, res: ApiResponse) => {
     const authReq = req as unknown as AuthenticatedRequest;
@@ -342,46 +450,47 @@ export const routes: RouteConfig = {
     res.status(204).end();
   },
   "savings-contribution-upsert": async (req: ApiRequest, res: ApiResponse) => {
-    const { goalId, memberId } = req.query;
-    if (
-      !goalId ||
-      typeof goalId !== "string" ||
-      !memberId ||
-      typeof memberId !== "string"
-    ) {
-      res.status(400).json({ error: "Missing goalId or memberId" });
-      return;
-    }
-    const validatedGoalId = IdSchema.parse(goalId);
-    const validatedMemberId = IdSchema.parse(memberId);
+    const ids = requireGoalAndMemberIds(req.query, res);
+    if (!ids) return;
+    const authReq = req as AuthenticatedRequest;
+    const validatedGoalId = IdSchema.parse(ids.goalId);
+    const validatedMemberId = IdSchema.parse(ids.memberId);
     const validatedBody = UpsertContributionSchema.parse(req.body);
-    const contribution = await SavingsService.upsertContribution(
-      validatedGoalId,
-      validatedMemberId,
-      validatedBody.amount,
-    );
-    res.status(200).json(contribution);
+    await handleSavingsContributionErrors(res, async () => {
+      const contribution = await SavingsService.upsertContribution(
+        validatedGoalId,
+        validatedMemberId,
+        validatedBody.amount,
+        authReq.user.id,
+      );
+      res.status(200).json(contribution);
+    });
   },
   "savings-contribution-delete": async (req: ApiRequest, res: ApiResponse) => {
-    const { goalId, memberId } = req.query;
-    if (
-      !goalId ||
-      typeof goalId !== "string" ||
-      !memberId ||
-      typeof memberId !== "string"
-    ) {
-      res.status(400).json({ error: "Missing goalId or memberId" });
-      return;
-    }
-    const validatedGoalId = IdSchema.parse(goalId);
-    const validatedMemberId = IdSchema.parse(memberId);
-    await SavingsService.deleteContribution(validatedGoalId, validatedMemberId);
-    res.status(204).end();
+    const ids = requireGoalAndMemberIds(req.query, res);
+    if (!ids) return;
+    const authReq = req as AuthenticatedRequest;
+    const validatedGoalId = IdSchema.parse(ids.goalId);
+    const validatedMemberId = IdSchema.parse(ids.memberId);
+    await handleSavingsContributionErrors(res, async () => {
+      await SavingsService.deleteContribution(
+        validatedGoalId,
+        validatedMemberId,
+        authReq.user.id,
+      );
+      res.status(204).end();
+    });
   },
   "savings-goals-list": async (req: ApiRequest, res: ApiResponse) => {
+    const authReq = req as AuthenticatedRequest;
     const { groupId } = req.query;
     if (!requireStringParam(groupId, "groupId", res)) return;
-    const validatedGroupId = IdSchema.parse(groupId);
+    const validatedGroupId = await requireGroupAccess(
+      groupId,
+      authReq.user.id,
+      res,
+    );
+    if (!validatedGroupId) return;
     const goals = await SavingsService.getGoalsForGroup(validatedGroupId);
     res.status(200).json(goals);
   },
