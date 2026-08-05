@@ -102,13 +102,13 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 3a: Groups Server Actions
 
-- [ ] 3a.1 [RED] Test: owner reads group G detail → returned; non-member denied 403. (resource-authorization: "Group Access Requires Membership or Ownership")
-- [ ] 3a.2 [GREEN] Create `lib/actions/group.ts` `create`/`archive`/`undoArchive`/`transferOwnership` Server Actions calling `lib/server/services/group.ts`, porting the ownership check from `api/_src/handlers/groups.ts:80`.
-- [ ] 3a.3 [RED] Test: non-owner invoking `transferOwnership` on a group they don't own is denied 403, no data mutated. (Threat Matrix case 4)
-- [ ] 3a.4 [GREEN] Enforce owner-only check for `transferOwnership`/`archive`/`undoArchive`.
-- [ ] 3a.5 [RED] Test: invitation `create`/`respondInvite` — only a group member can create; only the invited user can respond.
-- [ ] 3a.6 [GREEN] Create `invitationCreate`/`respondInvite` actions.
-- [ ] 3a.7 Create `lib/actions/result.ts` (`ActionResult<T>`) and `lib/server/errors.ts` (`toStatus`), ported from existing catch-block message→status mapping; wire all 3a actions to return `ActionResult`, never throw.
+- [x] 3a.1 [RED] Test: owner reads group G detail → returned; non-member denied 403. (resource-authorization: "Group Access Requires Membership or Ownership") — added a `read` Server Action (not literally enumerated in 3a.2's action list, but required to exercise this scenario at the Server Action layer per design's `isGroupMember` reuse instruction) — see apply-progress Deviations.
+- [x] 3a.2 [GREEN] Create `lib/actions/group.ts` `create`/`archive`/`undoArchive`/`transferOwnership` Server Actions calling `lib/server/services/group.ts`, porting the ownership check from `api/_src/handlers/groups.ts:80`.
+- [x] 3a.3 [RED] Test: non-owner invoking `transferOwnership` on a group they don't own is denied 403, no data mutated. (Threat Matrix case 4) — genuine RED confirmed by temporarily reverting the `isGroupOwner` check and re-running (see apply-progress TDD evidence).
+- [x] 3a.4 [GREEN] Enforce owner-only check for `transferOwnership`/`archive`/`undoArchive`. (archive/undoArchive already enforce ownership inside `ArchiveService`; the action surfaces that via `toStatus`, verified with tests asserting the 403 mapping.)
+- [x] 3a.5 [RED] Test: invitation `create`/`respondInvite` — only a group member can create; only the invited user can respond. — genuine RED confirmed for both checks via the same temporary-revert method.
+- [x] 3a.6 [GREEN] Create `invitationCreate`/`respondInvite` actions. (`respondInvite` adds an invited-user-only gate before calling either accept/reject — `InvitationService.rejectInvitation` had no such check at all; see apply-progress Deviations/Issues Found.)
+- [x] 3a.7 Create `lib/actions/result.ts` (`ActionResult<T>`) and `lib/server/errors.ts` (`toStatus`), ported from existing catch-block message→status mapping; wire all 3a actions to return `ActionResult`, never throw.
 
 ## Phase 3b: Members + Users Actions, Page Move, Old-Handler Deletion
 

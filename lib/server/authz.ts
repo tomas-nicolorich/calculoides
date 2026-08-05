@@ -15,3 +15,17 @@ export async function isGroupMember(
   const groups = await GroupService.getGroupsForUser(userId);
   return groups.some((g) => g.id === groupId);
 }
+
+/**
+ * resource-authorization Threat Matrix case 4 (non-owner `transferOwnership`
+ * denial) — mirrors the exact ownership-check precedent at
+ * `api/_src/handlers/groups.ts:80` (`GroupService.isOwner(groupId,
+ * authReq.user.id)`), lifted here so Server Actions share one owner-check
+ * helper alongside `isGroupMember` instead of re-deriving it per action.
+ */
+export async function isGroupOwner(
+  userId: string,
+  groupId: string,
+): Promise<boolean> {
+  return GroupService.isOwner(groupId, userId);
+}
