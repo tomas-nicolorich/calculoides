@@ -8,13 +8,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Request, Response } from "express";
 import groupsHandler from "../../../_src/handlers/groups";
-import { InvitationService } from "../../../_src/services/invitation";
-import { GroupService } from "../../../_src/services/group";
+import { InvitationService } from "../../../../lib/server/services/invitation";
+import { GroupService } from "../../../../lib/server/services/group";
 
 // Mock the services
-vi.mock("../../../_src/services/group");
-vi.mock("../../../_src/services/archive");
-vi.mock("../../../_src/services/invitation");
+vi.mock("../../../../lib/server/services/group");
+vi.mock("../../../../lib/server/services/archive");
+vi.mock("../../../../lib/server/services/invitation");
 vi.mock("../../../_src/middleware/handler", async () => {
   const actual = (await vi.importActual(
     "../../../_src/middleware/handler",

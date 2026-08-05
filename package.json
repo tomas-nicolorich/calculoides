@@ -10,14 +10,15 @@
     "shared"
   ],
   "scripts": {
-    "dev": "turbo run dev start:api",
-    "dev:local": "turbo run dev start:api:local",
+    "dev": "next dev",
+    "dev:local": "next dev",
     "dev:next": "next dev",
     "build": "turbo run build",
     "build:next": "next build",
     "start:next": "next start",
     "test": "vitest run --config vitest.config.ts && turbo run test",
     "test:next": "vitest run --config vitest.config.ts",
+    "test:e2e:next": "playwright test -c playwright.config.ts",
     "test:local": "cross-env CALC_ENVIRONMENT=test-local turbo run test",
     "lint": "eslint app lib middleware.ts next.config.ts --max-warnings 0 && turbo run lint",
     "lint:next": "eslint app lib middleware.ts next.config.ts --max-warnings 0",
@@ -28,6 +29,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.0",
+    "@types/pg": "^8.20.0",
     "dotenv": "^17.4.2",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -54,10 +57,13 @@
     "@prisma/engines@7.8.0": true
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "7.8.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.0",
     "@tailwindcss/postcss": "^4.3.3",
     "next": "^16.3.0",
+    "pg": "^8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "tailwindcss": "^4.3.3"

@@ -1,4 +1,4 @@
-import { prisma } from "../utils/prisma";
+import { prisma } from "../../../api/_src/utils/prisma";
 import { Category } from "@prisma/client";
 import {
   calculateCategoryBalances,

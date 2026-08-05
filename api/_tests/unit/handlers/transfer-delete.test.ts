@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { transactionsHandler } from "../../../_src/handlers/transactions";
-import { TransferService } from "../../../_src/services/transfer";
+import { TransferService } from "../../../../lib/server/services/transfer";
 import { RouteConfig } from "../../../_src/utils/dispatcher";
 import { ApiRequest, ApiResponse } from "../../../_src/middleware/handler";
 
@@ -9,7 +9,7 @@ const mockedTransferService = TransferService as unknown as Record<
   Mock
 >;
 
-vi.mock("../../../_src/services/transfer", () => ({
+vi.mock("../../../../lib/server/services/transfer", () => ({
   TransferService: {
     deleteTransfer: vi.fn(),
   },

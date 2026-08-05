@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2025",
     "lib": [
       "dom",
       "dom.iterable",
@@ -29,10 +29,12 @@
     "middleware.ts",
     "middleware.test.ts",
     "vitest.config.ts",
+    "playwright.config.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
     "lib/**/*.ts",
     "lib/**/*.tsx",
+    "e2e/**/*.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],

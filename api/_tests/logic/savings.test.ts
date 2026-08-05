@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { calculateSavingsContributions } from "../../_src/services/savings";
-import { calculateMemberBudgetedTotals } from "../../_src/services/calculation";
+import { calculateSavingsContributions } from "../../../lib/server/services/savings";
+import { calculateMemberBudgetedTotals } from "../../../lib/server/services/calculation";
 import {
   calculateProjectedMonths,
   addMonths,

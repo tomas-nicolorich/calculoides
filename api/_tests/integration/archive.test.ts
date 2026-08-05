@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi } from "vitest";
-import { ArchiveService } from "../../_src/services/archive";
-import { GroupService } from "../../_src/services/group";
+import { ArchiveService } from "../../../lib/server/services/archive";
+import { GroupService } from "../../../lib/server/services/group";
 
-vi.mock("../../_src/services/group", () => ({
+vi.mock("../../../lib/server/services/group", () => ({
   GroupService: { isOwner: vi.fn() },
 }));
 

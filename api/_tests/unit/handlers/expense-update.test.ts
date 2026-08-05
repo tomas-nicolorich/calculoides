@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { transactionsHandler } from "../../../_src/handlers/transactions";
-import { ExpenseService } from "../../../_src/services/expense";
+import { ExpenseService } from "../../../../lib/server/services/expense";
 import { RouteConfig } from "../../../_src/utils/dispatcher";
 import { ApiRequest, ApiResponse } from "../../../_src/middleware/handler";
 
 const mockedExpenseService = ExpenseService as unknown as Record<string, Mock>;
 
-vi.mock("../../../_src/services/expense", () => ({
+vi.mock("../../../../lib/server/services/expense", () => ({
   ExpenseService: {
     updateExpense: vi.fn(),
   },

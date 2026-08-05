@@ -1,7 +1,7 @@
 import { dispatch, RouteConfig } from "../utils/dispatcher";
-import { GroupService } from "../services/group";
-import { ArchiveService } from "../services/archive";
-import { InvitationService } from "../services/invitation";
+import { GroupService } from "../../../lib/server/services/group";
+import { ArchiveService } from "../../../lib/server/services/archive";
+import { InvitationService } from "../../../lib/server/services/invitation";
 import {
   withAuth,
   withErrorHandling,

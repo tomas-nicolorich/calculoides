@@ -1,9 +1,9 @@
 import { dispatch, RouteConfig } from "../utils/dispatcher";
-import { ExpenseService } from "../services/expense";
-import { TransferService } from "../services/transfer";
-import { BudgetService } from "../services/budget";
-import { SavingsService } from "../services/savings";
-import { GroupService } from "../services/group";
+import { ExpenseService } from "../../../lib/server/services/expense";
+import { TransferService } from "../../../lib/server/services/transfer";
+import { BudgetService } from "../../../lib/server/services/budget";
+import { SavingsService } from "../../../lib/server/services/savings";
+import { GroupService } from "../../../lib/server/services/group";
 import {
   withAuth,
   withErrorHandling,
@@ -24,7 +24,7 @@ import {
   calculateIncomeShares,
   calculateCategoryBalances,
   calculateMemberBudgetedTotals,
-} from "../services/calculation";
+} from "../../../lib/server/services/calculation";
 
 function requireStringParam(
   value: unknown,

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ExpenseService } from "../../_src/services/expense";
+import { ExpenseService } from "../../../lib/server/services/expense";
 import { prisma } from "../../_src/utils/prisma";
 import { Category, GroupMember, Expense } from "@prisma/client";
 

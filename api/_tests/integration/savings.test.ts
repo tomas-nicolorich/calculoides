@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import transactionsHandler from "../../transactions";
 import { prisma } from "../../_src/utils/prisma";
 import { getUserFromSession } from "../../_src/services/auth";
-import { GroupService } from "../../_src/services/group";
+import { GroupService } from "../../../lib/server/services/group";
 import { SavingsGoal, Prisma } from "@prisma/client";
 import { User } from "@supabase/supabase-js";
 import { ApiRequest } from "../../_src/middleware/handler";
@@ -46,7 +46,7 @@ vi.mock("../../_src/services/auth", () => ({
 }));
 
 // Mock GroupService
-vi.mock("../../_src/services/group", () => ({
+vi.mock("../../../lib/server/services/group", () => ({
   GroupService: {
     getGroupsForUser: vi.fn(),
   },

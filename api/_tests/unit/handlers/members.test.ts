@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { membersHandler } from "../../../_src/handlers/members";
-import { GroupService } from "../../../_src/services/group";
+import { GroupService } from "../../../../lib/server/services/group";
 import { prisma } from "../../../_src/utils/prisma";
 import { RouteConfig } from "../../../_src/utils/dispatcher";
 import { ApiRequest, ApiResponse } from "../../../_src/middleware/handler";
@@ -10,7 +10,7 @@ const mockedPrisma = prisma as unknown as {
   groupMember: { findUnique: Mock };
 };
 
-vi.mock("../../../_src/services/group");
+vi.mock("../../../../lib/server/services/group");
 vi.mock("../../../_src/utils/prisma", () => ({
   prisma: {
     groupMember: { findUnique: vi.fn() },

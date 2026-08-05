@@ -1,5 +1,5 @@
 import { dispatch, RouteConfig } from "../utils/dispatcher";
-import { GroupService } from "../services/group";
+import { GroupService } from "../../../lib/server/services/group";
 import {
   withAuth,
   withErrorHandling,

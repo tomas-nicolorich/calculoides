@@ -76,18 +76,18 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 1b: Legacy Adapter Cutover
 
-- [ ] 1b.1 Create `app/api/[...legacy]/route.ts`: adapt `Request`/`NextResponse` to `ApiRequest`/`ApiResponse` (`api/_src/middleware/handler.ts` shapes), plus a friendly-path → `{handler, action}` table replacing `vercel.json` rewrites.
-- [ ] 1b.2 [RED] Adapter test: `res.status().json()` chaining and `.end()` for 204 responses work through the shim.
-- [ ] 1b.3 [RED] Adapter test: `req.query` populated correctly for both dynamic segments (`:id`) and query-string actions.
-- [ ] 1b.4 [RED] Adapter test: legacy path with a cookie session but no `Authorization` header — adapter injects a synthetic bearer token from the server Supabase client, handler behaves identically. (Threat Matrix case 3; server-session-auth: "Both Auth Paths Derive From the Same Supabase Session")
-- [ ] 1b.5 [RED] Adapter/Route Handler test: unauthenticated request to `/api/*` returns 401 JSON, never an HTML redirect. (Threat Matrix case 2)
-- [ ] 1b.6 [RED] Test: legacy bearer token from an unrelated/expired session is rejected with 401. (server-session-auth: "Legacy bearer token from an unrelated/expired session is rejected")
-- [ ] 1b.7 [GREEN] Implement the adapter to pass 1b.2–1b.6, invoking unchanged `withErrorHandling(withAuth(dispatch(...)))` chains from `api/_src/{middleware/handler.ts,utils/dispatcher.ts}`.
-- [ ] 1b.8 [E2E] Playwright test: one Next.js page and one legacy `/api/*` call authenticate from the same session. (proposal Phase-1 gate; server-session-auth: "Same session authenticates both")
-- [ ] 1b.9 Delete `vercel.json` API rewrites (keep only the SPA catch-all if still needed, or delete the file if Vercel's Next.js preset makes it redundant).
-- [ ] 1b.10 Delete `api/_src/server.ts` (Express dev shim); update root `dev`/`dev:local` scripts to run only `next dev`.
-- [ ] 1b.11 Create `lib/prisma.ts` as a verbatim port of `api/_src/utils/prisma.ts` (globalThis singleton), server-only import path.
-- [ ] 1b.12 Move `api/_src/services/**` to `lib/server/services/**` unchanged (import-path updates only, no logic changes).
+- [x] 1b.1 Create `app/api/[...legacy]/route.ts`: adapt `Request`/`NextResponse` to `ApiRequest`/`ApiResponse` (`api/_src/middleware/handler.ts` shapes), plus a friendly-path → `{handler, action}` table replacing `vercel.json` rewrites. (`app/api/[...legacy]/route.ts` + `routes-table.ts`, exhaustively ported from every `vercel.json` rewrite rule — see apply-progress.)
+- [x] 1b.2 [RED] Adapter test: `res.status().json()` chaining and `.end()` for 204 responses work through the shim.
+- [x] 1b.3 [RED] Adapter test: `req.query` populated correctly for both dynamic segments (`:id`) and query-string actions.
+- [x] 1b.4 [RED] Adapter test: legacy path with a cookie session but no `Authorization` header — adapter injects a synthetic bearer token from the server Supabase client, handler behaves identically. (Threat Matrix case 3; server-session-auth: "Both Auth Paths Derive From the Same Supabase Session")
+- [x] 1b.5 [RED] Adapter/Route Handler test: unauthenticated request to `/api/*` returns 401 JSON, never an HTML redirect. (Threat Matrix case 2)
+- [x] 1b.6 [RED] Test: legacy bearer token from an unrelated/expired session is rejected with 401. (server-session-auth: "Legacy bearer token from an unrelated/expired session is rejected")
+- [x] 1b.7 [GREEN] Implement the adapter to pass 1b.2–1b.6, invoking unchanged `withErrorHandling(withAuth(dispatch(...)))` chains from `api/_src/{middleware/handler.ts,utils/dispatcher.ts}`.
+- [x] 1b.8 [E2E] Playwright test: one Next.js page and one legacy `/api/*` call authenticate from the same session. (proposal Phase-1 gate; server-session-auth: "Same session authenticates both") — written (`e2e/dual-auth.spec.ts` + root `playwright.config.ts`), NOT executed against a live browser/Supabase project in this sandbox — see apply-progress Deviations.
+- [x] 1b.9 Delete `vercel.json` API rewrites (keep only the SPA catch-all if still needed, or delete the file if Vercel's Next.js preset makes it redundant). — deleted the whole file (Next.js preset makes both the API rewrites and the SPA catch-all redundant; see apply-progress).
+- [x] 1b.10 Delete `api/_src/server.ts` (Express dev shim); update root `dev`/`dev:local` scripts to run only `next dev`.
+- [x] 1b.11 Create `lib/prisma.ts` as a verbatim port of `api/_src/utils/prisma.ts` (globalThis singleton), server-only import path.
+- [x] 1b.12 Move `api/_src/services/**` to `lib/server/services/**` unchanged (import-path updates only, no logic changes). — real `git mv` (not duplication) with consumer import-path fixes across 4 handlers + ~20 pre-existing tests; `auth.ts` deliberately excluded from the move — see apply-progress Deviations for why.
 
 ## Phase 2: Dashboard Read Path → Server Components
 

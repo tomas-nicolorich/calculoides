@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
-import { SavingsService } from "../../../_src/services/savings";
+import { SavingsService } from "../../../../lib/server/services/savings";
 
 // ── Prisma mock ──────────────────────────────────────────────────────────────
 vi.mock("../../../_src/utils/prisma", () => ({

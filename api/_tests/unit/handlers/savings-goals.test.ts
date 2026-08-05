@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { transactionsHandler } from "../../../_src/handlers/transactions";
-import { SavingsService } from "../../../_src/services/savings";
-import { GroupService } from "../../../_src/services/group";
+import { SavingsService } from "../../../../lib/server/services/savings";
+import { GroupService } from "../../../../lib/server/services/group";
 import { RouteConfig } from "../../../_src/utils/dispatcher";
 import { ApiRequest, ApiResponse } from "../../../_src/middleware/handler";
 
@@ -9,8 +9,8 @@ const mockedSavingsService = SavingsService as unknown as Record<string, Mock>;
 const mockedGroupService = GroupService as unknown as Record<string, Mock>;
 
 // Mock dependencies
-vi.mock("../../../_src/services/savings");
-vi.mock("../../../_src/services/group");
+vi.mock("../../../../lib/server/services/savings");
+vi.mock("../../../../lib/server/services/group");
 vi.mock("../../../_src/middleware/handler", () => ({
   withAuth: vi.fn(<T>(handler: T): T => handler),
   withErrorHandling: vi.fn(<T>(handler: T): T => handler),

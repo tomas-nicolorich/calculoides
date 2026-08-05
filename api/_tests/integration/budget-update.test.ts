@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { BudgetService } from "../../_src/services/budget";
-import { TransferService } from "../../_src/services/transfer";
+import { BudgetService } from "../../../lib/server/services/budget";
+import { TransferService } from "../../../lib/server/services/transfer";
 import { prisma } from "../../_src/utils/prisma";
 import { Category, Transfer, Prisma } from "@prisma/client";
 

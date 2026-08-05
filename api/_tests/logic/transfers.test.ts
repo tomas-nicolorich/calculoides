@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateCategoryBalances } from "../../_src/services/calculation";
+import { calculateCategoryBalances } from "../../../lib/server/services/calculation";
 
 describe("Transfer Logic", () => {
   const category = { monthlyBudget: 1000 };

@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "start:api": "vercel dev --listen 3001",
-    "start:api:local": "exec node --import tsx _src/server.ts",
     "build:api": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -17,7 +16,6 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "7.8.0",
     "@supabase/supabase-js": "2.105.4",
-    "cors": "^2.8.6",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -26,7 +24,6 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.7.0",
     "@types/pg": "^8.20.0",

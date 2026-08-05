@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateCategoryBalances } from "../../_src/services/calculation";
+import { calculateCategoryBalances } from "../../../lib/server/services/calculation";
 
 /** Sum quotas in integer-cent space; avoids lossy float `=== budget`. */
 function quotaCents(balances: { quota: number }[]): number {

@@ -21,10 +21,6 @@
     "start:api": {
       "cache": false,
       "persistent": true
-    },
-    "start:api:local": {
-      "cache": false,
-      "persistent": true
     }
   }
 }

@@ -3,7 +3,7 @@ import {
   calculateIncomeShares,
   calculateCategoryBalances,
   MemberIncome,
-} from "../../_src/services/calculation";
+} from "../../../lib/server/services/calculation";
 
 describe("Income Share Calculation", () => {
   it("should calculate proportional shares for a simple group", () => {
