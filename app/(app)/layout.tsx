@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
+import { Providers } from "../providers";
 import { AppShell } from "./AppShell";
 
 // TODO(1b.12): once `api/_src/services/**` moves to `lib/server/services/**`
@@ -27,5 +28,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   const groupNames = await getGroupNames();
 
-  return <AppShell groupNames={groupNames}>{children}</AppShell>;
+  return (
+    <Providers>
+      <AppShell groupNames={groupNames}>{children}</AppShell>
+    </Providers>
+  );
 }

@@ -91,14 +91,14 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 2: Dashboard Read Path → Server Components
 
-- [ ] 2.1 Create `app/(app)/dashboard/[groupId]/page.tsx` as a Server Component calling `lib/server/services/{budget,summary}` directly for first-paint `summary`/`categories-list` data.
-- [ ] 2.2 Wire `dehydrate()`/`HydrationBoundary` to prefetch into the existing TanStack Query keys used by `useDashboardSummary`, `useCategoriesList` — client hooks stay unchanged.
-- [ ] 2.3 Create `app/api/summary/route.ts` and `app/api/categories/route.ts` (GET) backing refetch-on-focus for the same query keys, calling the moved services with the resource's own `groupId` authz check. (resource-authorization: "Group-Scoped Budget Resources Require Membership")
-- [ ] 2.4 [RED] RTL test: server-prefetched key is a cache-hit on client nav within the staleness window (no refetch). (client-data-cache: "Server-Component-served read has no query key")
-- [ ] 2.5 [RED] RTL test: refetch-on-focus for a server-prefetched key hits the new GET Route Handler.
-- [ ] 2.6 [GREEN] Implement hydration wiring to pass 2.4–2.5.
-- [ ] 2.7 [RED] Route Handler test: non-member of group G denied 403 on `/api/summary?groupId=G`, `/api/categories?groupId=G`. (resource-authorization: "Non-member denied on transfer/savings/expense access")
-- [ ] 2.8 [GREEN] Implement the membership check in both route handlers to pass 2.7.
+- [x] 2.1 Create `app/(app)/dashboard/[groupId]/page.tsx` as a Server Component calling `lib/server/services/{budget,summary}` directly for first-paint `summary`/`categories-list` data. (Extra, not separately numbered: page itself gates on `isGroupMember` + `notFound()`, per `lib/server/services/summary.ts`'s doc comment that services perform no authz themselves — see apply-progress.)
+- [x] 2.2 Wire `dehydrate()`/`HydrationBoundary` to prefetch into the existing TanStack Query keys used by `useDashboardSummary`, `useCategoriesList` — client hooks stay unchanged. (Deviation: new lean `app/(app)/dashboard/[groupId]/queries.ts` hooks, not the literal `frontend/src/shared/api/dashboardHooks.ts` functions — reuses the same `queryKeys` tuples unchanged; see apply-progress Deviations for why literal reuse breaks the Next build.)
+- [x] 2.3 Create `app/api/summary/route.ts` and `app/api/categories/route.ts` (GET) backing refetch-on-focus for the same query keys, calling the moved services with the resource's own `groupId` authz check. (resource-authorization: "Group-Scoped Budget Resources Require Membership")
+- [x] 2.4 [RED] RTL test: server-prefetched key is a cache-hit on client nav within the staleness window (no refetch). (client-data-cache: "Server-Component-served read has no query key")
+- [x] 2.5 [RED] RTL test: refetch-on-focus for a server-prefetched key hits the new GET Route Handler.
+- [x] 2.6 [GREEN] Implement hydration wiring to pass 2.4–2.5.
+- [x] 2.7 [RED] Route Handler test: non-member of group G denied 403 on `/api/summary?groupId=G`, `/api/categories?groupId=G`. (resource-authorization: "Non-member denied on transfer/savings/expense access")
+- [x] 2.8 [GREEN] Implement the membership check in both route handlers to pass 2.7.
 
 ## Phase 3a: Groups Server Actions
 
