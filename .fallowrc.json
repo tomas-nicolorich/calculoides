@@ -8,7 +8,8 @@
     "frontend/dist/**",
     "api/dist/**",
     "api/_src/handlers/users.ts",
-    "frontend/scripts/screenshot.mjs"
+    "frontend/scripts/screenshot.mjs",
+    "next-env.d.ts"
   ],
   "duplicates": {
     "minOccurrences": 3
