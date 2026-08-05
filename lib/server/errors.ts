@@ -6,6 +6,8 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   // Not found
   "Group not found": 404,
   "Member not found": 404,
+  "Category not found": 404,
+  "Expense not found": 404,
 
   // Ownership / membership denial
   "Unauthorized access to group": 403,
@@ -16,6 +18,7 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   "Only the group owner can archive expenses": 403,
   "Only the group owner can undo archiving": 403,
   "Only the owner can remove other members": 403,
+  "Payer is not a member of this group": 403,
   "User email not found in session": 400,
 
   // Validation failures

@@ -126,10 +126,10 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 4a: Expense Server Actions
 
-- [ ] 4a.1 [RED] Test: member creates an expense in their group succeeds; non-member denied 403. (resource-authorization: "Group-Scoped Budget Resources Require Membership")
-- [ ] 4a.2 [GREEN] Create `lib/actions/expense.ts` `create`/`update`/`delete`/`deleteAll`, resolving `groupId` from the expense's own record, not the request body.
-- [ ] 4a.3 [RED] Test: cross-group id substitution on expense update/delete is rejected. (Threat Matrix case 5)
-- [ ] 4a.4 [GREEN] Enforce resource-derived `groupId` to pass 4a.3.
+- [x] 4a.1 [RED] Test: member creates an expense in their group succeeds; non-member denied 403. (resource-authorization: "Group-Scoped Budget Resources Require Membership") — `lib/actions/expense.test.ts` written whole (create/update/delete/deleteAll cases together) before `lib/actions/expense.ts` existed; genuine RED confirmed via `Cannot find module '/lib/actions/expense'` — see apply-progress.
+- [x] 4a.2 [GREEN] Create `lib/actions/expense.ts` `create`/`update`/`delete`/`deleteAll`, resolving `groupId` from the expense's own record, not the request body. (Deviation: singular delete exported as `deleteExpense`, not the literal `delete` — `delete` is a reserved JS keyword and cannot be a function identifier — see apply-progress.)
+- [x] 4a.3 [RED] Test: cross-group id substitution on expense update/delete is rejected. (Threat Matrix case 5) — covered by the same whole-file RED batch as 4a.1 (`update`/`deleteExpense` cross-group cases); genuine pre-GREEN failure via the same module-not-found gate — see apply-progress.
+- [x] 4a.4 [GREEN] Enforce resource-derived `groupId` to pass 4a.3. (`ExpenseService.updateExpense`/`deleteExpense` already derive the group from the *existing* expense's own `category.groupId`, ported verbatim in 1b.12 — no caller-supplied `groupId` field exists on either schema. The action's try/catch surfaces that denial as a 403 `ActionResult` via `toStatus`, same non-duplication precedent as 3a.4's archive/undoArchive. `deleteAll`'s `groupId` has no prior resource to derive from, unlike `update`/`deleteExpense`'s `expenseId` — its own explicit `isGroupMember` check was added since `ExpenseService.deleteAllExpenses` has none — see apply-progress.)
 
 ## Phase 4b: Category Actions, GET Handlers, Page Move
 
