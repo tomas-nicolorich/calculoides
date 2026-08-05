@@ -13,6 +13,9 @@
   "duplicates": {
     "minOccurrences": 3
   },
+  "ignoreDependencies": [
+    "postcss-load-config"
+  ],
   "rules": {
     "unused-files": "warn",
     "unused-exports": "warn",

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "../../lib/supabase/server";
 import { AppShell } from "./AppShell";
 
 // TODO(1b.12): once `api/_src/services/**` moves to `lib/server/services/**`

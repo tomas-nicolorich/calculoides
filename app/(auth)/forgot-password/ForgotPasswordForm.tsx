@@ -2,7 +2,30 @@
 
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "../../../lib/supabase/client";
+import { AuthCard, FormField, FormError } from "../_components/AuthCard";
+
+function ResetLinkSent({ email }: { email: string }) {
+  return (
+    <AuthCard title="Reset Password" subtitle="Check your inbox">
+      <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl mb-4">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          If an account exists for{" "}
+          <strong className="text-slate-900 dark:text-white">
+            {email || "that address"}
+          </strong>
+          , a password reset link is on its way. The link expires in 30 minutes.
+        </p>
+      </div>
+      <Link
+        href="/login"
+        className="block w-full text-center rounded-md bg-brand-balance text-white h-10 leading-10 font-semibold"
+      >
+        Back to Sign In
+      </Link>
+    </AuthCard>
+  );
+}
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -34,78 +57,27 @@ export function ForgotPasswordForm() {
   };
 
   if (sent) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Reset Password
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Check your inbox
-          </p>
-        </div>
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl mb-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            If an account exists for{" "}
-            <strong className="text-slate-900 dark:text-white">
-              {email || "that address"}
-            </strong>
-            , a password reset link is on its way. The link expires in 30
-            minutes.
-          </p>
-        </div>
-        <Link
-          href="/login"
-          className="block w-full text-center rounded-md bg-brand-balance text-white h-10 leading-10 font-semibold"
-        >
-          Back to Sign In
-        </Link>
-      </div>
-    );
+    return <ResetLinkSent email={email} />;
   }
 
   return (
-    <div className="w-full max-w-md mx-auto bg-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Reset Password
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          We&apos;ll email you a reset link
-        </p>
-      </div>
-
+    <AuthCard title="Reset Password" subtitle="We'll email you a reset link">
       <form
         onSubmit={(event) => {
           void handleSubmit(event);
         }}
         className="space-y-4"
       >
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-            required
-            className="w-full rounded-md px-3 py-2 text-sm"
-          />
-        </div>
+        <FormField
+          id="email"
+          label="Email"
+          type="email"
+          placeholder="name@example.com"
+          value={email}
+          onChange={setEmail}
+        />
 
-        {error && (
-          <p role="alert" className="text-sm text-brand-expense text-center">
-            {error}
-          </p>
-        )}
+        <FormError message={error} />
 
         <button
           type="submit"
@@ -128,6 +100,6 @@ export function ForgotPasswordForm() {
           </p>
         </div>
       </form>
-    </div>
+    </AuthCard>
   );
 }

@@ -3,7 +3,14 @@
 import { useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "../../../lib/supabase/client";
+import { AuthCard, FormField, FormError } from "../_components/AuthCard";
+
+function toLoginErrorMessage(message: string): string {
+  return message === "Invalid login credentials"
+    ? "Incorrect email or password. Double-check and try again."
+    : "Something went wrong. Please try again.";
+}
 
 /**
  * Lean port of `frontend/src/features/auth/ui/LoginForm.tsx` for the
@@ -34,11 +41,7 @@ export function LoginForm() {
     });
 
     if (signInError) {
-      setError(
-        signInError.message === "Invalid login credentials"
-          ? "Incorrect email or password. Double-check and try again."
-          : "Something went wrong. Please try again.",
-      );
+      setError(toLoginErrorMessage(signInError.message));
       setLoading(false);
       return;
     }
@@ -48,63 +51,32 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Sign In
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Access your group budget overview
-        </p>
-      </div>
-
+    <AuthCard title="Sign In" subtitle="Access your group budget overview">
       <form
         onSubmit={(event) => {
           void handleSignIn(event);
         }}
         className="space-y-4"
       >
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-            required
-            autoComplete="email"
-            autoFocus
-            className="w-full rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-            }}
-            required
-            autoComplete="current-password"
-            className="w-full rounded-md px-3 py-2 text-sm"
-          />
-        </div>
+        <FormField
+          id="email"
+          label="Email"
+          type="email"
+          placeholder="name@example.com"
+          value={email}
+          onChange={setEmail}
+          autoComplete="email"
+          autoFocus
+        />
+        <FormField
+          id="password"
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+        />
 
         <div className="flex items-center justify-end">
           <Link
@@ -115,11 +87,7 @@ export function LoginForm() {
           </Link>
         </div>
 
-        {error && (
-          <p role="alert" className="text-sm text-brand-expense">
-            {error}
-          </p>
-        )}
+        <FormError message={error} />
 
         <button
           type="submit"
@@ -139,6 +107,6 @@ export function LoginForm() {
           </Link>
         </div>
       </form>
-    </div>
+    </AuthCard>
   );
 }

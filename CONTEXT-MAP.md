@@ -15,6 +15,10 @@ schemas are imported by both server code (`lib/actions/**`, `lib/server/**`)
 and client components, and it has no framework-specific dependencies that
 would force a merge (decided in Phase 1a, task 1a.12; see `next.config.ts`'s
 comment on why the app also uses its own `tsconfig.next.json` instead of the
-shared root `tsconfig.json` that `frontend`/`api` extend).
+shared root `tsconfig.json` that `frontend`/`api` extend). Use relative
+imports under `app/`/`lib/`, not a `@/*` path alias: `fallow`'s dead-code
+resolver (`.github/workflows/fallow.yml`) doesn't follow TS path mapping,
+so alias imports get misreported as unresolved and their target files as
+unused (found while fixing Phase 1a's PR checks).
 
 System-wide architectural decisions: `docs/adr/`.

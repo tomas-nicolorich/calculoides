@@ -2,17 +2,30 @@
 
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "../../../lib/supabase/client";
+import { AuthCard, FormField, FormError } from "../_components/AuthCard";
 
+async function extractErrorMessage(response: Response): Promise<string | null> {
+  try {
+    const body = (await response.json()) as {
+      error?: string;
+      message?: string;
+    };
+    return body.error ?? body.message ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Depends on the legacy `/api/users` dispatcher, only reachable from
+// inside this Next.js app once the legacy adapter Route Handler lands
+// (Phase 1b: `app/api/[...legacy]/route.ts`). Until then this fetch
+// 404s against Next's own router — sign-up still succeeds via Supabase
+// auth, but the profile-name upsert is deferred.
 async function createUserProfile(
   token: string,
   name: string,
 ): Promise<string | null> {
-  // Depends on the legacy `/api/users` dispatcher, only reachable from
-  // inside this Next.js app once the legacy adapter Route Handler lands
-  // (Phase 1b: `app/api/[...legacy]/route.ts`). Until then this fetch
-  // 404s against Next's own router — sign-up still succeeds via Supabase
-  // auth, but the profile-name upsert is deferred.
   const response = await fetch("/api/users", {
     method: "POST",
     headers: {
@@ -21,18 +34,56 @@ async function createUserProfile(
     },
     body: JSON.stringify({ name }),
   });
-  if (!response.ok) {
-    try {
-      const body = (await response.json()) as {
-        error?: string;
-        message?: string;
-      };
-      return body.error ?? body.message ?? null;
-    } catch {
-      return null;
-    }
+  if (response.ok) return null;
+  return extractErrorMessage(response);
+}
+
+// Isolates the two-step signUp-then-provision-profile flow so the form's
+// own submit handler only has to branch on its result, not on Supabase's
+// auth error plus the token-presence check separately.
+async function signUpAndProvisionProfile(
+  email: string,
+  password: string,
+  name: string,
+): Promise<string | null> {
+  const supabase = createClient();
+  const { data, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (authError) return authError.message;
+
+  const token = data.session?.access_token;
+  if (token) {
+    // Profile creation is best-effort in 1a — see `createUserProfile`.
+    await createUserProfile(token, name);
   }
   return null;
+}
+
+function arePasswordsMismatched(password: string, confirmPassword: string) {
+  return confirmPassword.length > 0 && confirmPassword !== password;
+}
+
+function PasswordMismatchWarning({ show }: { show: boolean }) {
+  if (!show) return null;
+  return <p className="text-brand-expense text-sm">Passwords do not match</p>;
+}
+
+function SignupSuccess({ email }: { email: string }) {
+  return (
+    <AuthCard
+      title="Check your email"
+      subtitle={`We've sent a confirmation link to ${email}.`}
+    >
+      <Link
+        href="/login"
+        className="block w-full text-center rounded-md border border-slate-200 dark:border-slate-800 h-10 leading-10 font-medium"
+      >
+        Back to Login
+      </Link>
+    </AuthCard>
+  );
 }
 
 export function SignupForm() {
@@ -44,8 +95,7 @@ export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const passwordsDoNotMatch =
-    confirmPassword.length > 0 && confirmPassword !== password;
+  const passwordsDoNotMatch = arePasswordsMismatched(password, confirmPassword);
 
   const handleSignUp = async (event: SyntheticEvent) => {
     event.preventDefault();
@@ -53,151 +103,64 @@ export function SignupForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
-
-    const token = data.session?.access_token;
-    if (token) {
-      // Profile creation is best-effort in 1a — see `createUserProfile`.
-      await createUserProfile(token, name);
-    }
-
-    setSuccess(true);
+    const signUpError = await signUpAndProvisionProfile(email, password, name);
+    setError(signUpError);
+    setSuccess(signUpError === null);
     setLoading(false);
   };
 
   if (success) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Check your email
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            We&apos;ve sent a confirmation link to {email}.
-          </p>
-        </div>
-        <Link
-          href="/login"
-          className="block w-full text-center rounded-md border border-slate-200 dark:border-slate-800 h-10 leading-10 font-medium"
-        >
-          Back to Login
-        </Link>
-      </div>
-    );
+    return <SignupSuccess email={email} />;
   }
 
   return (
-    <div className="w-full max-w-md mx-auto bg-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Create an Account
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Start managing your household budget
-        </p>
-      </div>
-
+    <AuthCard
+      title="Create an Account"
+      subtitle="Start managing your household budget"
+    >
       <form
         onSubmit={(event) => {
           void handleSignUp(event);
         }}
         className="space-y-4"
       >
+        <FormField
+          id="name"
+          label="Name"
+          type="text"
+          placeholder="Your name"
+          value={name}
+          onChange={setName}
+        />
+        <FormField
+          id="email"
+          label="Email"
+          type="email"
+          placeholder="name@example.com"
+          value={email}
+          onChange={setEmail}
+        />
+        <FormField
+          id="password"
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={setPassword}
+        />
         <div className="space-y-2">
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            placeholder="Your name"
-            value={name}
-            onChange={(event) => {
-              setName(event.target.value);
-            }}
-            required
-            className="w-full rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-            required
-            className="w-full rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-            }}
-            required
-            className="w-full rounded-md px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Confirm Password
-          </label>
-          <input
+          <FormField
             id="confirmPassword"
+            label="Confirm Password"
             type="password"
             placeholder="••••••••"
             value={confirmPassword}
-            onChange={(event) => {
-              setConfirmPassword(event.target.value);
-            }}
-            required
-            className="w-full rounded-md px-3 py-2 text-sm"
+            onChange={setConfirmPassword}
           />
-          {passwordsDoNotMatch && (
-            <p className="text-brand-expense text-sm">Passwords do not match</p>
-          )}
+          <PasswordMismatchWarning show={passwordsDoNotMatch} />
         </div>
 
-        {error && (
-          <p role="alert" className="text-sm text-brand-expense text-center">
-            {error}
-          </p>
-        )}
+        <FormError message={error} />
 
         <button
           type="submit"
@@ -217,6 +180,6 @@ export function SignupForm() {
           </Link>
         </div>
       </form>
-    </div>
+    </AuthCard>
   );
 }
