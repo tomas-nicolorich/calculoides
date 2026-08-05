@@ -7,29 +7,20 @@ import { matchLegacyRoute } from "./routes-table";
 // `ApiRequest` — testing it directly avoids a full `NextRequest` fixture.
 describe("matchLegacyRoute", () => {
   it("maps a static friendly path to its handler and action", () => {
-    const match = matchLegacyRoute(["archive"]);
+    const match = matchLegacyRoute(["expenses"]);
 
     expect(match).toEqual({
-      handlerName: "groups",
-      query: { action: "archive" },
+      handlerName: "transactions",
+      query: { action: "expenses" },
     });
   });
 
   it("captures a dynamic segment into the mapped query key", () => {
-    const match = matchLegacyRoute(["members", "member-42", "income"]);
+    const match = matchLegacyRoute(["transactions", "expense-42"]);
 
     expect(match).toEqual({
-      handlerName: "members",
-      query: { action: "update-income", id: "member-42" },
-    });
-  });
-
-  it("captures a dynamic segment under a differently-named query key", () => {
-    const match = matchLegacyRoute(["groups", "group-7", "transfer-ownership"]);
-
-    expect(match).toEqual({
-      handlerName: "groups",
-      query: { action: "transfer", groupId: "group-7" },
+      handlerName: "transactions",
+      query: { action: "transaction", id: "expense-42" },
     });
   });
 

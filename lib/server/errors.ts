@@ -15,6 +15,8 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   "Only the owner can transfer ownership": 403,
   "Only the group owner can archive expenses": 403,
   "Only the group owner can undo archiving": 403,
+  "Only the owner can remove other members": 403,
+  "User email not found in session": 400,
 
   // Validation failures
   "New owner must be a member of the group": 400,

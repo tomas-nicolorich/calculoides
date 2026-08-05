@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GroupService } from "../../../lib/server/services/group";
-import { membersHandler } from "../../_src/handlers/members";
 import { prisma } from "../../_src/utils/prisma";
 import { Group, GroupMember, Prisma } from "@prisma/client";
-import { ApiRequest, ApiResponse } from "../../_src/middleware/handler";
 
 // Mock Prisma
 vi.mock("../../_src/utils/prisma", () => ({
@@ -35,14 +33,6 @@ vi.mock("../../_src/utils/prisma", () => ({
       update: vi.fn(),
     },
   },
-}));
-
-// Bypass real Supabase auth + error-handling middleware so the route body
-// (including UpdateIncomeSchema validation + GroupService authorization)
-// can be exercised directly with an injected `req.user`.
-vi.mock("../../_src/middleware/handler", () => ({
-  withAuth: <T>(handler: T): T => handler,
-  withErrorHandling: <T>(handler: T): T => handler,
 }));
 
 describe("GroupService Integration", () => {
@@ -80,104 +70,28 @@ describe("GroupService Integration", () => {
     expect(result.ownerId).toBe(newOwnerId);
   });
 
-  describe("PUT /members/:id/income (update-income route)", () => {
-    const memberId = "member-1";
+  // `PUT /members/:id/income`'s route-level coverage moved to
+  // `lib/actions/member.test.ts` (3b.1-3b.2) — `membersHandler` was deleted
+  // in 3b.9. `GroupService.updateMemberIncome`'s own owner-or-member check
+  // is still exercised directly below.
+  it("rejects a requester who is a member of a different group; income unchanged", async () => {
     const targetGroupId = "group-1";
-    const targetUserId = "user-target";
-    const targetMemberRow = {
-      id: memberId,
-      userId: targetUserId,
-      groupId: targetGroupId,
-      group: { id: targetGroupId, ownerId: "owner-1" },
-    } as unknown as GroupMember & { group: Group };
+    vi.mocked(prisma.groupMember.findUnique).mockImplementation(((
+      args: unknown,
+    ) => {
+      const where = (args as { where: Record<string, unknown> }).where;
+      if ("userId_groupId" in where) return Promise.resolve(null);
+      return Promise.resolve({
+        id: "member-1",
+        userId: "user-target",
+        groupId: targetGroupId,
+        group: { id: targetGroupId, ownerId: "owner-1" },
+      } as unknown as GroupMember & { group: Group });
+    }) as unknown as typeof prisma.groupMember.findUnique);
 
-    let mockResponse: Partial<ApiResponse>;
-
-    beforeEach(() => {
-      mockResponse = {
-        status: vi.fn().mockReturnThis(),
-        json: vi.fn().mockReturnThis(),
-        end: vi.fn().mockReturnThis(),
-        headersSent: false,
-      };
-    });
-
-    function buildRequest(
-      overrides: Partial<ApiRequest> & { user: { id: string } },
-    ): ApiRequest {
-      return {
-        query: { action: "update-income", id: memberId },
-        headers: {},
-        ...overrides,
-      } as unknown as ApiRequest;
-    }
-
-    it("returns 200 when a non-owner shared-group member updates another member's income", async () => {
-      const requesterId = "member-requester";
-      vi.mocked(prisma.groupMember.findUnique).mockImplementation(((
-        args: unknown,
-      ) => {
-        const where = (args as { where: Record<string, unknown> }).where;
-        if ("userId_groupId" in where) {
-          return Promise.resolve({
-            id: "member-requester-row",
-            userId: requesterId,
-            groupId: targetGroupId,
-          } as unknown as GroupMember);
-        }
-        return Promise.resolve(targetMemberRow as unknown as GroupMember);
-      }) as unknown as typeof prisma.groupMember.findUnique);
-      vi.mocked(prisma.groupMember.update).mockResolvedValue({
-        id: memberId,
-        income: 4200,
-      } as unknown as GroupMember);
-
-      const req = buildRequest({
-        body: { income: 4200 },
-        user: { id: requesterId },
-      });
-
-      await membersHandler(req, mockResponse as ApiResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({ id: memberId, income: 4200 }),
-      );
-    });
-
-    it("rejects a requester who is a member of a different group; income unchanged", async () => {
-      vi.mocked(prisma.groupMember.findUnique).mockImplementation(((
-        args: unknown,
-      ) => {
-        const where = (args as { where: Record<string, unknown> }).where;
-        if ("userId_groupId" in where) {
-          return Promise.resolve(null);
-        }
-        return Promise.resolve(targetMemberRow as unknown as GroupMember);
-      }) as unknown as typeof prisma.groupMember.findUnique);
-
-      const req = buildRequest({
-        body: { income: 4200 },
-        user: { id: "outsider-1" },
-      });
-
-      await membersHandler(req, mockResponse as ApiResponse);
-
-      expect(mockResponse.status).not.toHaveBeenCalledWith(200);
-      expect(vi.mocked(prisma.groupMember.update)).not.toHaveBeenCalled();
-    });
-
-    it("rejects negative income via UpdateIncomeSchema before reaching the service; no data change", async () => {
-      const req = buildRequest({
-        body: { income: -100 },
-        user: { id: "owner-1" },
-      });
-
-      await membersHandler(req, mockResponse as ApiResponse);
-
-      expect(mockResponse.status).not.toHaveBeenCalledWith(200);
-      expect(vi.mocked(prisma.groupMember.findUnique)).not.toHaveBeenCalled();
-      expect(vi.mocked(prisma.groupMember.update)).not.toHaveBeenCalled();
-    });
+    await expect(
+      GroupService.updateMemberIncome("outsider-1", "member-1", 4200),
+    ).rejects.toThrow("Unauthorized: not a member of this group");
+    expect(vi.mocked(prisma.groupMember.update)).not.toHaveBeenCalled();
   });
 });

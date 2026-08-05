@@ -3,44 +3,16 @@
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
+import { upsert } from "../../../lib/actions/user";
 import { AuthCard, FormField, FormError } from "../_components/AuthCard";
-
-async function extractErrorMessage(response: Response): Promise<string | null> {
-  try {
-    const body = (await response.json()) as {
-      error?: string;
-      message?: string;
-    };
-    return body.error ?? body.message ?? null;
-  } catch {
-    return null;
-  }
-}
-
-// Depends on the legacy `/api/users` dispatcher, only reachable from
-// inside this Next.js app once the legacy adapter Route Handler lands
-// (Phase 1b: `app/api/[...legacy]/route.ts`). Until then this fetch
-// 404s against Next's own router — sign-up still succeeds via Supabase
-// auth, but the profile-name upsert is deferred.
-async function createUserProfile(
-  token: string,
-  name: string,
-): Promise<string | null> {
-  const response = await fetch("/api/users", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ name }),
-  });
-  if (response.ok) return null;
-  return extractErrorMessage(response);
-}
 
 // Isolates the two-step signUp-then-provision-profile flow so the form's
 // own submit handler only has to branch on its result, not on Supabase's
-// auth error plus the token-presence check separately.
+// auth error plus the session-presence check separately. Profile creation
+// calls the `upsert` Server Action (3b.7) directly — it resolves the id
+// from the session cookie, not a client-supplied token, so it only runs
+// once `supabase.auth.signUp()` has actually established a session (email
+// confirmation may defer that; profile creation stays best-effort here).
 async function signUpAndProvisionProfile(
   email: string,
   password: string,
@@ -53,10 +25,8 @@ async function signUpAndProvisionProfile(
   });
   if (authError) return authError.message;
 
-  const token = data.session?.access_token;
-  if (token) {
-    // Profile creation is best-effort in 1a — see `createUserProfile`.
-    await createUserProfile(token, name);
+  if (data.session) {
+    await upsert({ name });
   }
   return null;
 }

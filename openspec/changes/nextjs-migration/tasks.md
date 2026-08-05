@@ -112,15 +112,17 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 3b: Members + Users Actions, Page Move, Old-Handler Deletion
 
-- [ ] 3b.1 [RED] Test: fellow member updates another member's income within the same group → succeeds; outsider denied. (resource-authorization: "Member Income Update Requires Membership")
-- [ ] 3b.2 [GREEN] Create `lib/actions/member.ts` `updateIncome` action.
-- [ ] 3b.3 [RED] Test: owner removes a member of their own group succeeds; self-removal without ownership succeeds. (resource-authorization: "Member Removal Authorization...")
-- [ ] 3b.4 [RED] Test: cross-group id substitution — caller-supplied `groupId=A` alongside a member of group B is authorized against B, not A, and denied. (Threat Matrix case 5; ports `members.ts:78` precedent)
-- [ ] 3b.5 [GREEN] Create `removeMember` action resolving the group strictly from the target member's own `groupId`, never the caller-supplied one, to pass 3b.3–3b.4.
-- [ ] 3b.6 [RED] Test: user reads/upserts own profile via session id; client-supplied id in the payload is ignored. (resource-authorization: "User Profile Access Is Self-Scoped")
-- [ ] 3b.7 [GREEN] Create `lib/actions/user.ts` `upsert` action resolving the id from the session, and a `users/me` first-paint service call (no endpoint).
-- [ ] 3b.8 Create `app/(app)/groups/page.tsx` (Server Component groups list) and `app/(app)/members/page.tsx` (Server Component members list); move corresponding widgets to `components/**`.
-- [ ] 3b.9 Delete `api/groups.ts`, `api/members.ts`, `api/users.ts`, `api/_src/handlers/{groups,members,users}.ts`, and their friendly-path entries from the `app/api/[...legacy]/route.ts` table, in one commit.
+- [x] 3b.1 [RED] Test: fellow member updates another member's income within the same group → succeeds; outsider denied. (resource-authorization: "Member Income Update Requires Membership")
+- [x] 3b.2 [GREEN] Create `lib/actions/member.ts` `updateIncome` action.
+- [x] 3b.3 [RED] Test: owner removes a member of their own group succeeds; self-removal without ownership succeeds. (resource-authorization: "Member Removal Authorization...")
+- [x] 3b.4 [RED] Test: cross-group id substitution — caller-supplied `groupId=A` alongside a member of group B is authorized against B, not A, and denied. (Threat Matrix case 5; ports `members.ts:78` precedent)
+- [x] 3b.5 [GREEN] Create `removeMember` action resolving the group strictly from the target member's own `groupId`, never the caller-supplied one, to pass 3b.3–3b.4. (Added `GroupService.getMemberById` to resolve the real record first — see apply-progress.)
+- [x] 3b.6 [RED] Test: user reads/upserts own profile via session id; client-supplied id in the payload is ignored. (resource-authorization: "User Profile Access Is Self-Scoped")
+- [x] 3b.7 [GREEN] Create `lib/actions/user.ts` `upsert` action resolving the id from the session, and a `users/me` first-paint service call (no endpoint). (`UserService.getUser` wired into `app/(app)/members/page.tsx` as the "users me" first-paint call — see apply-progress Deviations for why there, not a dedicated profile page.)
+- [x] 3b.8 Create `app/(app)/groups/page.tsx` (Server Component groups list) and `app/(app)/members/page.tsx` (Server Component members list); move corresponding widgets to `components/**`. (Deviation: colocated `GroupsClient.tsx`/`MembersClient.tsx` beside their `page.tsx`, matching Phase 1a/2's established precedent, not a top-level `components/**` — see apply-progress.)
+- [x] 3b.9 Delete `api/groups.ts`, `api/members.ts`, `api/users.ts`, `api/_src/handlers/{groups,members,users}.ts`, and their friendly-path entries from the `app/api/[...legacy]/route.ts` table, in one commit. (Also fixed a real, previously-undiscovered break: `app/(auth)/signup/SignupForm.tsx` called the now-deleted `/api/users` directly — repointed to the new `upsert` Server Action — see apply-progress Issues Found.)
+
+**Status: implemented and fully test-verified (all gates green), NOT YET COMMITTED — blocked on a review-budget decision.** Measured diff is 1756 changed lines (985 insertions + 771 deletions) against the 800-line session budget, well above the 700–900 forecast in this file's own per-phase table. See apply-progress for the full breakdown and the decision this phase needs before it can be committed.
 
 ## Phase 4a: Expense Server Actions
 

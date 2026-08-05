@@ -117,6 +117,16 @@ export const GroupService = {
   },
 
   /**
+   * Retrieves a single member row by id, or null if not found. Used by
+   * `lib/actions/member.ts`'s `removeMember` to resolve the target's *real*
+   * `groupId` before authorizing (resource-authorization Threat Matrix
+   * case 5 — never trust a caller-supplied groupId for this check).
+   */
+  async getMemberById(memberId: string) {
+    return await prisma.groupMember.findUnique({ where: { id: memberId } });
+  },
+
+  /**
    * Updates a member's income for retroactive calculation.
    * Mandated by BUG-013 to allow group owners to update any member's income;
    * widened so any member sharing the target's group may also update it.

@@ -5,9 +5,6 @@ import type {
   Handler,
 } from "../../../api/_src/middleware/handler";
 import { createClient } from "../../../lib/supabase/server";
-import { groupsHandler } from "../../../api/_src/handlers/groups";
-import { membersHandler } from "../../../api/_src/handlers/members";
-import { usersHandler } from "../../../api/_src/handlers/users";
 import { transactionsHandler } from "../../../api/_src/handlers/transactions";
 import { matchLegacyRoute, type LegacyHandlerName } from "./routes-table";
 
@@ -142,9 +139,6 @@ async function injectBearerIfMissing(req: ApiRequest): Promise<void> {
 }
 
 const LEGACY_HANDLERS: Record<LegacyHandlerName, Handler> = {
-  groups: groupsHandler,
-  members: membersHandler,
-  users: usersHandler,
   transactions: transactionsHandler,
 };
 

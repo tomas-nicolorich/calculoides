@@ -4,14 +4,19 @@
  *
  * Every entry below is a direct, faithful port of one `vercel.json` rewrite
  * rule (`source` → `destination`'s `action`/dynamic-segment query params).
- * `groups` and `transactions` have no corresponding `vercel.json` rewrite —
- * on real Vercel those paths hit `api/groups.ts`/`api/transactions.ts`
- * directly via file-based routing with the client's original query string
- * untouched, so they're listed here as passthrough entries (no `action`
- * override) purely to route them to the right handler.
+ * `transactions` has no corresponding `vercel.json` rewrite — on real Vercel
+ * that path hits `api/transactions.ts` directly via file-based routing with
+ * the client's original query string untouched, so it's listed here as a
+ * passthrough entry (no `action` override) purely to route it to the right
+ * handler.
+ *
+ * `groups`/`members`/`users` entries were removed in 3b.9 — those handlers
+ * are deleted; the same resources are now served by `lib/actions/{group,
+ * member,user}.ts` Server Actions and `app/(app)/{groups,members}/page.tsx`
+ * Server Components.
  */
 
-export type LegacyHandlerName = "groups" | "members" | "users" | "transactions";
+export type LegacyHandlerName = "transactions";
 
 interface LegacyRoutePattern {
   /** Path segments; a segment starting with `:` captures a dynamic value. */
@@ -24,24 +29,6 @@ interface LegacyRoutePattern {
 }
 
 const ROUTE_TABLE: LegacyRoutePattern[] = [
-  // Groups (api/groups.ts, no rewrite — direct file-based mount)
-  { parts: ["groups"], handlerName: "groups" },
-  { parts: ["archive"], handlerName: "groups", action: "archive" },
-  { parts: ["undo-archive"], handlerName: "groups", action: "undo-archive" },
-  {
-    parts: ["groups", ":id", "transfer-ownership"],
-    handlerName: "groups",
-    action: "transfer",
-    paramQueryKey: "groupId",
-  },
-  { parts: ["transfer-ownership"], handlerName: "groups", action: "transfer" },
-  { parts: ["invitations"], handlerName: "groups", action: "invitations" },
-  {
-    parts: ["respond-invitation"],
-    handlerName: "groups",
-    action: "respond-invite",
-  },
-
   // Transactions (api/transactions.ts, no rewrite — direct file-based mount)
   { parts: ["transactions"], handlerName: "transactions" },
   {
@@ -64,19 +51,6 @@ const ROUTE_TABLE: LegacyRoutePattern[] = [
     handlerName: "transactions",
     action: "categories-list",
   },
-
-  // Members
-  { parts: ["members"], handlerName: "members", action: "list" },
-  {
-    parts: ["members", ":id", "income"],
-    handlerName: "members",
-    action: "update-income",
-    paramQueryKey: "id",
-  },
-
-  // Users
-  { parts: ["users"], handlerName: "users", action: "upsert" },
-  { parts: ["users", "me"], handlerName: "users", action: "me" },
 ];
 
 export interface LegacyRouteMatch {

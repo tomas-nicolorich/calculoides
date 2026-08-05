@@ -4,12 +4,17 @@ import { NextRequest } from "next/server";
 // vi.mock factories are hoisted above top-level const declarations, so the
 // mock fns themselves must be created inside vi.hoisted() to be referenced
 // both here and from inside the test bodies below.
-const { getSessionMock, getUserFromSessionMock, getGroupsForUserMock } =
-  vi.hoisted(() => ({
-    getSessionMock: vi.fn(),
-    getUserFromSessionMock: vi.fn(),
-    getGroupsForUserMock: vi.fn(),
-  }));
+const {
+  getSessionMock,
+  getUserFromSessionMock,
+  getGroupsForUserMock,
+  listCategoriesMock,
+} = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
+  getUserFromSessionMock: vi.fn(),
+  getGroupsForUserMock: vi.fn(),
+  listCategoriesMock: vi.fn(),
+}));
 
 // Server Supabase client — used by the adapter to look up the cookie
 // session's access_token when no `Authorization` header is present
@@ -30,10 +35,16 @@ vi.mock("../../../api/_src/services/auth", () => ({
     header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : null,
 }));
 
-// One representative service call so the "groups list" happy path can be
-// exercised end-to-end without a real database.
+// Representative service calls so the "categories list" happy path (legacy
+// `transactions` handler, action=categories-list) can be exercised
+// end-to-end without a real database. `requireGroupAccess` (internal to the
+// handler) calls `GroupService.getGroupsForUser` for its membership check.
 vi.mock("../../../lib/server/services/group", () => ({
   GroupService: { getGroupsForUser: getGroupsForUserMock },
+}));
+
+vi.mock("../../../lib/server/services/budget", () => ({
+  BudgetService: { listCategoriesWithBalances: listCategoriesMock },
 }));
 
 import { GET } from "./route";
@@ -49,6 +60,7 @@ describe("legacy adapter route", () => {
     getSessionMock.mockReset();
     getUserFromSessionMock.mockReset();
     getGroupsForUserMock.mockReset();
+    listCategoriesMock.mockReset();
   });
 
   // 1b.5 (Threat Matrix case 2): unauthenticated request to /api/* returns
@@ -56,8 +68,8 @@ describe("legacy adapter route", () => {
   it("returns 401 JSON, not a redirect, for a fully unauthenticated request", async () => {
     getSessionMock.mockResolvedValue({ data: { session: null } });
 
-    const response = await GET(requestFor("/api/groups"), {
-      params: Promise.resolve({ legacy: ["groups"] }),
+    const response = await GET(requestFor("/api/categories?groupId=group-1"), {
+      params: Promise.resolve({ legacy: ["categories"] }),
     });
 
     expect(response.status).toBe(401);
@@ -75,8 +87,10 @@ describe("legacy adapter route", () => {
     getUserFromSessionMock.mockResolvedValue(null);
 
     const response = await GET(
-      requestFor("/api/groups", { authorization: "Bearer stale-token" }),
-      { params: Promise.resolve({ legacy: ["groups"] }) },
+      requestFor("/api/categories?groupId=group-1", {
+        authorization: "Bearer stale-token",
+      }),
+      { params: Promise.resolve({ legacy: ["categories"] }) },
     );
 
     expect(response.status).toBe(401);
@@ -95,19 +109,22 @@ describe("legacy adapter route", () => {
       id: "user-1",
       email: "a@b.com",
     });
-    getGroupsForUserMock.mockResolvedValue([{ id: "group-1" }]);
+    const groupId = "22222222-2222-4222-8222-222222222222";
+    getGroupsForUserMock.mockResolvedValue([{ id: groupId }]);
+    listCategoriesMock.mockResolvedValue([{ id: "category-1" }]);
 
-    const response = await GET(requestFor("/api/groups"), {
-      params: Promise.resolve({ legacy: ["groups"] }),
-    });
+    const response = await GET(
+      requestFor(`/api/categories?groupId=${groupId}`),
+      { params: Promise.resolve({ legacy: ["categories"] }) },
+    );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual([{ id: "group-1" }]);
+    expect(await response.json()).toEqual([{ id: "category-1" }]);
     // Proves the injected token — not a hardcoded/absent one — is what
     // withAuth verified, i.e. the same code path a real bearer call takes.
     expect(getUserFromSessionMock).toHaveBeenCalledWith(
       "session-derived-token",
     );
-    expect(getGroupsForUserMock).toHaveBeenCalledWith("user-1");
+    expect(listCategoriesMock).toHaveBeenCalledWith(groupId);
   });
 });
