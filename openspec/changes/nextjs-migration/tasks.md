@@ -60,18 +60,19 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 1a: Next.js Shell
 
-- [ ] 1a.1 Create `lib/supabase/client.ts` (browser client), `lib/supabase/server.ts` (server client), `lib/supabase/middleware.ts` (`@supabase/ssr` three-client setup).
-- [ ] 1a.2 Create root `middleware.ts`: refresh session cookie on every matched request via `lib/supabase/middleware.ts`; matcher excludes `_next/static`, `_next/image`, favicon, static assets. (server-session-auth: "Middleware Refreshes the Session on Every Matched Request")
-- [ ] 1a.3 [RED] Write middleware test: unauthenticated request to a protected page redirects to `/login`. (Threat Matrix case 1)
-- [ ] 1a.4 [RED] Write middleware test: request to `/api/*` is NOT intercepted by the redirect branch. (server-session-auth: "Legacy API paths are excluded from the matcher")
-- [ ] 1a.5 [GREEN] Implement middleware redirect-for-pages / passthrough-for-`/api` branching to pass 1a.3–1a.4.
-- [ ] 1a.6 Create `app/(auth)/login/page.tsx`, `signup/page.tsx`, `forgot-password/page.tsx`, `reset-password/page.tsx`, `complete-profile/page.tsx` from `frontend/src/pages/{Login,Signup,ForgotPassword,ResetPassword,CompleteProfile}Page.tsx`; mark client-interactive forms `"use client"`.
-- [ ] 1a.7 Create `app/(app)/layout.tsx` hosting `AppShell` (port of `frontend/src/app/ui/AppShell.tsx`) + server-fetched group list (`GroupListContext` data via direct service call, no client fetch).
-- [ ] 1a.8 [RED] Write test: protected segment with no/invalid session redirects without rendering content. (server-session-auth: "Protected Segments Require a Verified Session")
-- [ ] 1a.9 [RED] Write test: tampered cookie without a valid Supabase session is treated as unauthenticated by `getUser()`.
-- [ ] 1a.10 [GREEN] Implement `getUser()`-based verification in `app/(app)/layout.tsx` to pass 1a.8–1a.9.
-- [ ] 1a.11 Audit ported client components for module-scope `window`/`localStorage` access; replicate `ActiveGroupContext.readStoredGroupId`'s `typeof window` guard pattern (proposal Risk: SSR breakage).
-- [ ] 1a.12 Decide `shared/` fate: keep as workspace (Zod schemas imported by server + client); document in `CONTEXT-MAP.md`.
+- [x] 1a.0 Scaffold Next.js (App Router) at the repo root: add `next`, `@supabase/ssr`, `@supabase/supabase-js` as root dependencies; create root `next.config.ts`, `app/layout.tsx`, `app/globals.css` (reuse the Tailwind 4 setup from `frontend/`); add root `dev:next`/`build:next`/`start:next` scripts (kept separate from the existing `turbo run dev`/`build` pipeline so `frontend`/`api` keep working unmodified during the transition); confirm `next dev` boots and renders a placeholder page without touching `frontend/` or `api/`. (Not in the original design doc — Next.js was never actually installed; this is the missing bootstrap step design/tasks assumed.)
+- [x] 1a.1 Create `lib/supabase/client.ts` (browser client), `lib/supabase/server.ts` (server client), `lib/supabase/middleware.ts` (`@supabase/ssr` three-client setup).
+- [x] 1a.2 Create root `middleware.ts`: refresh session cookie on every matched request via `lib/supabase/middleware.ts`; matcher excludes `_next/static`, `_next/image`, favicon, static assets. (server-session-auth: "Middleware Refreshes the Session on Every Matched Request")
+- [x] 1a.3 [RED] Write middleware test: unauthenticated request to a protected page redirects to `/login`. (Threat Matrix case 1)
+- [x] 1a.4 [RED] Write middleware test: request to `/api/*` is NOT intercepted by the redirect branch. (server-session-auth: "Legacy API paths are excluded from the matcher")
+- [x] 1a.5 [GREEN] Implement middleware redirect-for-pages / passthrough-for-`/api` branching to pass 1a.3–1a.4.
+- [x] 1a.6 Create `app/(auth)/login/page.tsx`, `signup/page.tsx`, `forgot-password/page.tsx`, `reset-password/page.tsx`, `complete-profile/page.tsx` from `frontend/src/pages/{Login,Signup,ForgotPassword,ResetPassword,CompleteProfile}Page.tsx`; mark client-interactive forms `"use client"`. (Deviation: lean new implementations wired to `lib/supabase/client.ts`, not full ports of the `shared/ui`-atom-based forms — see apply-progress.)
+- [x] 1a.7 Create `app/(app)/layout.tsx` hosting `AppShell` (port of `frontend/src/app/ui/AppShell.tsx`) + server-fetched group list (`GroupListContext` data via direct service call, no client fetch). (Deviation: group list stubbed to `[]` pending 1b.12's `lib/server/services` move; nav chrome is a lean placeholder — see apply-progress.)
+- [x] 1a.8 [RED] Write test: protected segment with no/invalid session redirects without rendering content. (server-session-auth: "Protected Segments Require a Verified Session")
+- [x] 1a.9 [RED] Write test: tampered cookie without a valid Supabase session is treated as unauthenticated by `getUser()`.
+- [x] 1a.10 [GREEN] Implement `getUser()`-based verification in `app/(app)/layout.tsx` to pass 1a.8–1a.9.
+- [x] 1a.11 Audit ported client components for module-scope `window`/`localStorage` access; replicate `ActiveGroupContext.readStoredGroupId`'s `typeof window` guard pattern (proposal Risk: SSR breakage). (Audit result: only usage found is `window.location.origin` inside `ForgotPasswordForm`'s submit handler — function-scoped, not module-scope; no guard needed.)
+- [x] 1a.12 Decide `shared/` fate: keep as workspace (Zod schemas imported by server + client); document in `CONTEXT-MAP.md`.
 
 ## Phase 1b: Legacy Adapter Cutover
 

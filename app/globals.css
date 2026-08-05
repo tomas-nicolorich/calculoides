@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-mono-variable.woff2") format("woff2");
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono:
+    "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-brand-income: var(--color-emerald-500);
+  --color-brand-balance: var(--color-blue-600);
+  --color-brand-expense: var(--color-red-500);
+  --color-brand-transfer: var(--color-amber-500);
+  --color-brand-category: var(--color-violet-500);
+
+  /* CDS member palette — stable per-member identity colours (avatars, bars).
+     Darkened from the base Tailwind 500 shades so white avatar initials
+     always clear WCAG AA (4.5:1); see Avatar.tsx WHITE_TEXT. */
+  --color-member-1: #047857;
+  --color-member-2: #2563eb;
+  --color-member-3: #7c3aed;
+  --color-member-4: #b45309;
+  --color-member-5: #e11d48;
+  --color-member-6: #0e7490;
+  --color-member-7: #c2410c;
+  --color-member-8: #db2777;
+  --color-member-9: #4f46e5;
+  --color-member-10: #0f766e;
+
+  --color-background: var(--color-slate-50);
+  --color-foreground: var(--color-slate-900);
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-slate-900);
+  --color-input: var(--color-slate-200);
+
+  --breakpoint-3xl: 2048px;
+
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow-sm:
+    0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+  --shadow-md:
+    0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --shadow-lg:
+    0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.06);
+  --shadow-xl:
+    0 20px 25px -5px rgb(15 23 42 / 0.12), 0 8px 10px -6px rgb(15 23 42 / 0.08);
+}
+
+:root {
+  --glow-balance: 0 10px 20px -6px rgb(59 130 246 / 0.35);
+  --glow-income: 0 10px 20px -6px rgb(16 185 129 / 0.35);
+  --glow-expense: 0 10px 20px -6px rgb(239 68 68 / 0.35);
+  --glow-transfer: 0 10px 20px -6px rgb(245 158 11 / 0.35);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 500ms;
+}
+
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:
+    "tnum" 1,
+    "zero" 1;
+}
+
+.dark {
+  --color-background: var(--color-slate-950);
+  --color-foreground: var(--color-slate-50);
+  --color-card: var(--color-slate-900);
+  --color-card-foreground: var(--color-white);
+  --color-input: var(--color-slate-800);
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  input,
+  select,
+  textarea,
+  option {
+    @apply text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-500 transition-colors;
+  }
+
+  option {
+    @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+  }
+
+  /* Autofill styling override for high-contrast readability */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important; /* slate-900 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important; /* slate-900 */
+    -webkit-text-fill-color: #f1f5f9 !important; /* slate-100 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+}
