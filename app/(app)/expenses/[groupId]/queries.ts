@@ -4,10 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import {
-  queryKeys,
-  type ExpenseFilters,
-} from "../../../../frontend/src/shared/api/queryKeys";
+import { queryKeys, type ExpenseFilters } from "../../../../lib/query-keys";
 import type { ExpensesList } from "shared/src/types/redesign";
 import {
   create,

@@ -21,12 +21,7 @@ export default tseslint.config(
         ...globals.node,
       },
       parserOptions: {
-        project: [
-          "./tsconfig.json",
-          "./tsconfig.next.json",
-          "./frontend/tsconfig.json",
-          "./api/tsconfig.json",
-        ],
+        project: ["./tsconfig.json", "./tsconfig.next.json"],
         tsconfigRootDir: import.meta.dirname,
       },
     },

@@ -1,4 +1,4 @@
-import { prisma } from "../../../api/_src/utils/prisma";
+import { prisma } from "../../prisma";
 import { GroupService } from "./group";
 import { calculateCategoryBalances } from "./calculation";
 

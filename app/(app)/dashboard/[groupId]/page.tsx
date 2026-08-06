@@ -8,8 +8,8 @@ import { createClient } from "../../../../lib/supabase/server";
 import { isGroupMember } from "../../../../lib/server/authz";
 import { SummaryService } from "../../../../lib/server/services/summary";
 import { BudgetService } from "../../../../lib/server/services/budget";
-import { createQueryClient } from "../../../../frontend/src/shared/api/queryClient";
-import { queryKeys } from "../../../../frontend/src/shared/api/queryKeys";
+import { createQueryClient } from "../../../../lib/query-client";
+import { queryKeys } from "../../../../lib/query-keys";
 import { DashboardClient } from "./DashboardClient";
 
 /**

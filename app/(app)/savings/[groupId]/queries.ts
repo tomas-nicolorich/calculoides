@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import { queryKeys } from "../../../../frontend/src/shared/api/queryKeys";
+import { queryKeys } from "../../../../lib/query-keys";
 import {
   create,
   deleteGoal,

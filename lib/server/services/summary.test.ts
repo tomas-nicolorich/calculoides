@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SummaryService } from "./summary";
-import { prisma } from "../../../api/_src/utils/prisma";
+import { prisma } from "../../prisma";
 
 // Mirrors `api/_tests/integration/summary.test.ts`'s mocking pattern — the
 // approval-test baseline for the identical computation this module ports out
@@ -12,7 +12,7 @@ import { prisma } from "../../../api/_src/utils/prisma";
 // was deleted: `SummaryService.getGroupSummary` performs the exact same
 // computation `routes.summary` did (see this module's own doc comment), so
 // calling the service directly preserves the identical coverage.
-vi.mock("../../../api/_src/utils/prisma", () => ({
+vi.mock("../../prisma", () => ({
   prisma: {
     group: { findUnique: vi.fn() },
     category: { findMany: vi.fn() },

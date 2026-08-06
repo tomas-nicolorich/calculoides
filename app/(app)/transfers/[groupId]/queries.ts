@@ -4,10 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import {
-  queryKeys,
-  type TransferFilters,
-} from "../../../../frontend/src/shared/api/queryKeys";
+import { queryKeys, type TransferFilters } from "../../../../lib/query-keys";
 import type { TransfersList } from "shared/src/types/redesign";
 import {
   create,

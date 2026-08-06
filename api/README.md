@@ -1,31 +1,17 @@
-# Calculoides API
+# Calculoides API (retired)
+
+**This package is retired.** Its Express/Vercel-serverless-functions backend was fully ported to the Next.js App Router application at the repo root across `openspec/changes/nextjs-migration` (phases 1b–7) and deleted in Phase 7. Nothing under `api/` is built, deployed, or imported anymore — only this file and `CONTEXT.md` remain, as a historical record of the architecture that preceded the migration.
+
+See the root [`README.md`](../README.md) for the current architecture, and `openspec/changes/nextjs-migration/design.md` for the port itself.
+
+## What used to be here (pre-migration)
 
 Consolidated Vercel Serverless functions for financial logic and household budget management.
 
-## Architecture
+To stay within the Vercel Hobby plan's 12-function limit, routes were consolidated behind a `?action=` **dispatcher** (`api/_src/utils/dispatcher.ts`), fronted by `vercel.json` rewrites that mapped friendly paths onto that query string, with an Express dev shim (`api/_src/server.ts`) reproducing the same routing locally. Next.js auto-bundles and is exempt from that function cap, which removed the need for all three pieces.
 
-To stay within the Vercel Hobby plan limit (12 functions), we use a consolidated handler pattern:
+- **Groups**: group creation, listing, invitations, ownership transfers → `lib/actions/group.ts`.
+- **Members**: member listing, income updates, member removal → `lib/actions/member.ts`.
+- **Transactions**: expenses, budget transfers, categories, savings goals → `lib/actions/{expense,transfer,category,savings}.ts` + `app/api/{expenses,transfers,summary,categories,savings}/route.ts`.
 
-- **Groups**: Handles group creation, listing, invitations, and ownership transfers.
-- **Members**: Handles member listing, income updates, and member removal.
-- **Transactions**: Handles expenses, budget transfers, categories, and savings goals.
-
-### Routing
-
-We use a `dispatcher` utility to route incoming requests to specific actions based on the `action` query parameter or body field.
-
-Example: `POST /api/groups?action=invite`
-
-### Local Development
-
-The local server (`npm run start:api:local`) recursively loads handlers from `src/handlers/` and supports dynamic segments like `[id]`.
-
-## Scripts
-
-- `npm run build:api`: Runs type checks and enforces the 12-function limit.
-- `npm run api:benchmark`: Measures latency for core endpoints.
-- `npm run test`: Runs the Vitest suite.
-
-## Function Limit Enforcement
-
-We have a strict gate in `scripts/check-function-count.ts` that prevents builds if more than 12 serverless functions are detected in the root of the `api/` directory (per Vercel Hobby plan limits).
+Domain services (`api/_src/services/**`) moved to `lib/server/services/**` unchanged; business-logic test coverage moved to `lib/server/services/**/*.test.ts` and `shared/logic/**/*.test.ts`.

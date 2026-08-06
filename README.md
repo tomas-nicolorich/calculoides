@@ -15,13 +15,14 @@ See [`shared/CONTEXT.md`](./shared/CONTEXT.md) for the full domain glossary.
 
 ## Tech stack
 
-| Package | Stack |
-|---|---|
-| [`api/`](./api) | Express 5, Prisma 7 (Supabase Postgres via PgBouncer), Zod validation, Resend for email, Vitest |
-| [`frontend/`](./frontend) | React 19, Vite, React Router 7, Tailwind 4, Base UI, Supabase JS, Vitest + Testing Library |
-| [`shared/`](./shared) | Domain types, Zod schemas, and financial calculation logic shared by both packages |
+A single Next.js App Router application at the repo root (`app/`, `lib/`, `middleware.ts`) — Server Components query Prisma directly, mutations are Server Actions, and every session/authorization check runs server-side via `@supabase/ssr`. `frontend/` and `api/` are retired (`openspec/changes/nextjs-migration`); `shared/` remains a workspace.
 
-npm workspaces + Turborepo monorepo, deployed on Vercel.
+| Package               | Stack                                                                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| root app              | Next.js 16 (App Router), React 19, Prisma 7 (Supabase Postgres via PgBouncer), `@supabase/ssr`, TanStack Query, Tailwind 4, Zod validation, Resend for email, Vitest |
+| [`shared/`](./shared) | Domain types, Zod schemas, and financial calculation logic shared by server and client code                                                                          |
+
+npm workspaces (root app + `shared`) + Turborepo for `shared`'s own pipeline, deployed on Vercel (Next.js framework preset).
 
 ## Getting started
 
@@ -34,20 +35,16 @@ npm install
 You'll need a Supabase project (Postgres database + auth) and a Resend API key. Set the following environment variables (e.g. in `.env` at the repo root, or your shell):
 
 ```bash
-# api
-DATABASE_URL=            # Supabase Postgres connection string (via PgBouncer)
-SUPABASE_URL=
+DATABASE_URL=                    # Supabase Postgres connection string (via PgBouncer)
+SUPABASE_URL=                    # server-side Supabase client (middleware.ts, lib/supabase/server.ts)
 SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_URL=        # browser Supabase client (lib/supabase/client.ts)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 RESEND_API_KEY=
-FRONTEND_URL=            # used for CORS / email links
-PORT=                    # optional, local dev only
-
-# frontend
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+FRONTEND_URL=                    # used for invitation email links
 ```
 
-Run the app in development:
+Run the app in development — one process, no separate API server:
 
 ```bash
 npm run dev
@@ -56,20 +53,20 @@ npm run dev
 Other common commands:
 
 ```bash
-npm test          # run all tests (Turborepo, all workspaces)
-npm run typecheck # TypeScript check across workspaces
-npm run lint       # lint all workspaces
-npm run build      # build all workspaces
+npm test          # vitest (root) + turbo run test (shared)
+npm run typecheck # tsc -p tsconfig.next.json + turbo run typecheck (shared)
+npm run lint       # eslint (root) + turbo run lint (shared)
+npm run build      # next build
 ```
-
-Any of these can be scoped to a single workspace with `-w`, e.g. `npm test -w api`.
 
 ## Project structure
 
 ```
-api/       Express backend (Vercel serverless functions)
-frontend/  React SPA
-shared/    Domain types, Zod schemas, financial logic
+app/       Next.js App Router: route segments, Server Actions, Route Handlers, middleware.ts
+lib/       Server-only services (lib/server/services), Server Actions (lib/actions), Supabase clients
+shared/    Domain types, Zod schemas, financial logic — imported by both server and client code
+frontend/  Retired Vite SPA — kept only where its source is not yet fully superseded; not deployed
+api/       Retired Express/Vercel-functions backend — docs kept for historical context; not deployed
 prisma/    Prisma schema (repo root)
 docs/      ADRs, design docs, glossary
 ```
@@ -78,4 +75,4 @@ Each package has its own `CONTEXT.md` with domain and code conventions — see [
 
 ## Deployment
 
-Deployed on Vercel; API routes are rewritten per `vercel.json` (see file for the current routing table).
+Deployed on Vercel under the Next.js framework preset. No `vercel.json` rewrites or separate Express dev shim — `app/**` routes serve everything.

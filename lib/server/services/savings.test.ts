@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SavingsService } from "./savings";
-import { prisma } from "../../../api/_src/utils/prisma";
+import { prisma } from "../../prisma";
 
 /**
  * Rehomed from `api/_tests/integration/savings.test.ts` /
@@ -14,7 +14,7 @@ import { prisma } from "../../../api/_src/utils/prisma";
  * `SavingsService` directly here preserves the identical coverage. Mirrors
  * `lib/server/services/summary.test.ts`'s rehoming precedent (Phase 2).
  */
-vi.mock("../../../api/_src/utils/prisma", () => ({
+vi.mock("../../prisma", () => ({
   prisma: {
     savingsGoal: {
       create: vi.fn(),

@@ -81,6 +81,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Playwright verification screenshots
 .playwright-mcp/
 /*.png
+test-results/
+playwright-report/
+playwright-report-next/
 
 # Project tooling & agent state
 .claude/**

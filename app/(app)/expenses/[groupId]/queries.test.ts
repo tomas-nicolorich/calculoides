@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../../../../frontend/src/shared/api/queryKeys";
+import { queryKeys } from "../../../../lib/query-keys";
 import { invalidateGroupQueries } from "./queries";
 
 const GROUP_X = "22222222-2222-4222-8222-222222222222";

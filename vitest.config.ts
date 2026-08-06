@@ -6,8 +6,7 @@ import path from "path";
 // Root-level Vitest config for the Next.js shell (`app/**`, `lib/**`,
 // `middleware.ts`). Server Components and middleware are plain
 // async/sync functions that return React elements or `NextResponse`s, so a
-// plain "node" environment is enough — no DOM is exercised. `frontend/` and
-// `api/` keep their own workspace-scoped Vitest configs untouched.
+// plain "node" environment is enough — no DOM is exercised.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
 
@@ -24,6 +23,11 @@ export default defineConfig(({ mode }) => {
         "app/**/*.test.ts",
         "app/**/*.test.tsx",
         "lib/**/*.test.ts",
+        // Phase 7.2: `shared/logic/{projection,rounding}.test.ts` rehomed
+        // from `api/_tests/logic/**` — `shared/` has no vitest devDependency
+        // of its own, so root Vitest covers it (mirrors how `lib/**` above
+        // already covers the rehomed `api/_src/services/**` tests).
+        "shared/**/*.test.ts",
       ],
       env: {
         // Vitest (unlike `next dev`/`next build`) does not auto-load

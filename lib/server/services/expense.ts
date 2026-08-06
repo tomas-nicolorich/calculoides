@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "../../../api/_src/utils/prisma";
+import { prisma } from "../../prisma";
 
 export const ExpenseService = {
   /**

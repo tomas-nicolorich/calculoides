@@ -8,8 +8,8 @@ import {
   HydrationBoundary,
   dehydrate,
 } from "@tanstack/react-query";
-import { createQueryClient } from "../../../../frontend/src/shared/api/queryClient";
-import { queryKeys } from "../../../../frontend/src/shared/api/queryKeys";
+import { createQueryClient } from "../../../../lib/query-client";
+import { queryKeys } from "../../../../lib/query-keys";
 import { DashboardClient } from "./DashboardClient";
 
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
@@ -88,9 +88,8 @@ describe("DashboardClient hydration", () => {
   // Uses a short `staleTime` override (real elapsed time, no fake timers —
   // `refetchOnWindowFocus` interacts with React's/jsdom's own scheduling,
   // which fake timers destabilize) instead of waiting out the production
-  // 30s default; the 30s constant itself is already covered by
-  // `frontend/src/shared/api/queryClient.test.ts` via the same
-  // `createQueryClient` this test reuses.
+  // 30s default; the 30s constant itself is `createQueryClient`'s own
+  // concern, not re-asserted here.
   it("refetches via the GET Route Handler on window focus once stale", async () => {
     const serverClient = await prefetchServerClient();
     const browserClient = createQueryClient({ queries: { staleTime: 20 } });

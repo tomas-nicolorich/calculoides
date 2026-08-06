@@ -5,15 +5,13 @@
   "packageManager": "npm@10.8.2",
   "type": "module",
   "workspaces": [
-    "frontend",
-    "api",
     "shared"
   ],
   "scripts": {
     "dev": "next dev",
     "dev:local": "next dev",
     "dev:next": "next dev",
-    "build": "turbo run build",
+    "build": "next build",
     "build:next": "next build",
     "start:next": "next start",
     "test": "vitest run --config vitest.config.ts && turbo run test",
@@ -25,7 +23,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.next.json && turbo run typecheck",
     "typecheck:next": "tsc --noEmit -p tsconfig.next.json",
     "prepare": "husky",
-    "postinstall": "npm run prisma:generate -w api"
+    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
+    "postinstall": "npm run prisma:generate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -33,6 +33,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/pg": "^8.20.0",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -42,6 +43,7 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.5",
     "prettier": "^3.0.0",
+    "prisma": "7.8.0",
     "supabase": "^2.107.0",
     "turbo": "^2.10.8",
     "typescript": "6.0.3",
@@ -70,6 +72,7 @@
     "pg": "^8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "resend": "^6.12.3",
     "tailwindcss": "^4.3.3",
     "zod": "4.4.3"
   }

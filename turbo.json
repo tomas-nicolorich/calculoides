@@ -17,10 +17,6 @@
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "start:api": {
-      "cache": false,
-      "persistent": true
     }
   }
 }
