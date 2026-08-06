@@ -1,9 +1,11 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { createClient } from "../supabase/server";
 import { isGroupMember } from "../server/authz";
 import { ExpenseService } from "../server/services/expense";
+import { BudgetService } from "../server/services/budget";
 import { toStatus } from "../server/errors";
 import { ActionResult, ok, fail } from "./result";
 import { CreateExpenseSchema, IdSchema } from "shared";
@@ -14,6 +16,12 @@ import { CreateExpenseSchema, IdSchema } from "shared";
 // cannot be used as a function identifier, so the singular delete action is
 // named `deleteExpense` (matches `ExpenseService.deleteExpense`'s own name)
 // instead of the task's literal `delete`.
+//
+// Each successful mutation revalidates the Dashboard Server Component route
+// for its own group (client-data-cache: "Mutations Invalidate Group-Scoped
+// Queries by Key Prefix", 4b.7); client-side `["group", groupId]` cache
+// invalidation is wired where these actions are actually invoked from a
+// Client Component (`app/(app)/expenses/[groupId]/queries.ts`, 4b.7-4b.8).
 
 const UpdateExpenseSchema = z.object({
   expenseId: IdSchema,
@@ -71,6 +79,10 @@ export async function create(
       parsed.data.date,
       userId,
     );
+    const category = await BudgetService.getCategoryById(
+      parsed.data.categoryId,
+    );
+    if (category) revalidatePath(`/dashboard/${category.groupId}`);
     return ok(expense);
   } catch (err) {
     return fromThrown(err);
@@ -107,6 +119,10 @@ export async function update(
       },
       userId,
     );
+    const category = await BudgetService.getCategoryById(
+      parsed.data.categoryId,
+    );
+    if (category) revalidatePath(`/dashboard/${category.groupId}`);
     return ok(updated);
   } catch (err) {
     return fromThrown(err);
@@ -125,8 +141,14 @@ export async function deleteExpense(
   const parsed = DeleteExpenseSchema.safeParse(input);
   if (!parsed.success) return fail("Missing expenseId", 400);
 
+  // Resolved BEFORE the delete runs — `expenseId` has no `groupId` field of
+  // its own, and the row is gone once `deleteExpense` succeeds, so this is
+  // the only revalidation source available (4b.7).
+  const groupId = await ExpenseService.getExpenseGroupId(parsed.data.expenseId);
+
   try {
     await ExpenseService.deleteExpense(parsed.data.expenseId, userId);
+    if (groupId) revalidatePath(`/dashboard/${groupId}`);
     return ok({ success: true as const });
   } catch (err) {
     return fromThrown(err);
@@ -154,6 +176,7 @@ export async function deleteAll(
 
   try {
     const result = await ExpenseService.deleteAllExpenses(parsed.data.groupId);
+    revalidatePath(`/dashboard/${parsed.data.groupId}`);
     return ok(result);
   } catch (err) {
     return fromThrown(err);

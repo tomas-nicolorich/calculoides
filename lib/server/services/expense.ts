@@ -188,6 +188,21 @@ export const ExpenseService = {
   },
 
   /**
+   * Resolves the groupId that owns an expense, via its category — no
+   * authorization of its own. Used purely to derive a cache-revalidation
+   * path (4b.7) for `deleteExpense`, whose only caller-supplied identifier
+   * (`expenseId`) has no `groupId` field of its own; must be looked up
+   * before the delete, since the row is gone afterward.
+   */
+  async getExpenseGroupId(expenseId: string): Promise<string | null> {
+    const expense = await prisma.expense.findUnique({
+      where: { id: expenseId },
+      include: { category: { select: { groupId: true } } },
+    });
+    return expense?.category.groupId ?? null;
+  },
+
+  /**
    * Deletes an expense (Permanent deletion per specification).
    * Validates that the caller is a member of the expense's group.
    */

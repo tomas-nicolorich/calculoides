@@ -8,6 +8,9 @@ const {
   updateExpenseMock,
   deleteExpenseMock,
   deleteAllExpensesMock,
+  getExpenseGroupIdMock,
+  getCategoryByIdMock,
+  revalidatePathMock,
 } = vi.hoisted(() => ({
   getUserMock: vi.fn(),
   isGroupMemberMock: vi.fn(),
@@ -15,6 +18,9 @@ const {
   updateExpenseMock: vi.fn(),
   deleteExpenseMock: vi.fn(),
   deleteAllExpensesMock: vi.fn(),
+  getExpenseGroupIdMock: vi.fn(),
+  getCategoryByIdMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
 }));
 
 vi.mock("../supabase/server", () => ({
@@ -33,7 +39,18 @@ vi.mock("../server/services/expense", () => ({
     updateExpense: updateExpenseMock,
     deleteExpense: deleteExpenseMock,
     deleteAllExpenses: deleteAllExpensesMock,
+    getExpenseGroupId: getExpenseGroupIdMock,
   },
+}));
+
+vi.mock("../server/services/budget", () => ({
+  BudgetService: {
+    getCategoryById: getCategoryByIdMock,
+  },
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
 }));
 
 import { create, update, deleteExpense, deleteAll } from "./expense";
@@ -52,14 +69,24 @@ describe("create", () => {
   beforeEach(() => {
     getUserMock.mockReset();
     logExpenseMock.mockReset();
+    getCategoryByIdMock.mockReset();
+    revalidatePathMock.mockReset();
   });
 
+  // client-data-cache: "Mutations Invalidate Group-Scoped Queries by Key
+  // Prefix" — a successful create revalidates the Dashboard route for the
+  // expense's own group, resolved via `BudgetService.getCategoryById`
+  // (4b.7).
   it("creates an expense for a member of the category's group", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
     logExpenseMock.mockResolvedValue({
       id: EXPENSE_ID,
       categoryId: CATEGORY_ID,
       amount: 25.5,
+    });
+    getCategoryByIdMock.mockResolvedValue({
+      id: CATEGORY_ID,
+      groupId: GROUP_ID,
     });
 
     const result = await create({
@@ -81,6 +108,7 @@ describe("create", () => {
       new Date("2026-08-01"),
       USER_ID,
     );
+    expect(revalidatePathMock).toHaveBeenCalledWith(`/dashboard/${GROUP_ID}`);
   });
 
   it("denies a non-member with 403 via the service's membership check", async () => {
@@ -113,6 +141,7 @@ describe("create", () => {
 
     expect(result).toEqual({ ok: false, error: "Unauthorized", status: 403 });
     expect(logExpenseMock).not.toHaveBeenCalled();
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });
 
@@ -125,6 +154,8 @@ describe("update", () => {
   beforeEach(() => {
     getUserMock.mockReset();
     updateExpenseMock.mockReset();
+    getCategoryByIdMock.mockReset();
+    revalidatePathMock.mockReset();
   });
 
   it("updates the expense for a member of its own group", async () => {
@@ -133,6 +164,10 @@ describe("update", () => {
       id: EXPENSE_ID,
       description: "Rent",
       amount: 900,
+    });
+    getCategoryByIdMock.mockResolvedValue({
+      id: CATEGORY_ID,
+      groupId: GROUP_ID,
     });
 
     const result = await update({
@@ -159,6 +194,7 @@ describe("update", () => {
       },
       USER_ID,
     );
+    expect(revalidatePathMock).toHaveBeenCalledWith(`/dashboard/${GROUP_ID}`);
   });
 
   it("rejects cross-group id substitution: caller is not a member of the expense's actual group", async () => {
@@ -181,6 +217,7 @@ describe("update", () => {
       error: "Not a member of this group",
       status: 403,
     });
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the expense does not exist", async () => {
@@ -201,6 +238,7 @@ describe("update", () => {
       error: "Expense not found",
       status: 404,
     });
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });
 
@@ -208,20 +246,29 @@ describe("deleteExpense", () => {
   beforeEach(() => {
     getUserMock.mockReset();
     deleteExpenseMock.mockReset();
+    getExpenseGroupIdMock.mockReset();
+    revalidatePathMock.mockReset();
   });
 
+  // `getExpenseGroupId` resolves the group BEFORE the delete runs, since
+  // `expenseId` has no `groupId` field of its own and the row is gone
+  // afterward — the only revalidation source available to this action
+  // (4b.7).
   it("deletes the expense for a member of its own group", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
+    getExpenseGroupIdMock.mockResolvedValue(GROUP_ID);
     deleteExpenseMock.mockResolvedValue({ id: EXPENSE_ID });
 
     const result = await deleteExpense({ expenseId: EXPENSE_ID });
 
     expect(result).toEqual({ ok: true, data: { success: true } });
     expect(deleteExpenseMock).toHaveBeenCalledWith(EXPENSE_ID, USER_ID);
+    expect(revalidatePathMock).toHaveBeenCalledWith(`/dashboard/${GROUP_ID}`);
   });
 
   it("rejects cross-group id substitution: caller is not a member of the expense's actual group", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
+    getExpenseGroupIdMock.mockResolvedValue(GROUP_ID);
     deleteExpenseMock.mockRejectedValue(
       new Error("Not a member of this group"),
     );
@@ -233,6 +280,7 @@ describe("deleteExpense", () => {
       error: "Not a member of this group",
       status: 403,
     });
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });
 
@@ -245,6 +293,7 @@ describe("deleteAll", () => {
     getUserMock.mockReset();
     isGroupMemberMock.mockReset();
     deleteAllExpensesMock.mockReset();
+    revalidatePathMock.mockReset();
   });
 
   it("deletes every expense in the group for a member", async () => {
@@ -257,6 +306,7 @@ describe("deleteAll", () => {
     expect(result).toEqual({ ok: true, data: { count: 7 } });
     expect(isGroupMemberMock).toHaveBeenCalledWith(USER_ID, GROUP_ID);
     expect(deleteAllExpensesMock).toHaveBeenCalledWith(GROUP_ID);
+    expect(revalidatePathMock).toHaveBeenCalledWith(`/dashboard/${GROUP_ID}`);
   });
 
   it("denies a non-member with 403 and never touches the service", async () => {
@@ -271,5 +321,6 @@ describe("deleteAll", () => {
       status: 403,
     });
     expect(deleteAllExpensesMock).not.toHaveBeenCalled();
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 });

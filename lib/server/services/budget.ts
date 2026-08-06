@@ -197,4 +197,25 @@ export const BudgetService = {
       },
     });
   },
+
+  /**
+   * Resolves a category by id (no authorization) — used by callers that
+   * need the category's own `groupId` to derive an ownership/membership
+   * decision or a cache-revalidation path (4b.2, 4b.7), same
+   * resource-resolution role `GroupService.getMemberById` plays for members.
+   */
+  async getCategoryById(categoryId: string): Promise<Category | null> {
+    return await prisma.category.findUnique({ where: { id: categoryId } });
+  },
+
+  /**
+   * Deletes a category (no authorization of its own). The owner-only check
+   * (resource-authorization: "Category Deletion Requires Ownership") lives
+   * in `lib/actions/category.ts`'s `deleteCategory` action, resolved via
+   * {@link getCategoryById} — same "thin service, action-layer check"
+   * precedent as `GroupService.removeMember` (3b.5).
+   */
+  async deleteCategory(categoryId: string): Promise<void> {
+    await prisma.category.delete({ where: { id: categoryId } });
+  },
 };
