@@ -5,7 +5,6 @@ import type {
   Handler,
 } from "../../../api/_src/middleware/handler";
 import { createClient } from "../../../lib/supabase/server";
-import { transactionsHandler } from "../../../api/_src/handlers/transactions";
 import { matchLegacyRoute, type LegacyHandlerName } from "./routes-table";
 
 /**
@@ -138,9 +137,11 @@ async function injectBearerIfMissing(req: ApiRequest): Promise<void> {
   }
 }
 
-const LEGACY_HANDLERS: Record<LegacyHandlerName, Handler> = {
-  transactions: transactionsHandler,
-};
+// Empty now that `transactions` (the only remaining legacy handler) was
+// deleted in 6b.5 — `ROUTE_TABLE` (routes-table.ts) is empty too, so
+// `matchLegacyRoute` always returns `undefined` and `dispatchLegacyRequest`
+// below always short-circuits to 404 before this map is ever indexed.
+const LEGACY_HANDLERS: Record<LegacyHandlerName, Handler> = {};
 
 /**
  * 1b.7: adapts a `Request` to `ApiRequest`/`ApiResponse` and invokes the
@@ -159,7 +160,12 @@ export async function dispatchLegacyRequest(
   const { req, res } = await buildLegacyRequest(request, match.query);
   await injectBearerIfMissing(req);
 
-  const handler = LEGACY_HANDLERS[match.handlerName];
+  // Unreachable: `ROUTE_TABLE` is empty (6b.5), so `match` can never be
+  // truthy at runtime — `LegacyHandlerName`/`match.handlerName` are typed
+  // `never`, which makes `LEGACY_HANDLERS[match.handlerName]` itself type to
+  // `never` (indexing `{}` with a `never` key). The cast keeps this
+  // genuinely-dead branch soundly typed until phase 7.1 deletes it outright.
+  const handler = LEGACY_HANDLERS[match.handlerName] as Handler;
   await handler(req, res as unknown as ApiResponse);
 
   return res.result;

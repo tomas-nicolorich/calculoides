@@ -2,21 +2,21 @@
  * Friendly-path → {handler, action} table, replacing `vercel.json`'s API
  * `rewrites` (task 1b.9 deletes that file once this table is live).
  *
- * Every entry below is a direct, faithful port of one `vercel.json` rewrite
+ * Every entry below was a direct, faithful port of one `vercel.json` rewrite
  * rule (`source` → `destination`'s `action`/dynamic-segment query params).
- * `transactions` has no corresponding `vercel.json` rewrite — on real Vercel
- * that path hits `api/transactions.ts` directly via file-based routing with
- * the client's original query string untouched, so it's listed here as a
- * passthrough entry (no `action` override) purely to route it to the right
- * handler.
  *
- * `groups`/`members`/`users` entries were removed in 3b.9 — those handlers
- * are deleted; the same resources are now served by `lib/actions/{group,
- * member,user}.ts` Server Actions and `app/(app)/{groups,members}/page.tsx`
- * Server Components.
+ * `groups`/`members`/`users` entries were removed in 3b.9. Every remaining
+ * entry (transactions/expenses/transfers/summary/savings/categories) routed
+ * to the single `transactions` handler, which 6b.5 deletes now that
+ * expenses/transfers/summary/categories/savings have all ported to their
+ * own Server Actions and `app/api/{expenses,transfers,summary,savings}` /
+ * `app/api/categories` Route Handlers (4a/4b/2/5/6a/6b) — so `ROUTE_TABLE`
+ * is intentionally empty: every `/api/*` path this catch-all sees from here
+ * on is genuinely unmatched (404), until phase 7.1 deletes this whole
+ * adapter apparatus outright ("nothing left calling them").
  */
 
-export type LegacyHandlerName = "transactions";
+export type LegacyHandlerName = never;
 
 interface LegacyRoutePattern {
   /** Path segments; a segment starting with `:` captures a dynamic value. */
@@ -28,30 +28,7 @@ interface LegacyRoutePattern {
   paramQueryKey?: string;
 }
 
-const ROUTE_TABLE: LegacyRoutePattern[] = [
-  // Transactions (api/transactions.ts, no rewrite — direct file-based mount)
-  { parts: ["transactions"], handlerName: "transactions" },
-  {
-    parts: ["transactions", ":id"],
-    handlerName: "transactions",
-    action: "transaction",
-    paramQueryKey: "id",
-  },
-  { parts: ["expenses"], handlerName: "transactions", action: "expenses" },
-  { parts: ["transfers"], handlerName: "transactions", action: "transfers" },
-  { parts: ["summary"], handlerName: "transactions", action: "summary" },
-  { parts: ["savings"], handlerName: "transactions", action: "savings" },
-  {
-    parts: ["savings", "contribution"],
-    handlerName: "transactions",
-    action: "savings-contribution",
-  },
-  {
-    parts: ["categories"],
-    handlerName: "transactions",
-    action: "categories-list",
-  },
-];
+const ROUTE_TABLE: LegacyRoutePattern[] = [];
 
 export interface LegacyRouteMatch {
   handlerName: LegacyHandlerName;
