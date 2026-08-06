@@ -9,6 +9,8 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   "Category not found": 404,
   "Expense not found": 404,
   "Transfer not found": 404,
+  "Savings goal not found": 404,
+  "Group member not found": 404,
 
   // Ownership / membership denial
   "Unauthorized access to group": 403,
@@ -22,6 +24,8 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   "Only group owners can delete categories": 403,
   "Payer is not a member of this group": 403,
   "User email not found in session": 400,
+  "Member does not belong to the group associated with this savings goal": 403,
+  "User does not belong to the group associated with this savings goal": 403,
 
   // Validation failures
   "New owner must be a member of the group": 400,

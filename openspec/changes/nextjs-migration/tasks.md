@@ -159,10 +159,12 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 6a: Savings Actions
 
-- [ ] 6a.1 [RED] Test: member creates a savings goal in their group succeeds; non-member denied 403.
-- [ ] 6a.2 [GREEN] Create `lib/actions/savings.ts` `create`/`update`/`delete` (goals) + `contributionUpsert`/`contributionDelete`, resource-derived `groupId`.
-- [ ] 6a.3 [RED] Test: cross-group id substitution on savings goal/contribution mutation is rejected.
-- [ ] 6a.4 [GREEN] Enforce resource-derived `groupId` to pass 6a.3.
+- [x] 6a.1 [RED] Test: member creates a savings goal in their group succeeds; non-member denied 403. — `lib/actions/savings.test.ts` written whole (create/update/deleteGoal/contributionUpsert/contributionDelete cases together) before `lib/actions/savings.ts` existed; genuine RED confirmed via `Cannot find module '/lib/actions/savings'` — see apply-progress.
+- [x] 6a.2 [GREEN] Create `lib/actions/savings.ts` `create`/`update`/`delete` (goals) + `contributionUpsert`/`contributionDelete`, resource-derived `groupId`. (Deviation: singular delete exported as `deleteGoal`, not the literal `delete` — same reserved-keyword resolution 4a.2/4b.2/5.2 applied to `deleteExpense`/`deleteCategory`/`deleteTransfer`. `create` needed an explicit `isGroupMember` action-layer check since `SavingsService.createGoal` performs none internally, same gap 4b.2 closed for `BudgetService.createCategory`. Added `SavingsService.getGoalGroupId` — mirrors `ExpenseService.getExpenseGroupId`/`TransferService.getTransferGroupId` (4b.7/5.4) — to resolve the revalidation path for `deleteGoal`/`contributionUpsert`/`contributionDelete`, all of which resolve to a goal/member state that may no longer be inspectable after the mutation. Added the four new savings/contribution error messages ("Savings goal not found", "Group member not found", and the two "...does not belong to the group associated with this savings goal" messages) to `lib/server/errors.ts`'s table.)
+- [x] 6a.3 [RED] Test: cross-group id substitution on savings goal/contribution mutation is rejected. — covered in the same whole-file RED batch as 6a.1 (`update`/`deleteGoal`'s not-a-member case, and the literal two-id `contributionUpsert`/`contributionDelete` cross-group case where `memberId` belongs to a different group than the goal); genuine pre-GREEN failure via the same module-not-found gate — see apply-progress.
+- [x] 6a.4 [GREEN] Enforce resource-derived `groupId` to pass 6a.3. (`SavingsService.updateGoal`/`deleteGoal` already derive the group from the *existing* goal's own record, and `upsertContribution`/`deleteContribution` already validate `goalId`/`memberId` belong to the same group plus check caller membership — all ported verbatim in 1b.12. No caller-supplied `groupId` field exists on any of these four schemas. The action's try/catch surfaces each denial as a 403/404 `ActionResult` via `toStatus`, same non-duplication precedent as 4a.4/4b.2/5.4.)
+
+**Status: implemented and fully test-verified (root + api-workspace vitest suites green, typecheck/lint/prettier clean). See apply-progress for the diff-size measurement against the 600–800 line forecast.**
 
 ## Phase 6b: Savings GET Handler, Page Move, Full Teardown of `transactions.ts`
 

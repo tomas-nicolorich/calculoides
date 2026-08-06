@@ -348,6 +348,21 @@ export const SavingsService = {
     });
   },
 
+  /**
+   * Resolves a goal's own `groupId` without loading the full record.
+   * Mirrors `ExpenseService.getExpenseGroupId`/`TransferService.getTransferGroupId`
+   * (Phase 4b.7/5.4) — used to resolve the revalidation path for
+   * `deleteGoal`/contribution mutations, where the row (or the override) may
+   * no longer exist after the mutation runs.
+   */
+  async getGoalGroupId(goalId: string): Promise<string | null> {
+    const goal = await prisma.savingsGoal.findUnique({
+      where: { id: goalId },
+      select: { groupId: true },
+    });
+    return goal?.groupId ?? null;
+  },
+
   async deleteGoal(goalId: string, userId: string) {
     const goal = await prisma.savingsGoal.findUnique({
       where: { id: goalId },
