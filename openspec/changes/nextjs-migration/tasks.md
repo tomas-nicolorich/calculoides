@@ -146,14 +146,16 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 5: Transfers
 
-- [ ] 5.1 [RED] Test: member creates a transfer in their group succeeds; non-member denied 403.
-- [ ] 5.2 [GREEN] Create `lib/actions/transfer.ts` `create`/`delete`/`deleteAll`, resource-derived `groupId`.
-- [ ] 5.3 [RED] Test: cross-group id substitution on transfer delete is rejected.
-- [ ] 5.4 [GREEN] Enforce resource-derived `groupId` to pass 5.3.
-- [ ] 5.5 Create `app/api/transfers/route.ts` and `app/api/transfers/by-category/route.ts` (GET), membership-checked.
-- [ ] 5.6 [RED] Route Handler test: non-member denied 403 on both GET endpoints.
-- [ ] 5.7 [GREEN] Wire membership checks to pass 5.6.
-- [ ] 5.8 Create `app/(app)/transfers/[groupId]/page.tsx`; move Transfers widgets to `components/**`.
+- [x] 5.1 [RED] Test: member creates a transfer in their group succeeds; non-member denied 403. — `lib/actions/transfer.test.ts` written whole before `lib/actions/transfer.ts` existed; genuine RED confirmed via `Cannot find module '/lib/actions/transfer'`.
+- [x] 5.2 [GREEN] Create `lib/actions/transfer.ts` `create`/`deleteTransfer`/`deleteAll`, resource-derived `groupId`. (Deviation: singular delete exported as `deleteTransfer`, not the literal `delete` — same reserved-keyword resolution 4a.2/4b.2 applied to `deleteExpense`/`deleteCategory`.)
+- [x] 5.3 [RED] Test: cross-group id substitution on transfer delete is rejected. (Threat Matrix case 5) — covered in the same whole-file RED batch as 5.1 (`deleteTransfer`'s cross-group case).
+- [x] 5.4 [GREEN] Enforce resource-derived `groupId` to pass 5.3. (`TransferService.deleteTransfer` already derives the group from the *existing* transfer's own `category.groupId`, ported verbatim in 1b.12 — no caller-supplied `groupId` field exists on the delete schema. Added new `TransferService.getTransferGroupId` — mirrors `ExpenseService.getExpenseGroupId` (4b.7) — to resolve the revalidation path before the row is deleted. `deleteAll`'s `groupId` has no prior resource to derive from, unlike `deleteTransfer`'s `transferId` — its own explicit `isGroupMember` check was added since `TransferService.deleteAllTransfers` has none, same gap 4a.4 closed for `deleteAllExpenses`.)
+- [x] 5.5 Create `app/api/transfers/route.ts` and `app/api/transfers/by-category/route.ts` (GET), membership-checked. (`transfers` mirrors `app/api/expenses/route.ts`'s explicit `isGroupMember` + `groupId` param pattern — `TransferService.listTransfers` already returns fully-mapped rows, no extra response mapping needed. `by-category` has no `groupId` param at all; it surfaces `TransferService.getTransfersForCategory`'s own internal membership check via `toStatus`, same non-duplication precedent as `expense.ts`'s `update`/`deleteExpense`.)
+- [x] 5.6 [RED] Route Handler test: non-member denied 403 on both GET endpoints. — `app/api/transfers/route.test.ts` and `app/api/transfers/by-category/route.test.ts` written before their `route.ts` files existed; genuine RED via `Cannot find module '/app/api/transfers/route'` / `'/app/api/transfers/by-category/route'`.
+- [x] 5.7 [GREEN] Wire membership checks to pass 5.6.
+- [x] 5.8 Create `app/(app)/transfers/[groupId]/page.tsx`; move Transfers widgets to `components/**`. (Deviation: lean colocated `TransfersClient.tsx` + `queries.ts`, not a literal port of `frontend/src/pages/transfers/ui/TransfersPage.tsx` — same "lean, not full port" precedent as `ExpensesClient` (4b.6). `queries.ts` exposes `useTransfersList`/`useCreateTransfer`/`useDeleteTransfer`/`useDeleteAllTransfers` plus `invalidateGroupQueries` reusing `queryKeys.transfers`/`queryKeys.group` unchanged from `frontend/src/shared/api/queryKeys.ts`; server-side `revalidatePath` wired directly into every Phase 5 action in `lib/actions/transfer.ts`. No dedicated cache-isolation RED test duplicated here — 4b.8 already proved `invalidateGroupQueries`'s prefix-match isolation property generically, and Phase 5's own task list does not enumerate a client-cache RED test.)
+
+**Status: implemented and fully test-verified. See apply-progress for the diff-size measurement against the 700–900 line forecast.**
 
 ## Phase 6a: Savings Actions
 

@@ -265,6 +265,22 @@ export const TransferService = {
   },
 
   /**
+   * Resolves the groupId that owns a transfer, via its category — no
+   * authorization of its own. Used purely to derive a cache-revalidation
+   * path (5.2) for `deleteTransfer`, whose only caller-supplied identifier
+   * (`transferId`) has no `groupId` field of its own; must be looked up
+   * before the delete, since the row is gone afterward. Mirrors
+   * `ExpenseService.getExpenseGroupId` (4b.7).
+   */
+  async getTransferGroupId(transferId: string): Promise<string | null> {
+    const transfer = await prisma.transfer.findUnique({
+      where: { id: transferId },
+      include: { category: { select: { groupId: true } } },
+    });
+    return transfer?.category.groupId ?? null;
+  },
+
+  /**
    * Deletes a transfer (permanent deletion, mirroring deleteExpense).
    * Validates that the caller is a member of the transfer's group.
    */

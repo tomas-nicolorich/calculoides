@@ -8,6 +8,7 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   "Member not found": 404,
   "Category not found": 404,
   "Expense not found": 404,
+  "Transfer not found": 404,
 
   // Ownership / membership denial
   "Unauthorized access to group": 403,
@@ -25,6 +26,7 @@ const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
   // Validation failures
   "New owner must be a member of the group": 400,
   "User is already a member of this group": 400,
+  "Both members must be assigned to this category to transfer budget.": 400,
 };
 
 /**
