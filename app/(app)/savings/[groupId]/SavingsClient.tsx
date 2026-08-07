@@ -7,7 +7,171 @@ import {
   useDeleteGoal,
   useContributionUpsert,
   useContributionDelete,
+  type SavingsGoal,
+  type SavingsContributionBreakdown,
 } from "./queries";
+
+/** One goal's contribution-override row, extracted to keep {@link SavingsGoalItem} shallow. */
+function ContributionRow({
+  entry,
+  draftValue,
+  onDraftChange,
+  onSave,
+  onReset,
+}: {
+  entry: SavingsContributionBreakdown;
+  draftValue: string;
+  onDraftChange: (value: string) => void;
+  onSave: () => void;
+  onReset: () => void;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-3 text-sm">
+      <span className="text-slate-600 dark:text-slate-300">
+        {entry.user?.name ?? entry.memberId}: ${entry.actualAmount}
+        {entry.isOverridden ? " (override)" : ""}
+      </span>
+      <div className="flex items-center gap-2">
+        <input
+          value={draftValue}
+          onChange={(event) => {
+            onDraftChange(event.target.value);
+          }}
+          placeholder="Override"
+          type="number"
+          className="h-8 w-24 rounded-md border border-slate-300 dark:border-slate-700 px-2"
+        />
+        <button
+          type="button"
+          onClick={onSave}
+          className="text-xs text-brand-balance"
+        >
+          Save
+        </button>
+        {entry.isOverridden && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs text-red-600"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/** One savings goal card, extracted to keep {@link SavingsGoalsListView} shallow. */
+function SavingsGoalItem({
+  goal,
+  contributionDrafts,
+  onDraftChange,
+  onDeleteGoal,
+  onSaveContribution,
+  onResetContribution,
+}: {
+  goal: SavingsGoal;
+  contributionDrafts: Record<string, string>;
+  onDraftChange: (draftKey: string, value: string) => void;
+  onDeleteGoal: () => void;
+  onSaveContribution: (memberId: string) => void;
+  onResetContribution: (memberId: string) => void;
+}) {
+  return (
+    <li className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="font-medium text-slate-900 dark:text-white">
+            {goal.name}
+          </p>
+          <p className="text-sm text-slate-500">
+            {goal.currentAmount} / {goal.targetAmount}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onDeleteGoal}
+          className="text-sm text-red-600"
+        >
+          Delete
+        </button>
+      </div>
+
+      {goal.breakdown.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {goal.breakdown.map((entry) => {
+            const draftKey = `${goal.id}:${entry.memberId}`;
+            return (
+              <ContributionRow
+                key={entry.memberId}
+                entry={entry}
+                draftValue={contributionDrafts[draftKey] ?? ""}
+                onDraftChange={(value) => {
+                  onDraftChange(draftKey, value);
+                }}
+                onSave={() => {
+                  onSaveContribution(entry.memberId);
+                }}
+                onReset={() => {
+                  onResetContribution(entry.memberId);
+                }}
+              />
+            );
+          })}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+/** Extracted from {@link SavingsClient} to keep its own cognitive complexity low. */
+function SavingsGoalsListView({
+  goals,
+  isLoading,
+  contributionDrafts,
+  onDraftChange,
+  onDeleteGoal,
+  onSaveContribution,
+  onResetContribution,
+}: {
+  goals: SavingsGoal[];
+  isLoading: boolean;
+  contributionDrafts: Record<string, string>;
+  onDraftChange: (draftKey: string, value: string) => void;
+  onDeleteGoal: (goalId: string) => void;
+  onSaveContribution: (goalId: string, memberId: string) => void;
+  onResetContribution: (goalId: string, memberId: string) => void;
+}) {
+  if (isLoading) return <p data-testid="savings-loading">Loading…</p>;
+  if (goals.length === 0) {
+    return (
+      <p className="text-slate-500">No savings goals yet for this group.</p>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-4" data-testid="savings-list">
+      {goals.map((goal) => (
+        <SavingsGoalItem
+          key={goal.id}
+          goal={goal}
+          contributionDrafts={contributionDrafts}
+          onDraftChange={onDraftChange}
+          onDeleteGoal={() => {
+            onDeleteGoal(goal.id);
+          }}
+          onSaveContribution={(memberId) => {
+            onSaveContribution(goal.id, memberId);
+          }}
+          onResetContribution={(memberId) => {
+            onResetContribution(goal.id, memberId);
+          }}
+        />
+      ))}
+    </ul>
+  );
+}
 
 /**
  * Lean Next-app port of `frontend/src/pages/savings/ui/SavingsPage.tsx`
@@ -124,100 +288,23 @@ export function SavingsClient({ groupId }: { groupId: string }) {
         {error && <p className="text-sm text-red-600 w-full">{error}</p>}
       </form>
 
-      {isLoading ? (
-        <p data-testid="savings-loading">Loading…</p>
-      ) : goalsList.length === 0 ? (
-        <p className="text-slate-500">No savings goals yet for this group.</p>
-      ) : (
-        <ul className="flex flex-col gap-4" data-testid="savings-list">
-          {goalsList.map((goal) => (
-            <li
-              key={goal.id}
-              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4 space-y-3"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white">
-                    {goal.name}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {goal.currentAmount} / {goal.targetAmount}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void removeGoal.mutateAsync({ goalId: goal.id });
-                  }}
-                  className="text-sm text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-
-              {goal.breakdown.length > 0 && (
-                <ul className="flex flex-col gap-2">
-                  {goal.breakdown.map((entry) => {
-                    const draftKey = `${goal.id}:${entry.memberId}`;
-                    return (
-                      <li
-                        key={entry.memberId}
-                        className="flex items-center justify-between gap-3 text-sm"
-                      >
-                        <span className="text-slate-600 dark:text-slate-300">
-                          {entry.user?.name ?? entry.memberId}: $
-                          {entry.actualAmount}
-                          {entry.isOverridden ? " (override)" : ""}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            value={contributionDrafts[draftKey] ?? ""}
-                            onChange={(event) => {
-                              setContributionDrafts((prev) => ({
-                                ...prev,
-                                [draftKey]: event.target.value,
-                              }));
-                            }}
-                            placeholder="Override"
-                            type="number"
-                            className="h-8 w-24 rounded-md border border-slate-300 dark:border-slate-700 px-2"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void handleContributionSave(
-                                goal.id,
-                                entry.memberId,
-                              );
-                            }}
-                            className="text-xs text-brand-balance"
-                          >
-                            Save
-                          </button>
-                          {entry.isOverridden && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void removeContribution.mutateAsync({
-                                  goalId: goal.id,
-                                  memberId: entry.memberId,
-                                });
-                              }}
-                              className="text-xs text-red-600"
-                            >
-                              Reset
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <SavingsGoalsListView
+        goals={goalsList}
+        isLoading={isLoading}
+        contributionDrafts={contributionDrafts}
+        onDraftChange={(draftKey, value) => {
+          setContributionDrafts((prev) => ({ ...prev, [draftKey]: value }));
+        }}
+        onDeleteGoal={(goalId) => {
+          void removeGoal.mutateAsync({ goalId });
+        }}
+        onSaveContribution={(goalId, memberId) => {
+          void handleContributionSave(goalId, memberId);
+        }}
+        onResetContribution={(goalId, memberId) => {
+          void removeContribution.mutateAsync({ goalId, memberId });
+        }}
+      />
     </div>
   );
 }
