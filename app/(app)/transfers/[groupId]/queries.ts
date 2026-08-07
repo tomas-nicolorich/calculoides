@@ -62,10 +62,7 @@ export function useTransfersList(
  * `app/(app)/expenses/[groupId]/queries.test.ts`'s cache-isolation coverage
  * (4b.8) for this helper's prefix-match semantics; not duplicated here.
  */
-export function invalidateGroupQueries(
-  queryClient: QueryClient,
-  groupId: string,
-) {
+function invalidateGroupQueries(queryClient: QueryClient, groupId: string) {
   return queryClient.invalidateQueries({
     queryKey: queryKeys.group(groupId),
   });
