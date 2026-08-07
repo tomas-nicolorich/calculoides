@@ -1,12 +1,63 @@
 "use client";
 
 import { useState, type SyntheticEvent } from "react";
+import type { TransfersList } from "shared/src/types/redesign";
 import {
   useTransfersList,
   useCreateTransfer,
   useDeleteTransfer,
   useDeleteAllTransfers,
 } from "./queries";
+
+/** Extracted from {@link TransfersClient} to keep its own cognitive complexity low. */
+function TransfersListView({
+  transfers,
+  isLoading,
+  onDelete,
+}: {
+  transfers: TransfersList["transfers"];
+  isLoading: boolean;
+  onDelete: (transferId: string) => void;
+}) {
+  if (isLoading) return <p data-testid="transfers-loading">Loading…</p>;
+  if (transfers.length === 0) {
+    return (
+      <p className="text-slate-500">No transfers logged yet for this group.</p>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-3" data-testid="transfers-list">
+      {transfers.map((transfer) => (
+        <li
+          key={transfer.id}
+          className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4"
+        >
+          <div>
+            <p className="font-medium text-slate-900 dark:text-white">
+              {transfer.fromMemberName} → {transfer.toMemberName}
+            </p>
+            <p className="text-sm text-slate-500">{transfer.categoryName}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono tabular-nums text-sm text-slate-900 dark:text-white">
+              {transfer.amount}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onDelete(transfer.id);
+              }}
+              className="text-sm text-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /**
  * Lean Next-app port of `frontend/src/pages/transfers/ui/TransfersPage.tsx`
@@ -119,47 +170,13 @@ export function TransfersClient({ groupId }: { groupId: string }) {
         {error && <p className="text-sm text-red-600 w-full">{error}</p>}
       </form>
 
-      {isLoading ? (
-        <p data-testid="transfers-loading">Loading…</p>
-      ) : transfers.length === 0 ? (
-        <p className="text-slate-500">
-          No transfers logged yet for this group.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-3" data-testid="transfers-list">
-          {transfers.map((transfer) => (
-            <li
-              key={transfer.id}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4"
-            >
-              <div>
-                <p className="font-medium text-slate-900 dark:text-white">
-                  {transfer.fromMemberName} → {transfer.toMemberName}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {transfer.categoryName}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono tabular-nums text-sm text-slate-900 dark:text-white">
-                  {transfer.amount}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void removeTransfer.mutateAsync({
-                      transferId: transfer.id,
-                    });
-                  }}
-                  className="text-sm text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <TransfersListView
+        transfers={transfers}
+        isLoading={isLoading}
+        onDelete={(transferId) => {
+          void removeTransfer.mutateAsync({ transferId });
+        }}
+      />
     </div>
   );
 }
