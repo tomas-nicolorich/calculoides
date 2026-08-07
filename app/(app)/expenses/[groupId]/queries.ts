@@ -11,7 +11,6 @@ import {
 import type { ExpensesList } from "shared/src/types/redesign";
 import {
   create,
-  update,
   deleteExpense,
   deleteAll,
 } from "../../../../lib/actions/expense";
@@ -80,14 +79,6 @@ export function useCreateExpense(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: create,
-    onSuccess: () => invalidateGroupQueries(queryClient, groupId),
-  });
-}
-
-export function useUpdateExpense(groupId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: update,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }
