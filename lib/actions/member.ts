@@ -1,11 +1,10 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "../supabase/server";
 import { isGroupOwner } from "../server/authz";
 import { GroupService } from "../server/services/group";
-import { toStatus } from "../server/errors";
-import { ActionResult, ok, fail } from "./result";
+import { ActionResult, ok, fail, fromThrown } from "./result";
+import { getAuthenticatedUserId } from "./session";
 import { IdSchema } from "shared";
 
 // Server Actions ported from `api/_src/handlers/members.ts` (3b.2, 3b.5).
@@ -20,19 +19,6 @@ const RemoveMemberSchema = z.object({
   groupId: IdSchema,
   memberId: IdSchema,
 });
-
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
-
-function fromThrown<T>(err: unknown): ActionResult<T> {
-  const message = err instanceof Error ? err.message : String(err);
-  return fail(message, toStatus(message));
-}
 
 // resource-authorization: "Member Income Update Requires Membership" (3b.1).
 // `GroupService.updateMemberIncome` performs its own owner-or-member check

@@ -2,11 +2,10 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { createClient } from "../supabase/server";
 import { isGroupMember, isGroupOwner } from "../server/authz";
 import { BudgetService } from "../server/services/budget";
-import { toStatus } from "../server/errors";
-import { ActionResult, ok, fail } from "./result";
+import { ActionResult, ok, fail, fromThrown } from "./result";
+import { getAuthenticatedUserId } from "./session";
 import { CreateCategorySchema, IdSchema } from "shared";
 
 // Server Actions ported from `api/_src/handlers/transactions.ts`'s category
@@ -26,19 +25,6 @@ const UpdateCategoryInputSchema = CreateCategorySchema.extend({
 const DeleteCategorySchema = z.object({
   categoryId: IdSchema,
 });
-
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
-
-function fromThrown<T>(err: unknown): ActionResult<T> {
-  const message = err instanceof Error ? err.message : String(err);
-  return fail(message, toStatus(message));
-}
 
 // resource-authorization: "Group-Scoped Budget Resources Require
 // Membership". `BudgetService.createCategory` performs NO membership check

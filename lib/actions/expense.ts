@@ -2,12 +2,11 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { createClient } from "../supabase/server";
 import { isGroupMember } from "../server/authz";
 import { ExpenseService } from "../server/services/expense";
 import { BudgetService } from "../server/services/budget";
-import { toStatus } from "../server/errors";
-import { ActionResult, ok, fail } from "./result";
+import { ActionResult, ok, fail, fromThrown } from "./result";
+import { getAuthenticatedUserId } from "./session";
 import { CreateExpenseSchema, IdSchema } from "shared";
 
 // Server Actions ported from `api/_src/handlers/transactions.ts`'s expense
@@ -39,19 +38,6 @@ const DeleteExpenseSchema = z.object({
 const DeleteAllSchema = z.object({
   groupId: IdSchema,
 });
-
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
-
-function fromThrown<T>(err: unknown): ActionResult<T> {
-  const message = err instanceof Error ? err.message : String(err);
-  return fail(message, toStatus(message));
-}
 
 // resource-authorization: "Group-Scoped Budget Resources Require Membership"
 // (4a.1). `categoryId` is the resource the expense is written into — like

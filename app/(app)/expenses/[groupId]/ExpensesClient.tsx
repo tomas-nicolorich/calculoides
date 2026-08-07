@@ -1,12 +1,65 @@
 "use client";
 
 import { useState, type SyntheticEvent } from "react";
+import type { ExpensesList } from "shared/src/types/redesign";
 import {
   useExpensesList,
   useCreateExpense,
   useDeleteExpense,
   useDeleteAllExpenses,
 } from "./queries";
+
+/** Extracted from {@link ExpensesClient} to keep its own cognitive complexity low. */
+function ExpensesListView({
+  expenses,
+  isLoading,
+  onDelete,
+}: {
+  expenses: ExpensesList["expenses"];
+  isLoading: boolean;
+  onDelete: (expenseId: string) => void;
+}) {
+  if (isLoading) return <p data-testid="expenses-loading">Loading…</p>;
+  if (expenses.length === 0) {
+    return (
+      <p className="text-slate-500">No expenses logged yet for this group.</p>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-3" data-testid="expenses-list">
+      {expenses.map((expense) => (
+        <li
+          key={expense.id}
+          className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4"
+        >
+          <div>
+            <p className="font-medium text-slate-900 dark:text-white">
+              {expense.description}
+            </p>
+            <p className="text-sm text-slate-500">
+              {expense.categoryName} · {expense.payerName}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono tabular-nums text-sm text-slate-900 dark:text-white">
+              {expense.amount}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onDelete(expense.id);
+              }}
+              className="text-sm text-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /**
  * Lean Next-app port of `frontend/src/pages/expenses/ui/ExpensesPage.tsx`
@@ -119,45 +172,13 @@ export function ExpensesClient({ groupId }: { groupId: string }) {
         {error && <p className="text-sm text-red-600 w-full">{error}</p>}
       </form>
 
-      {isLoading ? (
-        <p data-testid="expenses-loading">Loading…</p>
-      ) : expenses.length === 0 ? (
-        <p className="text-slate-500">No expenses logged yet for this group.</p>
-      ) : (
-        <ul className="flex flex-col gap-3" data-testid="expenses-list">
-          {expenses.map((expense) => (
-            <li
-              key={expense.id}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4"
-            >
-              <div>
-                <p className="font-medium text-slate-900 dark:text-white">
-                  {expense.description}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {expense.categoryName} · {expense.payerName}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono tabular-nums text-sm text-slate-900 dark:text-white">
-                  {expense.amount}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void removeExpense.mutateAsync({
-                      expenseId: expense.id,
-                    });
-                  }}
-                  className="text-sm text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ExpensesListView
+        expenses={expenses}
+        isLoading={isLoading}
+        onDelete={(expenseId) => {
+          void removeExpense.mutateAsync({ expenseId });
+        }}
+      />
     </div>
   );
 }
