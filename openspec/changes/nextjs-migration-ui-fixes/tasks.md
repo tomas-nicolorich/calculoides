@@ -192,44 +192,62 @@ prefix or font-extension exclusion yet. `middleware.test.ts` still imports `midd
 and `app-navigation-shell`). ADR-1, ADR-2, ADR-3 (hook scope).
 **Budget**: 250 src / 150 tests / **400** total. **Depends on**: PR 1 (merged, CI green).
 
-- [ ] 2.1 Confirm the exact dependency set before installing: verify `clsx`, `tailwind-merge`,
+- [x] 2.1 Confirm the exact dependency set before installing: verify `clsx`, `tailwind-merge`,
       `lucide-react` are absent from `package.json`; resolve the Base UI package name
       (`@base-ui/react` per the proposal vs. `@base-ui-components/react`, the historically
       published name — open question, but Base UI itself is only consumed starting PR 6, so
       this task only needs to *record* the resolved name for PR 6, not install it yet). This
       is a research task, not a RED/GREEN pair.
-- [ ] 2.2 **RED**: Add `lib/cn.test.ts` — assert `cn("a", false && "b", "c")` merges to
+- [x] 2.2 **RED**: Add `lib/cn.test.ts` — assert `cn("a", false && "b", "c")` merges to
       `"a c"`, and `cn("p-2", "p-4")` (conflicting Tailwind classes) resolves to `"p-4"`
       (tailwind-merge precedence, last wins). Run — fails, `lib/cn.ts` doesn't exist yet.
-- [ ] 2.3 **GREEN**: Install `clsx` + `tailwind-merge`; create `lib/cn.ts` exporting
+- [x] 2.3 **GREEN**: Install `clsx` + `tailwind-merge`; create `lib/cn.ts` exporting
       `cn(...inputs: ClassValue[])` = `twMerge(clsx(inputs))`. Test green.
-- [ ] 2.4 **RED**: Add `lib/hooks/use-is-mobile.test.ts` (`// @vitest-environment jsdom`) —
+- [x] 2.4 **RED**: Add `lib/hooks/use-is-mobile.test.ts` (`// @vitest-environment jsdom`) —
       stub `window.matchMedia`, assert the hook returns `true` below the breakpoint and
       `false` above it, and updates on a simulated `change` event. Run — fails, hook doesn't
       exist.
-- [ ] 2.5 **GREEN**: Create `lib/hooks/use-is-mobile.ts` — `matchMedia` listener hook, SSR-safe
+- [x] 2.5 **GREEN**: Create `lib/hooks/use-is-mobile.ts` — `matchMedia` listener hook, SSR-safe
       default (`false` until mounted, per ADR-3's "narrower scope" decision — this hook is
       only consumed by `ResponsiveDialog` later, never the shell). Test green.
-- [ ] 2.6 **RED**: For each of the three existing `queries.ts` files (dashboard, expenses,
-      transfers — confirm exact set via `Grep` before starting), write/port their existing
-      tests against new expected import paths `../../../_data/{summary,categories,expenses,
-      transfers,savings,members}` and `../../../_data/{fetch-json,invalidate}` — this fails
-      first because `app/_data/**` doesn't exist.
-- [ ] 2.7 **GREEN**: Create `app/_data/fetch-json.ts` and `app/_data/invalidate.ts` (dedupe the
-      three copies of `fetchJson`/`invalidateGroupQueries` — ADR-2), then
-      `app/_data/{summary,categories,expenses,transfers,savings,members}.ts` re-exporting the
-      hoisted hooks. Update the three consuming route folders' `queries.ts` files (or delete
-      them and update imports directly, per design's File Changes row) to import from
-      `app/_data/**`. Tests green.
-- [ ] 2.8 **REFACTOR**: Remove the now-dead per-route `queries.ts` triplication once every
-      import site is confirmed migrated (`Grep` for remaining `from "./queries"` /
-      `from "../queries"` imports of the hoisted functions).
-- [ ] 2.9 Verify: `npm run typecheck`, `npm run lint`, `npm test` (full suite, since this
-      touches 4 existing clients + 2 existing test files per design's ADR-2 table). Manual:
-      dashboard/expenses/transfers pages still render with real data (no regression from the
-      hoist).
-- [ ] 2.10 Commit + PR 2 (Position 2 of 16, Base `main` post-PR-1-merge, Depends on: PR 1,
-      Follow-up: PR 3, PR 4).
+      **Deviation**: implemented with `useSyncExternalStore` instead of `useState`+`useEffect`
+      — `eslint-plugin-react-hooks`'s `set-state-in-effect` rule rejects the sync-on-mount
+      `useEffect` pattern; `useSyncExternalStore` is React's canonical fix for exactly this
+      "subscribe to a browser API, stay hydration-safe" case and keeps the same SSR-safe
+      `false` default via `getServerSnapshot`.
+- [x] 2.6 **RED**: Confirmed via `Grep` the actual set is **four** `queries.ts` files (dashboard,
+      expenses, transfers, **and savings** — the design doc's "three" refers only to the files
+      duplicating both `fetchJson` **and** `invalidateGroupQueries`; dashboard duplicates only
+      `fetchJson`, no mutations). Ported the one existing dedicated test
+      (`expenses/[groupId]/queries.test.ts`'s `invalidateGroupQueries` coverage) to
+      `app/_data/invalidate.test.ts` against the new import path, and wrote new RED tests for
+      `fetch-json.ts` and each of `summary.ts`/`categories.ts`/`expenses.ts`/`transfers.ts`/
+      `savings.ts` (no dedicated per-hook tests existed before — `DashboardClient.test.tsx`
+      only exercised summary/categories indirectly). All fail first (module not found).
+      **Deviation**: `app/_data/members.ts` from design's File Changes row is **not** created —
+      no existing route consumes a members query hook yet (`useMembers` has zero call sites);
+      the file is deferred to whichever PR (13+) first needs it, avoiding a speculative empty
+      module.
+- [x] 2.7 **GREEN**: Created `app/_data/fetch-json.ts` and `app/_data/invalidate.ts` (dedupe),
+      then `app/_data/{summary,categories,expenses,transfers,savings}.ts` re-exporting the
+      hoisted hooks. Updated all four consuming route clients (`DashboardClient.tsx`,
+      `ExpensesClient.tsx`, `TransfersClient.tsx`, `SavingsClient.tsx`) to import from
+      `../../../_data/**`. All tests green.
+- [x] 2.8 **REFACTOR**: Deleted all four now-dead route-local `queries.ts` files and the
+      superseded `expenses/[groupId]/queries.test.ts` (`git rm`); confirmed via `Grep` no
+      remaining `from "./queries"` / `from "../queries"` imports of the hoisted functions.
+- [x] 2.9 Verify: `npm run typecheck:next`, `npm run lint:next`, `npm test` (full suite, 262
+      tests) all pass. `npm run build` (production) also passes — `/dashboard/[groupId]`,
+      `/expenses/[groupId]`, `/transfers/[groupId]`, `/savings/[groupId]` all compile and
+      bundle cleanly against the new `app/_data/**` import paths (used as the manual-render
+      proxy in this sandboxed environment; no live Supabase-backed dev server available).
+- [x] 2.10 Commit + PR 2 (Position 2 of 16, Base `main` post-PR-1-merge, Depends on: PR 1,
+      Follow-up: PR 3, PR 4). `size:exception` accepted by the maintainer: actual `git diff
+      --stat` vs `nextjs-migration-tracker` was **1,236 changed lines** (862 insertions + 374
+      deletions across 28 files, four deduped `queries.ts` files — dashboard, expenses,
+      transfers, savings), exceeding the 800-line hard budget. Approved as one coherent,
+      fully-tested, low-risk mechanical unit; splitting would have fragmented the atomic
+      refactor for no real review benefit. Committed as `d9e3c09a6ce5c12bf78bb151604df97e3679ee9a`.
 
 ## PR 3 — `_ui` atoms A: Button, Card, Input, barrel, Badge
 
