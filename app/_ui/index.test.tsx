@@ -47,4 +47,12 @@ describe("app/_ui barrel", () => {
   it("re-exports Logo", () => {
     expect(barrel.Logo).toBeTypeOf("function");
   });
+
+  it("re-exports Avatar", () => {
+    expect(barrel.Avatar).toBeTypeOf("function");
+  });
+
+  it("re-exports AvatarGroup", () => {
+    expect(barrel.AvatarGroup).toBeTypeOf("function");
+  });
 });

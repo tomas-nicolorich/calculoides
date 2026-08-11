@@ -11,6 +11,8 @@ export { IconButton } from "./IconButton";
 export type { IconButtonHover, IconButtonSize } from "./IconButton";
 export { ReloadButton } from "./ReloadButton";
 export { Logo } from "./Logo";
+export { Avatar, AvatarGroup } from "./Avatar";
+export type { AvatarSize, AvatarProps, AvatarGroupProps } from "./Avatar";
 
 export function Input({
   className,
