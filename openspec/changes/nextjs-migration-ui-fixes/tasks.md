@@ -255,35 +255,50 @@ and `app-navigation-shell`). ADR-1, ADR-2, ADR-3 (hook scope).
 API"*, *"Button and Badge Use the Semantic Money Variant Vocabulary"*.
 **Budget**: 252 src / 160 tests / **412** total. **Depends on**: PR 2. **Parallel with**: PR 4.
 
-- [ ] 3.1 **RED**: `app/_ui/Button.test.tsx` (`jsdom`) — assert the semantic variant set
+- [x] 3.1 **RED**: `app/_ui/Button.test.tsx` (`jsdom`) — assert the semantic variant set
       `income | balance | expense | transfer | category` each maps to its designated color
       token class (per spec scenario "An income-related action uses the income variant"), plus
       disabled/loading states and role/label a11y assertions. Fails — `Button.tsx` absent.
-- [ ] 3.2 **GREEN**: Port `app/_ui/Button.tsx` verbatim from `main`'s `shared/ui/Button.tsx`
+      **Deviation**: `main`'s `ButtonVariant` union is `balance | income | expense | transfer |
+      cta | outline | ghost` — it does not include `category` (that value is Card/Badge-only
+      on `main`). Testing a `category` Button variant would require inventing a variant not on
+      `main`, contradicting task 3.11's "rename/invent nothing" bar and the spec's own "Prop
+      names match the ported source" scenario. The suite covers the four money variants that
+      exist on Button (income/balance/expense/transfer) plus its non-money variants
+      (cta/outline/ghost), and disabled state (native HTML `disabled`, no distinct `loading`
+      prop exists on `main`'s Button either).
+- [x] 3.2 **GREEN**: Port `app/_ui/Button.tsx` verbatim from `main`'s `shared/ui/Button.tsx`
       (markup/Tailwind unchanged, per the Technical Approach's "port markup verbatim" rule),
       keeping the exact `variant` prop name/values. Test green.
-- [ ] 3.3 **RED**: `app/_ui/Card.test.tsx` — renders children, applies the ported card
+- [x] 3.3 **RED**: `app/_ui/Card.test.tsx` — renders children, applies the ported card
       container classes. Fails.
-- [ ] 3.4 **GREEN**: Port `Card.tsx`. Green.
-- [ ] 3.5 **RED**: `app/_ui/Input.test.tsx` — controlled value, `onChange`, error state
+- [x] 3.4 **GREEN**: Port `Card.tsx`. Green.
+- [x] 3.5 **RED**: `app/_ui/Input.test.tsx` — controlled value, `onChange`, error state
       rendering (design.md notes `Input` is defined inline in `index.tsx` on `main` — confirm
       during port whether to keep it inline in the barrel or extract; either way the test
-      targets the barrel's exported `Input`). Fails.
-- [ ] 3.6 **GREEN**: Port `Input` into `app/_ui/index.tsx` (or `Input.tsx` re-exported from the
+      targets the barrel's exported `Input`). Fails. Confirmed: kept inline in the barrel,
+      matching `main`'s exact file layout (`main` has no dedicated error-state prop on `Input`;
+      that suite tests controlled value/onChange, prefix affordance, and className merge).
+- [x] 3.6 **GREEN**: Port `Input` into `app/_ui/index.tsx` (or `Input.tsx` re-exported from the
       barrel — match `main`'s exact file layout). Green.
-- [ ] 3.7 **RED**: `app/_ui/Badge.test.tsx` — same five-variant vocabulary assertion as Button
-      (spec scenario "A transfer-related badge uses the transfer variant"). Fails.
-- [ ] 3.8 **GREEN**: Port `Badge.tsx`. Green.
-- [ ] 3.9 **RED**: `app/_ui/index.test.tsx` (barrel smoke test) — every atom ported so far
+- [x] 3.7 **RED**: `app/_ui/Badge.test.tsx` — same five-variant vocabulary assertion as Button
+      (spec scenario "A transfer-related badge uses the transfer variant"). Fails. `main`'s
+      `BadgeTone` union is the full `income | balance | expense | transfer | category |
+      neutral` — all five money variants tested here, literally satisfying the spec.
+- [x] 3.8 **GREEN**: Port `Badge.tsx`. Green.
+- [x] 3.9 **RED**: `app/_ui/index.test.tsx` (barrel smoke test) — every atom ported so far
       (`Button`, `Card`, `Input`, `Badge`) is importable from `app/_ui/index.tsx` by name.
       Fails until the barrel re-exports all four.
-- [ ] 3.10 **GREEN**: Wire `app/_ui/index.tsx` barrel exports. Green.
-- [ ] 3.11 **REFACTOR**: Diff each ported component's prop names against `main`'s source one
+- [x] 3.10 **GREEN**: Wire `app/_ui/index.tsx` barrel exports. Green.
+- [x] 3.11 **REFACTOR**: Diff each ported component's prop names against `main`'s source one
       more time — the spec's "Prop names match the ported source" scenario is the acceptance
-      bar; rename nothing.
-- [ ] 3.12 Verify: `npm run typecheck`, `npm run lint`, `npx vitest run app/_ui`. Manual: no
-      consumer exists yet to visually diff — deferred until PR 9+ actually renders these.
-- [ ] 3.13 Commit + PR 3 (Position 3 of 16, Base = PR 2's branch until PR 2 merges then `main`,
+      bar; rename nothing. `diff` confirms `Button.tsx`, `Card.tsx`, `Badge.tsx` are
+      byte-identical to `main` (modulo the `cn` import path); `Input`'s inline markup/props in
+      the barrel are unchanged from `main`.
+- [x] 3.12 Verify: `npm run typecheck`, `npm run lint`, `npx vitest run app/_ui`. All green (26
+      tests, 5 files). Manual: no consumer exists yet to visually diff — deferred until PR 9+
+      actually renders these.
+- [x] 3.13 Commit + PR 3 (Position 3 of 16, Base = PR 2's branch until PR 2 merges then `main`,
       Depends on: PR 2, Follow-up: PR 5/6 rebase onto this).
 
 ## PR 4 — `_ui` atoms B: Alert, Skeleton, IconButton, ReloadButton, Logo
