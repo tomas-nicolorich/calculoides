@@ -423,9 +423,9 @@ PR 3 + PR 4 (rebase onto both). **Parallel with**: PR 6.
 - [x] 5.13 Verify: typecheck, lint, `npx vitest run app/_ui` — 15 files / 69 tests, all green;
       `tsc --noEmit -p tsconfig.next.json` clean; `eslint app lib proxy.ts next.config.ts
       --max-warnings 0` clean. **Line-count checkpoint**: `git diff --stat` against the merge-
-      resolution commit (PR 3+PR 4 barrel merge, excluded per instruction) measured **766 total
-      changed lines** (509 src / 257 tests) for PR 5's own work — **53 lines over the row's own
-      713 forecast**, but still **34 lines under the 800 hard budget**, so no `size:exception`
+      resolution commit (PR 3+PR 4 barrel merge, excluded per instruction) measured **765 total
+      changed lines** (508 src / 257 tests) for PR 5's own work — **52 lines over the row's own
+      713 forecast**, but still **35 lines under the 800 hard budget**, so no `size:exception`
       is needed. Overshoot driven mainly by `Avatar.tsx`'s WCAG-AA contrast-adjustment math
       (hex↔HSL conversion, `ensureContrastForWhite`) ported verbatim from `main` — not
       discretionary scope creep; confirmed no further padding before opening.
