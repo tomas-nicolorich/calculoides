@@ -292,26 +292,57 @@ API"*, *"Button and Badge Use the Semantic Money Variant Vocabulary"*.
 different atoms).
 **Budget**: 317 src / 150 tests / **467** total. **Depends on**: PR 2. **Parallel with**: PR 3.
 
-- [ ] 4.1 **RED**: `app/_ui/Alert.test.tsx` — variant→class mapping (info/error/success per
+- [x] 4.1 **RED**: `app/_ui/Alert.test.tsx` — variant→class mapping (info/error/success per
       `main`'s API), role="alert" a11y. Fails.
-- [ ] 4.2 **GREEN**: Port `Alert.tsx`. Green.
-- [ ] 4.3 **RED**: `app/_ui/Skeleton.test.tsx` — renders a placeholder with the ported
+
+      **Deviation**: `main`'s actual `shared/ui/Alert.tsx` API is `tone?: "error" | "success"`
+      (default `"error"`), not a `variant` prop and not an `info` tone — there is no `info`
+      state on `main`. Ported the real `tone` API verbatim; the spec/task wording's "variant" and
+      "info" do not exist in the port source and were not invented. Same "confirm against real
+      source" lesson PR 3 recorded.
+- [x] 4.2 **GREEN**: Port `Alert.tsx`. Green.
+- [x] 4.3 **RED**: `app/_ui/Skeleton.test.tsx` — renders a placeholder with the ported
       shimmer/pulse class, accepts `className` passthrough. Fails.
-- [ ] 4.4 **GREEN**: Port `Skeleton.tsx`. Green.
-- [ ] 4.5 **RED**: `app/_ui/IconButton.test.tsx` — icon-only button, `aria-label` required prop
+- [x] 4.4 **GREEN**: Port `Skeleton.tsx`. Green.
+- [x] 4.5 **RED**: `app/_ui/IconButton.test.tsx` — icon-only button, `aria-label` required prop
       enforced/tested, size variants. Fails.
-- [ ] 4.6 **GREEN**: Port `IconButton.tsx`. Green.
-- [ ] 4.7 **RED**: `app/_ui/ReloadButton.test.tsx` — click fires the passed `onReload` callback,
+
+      **Deviation**: `main`'s `IconButtonProps` extends `ButtonHTMLAttributes` with no override
+      making `aria-label` TS-required — it is forwarded through `...props` like any native
+      attribute, not runtime-enforced. Test verifies the forwarding contract (label reaches the
+      rendered button) instead of inventing a required-prop enforcement `main` never had.
+- [x] 4.6 **GREEN**: Port `IconButton.tsx`. Green.
+- [x] 4.7 **RED**: `app/_ui/ReloadButton.test.tsx` — click fires the passed `onReload` callback,
       shows a loading spinner state while pending. Fails.
-- [ ] 4.8 **GREEN**: Port `ReloadButton.tsx`. Green.
-- [ ] 4.9 **RED**: `app/_ui/Logo.test.tsx` — renders the ported brand mark/wordmark, size
+
+      **Deviation**: `main`'s actual `shared/ui/ReloadButton.tsx` has no `onReload` prop at all.
+      Its real API is `{ queryKey: QueryKey; className?: string }` — it calls
+      `useQueryClient().invalidateQueries({ queryKey })` internally via TanStack Query and shows
+      the spinner while that invalidation is pending. Ported the real `queryKey`-driven API
+      verbatim (test wraps in `QueryClientProvider` and spies on `invalidateQueries`), not the
+      spec wording's paraphrased `onReload` callback.
+- [x] 4.8 **GREEN**: Port `ReloadButton.tsx`. Green.
+- [x] 4.9 **RED**: `app/_ui/Logo.test.tsx` — renders the ported brand mark/wordmark, size
       variant if `main`'s API has one. Fails.
-- [ ] 4.10 **GREEN**: Port `Logo.tsx`. Green.
-- [ ] 4.11 **GREEN (barrel)**: Add all five to the `app/_ui/index.tsx` barrel; extend the
+
+      **Deviation**: `main`'s `LogoProps` is `{ className?: string }` only — no size variant
+      exists on `main`, so none was invented.
+- [x] 4.10 **GREEN**: Port `Logo.tsx`. Green.
+- [x] 4.11 **GREEN (barrel)**: Add all five to the `app/_ui/index.tsx` barrel; extend the
       barrel smoke test from PR 3.
-- [ ] 4.12 **REFACTOR**: Prop-name diff against `main`, same acceptance bar as PR 3.
-- [ ] 4.13 Verify: typecheck, lint, `npx vitest run app/_ui`.
-- [ ] 4.14 Commit + PR 4 (Position 4 of 16, Depends on: PR 2, Follow-up: PR 5/6 rebase onto
+
+      **Note**: PR 4 forked from PR 2's branch (parallel with PR 3, not sequential), so PR 3's
+      barrel/tests are not present here — `app/_ui/index.tsx` and `index.test.tsx` were built
+      fresh with only PR 4's five atoms. PR 5/6 will need to merge both barrels when they rebase
+      onto PR 3 *and* PR 4 (expected, out of scope for PR 4).
+- [x] 4.12 **REFACTOR**: Prop-name diff against `main`, same acceptance bar as PR 3. Confirmed
+      via `diff` against each `main` source: only the `cn` import path (`../../lib/cn` vs.
+      `../lib/utils`, per PR 2's foundations) and comment wording differ — every prop name, type,
+      and default value is verbatim. Renamed nothing.
+- [x] 4.13 Verify: typecheck, lint, `npx vitest run app/_ui`. All green — 6 test files / 19
+      tests passing, `tsc --noEmit -p tsconfig.next.json` clean, `eslint app lib proxy.ts
+      next.config.ts --max-warnings 0` clean.
+- [x] 4.14 Commit + PR 4 (Position 4 of 16, Depends on: PR 2, Follow-up: PR 5/6 rebase onto
       this too — both PR 5 and PR 6 need atoms from PR 3 *and* PR 4).
 
 ## PR 5 — `_ui` identity + money: Avatar/AvatarGroup, StatFigure, MemberBar, ProgressMeter
