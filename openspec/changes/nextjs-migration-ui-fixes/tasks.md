@@ -76,10 +76,17 @@ the focused `npm test` command for the touched files are mandatory gates before 
 opened — none of the 16 slices carries a `size:exception`; all fit inside the 800-line budget
 as forecast, so none is requested.
 
-**Strategy**: Stacked PRs to main (per SDD `chain_strategy=stacked-to-main`), no tracker PR.
-Each child branches from its immediate parent's branch and is retargeted to `main` once that
-parent merges, per the `chained-pr` skill's Stacked-PRs execution model. Merge order is
-strictly the PR number.
+**Strategy (revised 2026-08-11)**: Feature-branch chain (per SDD `chain_strategy=feature-branch-chain`),
+tracker branch `nextjs-migration-tracker`. `main` still holds the pre-migration Vite/Express app and
+will not receive any of this stack until the full Next.js migration + these UI fixes are verified
+working — so no PR in this change targets `main` directly. `nextjs-migration-tracker` was forked
+from `feat/nextjs-migration-7-cleanup` after PR 1 landed directly on that branch (commit `5ec6167`,
+no separate PR-1 branch was cut — it predates this strategy revision and is treated as already part
+of the tracker's base). PR 2 onward: each PR is its own branch, PR 2 branches from and targets
+`nextjs-migration-tracker`, and every subsequent PR branches from and targets its immediate parent
+PR's branch — only `nextjs-migration-tracker` itself will eventually PR into `main`, once this
+whole change plus the rest of `nextjs-migration` is verified working. Merge order within the chain
+is strictly the PR number.
 
 ## Dependency Graph
 
@@ -100,14 +107,14 @@ artifact; this table exists only to make "which branch do I fork from" unambiguo
 
 | PR | Forks from (base branch) | Parallelizable with |
 |---|---|---|
-| 1 | `main` | — (lands first, alone) |
-| 2 | PR 1 | — |
+| 1 | `main` (historical — actually landed as a direct commit on `feat/nextjs-migration-7-cleanup`, `5ec6167`, before the tracker existed; no PR-1 branch/PR) | — (lands first, alone) |
+| 2 | `nextjs-migration-tracker` | — |
 | 3 | PR 2 | PR 4 |
 | 4 | PR 2 | PR 3 |
 | 5 | PR 3 + PR 4 (rebase onto both before opening) | PR 6 |
 | 6 | PR 3 + PR 4 (rebase onto both before opening) | PR 5, PR 7 (after 6 merges) |
 | 7 | PR 6 | PR 16 work can start once 7 merges |
-| 8 | PR 1 | PR 2–7 branch (independent chain per the diagram) |
+| 8 | `nextjs-migration-tracker` (PR 1's commit is already in the tracker's base — see PR 1 row) | PR 2–7 branch (independent chain per the diagram) |
 | 9 | PR 8 | — |
 | 10 | PR 9 | — |
 | 11 | PR 5, rebased onto PR 10 before opening (nav must land first — see diagram footnote) | PR 12 |
@@ -122,13 +129,14 @@ wanting `Avatar` from PR 5 before PR 5 has merged), treat it as a **base bug** p
 `chained-pr` skill ("polluted diffs are base bugs: retarget or rebase") — do not silently widen
 a slice's scope to route around it.
 
-## Branch Naming (stacked-to-main)
+## Branch Naming (feature-branch-chain)
 
-`feat/nextjs-ui-fixes-{NN}-{slug}`, e.g. `feat/nextjs-ui-fixes-01-proxy-rename`,
+`feat/nextjs-ui-fixes-{NN}-{slug}`, e.g. `feat/nextjs-ui-fixes-02-foundations`,
 `feat/nextjs-ui-fixes-14-budget-categories-read`. Each PR's body carries the `chained-pr`
-skill's **Chain Context** section (Chain, Tracker PR: "Not needed — stacked-to-main", Position
+skill's **Chain Context** section (Chain, Tracker branch: `nextjs-migration-tracker`, Position
 `N of 16`, Base, Depends on, Follow-up, Review budget `Δ / 800`, Starts at, Ends with) appended
-to, not replacing, the repo PR template.
+to, not replacing, the repo PR template. No PR in this chain targets `main` — every PR targets
+either `nextjs-migration-tracker` (PR 2, 8) or its immediate parent PR branch, per the table above.
 
 ---
 
