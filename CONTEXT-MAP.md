@@ -12,7 +12,7 @@ Phase 7; `frontend/` (the retired Vite SPA workspace) was removed outright in
 the same phase.
 
 The repo root is also the Next.js App Router application (`app/`, `lib/`,
-`middleware.ts`, `next.config.ts`) introduced by `openspec/changes/nextjs-migration`.
+`proxy.ts`, `next.config.ts`) introduced by `openspec/changes/nextjs-migration`.
 `shared/` stays a workspace rather than folding into the root app — its Zod
 schemas are imported by both server code (`lib/actions/**`, `lib/server/**`)
 and client components, and it has no framework-specific dependencies that

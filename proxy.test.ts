@@ -11,13 +11,13 @@ vi.mock("@supabase/ssr", () => ({
   })),
 }));
 
-import { middleware } from "./middleware";
+import { proxy, config } from "./proxy";
 
 function requestFor(path: string): NextRequest {
   return new NextRequest(new URL(path, "http://localhost:3000"));
 }
 
-describe("middleware", () => {
+describe("proxy", () => {
   beforeEach(() => {
     getUserMock.mockReset();
   });
@@ -26,7 +26,7 @@ describe("middleware", () => {
   it("redirects an unauthenticated request to a protected page to /login", async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
 
-    const response = await middleware(requestFor("/dashboard/group-1"));
+    const response = await proxy(requestFor("/dashboard/group-1"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
@@ -41,7 +41,7 @@ describe("middleware", () => {
   it("does not redirect /api/* requests even when unauthenticated", async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
 
-    const response = await middleware(requestFor("/api/groups"));
+    const response = await proxy(requestFor("/api/groups"));
 
     expect(response.status).not.toBe(307);
     expect(response.headers.get("location")).toBeNull();
@@ -55,7 +55,7 @@ describe("middleware", () => {
       data: { user: { id: "user-1" } },
     });
 
-    const response = await middleware(requestFor("/dashboard/group-1"));
+    const response = await proxy(requestFor("/dashboard/group-1"));
 
     expect(response.status).not.toBe(307);
     expect(response.headers.get("location")).toBeNull();
@@ -67,9 +67,38 @@ describe("middleware", () => {
   it("does not redirect an unauthenticated request to /login itself", async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
 
-    const response = await middleware(requestFor("/login"));
+    const response = await proxy(requestFor("/login"));
 
     expect(response.status).not.toBe(307);
     expect(response.headers.get("location")).toBeNull();
+  });
+
+  // server-session-auth: "A protected route shaped like a static asset
+  // still fails closed" — /dashboard/x.woff2 does not start with /fonts/,
+  // so it must remain a protected route path at the proxy's own logic
+  // level: this path is not conditioned on file extension, only on
+  // isApiPath/isPublicPath, so it still redirects regardless of what
+  // config.matcher decides for real Next.js request routing.
+  it("still redirects an unauthenticated request to a protected route that looks like a font asset", async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+
+    const response = await proxy(requestFor("/dashboard/x.woff2"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/login",
+    );
+  });
+});
+
+describe("config.matcher", () => {
+  const matcherPattern = new RegExp(config.matcher[0]);
+
+  // server-session-auth: "Font asset request bypasses the matcher entirely"
+  // — the /fonts prefix rule excludes this path so it never reaches the
+  // proxy at all (no session refresh, no redirect, served as a static
+  // 200 by Next.js directly).
+  it("excludes /fonts/* paths from the matcher", () => {
+    expect(matcherPattern.test("/fonts/geist-variable.woff2")).toBe(false);
   });
 });

@@ -54,7 +54,7 @@ export default tseslint.config(
     // `viewport`, route `config`) require exporting non-component values
     // alongside the default component — the opposite of Vite Fast Refresh's
     // assumption that `frontend/`'s config targets.
-    files: ["app/**/*.{ts,tsx}", "middleware.ts"],
+    files: ["app/**/*.{ts,tsx}", "proxy.ts"],
     rules: {
       "react-refresh/only-export-components": "off",
     },

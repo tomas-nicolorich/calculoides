@@ -15,7 +15,7 @@ See [`shared/CONTEXT.md`](./shared/CONTEXT.md) for the full domain glossary.
 
 ## Tech stack
 
-A single Next.js App Router application at the repo root (`app/`, `lib/`, `middleware.ts`) — Server Components query Prisma directly, mutations are Server Actions, and every session/authorization check runs server-side via `@supabase/ssr`. `frontend/` and `api/` are retired (`openspec/changes/nextjs-migration`); `shared/` remains a workspace.
+A single Next.js App Router application at the repo root (`app/`, `lib/`, `proxy.ts`) — Server Components query Prisma directly, mutations are Server Actions, and every session/authorization check runs server-side via `@supabase/ssr`. `frontend/` and `api/` are retired (`openspec/changes/nextjs-migration`); `shared/` remains a workspace.
 
 | Package               | Stack                                                                                                                                                                |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -36,7 +36,7 @@ You'll need a Supabase project (Postgres database + auth) and a Resend API key. 
 
 ```bash
 DATABASE_URL=                    # Supabase Postgres connection string (via PgBouncer)
-SUPABASE_URL=                    # server-side Supabase client (middleware.ts, lib/supabase/server.ts)
+SUPABASE_URL=                    # server-side Supabase client (proxy.ts, lib/supabase/server.ts)
 SUPABASE_ANON_KEY=
 NEXT_PUBLIC_SUPABASE_URL=        # browser Supabase client (lib/supabase/client.ts)
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -62,7 +62,7 @@ npm run build      # next build
 ## Project structure
 
 ```
-app/       Next.js App Router: route segments, Server Actions, Route Handlers, middleware.ts
+app/       Next.js App Router: route segments, Server Actions, Route Handlers, proxy.ts
 lib/       Server-only services (lib/server/services), Server Actions (lib/actions), Supabase clients
 shared/    Domain types, Zod schemas, financial logic — imported by both server and client code
 frontend/  Retired Vite SPA — kept only where its source is not yet fully superseded; not deployed

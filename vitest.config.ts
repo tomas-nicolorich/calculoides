@@ -4,7 +4,7 @@ import { loadEnv } from "vite";
 import path from "path";
 
 // Root-level Vitest config for the Next.js shell (`app/**`, `lib/**`,
-// `middleware.ts`). Server Components and middleware are plain
+// `proxy.ts`). Server Components and the routing proxy are plain
 // async/sync functions that return React elements or `NextResponse`s, so a
 // plain "node" environment is enough — no DOM is exercised.
 export default defineConfig(({ mode }) => {
@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: "node",
       include: [
-        "middleware.test.ts",
+        "proxy.test.ts",
         "app/**/*.test.ts",
         "app/**/*.test.tsx",
         "lib/**/*.test.ts",

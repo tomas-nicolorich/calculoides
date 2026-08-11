@@ -22,8 +22,8 @@
   "include": [
     "next-env.d.ts",
     "next.config.ts",
-    "middleware.ts",
-    "middleware.test.ts",
+    "proxy.ts",
+    "proxy.test.ts",
     "vitest.config.ts",
     "playwright.config.ts",
     "app/**/*.ts",
