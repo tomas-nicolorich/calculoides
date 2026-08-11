@@ -1,6 +1,7 @@
 "use client";
 
-import { useDashboardSummary, useCategoriesList } from "./queries";
+import { useDashboardSummary } from "../../../_data/summary";
+import { useCategoriesList } from "../../../_data/categories";
 
 /**
  * Lean placeholder rendering just enough of the Dashboard's first-paint data

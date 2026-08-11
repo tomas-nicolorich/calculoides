@@ -1,16 +1,19 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../../../../lib/query-keys";
-import { invalidateGroupQueries } from "./queries";
+import { queryKeys } from "../../lib/query-keys";
+import { invalidateGroupQueries } from "./invalidate";
 
 const GROUP_X = "22222222-2222-4222-8222-222222222222";
 const GROUP_Y = "33333333-3333-4333-8333-333333333333";
 
 /**
- * client-data-cache: "Mutation for one group does not affect another"
- * (4b.8). Genuine RED before `invalidateGroupQueries` existed: module not
- * found, same pre-GREEN gate 4a's whole-file expense action tests used.
+ * ADR-2: `invalidateGroupQueries` deduped out of three route-local
+ * `queries.ts` copies (expenses, transfers, savings) into one
+ * `app/_data/**` helper. Ported verbatim from
+ * `app/(app)/expenses/[groupId]/queries.test.ts`'s
+ * `client-data-cache: "Mutation for one group does not affect another"`
+ * coverage (4b.8) — same assertions, new import path.
  */
 describe("invalidateGroupQueries", () => {
   it("does not mark group Y's cached queries stale when group X mutates", async () => {

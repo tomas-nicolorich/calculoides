@@ -9,7 +9,7 @@ import {
   useContributionDelete,
   type SavingsGoal,
   type SavingsContributionBreakdown,
-} from "./queries";
+} from "../../../_data/savings";
 
 /** One goal's contribution-override row, extracted to keep {@link SavingsGoalItem} shallow. */
 function ContributionRow({

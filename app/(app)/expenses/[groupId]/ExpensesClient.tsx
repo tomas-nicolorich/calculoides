@@ -7,7 +7,7 @@ import {
   useCreateExpense,
   useDeleteExpense,
   useDeleteAllExpenses,
-} from "./queries";
+} from "../../../_data/expenses";
 
 /** Extracted from {@link ExpensesClient} to keep its own cognitive complexity low. */
 function ExpensesListView({

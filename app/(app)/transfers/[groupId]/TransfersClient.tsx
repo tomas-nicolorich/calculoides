@@ -7,7 +7,7 @@ import {
   useCreateTransfer,
   useDeleteTransfer,
   useDeleteAllTransfers,
-} from "./queries";
+} from "../../../_data/transfers";
 
 /** Extracted from {@link TransfersClient} to keep its own cognitive complexity low. */
 function TransfersListView({
