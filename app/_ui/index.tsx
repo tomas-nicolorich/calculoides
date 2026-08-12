@@ -15,6 +15,7 @@ export { DialogFooter } from "./Dialog";
 export { ResponsiveDialog } from "./ResponsiveDialog";
 export { RowMenu } from "./RowMenu";
 export { Select } from "./Select";
+export { DatePicker } from "./DatePicker";
 
 export function Input({
   className,

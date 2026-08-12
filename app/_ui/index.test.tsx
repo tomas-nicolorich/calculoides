@@ -63,4 +63,8 @@ describe("app/_ui barrel", () => {
   it("re-exports Select", () => {
     expect(barrel.Select).toBeTypeOf("function");
   });
+
+  it("re-exports DatePicker", () => {
+    expect(barrel.DatePicker).toBeTypeOf("function");
+  });
 });

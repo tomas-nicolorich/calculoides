@@ -471,21 +471,54 @@ not worth the added chain link, same reasoning as PR 2's larger accepted excepti
 largest single primitive, 477 lines — isolated into its own slice for that reason).
 **Budget**: 477 src / 170 tests / **647** total (153 headroom — watch). **Depends on**: PR 6.
 
-- [ ] 7.1 **RED**: `app/_ui/DatePicker.test.tsx` — controlled selected-date value, month
+- [x] 7.1 **RED**: `app/_ui/DatePicker.test.tsx` — controlled selected-date value, month
       navigation, keyboard arrow-key date navigation, min/max date bounds if `main`'s API has
-      them, `onChange` fires with the selected date. Fails.
-- [ ] 7.2 **GREEN**: Port `DatePicker.tsx` verbatim (largest single primitive — port
-      incrementally, re-running the test file after each sub-piece rather than writing all 477
-      lines before the first test run).
-- [ ] 7.3 **RED**: add a11y assertions if not already covered — `role="grid"`/date-cell
-      labeling, focus management on open. Fails if missing.
-- [ ] 7.4 **GREEN**: close any a11y gaps found in 7.3.
-- [ ] 7.5 **GREEN (barrel)**: Add to barrel + smoke test.
-- [ ] 7.6 **REFACTOR**: Prop-name diff against `main`.
-- [ ] 7.7 Verify: typecheck, lint, `npx vitest run app/_ui/DatePicker.test.tsx`. This closes
-      out the `_ui` layer — run the full `app/_ui/**` suite once here as a layer-complete
-      checkpoint.
-- [ ] 7.8 Commit + PR 7 (Position 7 of 16, Depends on: PR 6, Follow-up: PR 16 — `ExpenseForm`
+      them, `onChange` fires with the selected date. Fails. **Real-source check**: `main`'s
+      `frontend/src/shared/ui/DatePicker.tsx` (477 lines) has NO configurable `min`/`max`
+      props (bounds are implicit via `granularity`: day disables future dates, month disables
+      past months) and NO keyboard arrow-key grid navigation (dates are plain `<button>`s
+      relying on native Tab order only, no `onKeyDown`/roving-tabindex). 11 RED cases written
+      instead against the confirmed real API + the a11y gaps named in 7.3. Fails (module does
+      not exist).
+- [x] 7.2 **GREEN**: Port `DatePicker.tsx` verbatim (largest single primitive — ported
+      incrementally: core shell + `DayGrid` first, then `MonthGrid`, then a11y, re-running the
+      test file after each sub-piece). **DEVIATION** (same substitution PR 6 made for
+      `ResponsiveDialog`, tasks.md 6.5): `main` sources `isDesktop` from its own
+      `useMediaQuery("(min-width: 768px)")` hook, not present in this repo. This port uses
+      `lib/hooks/use-is-mobile.ts` (PR 2) and derives `isDesktop = !useIsMobile()` — inverted
+      boolean semantics, same 768px boundary, unchanged layout/prop contract. Green.
+- [x] 7.3 **RED**: add a11y assertions if not already covered — `role="grid"`/date-cell
+      labeling, focus management on open. Fails if missing. Confirmed against real source:
+      `main` has none of these — no `role="grid"`, no per-cell `aria-label` (only the bare day
+      number/month abbreviation as text content), and no explicit initial-focus handling on
+      open (relies on Base UI's default, which focuses the Popup container, not a date cell).
+      3 new RED assertions added (role=grid presence, per-cell full-date `aria-label`,
+      focus-on-open lands on the selected cell). Fails.
+- [x] 7.4 **GREEN**: close a11y gaps found in 7.3 — added `role="grid"` + `role="row"`
+      (`display:contents` wrappers so the CSS `grid-cols-7`/`grid-cols-3` visual layout is
+      unchanged) + `role="gridcell"`/`aria-label`/`aria-selected` per date button, and
+      initial-focus-on-open via Base UI's own `Popup`/`BaseDialog.Popup` `initialFocus` prop
+      (a function that queries a `data-autofocus="true"` marker on the selected-or-today cell,
+      falling back to Base UI's default when no target is in view) — used the sanctioned Base
+      UI mechanism instead of a manual `useEffect` race against Base UI's own focus-trap
+      timing. **Scope note**: keyboard arrow-key grid navigation (from 7.1's checklist) was
+      NOT added — `main`'s real source has none (confirmed in 7.1), `role="grid"` without
+      arrow-key support is a known a11y limitation accepted here to stay a faithful verbatim
+      port and hold the line on design.md's 477-line `src` budget (which is exactly `main`'s
+      line count, leaving no allocated room for a new keyboard-interaction subsystem). Green
+      (11/11).
+- [x] 7.5 **GREEN (barrel)**: Added `DatePicker` export to `app/_ui/index.tsx` + one smoke
+      test in `app/_ui/index.test.tsx`. Green.
+- [x] 7.6 **REFACTOR**: Prop-name diff against `main` — zero prop-name differences.
+      `DatePickerProps` (`value`, `onChange`, `granularity`, `placeholder`, `disabled`, `id`,
+      `labelId`) is byte-for-byte identical to `main`. All diff lines are the import-path/hook
+      substitution (7.2) and the additive a11y structure (7.4); no prop was renamed, added, or
+      removed.
+- [x] 7.7 Verify: `npm run typecheck` and `npm run lint` pass;
+      `npx vitest run app/_ui/DatePicker.test.tsx` — 11/11 green. Layer-complete checkpoint:
+      `npx vitest run app/_ui` — 15 files / 79 tests, all green. This closes out the `_ui`
+      primitives layer (PRs 3/4/5/6/7).
+- [x] 7.8 Commit + PR 7 (Position 7 of 16, Depends on: PR 6, Follow-up: PR 16 — `ExpenseForm`
       needs `DatePicker`).
 
 ## PR 8 — Theme (`THEME_SCRIPT` + `ThemeToggle`), `/` redirect, `signOut()` action
