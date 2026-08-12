@@ -404,16 +404,16 @@ Consumer"*; open question on Base UI package name resolves here.
 **Budget**: 451 src / 230 tests / **681** total (119 headroom — watch). **Depends on**: PR 3 +
 PR 4. **Parallel with**: PR 5.
 
-**BLOCKED (partial — see apply-progress for full report)**: 6.1–6.9 and the barrel/verify steps
-for those four components are complete and green. 6.10–6.15 (IconPicker + final barrel/verify/
-commit/PR) are blocked: `main`'s `IconPicker.tsx` has a hard, previously untraced dependency on
-`shared/lib/categoryIcons.tsx` (486 lines — `CategoryIconTile` + `CATEGORY_ICON_GROUPS`), which
-does not exist anywhere in this repo and is not budgeted/scoped in design.md's 16-PR line-count
-table (design.md lines 275-298) or anywhere else in tasks.md. Porting it here would blow PR6's
-681-line estimate past the 800-line review budget on its own. This is a genuine scope gap in the
-original plan, not a PR6 implementation issue — needs an explicit decision (add a scoped task/PR
-for `categoryIcons.tsx`, most naturally alongside the category-CRUD work in PR 14/15) before
-6.10 can proceed.
+**RESOLVED (scope decision, 2026-08-12)**: `main`'s `IconPicker.tsx` has a hard, previously
+untraced dependency on `shared/lib/categoryIcons.tsx` (486 lines — `CategoryIconTile` +
+`CATEGORY_ICON_GROUPS`), not budgeted/scoped anywhere in design.md's 16-PR line-count table
+(design.md lines 275-298) or tasks.md. This PR's scope is revised to **Dialog, ResponsiveDialog,
+RowMenu, Select only** — IconPicker + its `categoryIcons.tsx` dependency are moved to PR 15
+(category-CRUD dialogs, IconPicker's actual consumer — see that section's new task). Separately,
+the 4-component slice itself measured 824 lines (24 over the 800 hard budget, well past the
+681 forecast for the original 5-component scope) — accepted as `size:exception`: a real,
+fully-tested, coherent overlay-primitives slice; splitting a 3% overage into two PRs was judged
+not worth the added chain link, same reasoning as PR 2's larger accepted exception.
 
 - [x] 6.1 Resolve and install the Base UI package (verify exact published name — `@base-ui/react`
       vs `@base-ui-components/react` — and current version before this task's GREEN steps;
@@ -449,20 +449,21 @@ for `categoryIcons.tsx`, most naturally alongside the category-CRUD work in PR 1
       pointer-highlighted (`pointerMove`) first — a bare `click` on a non-highlighted item is a
       no-op in jsdom. Tests use a `pointerMove` → `pointerDown` → `pointerUp` → `click` sequence
       to mirror real mouse behavior; this is a test-harness detail, not a production deviation.
-- [ ] 6.10 **RED**: `app/_ui/IconPicker.test.tsx` — BLOCKED, see note above. Not started.
-- [ ] 6.11 **GREEN**: Port `IconPicker.tsx`. BLOCKED, see note above. Not started.
-- [ ] 6.12 **GREEN (barrel)**: Extend barrel exports + smoke test. DialogFooter, ResponsiveDialog,
-      RowMenu, Select are exported and smoke-tested (barrel + full `app/_ui` suite: 67/67 green).
-      IconPicker export withheld — blocked, see note above.
+- [x] 6.10 **MOVED**: `app/_ui/IconPicker.test.tsx` — out of PR6 scope, moved to PR 15 (see that
+      section's new task for `categoryIcons.tsx` + `IconPicker` port).
+- [x] 6.11 **MOVED**: Port `IconPicker.tsx` — out of PR6 scope, moved to PR 15 (same as 6.10).
+- [x] 6.12 **GREEN (barrel)**: Extend barrel exports + smoke test. `DialogFooter`, `ResponsiveDialog`,
+      `RowMenu`, `Select` exported and smoke-tested (barrel + full `app/_ui` suite: 67/67 green).
+      IconPicker export intentionally absent — out of scope per the 6.10/6.11 move.
 - [x] 6.13 **REFACTOR**: Prop-name diff against `main` — for the four completed components,
       confirmed unrenamed (see per-task deviation notes above for the two intentional exceptions:
       `Dialog.tsx` ports `DialogFooter` only, `ResponsiveDialog` swaps its media-query hook).
-- [ ] 6.14 Verify: typecheck, lint, `npx vitest run app/_ui`. Line-count checkpoint (same as
-      PR 5 — this row is flagged "Watch"). Typecheck/lint/tests all green for what exists
-      (67/67); checkpoint not finalized pending 6.10/6.11 resolution.
-- [ ] 6.15 Commit + PR 6 (Position 6 of 16, Depends on: PR 3, PR 4, Follow-up: PR 7, PR 14). NOT
-      opened — work committed to `feat/nextjs-ui-fixes-06-ui-overlays` pending the IconPicker
-      scope decision.
+- [x] 6.14 Verify: typecheck, lint, `npx vitest run app/_ui` — all green (67/67). Line-count
+      checkpoint: 824 lines (`git diff --stat feat/nextjs-ui-fixes-03-ui-atoms-a...HEAD` isolated
+      to PR6's own commit, excluding the PR3+PR4 merge-resolution commit) — 24 over the 800 hard
+      budget, accepted as `size:exception` (see resolution note above).
+- [x] 6.15 Commit + PR 6 (Position 6 of 16, Base `feat/nextjs-ui-fixes-03-ui-atoms-a`, Depends on:
+      PR 3, PR 4, Follow-up: PR 7, PR 15 [IconPicker]). `size:exception` accepted: 824/800 lines.
 
 ## PR 7 — `_ui` DatePicker
 
@@ -811,14 +812,28 @@ rather than opening an over-budget PR.
 **Spec**: `dashboard-view` — *"BudgetCategories Mutations Invalidate the Group Cache"*,
 *"Budget Transfers Support Inline Creation and Per-Category History"* (the accordion
 drill-down half).
-**Budget**: 370 src / 250 tests / **620** total. **Depends on**: PR 14.
+**Budget**: 370 src / 250 tests / **620** total, **plus an unbudgeted addition** (see 15.0 —
+`categoryIcons.tsx` is ~486 lines alone, before `IconPicker.tsx` itself or its tests; this was
+never in design.md's original PR15 forecast and pushes this PR's real total well past 620, likely
+past the 800 hard cap on its own — re-run the line-count checkpoint (15.12) early, after 15.0, not
+just at the end, and flag for a further split/exception decision if it's trending over budget).
+**Depends on**: PR 14.
 
+- [ ] 15.0 **RED→GREEN**: Port `IconPicker.tsx` + its `shared/lib/categoryIcons.tsx` dependency
+      (`CategoryIconTile` + `CATEGORY_ICON_GROUPS`, ~486 lines) into `app/_ui/**` — moved here
+      from PR 6 (2026-08-12 scope decision: `main`'s `IconPicker.tsx` has a hard dependency on
+      `categoryIcons.tsx` that design.md's original 16-PR line-count table never traced; PR15's
+      category-CRUD dialogs are IconPicker's actual consumer, a more natural home than the
+      generic `_ui` overlays slice). Follow the same strict-TDD RED→GREEN→REFACTOR pattern as
+      every other PR3/4/5/6 primitive port: confirm exact prop names/API against `main`'s real
+      source before writing the RED test, do not invent behavior the spec implies but `main`
+      doesn't have. Add to the `app/_ui` barrel + smoke test.
 - [ ] 15.1 **RED**: extend `BudgetCategories.test.tsx` — spec scenario "Creating a category
       refreshes dependent widgets": create-category dialog submit → `lib/actions/category.ts`
       `create` resolves → `queryKeys.group(groupId)` invalidates → `BudgetCategories` (and any
       widget reading category data) reflects the new category. Fails.
-- [ ] 15.2 **GREEN**: Add create-category dialog using `ResponsiveDialog` + `IconPicker` +
-      `Input` (from PR 6/PR 3), wired to `category.create`, `onSuccess` →
+- [ ] 15.2 **GREEN**: Add create-category dialog using `ResponsiveDialog` (PR 6) + `IconPicker`
+      (15.0, this PR) + `Input` (PR 3), wired to `category.create`, `onSuccess` →
       `invalidateQueries(queryKeys.group(groupId))`. Green.
 - [ ] 15.3 **RED**: extend — update-category dialog: same dialog/action pattern for
       `category.update`. Fails.
