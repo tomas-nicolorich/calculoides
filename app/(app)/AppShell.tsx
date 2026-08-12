@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { SidebarNav } from "./_nav/SidebarNav";
+import { MobileTopBar } from "./_nav/MobileTopBar";
+import { MobileTabBar } from "./_nav/MobileTabBar";
 
 export interface ShellGroup {
   id: string;
@@ -18,16 +20,15 @@ export interface ShellUser {
  * app-navigation-shell: "`children` Reaches the Shell as a Prop, Never an
  * Import" (ADR-4) — `children` arrives as a prop from the Server Component
  * `app/(app)/layout.tsx`, so every route below the shell keeps
- * server-rendering independently of `AppShell`'s client bundle. The
- * desktop tree is gated with Tailwind (`hidden md:flex`), never a JS
- * `useIsMobile()` branch (ADR-3) — the mobile top/tab bar tree lands in
- * PR 10 and is intentionally omitted here rather than built as dead
- * markup ahead of its own components.
+ * server-rendering independently of `AppShell`'s client bundle. Desktop
+ * (`SidebarNav`, `hidden md:flex`) and mobile (`MobileTopBar` +
+ * `MobileTabBar`, `md:hidden`) trees both render on every request, gated
+ * with Tailwind classes only — never a JS `useIsMobile()` branch (ADR-3) —
+ * so there is no first-frame mismatch before hydration.
  */
 export function AppShell({
-  // TODO(PR10): threaded into `GroupSwitcher`/`AccountMenu` once they land.
-  groups: _groups,
-  user: _user,
+  groups,
+  user,
   children,
 }: {
   groups: ShellGroup[];
@@ -36,8 +37,12 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-screen bg-slate-50 transition-colors dark:bg-slate-950">
-      <SidebarNav />
-      <main className="min-w-0 flex-1">{children}</main>
+      <SidebarNav groups={groups} user={user} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopBar groups={groups} />
+        <main className="min-w-0 flex-1 pb-16 md:pb-0">{children}</main>
+        <MobileTabBar />
+      </div>
     </div>
   );
 }

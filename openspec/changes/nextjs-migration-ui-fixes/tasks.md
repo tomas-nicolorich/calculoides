@@ -678,36 +678,44 @@ Sign-Out"* (UI half — wires PR 8's `signOut()`), *"Group Switcher Lists the Us
 Groups"* (UI half).
 **Budget**: 293 src / 200 tests / **493** total. **Depends on**: PR 9.
 
-- [ ] 10.1 **RED**: `app/(app)/_nav/MobileTopBar.test.tsx` — renders brand + group switcher
+- [x] 10.1 **RED**: `app/(app)/_nav/MobileTopBar.test.tsx` — renders brand + group switcher
       slot, `md:hidden`. Fails.
-- [ ] 10.2 **GREEN**: Create `MobileTopBar.tsx`. Green.
-- [ ] 10.3 **RED**: `app/(app)/_nav/MobileTabBar.test.tsx` — renders `NAV_ITEMS.filter(item =>
+- [x] 10.2 **GREEN**: Create `MobileTopBar.tsx`. Green.
+- [x] 10.3 **RED**: `app/(app)/_nav/MobileTabBar.test.tsx` — renders `NAV_ITEMS.filter(item =>
       item.showInTabBar)` as bottom-fixed tabs, `md:hidden`, active tab highlighted. Fails.
-- [ ] 10.4 **GREEN**: Create `MobileTabBar.tsx`. Green.
-- [ ] 10.5 **GREEN (wire)**: Update `AppShell.tsx` to render `MobileTopBar` + `MobileTabBar`
+- [x] 10.4 **GREEN**: Create `MobileTabBar.tsx`. Green.
+- [x] 10.5 **GREEN (wire)**: Update `AppShell.tsx` to render `MobileTopBar` + `MobileTabBar`
       inside `md:hidden` wrappers alongside the PR 9 desktop tree — re-run PR 9's
       `AppShell.test.tsx` "Desktop viewport shows the sidebar tree" / add "Mobile viewport
       shows the top/tab bar tree" (spec scenario) as a new RED case first, then satisfy it.
-- [ ] 10.6 **RED**: `app/(app)/_nav/GroupSwitcher.test.tsx` — spec scenario "Dashboard route
+- [x] 10.6 **RED**: `app/(app)/_nav/GroupSwitcher.test.tsx` — spec scenario "Dashboard route
       derives groupId from the path segment": given path `/dashboard/abc123`, resolves active
       group via `useParams<{ groupId?: string }>()` with `usePathname()` fallback; lists all
       groups from the `groups` prop (spec scenario "Switcher lists the signed-in user's
       groups"). Fails.
-- [ ] 10.7 **GREEN**: Create `GroupSwitcher.tsx` per ADR-5. Green.
-- [ ] 10.8 **RED**: `app/(app)/_nav/AccountMenu.test.tsx` — renders `user.name`/`user.email`
+- [x] 10.7 **GREEN**: Create `GroupSwitcher.tsx` per ADR-5. Green.
+- [x] 10.8 **RED**: `app/(app)/_nav/AccountMenu.test.tsx` — renders `user.name`/`user.email`
       from props; spec scenario "Signing out clears the session and redirects" — selecting
       "Sign out" calls the PR 8 `signOut()` Server Action (mock and assert the call, not the
       Server Action's own internals — those are covered by PR 8's test). Fails.
-- [ ] 10.9 **GREEN**: Create `AccountMenu.tsx`, wiring PR 8's `signOut()`. Green.
-- [ ] 10.10 **REFACTOR**: Confirm `AppShell` composes all six nav pieces
+- [x] 10.9 **GREEN**: Create `AccountMenu.tsx`, wiring PR 8's `signOut()`. Green.
+- [x] 10.10 **REFACTOR**: Confirm `AppShell` composes all six nav pieces
       (`SidebarNav`/`MobileTopBar`/`MobileTabBar`/`NavItemLink`/`GroupSwitcher`/`AccountMenu`)
       per the Data Flow diagram; no leftover placeholder markup remains.
-- [ ] 10.11 Verify: typecheck, lint, `npx vitest run app/(app)/_nav app/(app)/AppShell.test.tsx`.
+      **Note**: `AppShell` threads `groups`/`user` into `SidebarNav` (previously discarded
+      placeholder props) and `MobileTopBar`; `SidebarNav` composes `GroupSwitcher` +
+      `AccountMenu` alongside `NavItemLink`, matching the Data Flow diagram's desktop column.
+      `AccountMenu` is desktop-only in this PR (the diagram places it only under the
+      `SidebarNav` column, not the mobile column) — see Deviations in the PR 10 commit summary.
+- [x] 10.11 Verify: typecheck, lint, `npx vitest run app/(app)/_nav app/(app)/AppShell.test.tsx`.
       Manual: mobile viewport (devtools responsive mode) shows top bar + tab bar, no sidebar;
       switch groups via the switcher and confirm route changes; sign out and confirm redirect
       to `/login` plus that a subsequent protected-route request also redirects (spec's
       "invalidates the server session" scenario, manually).
-- [ ] 10.12 Commit + PR 10 (Position 10 of 16, Depends on: PR 9, Follow-up: PR 11–16, all of
+      **Deferred**: no browser available in this environment — manual viewport/group-switch/
+      sign-out verification not performed; automated typecheck/lint/focused+full test suite all
+      green (see PR 10 commit summary).
+- [x] 10.12 Commit + PR 10 (Position 10 of 16, Depends on: PR 9, Follow-up: PR 11–16, all of
       which render inside the now-real chrome for the first time).
 
 ## PR 11 — Groups full parity (ADR-0008): `GroupsClient` rewrite + `CreateGroupForm`

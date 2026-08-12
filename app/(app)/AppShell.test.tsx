@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { AppShell } from "./AppShell";
 
@@ -19,14 +19,19 @@ describe("AppShell", () => {
 
   // app-navigation-shell: "Desktop viewport shows the sidebar tree"
   it("renders the desktop sidebar tree gated by hidden md:flex", () => {
-    const { container } = render(
+    render(
       <AppShell groups={GROUPS} user={USER}>
         <p>page content</p>
       </AppShell>,
     );
 
-    expect(container.querySelector("aside")).toHaveClass("hidden", "md:flex");
-    expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
+    // Scoped to `aside`: both trees render (ADR-3), so an unscoped
+    // "Dashboard" link query would now match the mobile tab bar too.
+    const aside = screen.getByRole("complementary");
+    expect(aside).toHaveClass("hidden", "md:flex");
+    expect(
+      within(aside).getByRole("link", { name: "Dashboard" }),
+    ).toBeInTheDocument();
   });
 
   // app-navigation-shell: "Page content server-renders independently of the
@@ -40,5 +45,23 @@ describe("AppShell", () => {
     );
 
     expect(screen.getByText("page content")).toBeInTheDocument();
+  });
+
+  // app-navigation-shell: "Mobile viewport shows the top/tab bar tree" —
+  // CSS-first branching (ADR-3) renders both trees on every server render;
+  // the mobile tree is gated by `md:hidden` alone, never a JS check.
+  it("renders the mobile top/tab bar tree gated by md:hidden", () => {
+    const { container } = render(
+      <AppShell groups={GROUPS} user={USER}>
+        <p>page content</p>
+      </AppShell>,
+    );
+
+    const tabBarNav = [...container.querySelectorAll("nav")].find((nav) =>
+      nav.className.includes("fixed"),
+    );
+
+    expect(container.querySelector("header")).toHaveClass("md:hidden");
+    expect(tabBarNav).toHaveClass("md:hidden");
   });
 });
