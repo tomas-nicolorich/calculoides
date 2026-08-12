@@ -621,24 +621,24 @@ Switcher Lists the User's Real Groups"* (the `getGroupNames()` un-stub half — 
 UI itself is PR 10).
 **Budget**: 448 src / 200 tests / **648** total (152 headroom — watch). **Depends on**: PR 8.
 
-- [ ] 9.1 **RED**: `app/(app)/_nav/navItems.test.ts` (`node`) — spec scenario "Members nav item
+- [x] 9.1 **RED**: `app/(app)/_nav/navItems.test.ts` (`node`) — spec scenario "Members nav item
       builds a query-string href": given `groupId = "abc123"`, the Members `NavItem.href(...)`
       produces `/members?groupId=abc123`, not `/members/abc123`; every other item's `href`
       builds a plain `/segment/[groupId]` path or a static path per `requiresGroup`. Fails —
       `navItems.ts` doesn't exist.
-- [ ] 9.2 **GREEN**: Create `app/(app)/_nav/navItems.ts` — `NavItem` interface with `href` as a
+- [x] 9.2 **GREEN**: Create `app/(app)/_nav/navItems.ts` — `NavItem` interface with `href` as a
       **function** (per the Interfaces/Contracts block, ADR-5's route-shape trap), populate
       `NAV_ITEMS` for dashboard/expenses/transfers/savings/members/groups. Green.
-- [ ] 9.3 **RED**: `app/(app)/_nav/NavItemLink.test.tsx` (`jsdom`) — renders a `next/link`,
+- [x] 9.3 **RED**: `app/(app)/_nav/NavItemLink.test.tsx` (`jsdom`) — renders a `next/link`,
       marks itself active via `usePathname()` match, hidden when `requiresGroup` is true and no
       `groupId` is resolvable (spec scenario "No active group hides group-scoped nav items").
       Fails.
-- [ ] 9.4 **GREEN**: Create `NavItemLink.tsx`. Green.
-- [ ] 9.5 **RED**: `app/(app)/_nav/SidebarNav.test.tsx` — renders `NAV_ITEMS` as
+- [x] 9.4 **GREEN**: Create `NavItemLink.tsx`. Green.
+- [x] 9.5 **RED**: `app/(app)/_nav/SidebarNav.test.tsx` — renders `NAV_ITEMS` as
       `NavItemLink`s, carries `hidden md:flex` (CSS-first branching, ADR-3 — never a JS
       `useIsMobile()` gate in the shell). Fails.
-- [ ] 9.6 **GREEN**: Create `SidebarNav.tsx`. Green.
-- [ ] 9.7 **RED**: `app/(app)/AppShell.test.tsx` — rewrite for the real shell: spec scenario
+- [x] 9.6 **GREEN**: Create `SidebarNav.tsx`. Green.
+- [x] 9.7 **RED**: `app/(app)/AppShell.test.tsx` — rewrite for the real shell: spec scenario
       "Desktop viewport shows the sidebar tree" (sidebar visible via `hidden md:flex`, mobile
       trees `md:hidden` even though this PR doesn't yet build the mobile trees — assert the
       *desktop* tree renders and any placeholder-for-mobile slot is `md:hidden`) and "Page
@@ -646,28 +646,28 @@ UI itself is PR 10).
       as a prop; assert the component signature takes `children: ReactNode` as a prop, never
       an internal import of a page module). Fails — current `AppShell` is the placeholder
       header.
-- [ ] 9.8 **GREEN**: Rewrite `app/(app)/AppShell.tsx` per ADR-4: `"use client"`, accepts
+- [x] 9.8 **GREEN**: Rewrite `app/(app)/AppShell.tsx` per ADR-4: `"use client"`, accepts
       `{ groups, user, children }` per the Interfaces/Contracts `ShellGroup`/`ShellUser`
       shapes, renders `SidebarNav` inside `hidden md:flex`. (Mobile top/tab bar slots are
       stubbed or omitted here — PR 10 fills them in; do not build dead mobile markup ahead of
       its own components landing, matching the same "avoid dead links" precedent the current
       placeholder's own doc comment already established.)
-- [ ] 9.9 **RED**: `app/(app)/layout.test.tsx` — extend for the un-stub: asserts
+- [x] 9.9 **RED**: `app/(app)/layout.test.tsx` — extend for the un-stub: asserts
       `GroupService.getGroupsForUser(user.id)` and `UserService.getUser(user.id)` are called
       (spec scenario "Switcher lists the signed-in user's groups" — 2 groups → both passed to
       `AppShell`), replacing the current `getGroupNames()` stub that always resolves `[]`.
       Fails.
-- [ ] 9.10 **GREEN**: Rewrite `app/(app)/layout.tsx`: drop the local `getGroupNames()` stub,
+- [x] 9.10 **GREEN**: Rewrite `app/(app)/layout.tsx`: drop the local `getGroupNames()` stub,
       call `GroupService.getGroupsForUser(user.id)` + `UserService.getUser(user.id)`, pass
       `{ groups, user }` into `AppShell`. Green.
-- [ ] 9.11 **REFACTOR**: Confirm `AppShell`'s new prop shape matches the
+- [x] 9.11 **REFACTOR**: Confirm `AppShell`'s new prop shape matches the
       Interfaces/Contracts block exactly (`ShellGroup { id, name }`, `ShellUser { id, name,
       email }`).
-- [ ] 9.12 Verify: typecheck, lint, `npx vitest run app/(app)/_nav app/(app)/AppShell.test.tsx
+- [x] 9.12 Verify: typecheck, lint, `npx vitest run app/(app)/_nav app/(app)/AppShell.test.tsx
       app/(app)/layout.test.tsx`. Manual: desktop viewport shows sidebar with real group names
       (no more placeholder `groupNames.join(", ")` span); active nav item highlighted per
       route.
-- [ ] 9.13 Commit + PR 9 (Position 9 of 16, Depends on: PR 8, Follow-up: PR 10).
+- [x] 9.13 Commit + PR 9 (Position 9 of 16, Depends on: PR 8, Follow-up: PR 10).
 
 ## PR 10 — Nav B: `MobileTopBar`, `MobileTabBar`, `GroupSwitcher`, `AccountMenu`
 

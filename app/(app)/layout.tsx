@@ -1,16 +1,10 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
+import { GroupService } from "../../lib/server/services/group";
+import { UserService } from "../../lib/server/services/user";
 import { Providers } from "../providers";
 import { AppShell } from "./AppShell";
-
-// TODO(1b.12): once `api/_src/services/**` moves to `lib/server/services/**`
-// unchanged, replace this with a direct service call for the signed-in
-// user's group list (GroupListContext data), per design.md's
-// "Server Component (no endpoint)" row for `groups list`.
-function getGroupNames(): Promise<string[]> {
-  return Promise.resolve([]);
-}
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // server-session-auth: "Protected Segments Require a Verified Session" —
@@ -19,18 +13,32 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // whether a cookie is present at all.
   const supabase = await createClient();
   const {
-    data: { user },
+    data: { user: authUser },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!authUser) {
     redirect("/login");
   }
 
-  const groupNames = await getGroupNames();
+  // app-navigation-shell: "Group Switcher Lists the User's Real Groups" —
+  // replaces the former `getGroupNames()` stub that always resolved `[]`.
+  const [groups, profile] = await Promise.all([
+    GroupService.getGroupsForUser(authUser.id),
+    UserService.getUser(authUser.id),
+  ]);
 
   return (
     <Providers>
-      <AppShell groupNames={groupNames}>{children}</AppShell>
+      <AppShell
+        groups={groups.map((group) => ({ id: group.id, name: group.name }))}
+        user={{
+          id: authUser.id,
+          name: profile?.name ?? null,
+          email: profile?.email ?? authUser.email ?? "",
+        }}
+      >
+        {children}
+      </AppShell>
     </Providers>
   );
 }

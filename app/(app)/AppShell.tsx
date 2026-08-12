@@ -1,34 +1,43 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { SidebarNav } from "./_nav/SidebarNav";
+
+export interface ShellGroup {
+  id: string;
+  name: string;
+}
+
+export interface ShellUser {
+  id: string;
+  name: string | null;
+  email: string;
+}
 
 /**
- * Phase 1a placeholder for `frontend/src/app/ui/AppShell.tsx`. The real
- * shell branches on `useIsMobile()` into `SidebarNav`/`MobileTopBar`/
- * `MobileTabBar` (widgets/navigation/**), none of which are ported yet —
- * their link targets (`dashboard/[groupId]`, `expenses/[groupId]`, etc.)
- * don't exist as routes until Phases 2-6b. Full navigation-chrome porting
- * is deferred to when those destination pages land, to avoid building
- * dead links and to keep this phase within its review budget.
+ * app-navigation-shell: "`children` Reaches the Shell as a Prop, Never an
+ * Import" (ADR-4) — `children` arrives as a prop from the Server Component
+ * `app/(app)/layout.tsx`, so every route below the shell keeps
+ * server-rendering independently of `AppShell`'s client bundle. The
+ * desktop tree is gated with Tailwind (`hidden md:flex`), never a JS
+ * `useIsMobile()` branch (ADR-3) — the mobile top/tab bar tree lands in
+ * PR 10 and is intentionally omitted here rather than built as dead
+ * markup ahead of its own components.
  */
 export function AppShell({
+  // TODO(PR10): threaded into `GroupSwitcher`/`AccountMenu` once they land.
+  groups: _groups,
+  user: _user,
   children,
-  groupNames,
 }: {
+  groups: ShellGroup[];
+  user: ShellUser;
   children: ReactNode;
-  groupNames: string[];
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors">
-      <header className="border-b border-slate-200 dark:border-slate-800 px-4 py-3">
-        <span className="text-lg font-bold text-slate-900 dark:text-white">
-          Calculoides
-        </span>
-        {groupNames.length > 0 && (
-          <span className="ml-3 text-sm text-slate-500 dark:text-slate-400">
-            {groupNames.join(", ")}
-          </span>
-        )}
-      </header>
-      <main className="flex-1 min-w-0">{children}</main>
+    <div className="flex min-h-screen bg-slate-50 transition-colors dark:bg-slate-950">
+      <SidebarNav />
+      <main className="min-w-0 flex-1">{children}</main>
     </div>
   );
 }
