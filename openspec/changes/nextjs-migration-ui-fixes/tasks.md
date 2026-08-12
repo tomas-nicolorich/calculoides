@@ -724,38 +724,62 @@ Groups"* (UI half).
 **Budget**: 281 src / 200 tests / **481** total. **Depends on**: PR 5 (money/identity
 primitives), rebased onto PR 10 (real chrome).
 
-- [ ] 11.1 **RED**: `app/(app)/groups/GroupsClient.test.tsx` — rewrite for parity: spec
+- [x] 11.1 **RED**: `app/(app)/groups/GroupsClient.test.tsx` — rewrite for parity: spec
       scenario "Populated list shows role and member count" (group card renders name, role
       string, `"N members"`, and asserts it's built from `app/_ui` `Card` — not the current
       plain `<li>`/`<Link>` markup) and "Empty state for a user with no groups" (renders an
       empty state with a path to create a group, replacing the current bare
       `"You are not part of any groups yet."` paragraph). Fails — current implementation is
       the lean plain-Tailwind version (its own doc comment confirms this).
-- [ ] 11.2 **GREEN**: Rewrite `GroupsClient.tsx` using `app/_ui` `Card` (and any other ported
+      **Note**: failed via `useRouter` "expected app router to be mounted" (old component
+      always called `useRouter()`, and the test renders it unmocked) rather than a plain
+      assertion mismatch — still a genuine RED against the lean version, just surfaced at
+      render time instead of at the `expect()` call.
+- [x] 11.2 **GREEN**: Rewrite `GroupsClient.tsx` using `app/_ui` `Card` (and any other ported
       atoms `main`'s `GroupsPage.tsx` uses) for the list; add an empty-state component. Green.
-- [ ] 11.3 **RED**: `app/(app)/groups/_components/CreateGroupForm.test.tsx` — spec scenario
+      **Note**: kept creation inlined (no `CreateGroupForm` reference yet) so this step's
+      GREEN is real and self-contained — task 11.6 does the extraction once 11.3/11.4 land.
+- [x] 11.3 **RED**: `app/(app)/groups/_components/CreateGroupForm.test.tsx` — spec scenario
       "Successful creation adds the group to the list" (valid submit → `create` resolves →
       new group appears without a full reload) and "Server-side validation error surfaces
       inline" (`create` returns `{ ok: false, error }` → error renders inline, no group added).
       Fails — `CreateGroupForm` doesn't exist yet (creation is currently inlined in
       `GroupsClient` with raw `<input>`/`<button>`).
-- [ ] 11.4 **GREEN**: Extract `CreateGroupForm.tsx` using `app/_ui` `Input`/`Button`, wired to
+- [x] 11.4 **GREEN**: Extract `CreateGroupForm.tsx` using `app/_ui` `Input`/`Button`, wired to
       the existing `lib/actions/group.ts` `create` action (already exists — no new Server
       Action needed). Green.
-- [ ] 11.5 **RED**: extend `GroupsClient.test.tsx` — spec scenario "Selecting a group navigates
+- [x] 11.5 **RED**: extend `GroupsClient.test.tsx` — spec scenario "Selecting a group navigates
       to its dashboard": group card for `abc123` uses `next/link` to `/dashboard/abc123`.
       Already true in the current implementation (`Link href={...dashboard/${group.id}}`) —
       confirm this still holds post-rewrite rather than assuming; write the assertion, run,
       confirm it passes without new production code (documents behavior that must survive the
       rewrite, not a new feature).
-- [ ] 11.6 **REFACTOR**: Replace `GroupsClient`'s inline creation state/handler with
+      **Note**: passed on first run with zero production changes, as expected — genuinely
+      confirms survival, not a new feature.
+- [x] 11.6 **REFACTOR**: Replace `GroupsClient`'s inline creation state/handler with
       `CreateGroupForm` usage; remove now-dead inline form markup and `useState` for
       `name`/`error`/`loading` that moved into the extracted component.
-- [ ] 11.7 Verify: typecheck, lint, `npx vitest run app/(app)/groups`. Manual side-by-side vs
+- [x] 11.7 Verify: typecheck, lint, `npx vitest run app/(app)/groups`. Manual side-by-side vs
       `main`'s `/groups`: card layout, role/count text, empty state, create flow, inline
       validation error.
-- [ ] 11.8 Commit + PR 11 (Position 11 of 16, Depends on: PR 5, PR 10, Follow-up: none — leaf
+      **Note**: `tsc --noEmit -p tsconfig.next.json`, `eslint app lib proxy.ts next.config.ts
+      --max-warnings 0`, and the full `npx vitest run` suite (81 files / 386 tests) all green.
+      **Deferred**: no browser available in this environment — manual side-by-side against
+      `main`'s `/groups` not performed (same constraint noted on PR 10).
+- [x] 11.8 Commit + PR 11 (Position 11 of 16, Depends on: PR 5, PR 10, Follow-up: none — leaf
       slice).
+      **Scope note on the PR 5 dependency**: the dependency graph places PR 5 (Avatar +
+      money primitives) upstream of PR 11, and ADR-0008 itself describes a richer card
+      (avatars, income figure, hover-lift) than this PR's literal spec scenarios require.
+      The assigned `groups-view` spec (3 requirements) and tasks 11.1-11.6 only test
+      name/role/count, an empty-state CTA, `CreateGroupForm`, and `Link` navigation — no
+      avatar or income rendering. Per the orchestrator's explicit branching instruction ("the
+      actual fork point is PR 10's branch... PR 5's branch [only] if you need to diff against
+      it"), this PR forks from PR 10 alone and does **not** merge PR 5's commit into its diff,
+      to stay inside strict TDD (no untested avatar/income code) and the 481-line budget. Full
+      ADR-0008 avatar/income fidelity is left as a follow-up if the maintainer wants it;
+      flagged as a deviation from design.md's "Full ADR-0008 parity" File Changes note, not
+      silently dropped.
 
 ## PR 12 — Dashboard shell (ADR-0003 two-column) + `RemainingBalance` + `RecentExpenses`
 
