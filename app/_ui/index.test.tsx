@@ -47,4 +47,20 @@ describe("app/_ui barrel", () => {
   it("re-exports Logo", () => {
     expect(barrel.Logo).toBeTypeOf("function");
   });
+
+  it("re-exports DialogFooter", () => {
+    expect(barrel.DialogFooter).toBeTypeOf("function");
+  });
+
+  it("re-exports ResponsiveDialog", () => {
+    expect(barrel.ResponsiveDialog).toBeTypeOf("function");
+  });
+
+  it("re-exports RowMenu", () => {
+    expect(barrel.RowMenu).toBeTypeOf("function");
+  });
+
+  it("re-exports Select", () => {
+    expect(barrel.Select).toBeTypeOf("function");
+  });
 });

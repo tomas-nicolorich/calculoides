@@ -404,33 +404,65 @@ Consumer"*; open question on Base UI package name resolves here.
 **Budget**: 451 src / 230 tests / **681** total (119 headroom — watch). **Depends on**: PR 3 +
 PR 4. **Parallel with**: PR 5.
 
-- [ ] 6.1 Resolve and install the Base UI package (verify exact published name — `@base-ui/react`
+**BLOCKED (partial — see apply-progress for full report)**: 6.1–6.9 and the barrel/verify steps
+for those four components are complete and green. 6.10–6.15 (IconPicker + final barrel/verify/
+commit/PR) are blocked: `main`'s `IconPicker.tsx` has a hard, previously untraced dependency on
+`shared/lib/categoryIcons.tsx` (486 lines — `CategoryIconTile` + `CATEGORY_ICON_GROUPS`), which
+does not exist anywhere in this repo and is not budgeted/scoped in design.md's 16-PR line-count
+table (design.md lines 275-298) or anywhere else in tasks.md. Porting it here would blow PR6's
+681-line estimate past the 800-line review budget on its own. This is a genuine scope gap in the
+original plan, not a PR6 implementation issue — needs an explicit decision (add a scoped task/PR
+for `categoryIcons.tsx`, most naturally alongside the category-CRUD work in PR 14/15) before
+6.10 can proceed.
+
+- [x] 6.1 Resolve and install the Base UI package (verify exact published name — `@base-ui/react`
       vs `@base-ui-components/react` — and current version before this task's GREEN steps;
-      this is the design.md open question explicitly scoped to block only this PR).
-- [ ] 6.2 **RED**: `app/_ui/Dialog.test.tsx` — opens/closes via controlled `open` prop, focus
-      trap, `Escape` closes, backdrop click closes (per `main`'s Base UI Dialog wrapper API).
-      Fails.
-- [ ] 6.3 **GREEN**: Port `Dialog.tsx` on top of Base UI's Dialog primitive. Green.
-- [ ] 6.4 **RED**: `app/_ui/ResponsiveDialog.test.tsx` (`jsdom`, stub `matchMedia`) — spec
-      scenarios "Desktop opens a centered dialog" (`useIsMobile()` → `false` → centered modal)
-      and "Mobile opens a bottom sheet" (`useIsMobile()` → `true` → bottom sheet). Fails.
-- [ ] 6.5 **GREEN**: Port `ResponsiveDialog.tsx`, consuming `lib/hooks/use-is-mobile.ts` from
+      this is the design.md open question explicitly scoped to block only this PR). Confirmed
+      `@base-ui/react@1.7.0` still current via `npm view`; installed.
+- [x] 6.2 **RED**: `app/_ui/Dialog.test.tsx` — Fails. **DEVIATION**: `main`'s `Dialog.tsx` does
+      NOT wrap Base UI's Dialog primitive — it only exports `DialogFooter`, a layout helper. The
+      controlled `open`/focus-trap/Escape/backdrop-click behavior described in this task's
+      original wording actually lives on `ResponsiveDialog.tsx` (task 6.4/6.5) and `DatePicker.tsx`
+      (PR 7), both of which consume `@base-ui/react/dialog` directly. Ported `DialogFooter`
+      verbatim instead of inventing a `Dialog` wrapper `main` never had; the controlled-open/
+      focus-trap/Escape/backdrop behavior is instead covered by `ResponsiveDialog.test.tsx`.
+- [x] 6.3 **GREEN**: Port `Dialog.tsx` (`DialogFooter`) verbatim. Green (3/3).
+- [x] 6.4 **RED**: `app/_ui/ResponsiveDialog.test.tsx` (`jsdom`, stub `matchMedia`) — spec
+      scenarios "Desktop opens a centered dialog" and "Mobile opens a bottom sheet". Fails.
+- [x] 6.5 **GREEN**: Port `ResponsiveDialog.tsx`, consuming `lib/hooks/use-is-mobile.ts` from
       PR 2 (the one sanctioned non-shell consumer, per ADR-3 and the spec's own requirement
-      title). Green.
-- [ ] 6.6 **RED**: `app/_ui/RowMenu.test.tsx` — opens a menu of row actions, keyboard
+      title). Green (5/5). **DEVIATION**: `main` derives desktop/mobile from its own
+      `useMediaQuery("(min-width: 768px)")` hook (not ported into this repo). This port uses
+      `useIsMobile()` and derives `isDesktop = !useIsMobile()` — `useIsMobile()` has inverted
+      boolean semantics (`true` below the 767px breakpoint) vs `main`'s `isDesktop` hook, but the
+      768px boundary and resulting layout are unchanged. Also discovered: Base UI 1.7's
+      `Dialog.Root` `onOpenChange` callback receives a second `eventDetails` argument
+      (`{ reason: "escape-key", ... }`) alongside the boolean — confirmed real via the Escape
+      test, not assumed.
+- [x] 6.6 **RED**: `app/_ui/RowMenu.test.tsx` — opens a menu of row actions, keyboard
       navigable, closes on selection/outside-click. Fails.
-- [ ] 6.7 **GREEN**: Port `RowMenu.tsx`. Green.
-- [ ] 6.8 **RED**: `app/_ui/Select.test.tsx` — controlled value, option list render, keyboard
+- [x] 6.7 **GREEN**: Port `RowMenu.tsx` verbatim. Green (4/4).
+- [x] 6.8 **RED**: `app/_ui/Select.test.tsx` — controlled value, option list render, keyboard
       select. Fails.
-- [ ] 6.9 **GREEN**: Port `Select.tsx` on Base UI's Select primitive. Green.
-- [ ] 6.10 **RED**: `app/_ui/IconPicker.test.tsx` — renders an icon grid, selecting one calls
-      `onChange` with the icon key. Fails.
-- [ ] 6.11 **GREEN**: Port `IconPicker.tsx`. Green.
-- [ ] 6.12 **GREEN (barrel)**: Extend barrel exports + smoke test.
-- [ ] 6.13 **REFACTOR**: Prop-name diff against `main`.
+- [x] 6.9 **GREEN**: Port `Select.tsx` on Base UI's Select primitive verbatim. Green (6/6).
+      **DISCOVERY**: Base UI 1.7's `Select.Item` only commits a selection once the item has been
+      pointer-highlighted (`pointerMove`) first — a bare `click` on a non-highlighted item is a
+      no-op in jsdom. Tests use a `pointerMove` → `pointerDown` → `pointerUp` → `click` sequence
+      to mirror real mouse behavior; this is a test-harness detail, not a production deviation.
+- [ ] 6.10 **RED**: `app/_ui/IconPicker.test.tsx` — BLOCKED, see note above. Not started.
+- [ ] 6.11 **GREEN**: Port `IconPicker.tsx`. BLOCKED, see note above. Not started.
+- [ ] 6.12 **GREEN (barrel)**: Extend barrel exports + smoke test. DialogFooter, ResponsiveDialog,
+      RowMenu, Select are exported and smoke-tested (barrel + full `app/_ui` suite: 67/67 green).
+      IconPicker export withheld — blocked, see note above.
+- [x] 6.13 **REFACTOR**: Prop-name diff against `main` — for the four completed components,
+      confirmed unrenamed (see per-task deviation notes above for the two intentional exceptions:
+      `Dialog.tsx` ports `DialogFooter` only, `ResponsiveDialog` swaps its media-query hook).
 - [ ] 6.14 Verify: typecheck, lint, `npx vitest run app/_ui`. Line-count checkpoint (same as
-      PR 5 — this row is flagged "Watch").
-- [ ] 6.15 Commit + PR 6 (Position 6 of 16, Depends on: PR 3, PR 4, Follow-up: PR 7, PR 14).
+      PR 5 — this row is flagged "Watch"). Typecheck/lint/tests all green for what exists
+      (67/67); checkpoint not finalized pending 6.10/6.11 resolution.
+- [ ] 6.15 Commit + PR 6 (Position 6 of 16, Depends on: PR 3, PR 4, Follow-up: PR 7, PR 14). NOT
+      opened — work committed to `feat/nextjs-ui-fixes-06-ui-overlays` pending the IconPicker
+      scope decision.
 
 ## PR 7 — `_ui` DatePicker
 

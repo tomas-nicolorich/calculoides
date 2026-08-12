@@ -11,6 +11,10 @@ export { IconButton } from "./IconButton";
 export type { IconButtonHover, IconButtonSize } from "./IconButton";
 export { ReloadButton } from "./ReloadButton";
 export { Logo } from "./Logo";
+export { DialogFooter } from "./Dialog";
+export { ResponsiveDialog } from "./ResponsiveDialog";
+export { RowMenu } from "./RowMenu";
+export { Select } from "./Select";
 
 export function Input({
   className,
