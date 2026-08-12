@@ -1,35 +1,65 @@
 "use client";
 
+import { Card } from "../../../_ui";
 import { useDashboardSummary } from "../../../_data/summary";
-import { useCategoriesList } from "../../../_data/categories";
+import { RemainingBalance } from "./_widgets/RemainingBalance";
+import { RecentExpenses } from "./_widgets/RecentExpenses";
 
 /**
- * Lean placeholder rendering just enough of the Dashboard's first-paint data
- * to prove the hydration wiring (2.2, 2.4-2.6). Full widget porting
- * (`IncomeOverview`, `BudgetCategories`, etc. from
- * `frontend/src/pages/dashboard/ui/DashboardPage.tsx`) is out of this
- * phase's scope — Phase 2's Suggested Work Unit is "Dashboard Server
- * Component + hydration + GET refetch endpoints" only, matching the same
- * "lean new implementation" precedent as `AppShell` (1a.7).
+ * ADR-0003 two-column dashboard shell (PR 12). Six named widget slots;
+ * `RemainingBalance` and `RecentExpenses` are wired to real data in this PR
+ * — the other four (`IncomeOverview`, `BudgetTransfers`, `BudgetCategories`,
+ * `SavingsGoalList`) render as `WidgetStub` placeholders until PR 13-16
+ * land. Each slot owns its own loading boundary by self-subscribing to the
+ * query it needs — there is no page-level `summaryLoading || …` early
+ * return blocking the whole grid (spec: "Loading state precedes
+ * hydration"). The heading only reads `summary?.groupName`, so it degrades
+ * gracefully (blank) while its own query is still loading, without gating
+ * the grid below it.
  */
 export function DashboardClient({ groupId }: { groupId: string }) {
-  const { data: summary, isLoading: summaryLoading } =
-    useDashboardSummary(groupId);
-  const { data: categories, isLoading: categoriesLoading } =
-    useCategoriesList(groupId);
-
-  if (summaryLoading || categoriesLoading) {
-    return <p data-testid="dashboard-loading">Loading…</p>;
-  }
+  const { data: summary } = useDashboardSummary(groupId);
 
   return (
-    <div data-testid="dashboard-client">
-      <h1>{summary?.groupName}</h1>
-      <ul>
-        {categories?.map((category) => (
-          <li key={category.id}>{category.name}</li>
-        ))}
-      </ul>
+    <div
+      className="p-4 md:p-8 max-w-7xl mx-auto space-y-8"
+      data-testid="dashboard-client"
+    >
+      <header>
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
+          {summary?.groupName}
+        </h1>
+        <p className="text-slate-500">
+          Shared budget · {summary?.members.length ?? 0} members
+        </p>
+      </header>
+
+      <div
+        className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
+        data-testid="dashboard-grid"
+      >
+        <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
+          <WidgetStub title="Income Overview" />
+          <RemainingBalance groupId={groupId} />
+          <RecentExpenses groupId={groupId} />
+          <WidgetStub title="Budget Transfers" />
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <WidgetStub title="Budget Categories" />
+          <WidgetStub title="Savings Goals" />
+        </div>
+      </div>
     </div>
+  );
+}
+
+/** Placeholder for a widget slot not yet wired (PR 13-16). Renders as a
+ * clean, static `Card` — never a broken layout or an error. */
+function WidgetStub({ title }: { title: string }) {
+  return (
+    <Card title={title}>
+      <p className="text-sm text-slate-400">Coming soon.</p>
+    </Card>
   );
 }

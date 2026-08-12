@@ -1,4 +1,9 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createQueryClient } from "../../../../lib/query-client";
 
 // `vi.hoisted` — see `app/(app)/layout.test.tsx` for the same TDZ rationale.
 const {
@@ -84,5 +89,49 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
     expect(isGroupMemberMock).toHaveBeenCalledWith(USER_ID, GROUP_ID);
     expect(getGroupSummaryMock).toHaveBeenCalledWith(GROUP_ID);
     expect(listCategoriesMock).toHaveBeenCalledWith(GROUP_ID);
+  });
+
+  // dashboard-view: "No client-side waterfall for summary-backed widgets" —
+  // the full pipeline (Server Component prefetch → dehydrate →
+  // HydrationBoundary → DashboardClient's widget tree) must render from the
+  // server-fetched data alone; no summary-consuming widget may issue its
+  // own initial client fetch. Extends the `DashboardClient.test.tsx`
+  // `prefetchServerClient()` pattern to the real Server Component output
+  // per the Testing Strategy table's Integration row.
+  it("renders the widget tree from the server prefetch with no client-side fetch", async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
+    isGroupMemberMock.mockResolvedValue(true);
+    getGroupSummaryMock.mockResolvedValue({
+      groupName: "Roomies",
+      ownerId: USER_ID,
+      totalIncome: 4000,
+      totalBudget: 400,
+      totalSpent: 120,
+      members: [],
+      recentExpenses: [],
+      recentTransfers: [],
+    });
+    listCategoriesMock.mockResolvedValue([]);
+
+    const result = await DashboardPage({
+      params: Promise.resolve({ groupId: GROUP_ID }),
+    });
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        {result}
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("Roomies")).toBeInTheDocument();
+    expect(await screen.findByText("Remaining Balance")).toBeInTheDocument();
+    expect(await screen.findByText("Recent Expenses")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    cleanup();
+    vi.unstubAllGlobals();
   });
 });

@@ -825,43 +825,106 @@ Expenses and Quick-Add Share the Same Invalidation Contract"* (`RecentExpenses` 
 `ExpenseForm` quick-action half is PR 16).
 **Budget**: 424 src / 180 tests / **604** total. **Depends on**: PR 5, rebased onto PR 10.
 
-- [ ] 12.1 **RED**: `app/(app)/dashboard/[groupId]/DashboardClient.test.tsx` — rewrite for the
+- [x] 12.1 **RED**: `app/(app)/dashboard/[groupId]/DashboardClient.test.tsx` — rewrite for the
       two-column shell: spec scenario "Loading state precedes hydration" (each widget slot
       shows its own loading state, not one page-level spinner — replace the current
       `summaryLoading || categoriesLoading` combined early-return). Fails against the current
       lean placeholder.
-- [ ] 12.2 **GREEN**: Rewrite `DashboardClient.tsx`'s outer structure into the ADR-0003
+      **Note**: genuine RED — 3/3 new tests failed (`Roomies` never found;
+      `categories?.map is not a function` uncaught exception) against the lean placeholder.
+- [x] 12.2 **GREEN**: Rewrite `DashboardClient.tsx`'s outer structure into the ADR-0003
       two-column layout with named widget slots (six slots total; four are stubs/placeholders
       until PR 13–16 land — this PR fills `RemainingBalance` and `RecentExpenses` only, per
       its own row). Each slot owns its own loading boundary.
-- [ ] 12.3 **RED**: `app/(app)/dashboard/[groupId]/_widgets/RemainingBalance.test.tsx` —
+      **Note**: left column stack (matches `main`'s exact order) = `IncomeOverview` (stub),
+      `RemainingBalance`, `RecentExpenses`, `BudgetTransfers` (stub); right column =
+      `BudgetCategories` (stub), `SavingsGoalList` (stub — `main`'s own `DashboardPage.tsx`
+      never actually renders this widget on the dashboard grid, confirmed by git-archaeology
+      of the last pre-deletion commit; this spec's explicit six-widget requirement adds it
+      here, position is this PR's own reasonable placement, not a `main` port). Stubs render
+      via a local `WidgetStub` helper (static `Card` + "Coming soon.").
+- [x] 12.3 **RED**: `app/(app)/dashboard/[groupId]/_widgets/RemainingBalance.test.tsx` —
       loading / empty / error / populated states, reads from the hydrated `summary` query
       (`queryKeys.summary(groupId)`) with no client-side initial fetch (spec scenario "No
       client-side waterfall for summary-backed widgets" — assert via a mocked fetch spy that
       it is never called on mount when the cache is pre-hydrated). Fails.
-- [ ] 12.4 **GREEN**: Port `RemainingBalance.tsx`. Green.
-- [ ] 12.5 **RED**: `app/(app)/dashboard/[groupId]/_widgets/RecentExpenses.test.tsx` — same
+      **Note**: genuine RED — module not found (`./RemainingBalance` did not exist).
+- [x] 12.4 **GREEN**: Port `RemainingBalance.tsx`. Green.
+      **Note**: 5/5 green. Ported `main`'s
+      `frontend/src/widgets/dashboard/ui/RemainingBalance.tsx` markup verbatim; only the data
+      seam changed — self-subscribes to `useDashboardSummary(groupId)` instead of receiving
+      `totalRemaining`/`members` as external props. Needed a new pure `formatCurrency` helper
+      (`lib/format-currency.ts`, ported from `main`'s `dashboardUtils.ts`, RED→GREEN, 3 cases)
+      — not itemised as its own task but a genuine prerequisite gap in the target-seam
+      inventory. `Avatar`/`StatFigure` came from merging PR 5's commit into this branch (see
+      12.11's base-bug note).
+- [x] 12.5 **RED**: `app/(app)/dashboard/[groupId]/_widgets/RecentExpenses.test.tsx` — same
       four-state coverage; renders the group's most recent expenses from `summary.recentExpenses`
       (per the target-seam inventory — `SummaryService.getGroupSummary` already returns
       `recentExpenses`). Fails.
-- [ ] 12.6 **GREEN**: Port `RecentExpenses.tsx` (read-only in this PR — the quick-add form is
+      **Note**: genuine RED — module not found (`./RecentExpenses` did not exist).
+- [x] 12.6 **GREEN**: Port `RecentExpenses.tsx` (read-only in this PR — the quick-add form is
       PR 16's scope). Green.
-- [ ] 12.7 **RED**: `app/(app)/dashboard/[groupId]/page.test.tsx` — extend: asserts both
+      **Note**: 8/8 green. Ported `main`'s
+      `frontend/src/widgets/dashboard/ui/RecentExpenses.tsx` markup verbatim (`react-router-dom`
+      `Link` → `next/link`, href unchanged: `/expenses/${groupId}`). Dropped the unused
+      `categories` prop `main`'s own component declared but never read — a `main` dead field,
+      not a deviation. Payer `colorIndex` now resolves via `members.findIndex` (self-fetched
+      `summary.members`) instead of a threaded prop, same `?? 0` unknown-payer fallback as
+      `main`.
+- [x] 12.7 **RED**: `app/(app)/dashboard/[groupId]/page.test.tsx` — extend: asserts both
       `queryKeys.summary(groupId)` and `queryKeys.categories(groupId)` are prefetched and
       dehydrated (the current page already prefetches both — confirm this survives, then add
       the "no client waterfall" integration assertion extending the
       `prefetchServerClient()` pattern per the Testing Strategy table). Fails only on the new
       integration assertion.
-- [ ] 12.8 **GREEN**: Confirm/adjust `page.tsx`'s existing prefetch (already correct per the
+      **Note**: renamed `page.test.ts` → `page.test.tsx` (JSX rendering needs the `.tsx`
+      loader; `.ts` files aren't parsed for JSX by this repo's esbuild config) — matches what
+      this task's own description already anticipated. The 2 existing tests kept passing
+      throughout; only the new integration test was RED first (module/behavior not
+      implemented), confirmed by a scoped run before writing the GREEN-satisfying assertion.
+- [x] 12.8 **GREEN**: Confirm/adjust `page.tsx`'s existing prefetch (already correct per the
       code read during design) satisfies the new integration test.
-- [ ] 12.9 **REFACTOR**: Confirm all four "spec scenario: All six widgets render for a
+      **Note**: zero production changes to `page.tsx` — all 3 tests (2 existing + 1 new) passed
+      immediately, confirming the design's "already correct" call, same zero-diff-GREEN
+      precedent as PR 11 task 11.5.
+- [x] 12.9 **REFACTOR**: Confirm all four "spec scenario: All six widgets render for a
       populated group" widgets present so far (`RemainingBalance`, `RecentExpenses` — two of
       six; the remaining four land in PR 13/14/16) are composed inside the two-column grid at
       their designated ADR-0003 positions, not appended ad hoc.
-- [ ] 12.10 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: two-column
+      **Note**: confirmed — both widgets sit in the left-column stack at `main`'s exact
+      relative positions (`IncomeOverview` stub → `RemainingBalance` → `RecentExpenses` →
+      `BudgetTransfers` stub); no ad hoc appending. No further refactor needed — widgets
+      already match project conventions (`app/_ui` barrel imports, `formatCurrency`, hook-based
+      self-fetch) with no duplication worth extracting for only 2 widgets yet.
+- [x] 12.10 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: two-column
       layout matches `main`'s `DashboardPage` visually for the two widgets present; empty
       widget slots render as clean placeholders, not broken layout.
-- [ ] 12.11 Commit + PR 12 (Position 12 of 16, Depends on: PR 5, PR 10, Follow-up: PR 13).
+      **Note**: `tsc --noEmit -p tsconfig.next.json` clean; `eslint app lib proxy.ts
+      next.config.ts --max-warnings 0` clean (after fixing 3 `no-empty-function` violations —
+      `new Promise(() => {})` → `new Promise(() => undefined)` for the never-resolving-fetch
+      loading-state fixtures). `npx vitest run app/(app)/dashboard` — 4 files / 19 tests, all
+      green; full suite `npx vitest run --config vitest.config.ts` — 89 files / 428 tests, all
+      green. **Deferred**: no browser available in this environment — manual side-by-side vs
+      `main` not performed (same constraint noted on PR 10/PR 11).
+- [x] 12.11 Commit + PR 12 (Position 12 of 16, Depends on: PR 5, PR 10, Follow-up: PR 13).
+      **Base-bug note (predicted by this file's own "Branch Naming" section)**: PR 11's branch
+      (`feat/nextjs-ui-fixes-11-groups`, this PR's base) does **not** contain PR 5's commit —
+      confirmed by `git merge-base --is-ancestor`, and PR 11's own PR body documents the
+      deliberate deferral ("does not merge PR 5's commit into its diff... left as a follow-up
+      if wanted, not silently dropped"). Unlike PR 11, this PR's `RemainingBalance`/
+      `RecentExpenses` genuinely need `Avatar` and `StatFigure`. Per this file's explicit
+      instruction for exactly this scenario ("treat it as a base bug... retarget or rebase —
+      do not silently widen a slice's scope to route around it"), merged
+      `feat/nextjs-ui-fixes-05-ui-identity-money` into this branch (2 trivial add/add
+      conflicts on `app/_ui/index.tsx`/`index.test.tsx`, resolved by keeping both sides'
+      exports) instead of reimplementing Avatar/money primitives inline. This is the
+      follow-up merge PR 11's own body anticipated. **Review-budget impact**: PR 5's merged
+      commit is 818 lines (mostly `Avatar.tsx`/`money/*.tsx` + tests), on top of this PR's own
+      ~604-line budget — the GitHub diff against `feat/nextjs-ui-fixes-11-groups` will show
+      ~1,400+ total lines, not 604, because the target branch is missing a real prerequisite.
+      Flagged in the PR body and in this apply session's return report for maintainer
+      awareness; not a scope violation of PR 12's own authored work.
 
 ## PR 13 — `IncomeOverview` (+ income-edit mutation) + `BudgetTransfers`
 

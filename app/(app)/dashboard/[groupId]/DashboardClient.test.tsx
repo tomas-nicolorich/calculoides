@@ -25,20 +25,12 @@ const SUMMARY_FIXTURE = {
   recentTransfers: [],
 };
 
-const CATEGORIES_FIXTURE = [
-  { id: "cat-1", name: "Groceries", monthlyBudget: 400, balances: [] },
-];
-
 /** Simulates the server's `prefetchQuery` + `dehydrate` step (2.1-2.2). */
 async function prefetchServerClient(): Promise<QueryClient> {
   const serverClient = createQueryClient();
   await serverClient.prefetchQuery({
     queryKey: queryKeys.summary(GROUP_ID),
     queryFn: () => Promise.resolve(SUMMARY_FIXTURE),
-  });
-  await serverClient.prefetchQuery({
-    queryKey: queryKeys.categories(GROUP_ID),
-    queryFn: () => Promise.resolve(CATEGORIES_FIXTURE),
   });
   return serverClient;
 }
@@ -57,7 +49,7 @@ function renderHydrated(serverClient: QueryClient, browserClient: QueryClient) {
 
 type FetchMock = ReturnType<typeof vi.fn<(input: string) => Promise<Response>>>;
 
-describe("DashboardClient hydration", () => {
+describe("DashboardClient", () => {
   let fetchMock: FetchMock;
 
   beforeEach(() => {
@@ -70,16 +62,41 @@ describe("DashboardClient hydration", () => {
     vi.unstubAllGlobals();
   });
 
+  // dashboard-view: "Loading state precedes hydration" — the grid shell and
+  // its stub slots render immediately; only the still-loading widget shows
+  // its own loading state, there is no page-level spinner gating everything.
+  it("renders the two-column grid shell immediately, with only the unresolved widget showing a loading state", () => {
+    fetchMock.mockImplementation(() => new Promise(() => undefined));
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <DashboardClient groupId={GROUP_ID} />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.queryByTestId("dashboard-loading")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("remaining-balance-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("recent-expenses-loading")).toBeInTheDocument();
+    // Stub slots for the widgets PR 13-16 fill in render their static title
+    // right away — nothing blocks on the summary query resolving.
+    expect(screen.getByText("Income Overview")).toBeInTheDocument();
+    expect(screen.getByText("Budget Transfers")).toBeInTheDocument();
+    expect(screen.getByText("Budget Categories")).toBeInTheDocument();
+    expect(screen.getByText("Savings Goals")).toBeInTheDocument();
+  });
+
   // client-data-cache: "Server-Component-served read has no query key" —
   // a server-prefetched key must be a cache-hit on client mount within its
   // staleTime, never a fresh network round trip (2.4).
-  it("renders from the hydrated cache without issuing a network request", async () => {
+  it("renders the group name and both wired widgets from the hydrated cache without issuing a network request", async () => {
     const serverClient = await prefetchServerClient();
 
     renderHydrated(serverClient, createQueryClient());
 
     expect(await screen.findByText("Roomies")).toBeInTheDocument();
-    expect(screen.getByText("Groceries")).toBeInTheDocument();
+    expect(await screen.findByText("Remaining Balance")).toBeInTheDocument();
+    expect(await screen.findByText("Recent Expenses")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -89,29 +106,30 @@ describe("DashboardClient hydration", () => {
   // `refetchOnWindowFocus` interacts with React's/jsdom's own scheduling,
   // which fake timers destabilize) instead of waiting out the production
   // 30s default; the 30s constant itself is `createQueryClient`'s own
-  // concern, not re-asserted here.
+  // concern, not re-asserted here. Margin widened from the original 20ms/
+  // 50ms pair (DashboardClient now mounts 3 `queryKeys.summary` observers —
+  // header, `RemainingBalance`, `RecentExpenses` — instead of 1, which cost
+  // enough extra real render time under full-suite concurrent load to flake
+  // the pre-sleep "not yet called" assertion).
   it("refetches via the GET Route Handler on window focus once stale", async () => {
     const serverClient = await prefetchServerClient();
-    const browserClient = createQueryClient({ queries: { staleTime: 20 } });
+    const browserClient = createQueryClient({ queries: { staleTime: 100 } });
 
-    fetchMock.mockImplementation((input: string) => {
-      const body = input.includes("/api/categories")
-        ? CATEGORIES_FIXTURE
-        : SUMMARY_FIXTURE;
-      return Promise.resolve(
-        new Response(JSON.stringify(body), {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(SUMMARY_FIXTURE), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
-      );
-    });
+      ),
+    );
 
     renderHydrated(serverClient, browserClient);
     expect(await screen.findByText("Roomies")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
 
-    // Real sleep past the 20ms staleTime override above.
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Real sleep past the 100ms staleTime override above.
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     act(() => {
       window.dispatchEvent(new Event("visibilitychange"));
