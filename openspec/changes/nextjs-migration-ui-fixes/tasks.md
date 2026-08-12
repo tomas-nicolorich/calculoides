@@ -529,55 +529,88 @@ Redirects Based on Session State"*, *"Account Menu Exposes Identity and Sign-Out
 **Budget**: 145 src / 120 tests / **265** total. **Depends on**: PR 1 (independent of the
 `_ui` branch per the dependency diagram).
 
-- [ ] 8.1 **Open question to resolve first**: read `main`'s
+- [x] 8.1 **Open question to resolve first**: read `main`'s
       `frontend/src/features/theme-toggle/ui/ThemeToggle.tsx` for the exact `localStorage` key
       it uses (design.md assumes `"theme"` but flags this as unconfirmed) — the spec's
       "Pre-migration stored value is honored" scenario depends on using the *exact* key.
-- [ ] 8.2 **RED**: `app/_theme/theme-script.test.ts` (`node` env) — `THEME_SCRIPT` is a string
+      **Resolved**: confirmed via `git show main:frontend/src/features/theme-toggle/ui/ThemeToggle.tsx`
+      — the key is exactly `"theme"` (`localStorage.getItem("theme")` /
+      `localStorage.setItem("theme", ...)`), matching design.md's assumption.
+- [x] 8.2 **RED**: `app/_theme/theme-script.test.ts` (`node` env) — `THEME_SCRIPT` is a string
       containing logic that reads the resolved `localStorage` key and sets `.dark` on
       `document.documentElement` before paint; assert the string content, not runtime
       execution (it's injected as a raw script tag). Fails.
-- [ ] 8.3 **GREEN**: Write `app/_theme/theme-script.ts` exporting `THEME_SCRIPT`. Green.
-- [ ] 8.4 **RED**: `app/_theme/ThemeToggle.test.tsx` (`jsdom`) — spec scenarios "Toggling to
+- [x] 8.3 **GREEN**: Write `app/_theme/theme-script.ts` exporting `THEME_SCRIPT`. Green.
+- [x] 8.4 **RED**: `app/_theme/ThemeToggle.test.tsx` (`jsdom`) — spec scenarios "Toggling to
       dark mode" (adds `.dark` to `<html>`), "Toggling back to light mode" (removes it),
       "Preference survives a reload" (writes to the resolved `localStorage` key), "First-ever
       visit with no stored preference" (falls back to a default, does not write to storage
       until first interaction), "OS preference changes after a manual choice is already
       stored" (assert the applied theme does NOT change after a manual choice is stored, even
       if a stubbed `matchMedia` "change" fires). Fails.
-- [ ] 8.5 **GREEN**: Port `ThemeToggle.tsx` (direct port per the proposal's Approach table —
+- [x] 8.5 **GREEN**: Port `ThemeToggle.tsx` (direct port per the proposal's Approach table —
       pure `localStorage` + `.dark` toggle, zero router/data coupling). Green on all five
       scenarios.
-- [ ] 8.6 **RED**: `app/layout.test.tsx` (extend or create) — asserts `<html>` carries
+      **Deviation**: the `main` source imports `lucide-react` (Sun/Moon icons) and a `cn()`
+      helper from `frontend/src/shared/lib/utils`. Neither is available on this branch —
+      `lucide-react`/`clsx`/`tailwind-merge` are PR 2's responsibility
+      (`lib/cn.ts` + the dependency install), and PR 8 depends only on PR 1, independent of
+      the `_ui`/PR 2 chain per the dependency diagram. Ported the toggle's full *behavior*
+      (state, `localStorage`, `.dark` class, one-time OS-preference fallback, zero
+      `matchMedia` "change" listener) exactly, but swapped the two icon glyphs for
+      dependency-free `aria-hidden` emoji and used plain template-literal class strings
+      instead of `cn()`. No spec requirement covers iconography, so this preserves every
+      acceptance scenario without pulling an unplanned dependency into this PR's diff.
+- [x] 8.6 **RED**: `app/layout.test.tsx` (extend or create) — asserts `<html>` carries
       `suppressHydrationWarning` and `<head>` contains an inline `<script>` whose content is
       `THEME_SCRIPT`, positioned before `<body>`. Fails.
-- [ ] 8.7 **GREEN**: Wire `app/layout.tsx`: inline the script via `dangerouslySetInnerHTML`
+- [x] 8.7 **GREEN**: Wire `app/layout.tsx`: inline the script via `dangerouslySetInnerHTML`
       (the sanctioned use for a static, non-user-controlled string), add
       `suppressHydrationWarning` to `<html>`, add `font-sans` to `<body>` per the File Changes
       row. Green.
-- [ ] 8.8 **RED**: `app/page.test.tsx` — spec scenarios "Signed-in user visits `/`" (redirects
+- [x] 8.8 **RED**: `app/page.test.tsx` — spec scenarios "Signed-in user visits `/`" (redirects
       to `/groups`) and "Signed-out user visits `/`" (redirects to `/login`), replacing the
       current placeholder-shell-online message assertion. Fails — `app/page.tsx` still renders
       the placeholder.
-- [ ] 8.9 **GREEN**: Rewrite `app/page.tsx` as a Server Component: `getUser()` → redirect
-      branch. Green.
-- [ ] 8.10 **RED**: `lib/actions/session.test.ts` — extend for the new `signOut()` export:
+      **Note**: no `app/page.test.ts(x)` actually existed yet in this repo state (only the
+      placeholder `app/page.tsx` did) — created the test fresh rather than replacing an
+      existing file.
+- [x] 8.9 **GREEN**: Rewrite `app/page.tsx` as a Server Component: `getUser()` → redirect
+      branch. Green. Uses the same direct `createClient()` + `supabase.auth.getUser()` +
+      `redirect()` pattern as `app/(app)/layout.tsx` and `app/(app)/groups/page.tsx` (the
+      established convention for Server Component session checks), not the
+      `lib/actions/session.ts` `getAuthenticatedUserId()` helper, which is reserved for
+      Server Actions under `lib/actions/**`.
+- [x] 8.10 **RED**: `lib/actions/session.test.ts` — extend for the new `signOut()` export:
       spec scenario "Signing out clears the session and redirects" (calls
       `supabase.auth.signOut()` then `redirect("/login")`) and "Sign-out invalidates the server
       session, not just the browser store" (assert it's the server-side `supabase.auth.signOut()`
       call, not a client-only path — mock and assert the call happened). Fails — `signOut`
       doesn't exist in `lib/actions/session.ts` yet (current file only has
       `getAuthenticatedUserId`).
-- [ ] 8.11 **GREEN**: Add `"use server"` `signOut()` to `lib/actions/session.ts` per ADR-6.
+- [x] 8.11 **GREEN**: Add `"use server"` `signOut()` to `lib/actions/session.ts` per ADR-6.
       Green.
-- [ ] 8.12 **REFACTOR**: Confirm `signOut()` matches the existing file's style (same
+- [x] 8.12 **REFACTOR**: Confirm `signOut()` matches the existing file's style (same
       `createClient()` import, same error-handling convention as
       `getAuthenticatedUserId`/other `lib/actions/*.ts` files).
-- [ ] 8.13 Verify: typecheck, lint, `npx vitest run app/_theme app/page.test.tsx
+      **Deviation**: added a file-level `"use server"` directive to `lib/actions/session.ts`
+      (it previously had none, since `getAuthenticatedUserId` was only ever an internal
+      helper). Every other file under `lib/actions/*.ts` uses the file-level directive, so
+      this brings `session.ts` in line with the sibling-file convention task 8.12 asks to
+      match, rather than scoping `"use server"` to only the `signOut` function body.
+- [x] 8.13 Verify: typecheck, lint, `npx vitest run app/_theme app/page.test.tsx
       app/layout.test.tsx lib/actions/session.test.ts`. Manual: toggle theme, hard-reload,
       confirm no flash (dev server); visit `/` signed-in and signed-out, confirm both
       redirects.
-- [ ] 8.14 Commit + PR 8 (Position 8 of 16, Depends on: PR 1, Follow-up: PR 9).
+      All green (`npm run typecheck`, `npm run lint`, focused vitest run: 5 files / 18 tests
+      passed; full `npm test`: 48 files / 262 tests passed, no regressions). Manual: `npx next
+      build` succeeds with `/` compiled as dynamic (ƒ) and `/login` etc. still static (○),
+      confirming the theme script does not deopt the root layout (ADR-7's "Root layout stays
+      statically renderable" scenario). `npx next start` + `curl`: `/` returns `307` to
+      `/login` when signed out (no Supabase session), and the rendered `/login` HTML shows
+      `<script>` with `THEME_SCRIPT`'s exact content inside `<head>`, before
+      `<body class="font-sans ...">`.
+- [x] 8.14 Commit + PR 8 (Position 8 of 16, Depends on: PR 1, Follow-up: PR 9).
 
 ## PR 9 — Nav A: `NAV_ITEMS`, `NavItemLink`, `SidebarNav`, `AppShell` rewrite, layout un-stub
 
