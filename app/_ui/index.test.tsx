@@ -67,4 +67,12 @@ describe("app/_ui barrel", () => {
   it("re-exports DatePicker", () => {
     expect(barrel.DatePicker).toBeTypeOf("function");
   });
+
+  it("re-exports Avatar", () => {
+    expect(barrel.Avatar).toBeTypeOf("function");
+  });
+
+  it("re-exports AvatarGroup", () => {
+    expect(barrel.AvatarGroup).toBeTypeOf("function");
+  });
 });

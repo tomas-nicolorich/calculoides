@@ -366,35 +366,70 @@ different atoms).
 **Budget**: 493 src / 220 tests / **713** total (87 lines of headroom — watch). **Depends on**:
 PR 3 + PR 4 (rebase onto both). **Parallel with**: PR 6.
 
-- [ ] 5.1 **RED**: `app/_ui/Avatar.test.tsx` — renders initials fallback when no image URL,
+- [x] 5.1 **RED**: `app/_ui/Avatar.test.tsx` — renders initials fallback when no image URL,
       renders `<img>` when a URL is given, size variants. Fails.
-- [ ] 5.2 **GREEN**: Port `Avatar.tsx`. Green.
-- [ ] 5.3 **RED**: `app/_ui/AvatarGroup.test.tsx` — stacks N avatars, collapses overflow into a
+
+      **Deviation**: `main`'s actual `shared/ui/Avatar.tsx` has no `<img>`-rendering mode at
+      all — it always renders initials on a coloured circle (name → two-letter initials,
+      `colorIndex`/`color` → background, WCAG-AA contrast auto-darkening). There is no image-URL
+      prop on `main`'s `AvatarProps`. Ported the real initials-only API verbatim; the "renders
+      `<img>` when a URL is given" wording in this task does not exist in the port source and
+      was not invented. Same "confirm against real source" lesson PR 3/PR 4 recorded.
+- [x] 5.2 **GREEN**: Port `Avatar.tsx`. Green.
+- [x] 5.3 **RED**: `app/_ui/AvatarGroup.test.tsx` — stacks N avatars, collapses overflow into a
       `+N` indicator past `main`'s max-visible count. Fails.
-- [ ] 5.4 **GREEN**: Port `AvatarGroup.tsx`. Green.
-- [ ] 5.5 **RED**: `app/_ui/money/StatFigure.test.tsx` — renders a formatted currency figure
+
+      **Deviation**: on `main`, `AvatarGroup` is defined in the same file as `Avatar`
+      (`frontend/src/shared/ui/Avatar.tsx`) — there is no separate `AvatarGroup.tsx` source to
+      port. Matched `main`'s actual file layout (both live in `app/_ui/Avatar.tsx`, re-exported
+      from the barrel), same "match main's file layout" precedent PR 3 set for `Input`. Test
+      file is `app/_ui/Avatar.test.tsx` (single file covering both `describe` blocks), not a
+      separate `AvatarGroup.test.tsx`.
+- [x] 5.4 **GREEN**: Port `AvatarGroup.tsx`. Green (as part of `Avatar.tsx`, see 5.3 deviation).
+- [x] 5.5 **RED**: `app/_ui/money/StatFigure.test.tsx` — renders a formatted currency figure
       and label, positive/negative sign styling if `main`'s API has it. Fails.
-- [ ] 5.6 **GREEN**: Port `StatFigure.tsx`. Green.
-- [ ] 5.7 **RED**: `app/_ui/money/MemberBar.test.tsx` — asserts the spec scenario "Member
+
+      **Deviation**: `main`'s `StatFigureProps` has no sign/positive-negative styling prop —
+      colour comes from the `tone` vocabulary (`primary | balance | income | expense |
+      transfer`), not a sign detection. Ported the real `tone`-driven API verbatim; tested the
+      `income` tone's color-token class instead of inventing sign styling.
+- [x] 5.6 **GREEN**: Port `StatFigure.tsx`. Green.
+- [x] 5.7 **RED**: `app/_ui/money/MemberBar.test.tsx` — asserts the spec scenario "Member
       income split renders as a stacked bar": given N members with income shares, renders N
       CSS segments proportioned by share, **and explicitly asserts no `<canvas>`/`<svg
       class*="recharts">`/chart-library element is present** (the spec's negative assertion:
       "no chart-library canvas/SVG component"). Fails.
-- [ ] 5.8 **GREEN**: Port `MemberBar.tsx` as CSS stacked-segment divs. Green — including the
+- [x] 5.8 **GREEN**: Port `MemberBar.tsx` as CSS stacked-segment divs. Green — including the
       negative chart-library assertion.
-- [ ] 5.9 **RED**: `app/_ui/money/ProgressMeter.test.tsx` — spec scenario "Category progress
+- [x] 5.9 **RED**: `app/_ui/money/ProgressMeter.test.tsx` — spec scenario "Category progress
       renders via ProgressMeter": given a spent/budgeted ratio, renders a proportioned fill
       element via CSS/DOM only (no chart dependency), clamps at 100% for over-budget
       categories if that's `main`'s behavior (verify against source during port). Fails.
-- [ ] 5.10 **GREEN**: Port `ProgressMeter.tsx`. Green.
-- [ ] 5.11 **GREEN (barrel)**: Extend `app/_ui/index.tsx` and `app/_ui/money/index.tsx` (or
-      equivalent) barrel exports; extend the smoke test.
-- [ ] 5.12 **REFACTOR**: Prop-name diff against `main`.
-- [ ] 5.13 Verify: typecheck, lint, `npx vitest run app/_ui`. **Line-count checkpoint**: run
-      `git diff --stat` against the PR 2 base — if trending near 713, do not silently pad
-      scope; this PR is already flagged in the Review Workload Forecast, confirm it isn't
-      overshooting further before opening.
-- [ ] 5.14 Commit + PR 5 (Position 5 of 16, Depends on: PR 3, PR 4, Follow-up: PR 11, PR 12,
+- [x] 5.10 **GREEN**: Port `ProgressMeter.tsx`. Green. Confirmed `main`'s clamp behavior (`pct`
+      clamped to `[0, 100]` via `Math.max(0, Math.min(100, ...))`) — over-budget values render
+      `scaleX(1)`, asserted directly.
+- [x] 5.11 **GREEN (barrel)**: Extended `app/_ui/index.tsx` (added `Avatar`/`AvatarGroup`
+      exports, RED-first via a failing barrel-smoke assertion, then wired) and created
+      `app/_ui/money/index.ts` matching `main`'s `shared/ui/money/index.ts` layout
+      (`StatFigure`/`MemberBar`/`ProgressMeter`); added `app/_ui/money/index.test.ts` as its own
+      RED→GREEN barrel smoke test (`main` has no dedicated money-barrel smoke test — this
+      follows PR 3/4's `app/_ui/index.test.tsx` convention, applied to the money sub-barrel).
+- [x] 5.12 **REFACTOR**: Prop-name diff against `main` — confirmed via `diff`: only the `cn`
+      import path (`../../../lib/cn` vs. `../../lib/utils`, per PR 2's foundations), an added
+      explicit `import * as React from "react"` (source files ported without it relied on
+      `main`'s ambient JSX types config, absent here — same precedent as PR 3/4's port style),
+      and Prettier's multi-line `interface ... extends` wrapping differ. No prop name, type, or
+      default value was renamed.
+- [x] 5.13 Verify: typecheck, lint, `npx vitest run app/_ui` — 15 files / 69 tests, all green;
+      `tsc --noEmit -p tsconfig.next.json` clean; `eslint app lib proxy.ts next.config.ts
+      --max-warnings 0` clean. **Line-count checkpoint**: `git diff --stat` against the merge-
+      resolution commit (PR 3+PR 4 barrel merge, excluded per instruction) measured **765 total
+      changed lines** (508 src / 257 tests) for PR 5's own work — **52 lines over the row's own
+      713 forecast**, but still **35 lines under the 800 hard budget**, so no `size:exception`
+      is needed. Overshoot driven mainly by `Avatar.tsx`'s WCAG-AA contrast-adjustment math
+      (hex↔HSL conversion, `ensureContrastForWhite`) ported verbatim from `main` — not
+      discretionary scope creep; confirmed no further padding before opening.
+- [x] 5.14 Commit + PR 5 (Position 5 of 16, Depends on: PR 3, PR 4, Follow-up: PR 11, PR 12,
       PR 13).
 
 ## PR 6 — `_ui` overlays: Dialog, ResponsiveDialog, RowMenu, Select, IconPicker

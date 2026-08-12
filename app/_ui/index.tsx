@@ -16,6 +16,8 @@ export { ResponsiveDialog } from "./ResponsiveDialog";
 export { RowMenu } from "./RowMenu";
 export { Select } from "./Select";
 export { DatePicker } from "./DatePicker";
+export { Avatar, AvatarGroup } from "./Avatar";
+export type { AvatarSize, AvatarProps, AvatarGroupProps } from "./Avatar";
 
 export function Input({
   className,
