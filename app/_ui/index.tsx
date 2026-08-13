@@ -18,6 +18,9 @@ export { Select } from "./Select";
 export { DatePicker } from "./DatePicker";
 export { Avatar, AvatarGroup } from "./Avatar";
 export type { AvatarSize, AvatarProps, AvatarGroupProps } from "./Avatar";
+export { IconPicker } from "./IconPicker";
+export { CategoryIconTile, CATEGORY_ICON_GROUPS } from "./categoryIcons";
+export type { CategoryIconTileProps, CategoryIconTileSize } from "./categoryIcons";
 
 export function Input({
   className,

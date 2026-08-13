@@ -75,4 +75,8 @@ describe("app/_ui barrel", () => {
   it("re-exports AvatarGroup", () => {
     expect(barrel.AvatarGroup).toBeTypeOf("function");
   });
+
+  it("re-exports IconPicker", () => {
+    expect(barrel.IconPicker).toBeTypeOf("function");
+  });
 });

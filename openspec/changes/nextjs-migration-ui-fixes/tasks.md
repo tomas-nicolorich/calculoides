@@ -1087,7 +1087,26 @@ past the 800 hard cap on its own — re-run the line-count checkpoint (15.12) ea
 just at the end, and flag for a further split/exception decision if it's trending over budget).
 **Depends on**: PR 14.
 
-- [ ] 15.0 **RED→GREEN**: Port `IconPicker.tsx` + its `shared/lib/categoryIcons.tsx` dependency
+**SPLIT EXECUTED (sdd-apply, 2026-08-13)**: per this PR's own budget-risk note above, `git diff
+--stat` was run immediately after task 15.0 (before starting 15.1), per the mandatory checkpoint.
+Result: **815 changed lines** (`app/_ui/IconPicker.tsx` 164, `app/_ui/IconPicker.test.tsx` 93,
+`app/_ui/categoryIcons.tsx` 487, `app/_ui/categoryIcons.test.tsx` 64, plus 7 lines of barrel/smoke
+wiring) for task 15.0 alone — over the ~700 trending threshold and within 15 lines of the 800 hard
+cap, with tasks 15.1-15.13 (370 src / 250 tests forecast) not yet started. Split into two PRs at
+the pre-identified natural boundary:
+
+- **PR 15a** (`feat/nextjs-ui-fixes-15a-icon-picker`, forked from
+  `feat/nextjs-ui-fixes-14-budget-categories-read`): task 15.0 only — `IconPicker.tsx` +
+  `categoryIcons.tsx` port, `app/_ui` barrel + smoke test. Self-contained, 815 lines, own PR.
+- **PR 15b** (`feat/nextjs-ui-fixes-15b-budget-categories-mutations`, to be forked from
+  `feat/nextjs-ui-fixes-15a-icon-picker` once 15a is committed): tasks 15.1-15.13 — CRUD dialogs,
+  inline transfer form, `by-category` drill-down. Not started in this batch.
+
+This section's remaining tasks (15.1-15.13) keep their original PR-15 numbering; "PR 15" in this
+file now refers to the 15a+15b pair collectively, consistent with how PR 14a/14b would have been
+numbered had that fallback triggered.
+
+- [x] 15.0 **RED→GREEN**: Port `IconPicker.tsx` + its `shared/lib/categoryIcons.tsx` dependency
       (`CategoryIconTile` + `CATEGORY_ICON_GROUPS`, ~486 lines) into `app/_ui/**` — moved here
       from PR 6 (2026-08-12 scope decision: `main`'s `IconPicker.tsx` has a hard dependency on
       `categoryIcons.tsx` that design.md's original 16-PR line-count table never traced; PR15's
@@ -1096,6 +1115,28 @@ just at the end, and flag for a further split/exception decision if it's trendin
       every other PR3/4/5/6 primitive port: confirm exact prop names/API against `main`'s real
       source before writing the RED test, do not invent behavior the spec implies but `main`
       doesn't have. Add to the `app/_ui` barrel + smoke test.
+      **Confirmed real source** via `git show main:frontend/src/shared/ui/IconPicker.tsx` and
+      `main:frontend/src/shared/lib/categoryIcons.tsx` before writing the RED test — both ported
+      byte-identical (confirmed via `diff`) except the `cn`/`categoryIcons` import paths, no
+      behavior invented. `IconPicker` consumes Base UI's `Popover` (not previously a barrel
+      export before this task; `RowMenu` already depended on it internally). RED:
+      `app/_ui/categoryIcons.test.tsx` (6 cases: grouped-lookup shape, known/unknown
+      `CategoryIconTile` fallback, size/className) and `app/_ui/IconPicker.test.tsx` (7 cases:
+      trigger label, popover open + grouped list, search filter, no-results message, selection +
+      close, `aria-pressed` on the selected icon, disabled trigger) — not exhaustive over all
+      ~200 icon keys, same "acceptance bar, not exhaustive" precedent as prior primitive ports.
+      Both fully green on first GREEN pass (13/13). Barrel: `IconPicker`, `CategoryIconTile`,
+      `CATEGORY_ICON_GROUPS` + types exported from `app/_ui/index.tsx`, one new smoke-test case
+      added to `app/_ui/index.test.tsx` (RED confirmed first, then GREEN). Verify: `npm run
+      typecheck`, `npx eslint app/_ui --max-warnings 0`, `npx vitest run app/_ui` (22 files/117
+      tests) and full `npm test` (95 files/473 tests) all green — no regressions.
+      **Line-count checkpoint (mandatory, run immediately after this task per this PR's own
+      budget-risk note)**: `git diff --stat` vs `feat/nextjs-ui-fixes-14-budget-categories-read`
+      for this task's 6 files (2 new source + 2 new test + 2 barrel edits) = **815 changed
+      lines** — over the ~700 trending-past threshold this PR's own note calls out, 15 lines
+      short of the 800 hard cap, with tasks 15.1-15.13 (620-line forecast) entirely unstarted.
+      **Split triggered**: committed as its own PR 15a (see split note above); 15.1-15.13 deferred
+      to PR 15b, forked from 15a once 15a is committed.
 - [ ] 15.1 **RED**: extend `BudgetCategories.test.tsx` — spec scenario "Creating a category
       refreshes dependent widgets": create-category dialog submit → `lib/actions/category.ts`
       `create` resolves → `queryKeys.group(groupId)` invalidates → `BudgetCategories` (and any
