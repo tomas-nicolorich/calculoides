@@ -48,6 +48,9 @@ lib-cov
 .npm
 .eslintcache
 .stylelintcache
+
+# Dual-graph MCP context
+.dual-graph-context/
 .cache/
 .parcel-cache
 .rpt2_cache/
@@ -92,7 +95,6 @@ playwright-report-next/
 !.claude/hooks/**
 .agents
 .atl/
-.codegraph/
 .serena
 .gemini
 .superpowers
@@ -106,3 +108,4 @@ headroom_memory.db
 .tokensave/
 .gga
 .impeccable/
+.dual-graph/
