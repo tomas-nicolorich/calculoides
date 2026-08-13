@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import {
   QueryClient,
@@ -10,7 +10,18 @@ import {
 } from "@tanstack/react-query";
 import { createQueryClient } from "../../../../../lib/query-client";
 import { queryKeys } from "../../../../../lib/query-keys";
+import {
+  create as createCategoryAction,
+  update as updateCategoryAction,
+  deleteCategory as deleteCategoryAction,
+} from "../../../../../lib/actions/category";
 import { BudgetCategories } from "./BudgetCategories";
+
+vi.mock("../../../../../lib/actions/category", () => ({
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteCategory: vi.fn(),
+}));
 
 const GROUP_ID = "33333333-3333-4333-8333-333333333333";
 
@@ -123,17 +134,45 @@ async function renderHydrated(
 
 type FetchMock = ReturnType<typeof vi.fn<(input: string) => Promise<Response>>>;
 
+function jsonResponse(body: unknown) {
+  return Promise.resolve(
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+}
+
+/** Minimal `matchMedia` stub carrying only what `useIsMobile` depends on —
+ * `ResponsiveDialog` (used by the create/edit/delete dialogs) always calls
+ * it, even while closed, mirrors `ResponsiveDialog.test.tsx`'s own stub. */
+function stubMatchMedia() {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+}
+
 describe("BudgetCategories", () => {
   let fetchMock: FetchMock;
 
   beforeEach(() => {
     fetchMock = vi.fn<(input: string) => Promise<Response>>();
     vi.stubGlobal("fetch", fetchMock);
+    stubMatchMedia();
   });
 
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    vi.mocked(createCategoryAction).mockReset();
+    vi.mocked(updateCategoryAction).mockReset();
+    vi.mocked(deleteCategoryAction).mockReset();
   });
 
   // dashboard-view: "Loading state precedes hydration" — this widget shows
@@ -307,4 +346,123 @@ describe("BudgetCategories", () => {
       screen.getByText("No members with income in this category"),
     ).toBeInTheDocument();
   });
+
+  // dashboard-view: "Creating a category refreshes dependent widgets".
+  it("creates a category via category.create and reflects it in the list once the group cache invalidates", async () => {
+    vi.mocked(createCategoryAction).mockResolvedValue({
+      ok: true,
+      data: { id: "c2", groupId: GROUP_ID },
+    } as Awaited<ReturnType<typeof createCategoryAction>>);
+    const updatedCategories: CategoryFixture[] = [
+      RENT_CATEGORY,
+      { id: "c2", name: "Groceries", monthlyBudget: 400, balances: [] },
+    ];
+    fetchMock.mockImplementation((url: string) =>
+      url.includes("/api/categories")
+        ? jsonResponse(updatedCategories)
+        : jsonResponse(SUMMARY_FIXTURE),
+    );
+
+    await renderHydrated([RENT_CATEGORY]);
+    await screen.findByText("Rent");
+
+    fireEvent.click(screen.getByRole("button", { name: "New Category" }));
+    fireEvent.change(screen.getByLabelText("Category Name"), {
+      target: { value: "Groceries" },
+    });
+    fireEvent.change(screen.getByLabelText("Monthly Budget (€)"), {
+      target: { value: "400" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Category" }));
+
+    await waitFor(() => {
+      expect(createCategoryAction).toHaveBeenCalledWith(
+        { groupId: GROUP_ID, name: "Groceries", monthlyBudget: 400, icon: "other" },
+        expect.anything(),
+      );
+    });
+    expect(await screen.findByText("Groceries")).toBeInTheDocument();
+  });
+
+  it("opens the edit dialog pre-filled from the row menu and updates via category.update", async () => {
+    vi.mocked(updateCategoryAction).mockResolvedValue({
+      ok: true,
+      data: { id: "c1", groupId: GROUP_ID },
+    } as Awaited<ReturnType<typeof updateCategoryAction>>);
+    const updatedCategories: CategoryFixture[] = [
+      { ...RENT_CATEGORY, name: "Rent (updated)" },
+    ];
+    fetchMock.mockImplementation((url: string) =>
+      url.includes("/api/categories")
+        ? jsonResponse(updatedCategories)
+        : jsonResponse(SUMMARY_FIXTURE),
+    );
+
+    await renderHydrated([RENT_CATEGORY]);
+    await screen.findByText("Rent");
+
+    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+
+    expect(screen.getByLabelText("Category Name")).toHaveValue("Rent");
+    fireEvent.change(screen.getByLabelText("Category Name"), {
+      target: { value: "Rent (updated)" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    await waitFor(() => {
+      expect(updateCategoryAction).toHaveBeenCalledWith(
+        { categoryId: "c1", name: "Rent (updated)", monthlyBudget: 1000, icon: "other" },
+        expect.anything(),
+      );
+    });
+    expect(await screen.findByText("Rent (updated)")).toBeInTheDocument();
+  });
+
+  // dashboard-view: "Deleting a category is confirmed before the call fires".
+  it("does not call deleteCategory on a single row-menu click — a confirm step is required first", async () => {
+    await renderHydrated([RENT_CATEGORY]);
+    await screen.findByText("Rent");
+
+    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+
+    expect(deleteCategoryAction).not.toHaveBeenCalled();
+    expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
+  });
+
+  it("calls deleteCategory only after the confirm step, and the deleted category disappears once the group cache invalidates", async () => {
+    vi.mocked(deleteCategoryAction).mockResolvedValue({
+      ok: true,
+      data: { success: true as const },
+    });
+    fetchMock.mockImplementation((url: string) =>
+      url.includes("/api/categories")
+        ? jsonResponse([])
+        : jsonResponse(SUMMARY_FIXTURE),
+    );
+
+    await renderHydrated([RENT_CATEGORY]);
+    await screen.findByText("Rent");
+
+    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Category" }));
+
+    await waitFor(() => {
+      expect(deleteCategoryAction).toHaveBeenCalledWith(
+        { categoryId: "c1" },
+        expect.anything(),
+      );
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("Rent")).not.toBeInTheDocument();
+    });
+  });
+
+  // The per-category transfer-history drill-down and the category-scoped
+  // inline transfer form (dashboard-view: "Category drill-down lists only
+  // that category's transfers" / "Creating a transfer invalidates the group
+  // cache") land in PR 15c — split from this PR's CRUD-only scope per the
+  // mandatory line-count checkpoint (see tasks.md's split note).
 });

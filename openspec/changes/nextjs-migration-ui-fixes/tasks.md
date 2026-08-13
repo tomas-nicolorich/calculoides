@@ -1098,13 +1098,31 @@ the pre-identified natural boundary:
 - **PR 15a** (`feat/nextjs-ui-fixes-15a-icon-picker`, forked from
   `feat/nextjs-ui-fixes-14-budget-categories-read`): task 15.0 only — `IconPicker.tsx` +
   `categoryIcons.tsx` port, `app/_ui` barrel + smoke test. Self-contained, 815 lines, own PR.
-- **PR 15b** (`feat/nextjs-ui-fixes-15b-budget-categories-mutations`, to be forked from
-  `feat/nextjs-ui-fixes-15a-icon-picker` once 15a is committed): tasks 15.1-15.13 — CRUD dialogs,
-  inline transfer form, `by-category` drill-down. Not started in this batch.
+- **PR 15b** (`feat/nextjs-ui-fixes-15b-budget-categories-mutations`, forked from
+  `feat/nextjs-ui-fixes-15a-icon-picker`): tasks 15.1-15.13 — CRUD dialogs, inline transfer form,
+  `by-category` drill-down.
+
+**SECOND SPLIT (mid-batch, same session)**: after implementing all of 15.1-15.13 together and
+running the mandatory `git diff --stat` checkpoint (task 15.12) against `feat/nextjs-ui-fixes-15a-
+icon-picker`, the combined result was **928 changed lines** (880 insertions + 48 deletions across
+7 files) — 128 lines over the 800 hard cap, well past the 620-line forecast for this task range.
+Rather than accept a `size:exception` (auto-chain means split, per session preflight), the
+already-implemented change was split at the next natural vertical seam inside PR 15b's own scope:
+
+- **PR 15b** (this branch, kept): tasks 15.1-15.6 only — create/update/delete-with-confirmation
+  category dialogs (`CategoryFormFields`, `RowMenu` wiring, `useCreateCategory`/
+  `useUpdateCategory`/`useDeleteCategory`). Re-measured after removing the drill-down/inline-
+  transfer code: **604 changed lines** (556 insertions + 48 deletions across 5 files) — comfortably
+  under budget.
+- **PR 15c** (`feat/nextjs-ui-fixes-15c-budget-transfer-drilldown`, forked from PR 15b once
+  committed): tasks 15.7-15.13 — per-category transfer-history drill-down
+  (`TransferHistory`/`useTransfersByCategory`/`queryKeys.transfersByCategory`), the category-scoped
+  inline transfer form (`CategoryTransferForm`/`LabeledSelect`), REFACTOR/verify/commit. Deferred
+  to a follow-up batch.
 
 This section's remaining tasks (15.1-15.13) keep their original PR-15 numbering; "PR 15" in this
-file now refers to the 15a+15b pair collectively, consistent with how PR 14a/14b would have been
-numbered had that fallback triggered.
+file now refers to the 15a+15b+15c triple collectively, same "split at the natural seam, don't ask
+for an exception" precedent PR 14 and this PR's own 15.0 checkpoint already established.
 
 - [x] 15.0 **RED→GREEN**: Port `IconPicker.tsx` + its `shared/lib/categoryIcons.tsx` dependency
       (`CategoryIconTile` + `CATEGORY_ICON_GROUPS`, ~486 lines) into `app/_ui/**` — moved here
@@ -1137,23 +1155,66 @@ numbered had that fallback triggered.
       short of the 800 hard cap, with tasks 15.1-15.13 (620-line forecast) entirely unstarted.
       **Split triggered**: committed as its own PR 15a (see split note above); 15.1-15.13 deferred
       to PR 15b, forked from 15a once 15a is committed.
-- [ ] 15.1 **RED**: extend `BudgetCategories.test.tsx` — spec scenario "Creating a category
+- [x] 15.1 **RED**: extend `BudgetCategories.test.tsx` — spec scenario "Creating a category
       refreshes dependent widgets": create-category dialog submit → `lib/actions/category.ts`
       `create` resolves → `queryKeys.group(groupId)` invalidates → `BudgetCategories` (and any
       widget reading category data) reflects the new category. Fails.
-- [ ] 15.2 **GREEN**: Add create-category dialog using `ResponsiveDialog` (PR 6) + `IconPicker`
+- [x] 15.2 **GREEN**: Add create-category dialog using `ResponsiveDialog` (PR 6) + `IconPicker`
       (15.0, this PR) + `Input` (PR 3), wired to `category.create`, `onSuccess` →
       `invalidateQueries(queryKeys.group(groupId))`. Green.
-- [ ] 15.3 **RED**: extend — update-category dialog: same dialog/action pattern for
+- [x] 15.3 **RED**: extend — update-category dialog: same dialog/action pattern for
       `category.update`. Fails.
-- [ ] 15.4 **GREEN**: Wire update dialog. Green.
-- [ ] 15.5 **RED**: spec scenario "Deleting a category is confirmed before the call fires": row
+- [x] 15.4 **GREEN**: Wire update dialog. Green.
+- [x] 15.5 **RED**: spec scenario "Deleting a category is confirmed before the call fires": row
       menu (`RowMenu` from PR 6) offers delete; a confirmation step precedes the
       `deleteCategory` call — a single click on the row-menu item does NOT itself call
       `deleteCategory` (assert the action is not called until a second, explicit confirm
       step). Fails.
-- [ ] 15.6 **GREEN**: Wire delete with a confirmation step (e.g. `Dialog`-based confirm, or
+- [x] 15.6 **GREEN**: Wire delete with a confirmation step (e.g. `Dialog`-based confirm, or
       `ResponsiveDialog`) before calling `lib/actions/category.ts` `deleteCategory`. Green.
+
+      **15.1-15.6 combined evidence (PR 15b)**: `CategoryFormFields` (name/monthly-budget
+      `Input`s + `IconPicker`, no per-member-assignment toggle — no spec/task scenario requires
+      it, every category defaults to "applies to everyone", `memberIds: undefined`, a deliberate
+      scope reduction to hold the line budget, same class of decision as PR 14.6's icon
+      deferral). `RowMenu` (PR 6) is this codebase's first real consumer, wired to
+      `onEdit`/`onDelete` per category row header (sibling to the existing toggle `<button>`, not
+      nested inside it — avoids an invalid nested-button DOM). Create/update dialogs use
+      `ResponsiveDialog`; delete confirmation reuses `ResponsiveDialog` with a
+      Cancel/`variant="expense"` Delete pair (task 15.5's "single click does not itself delete"
+      assertion). `app/_data/categories.ts` gained `useCreateCategory`/`useUpdateCategory`/
+      `useDeleteCategory` — same `useMutation` + `invalidateGroupQueries` shape PR 13 established
+      for transfers. RED written first (6 new failing cases: create, edit-prefill+update,
+      delete-not-called-on-single-click, delete-after-confirm — 4 test-level cases covering the 6
+      RED/GREEN task pairs, same "combined RED file" precedent PR 14.1 set), confirmed genuinely
+      failing (missing `New Category` button / `Row options` menu / confirm dialog), then GREEN
+      implemented. **Deviation**: `DashboardClient.test.tsx` and `page.test.tsx` needed a
+      `matchMedia` stub added (mirrors `ResponsiveDialog.test.tsx`'s own stub) — `BudgetCategories`
+      now always mounts `ResponsiveDialog` (even closed), which calls `useIsMobile()`
+      unconditionally; those two integration tests previously never needed to stub it since no
+      widget in their tree used `ResponsiveDialog` yet. No owner-only gating on the delete menu
+      item client-side (deviation from `main`, which gates via a passed-down `isOwner` prop no
+      widget in this data-seam design currently receives) — `lib/actions/category.ts`
+      `deleteCategory` already enforces ownership server-side and returns a typed failure for a
+      non-owner; adding client-side `isOwner` plumbing was out of this task's explicit scope and
+      would have required threading a new prop through `DashboardClient`/`page.tsx`.
+      Verify: `npm run typecheck`, `npx eslint app lib proxy.ts next.config.ts --max-warnings 0`,
+      `npx vitest run "app/(app)/dashboard/[groupId]/_widgets/BudgetCategories.test.tsx"` (16/16)
+      and full `npm test` (95 files / 477 tests) all green.
+**PR 15b's own REFACTOR/verify/commit (task-equivalent of 15.11-15.13, scoped to 15.1-15.6
+only)**: confirmed no inline reimplementation — `CategoryFormFields`/dialogs reuse
+`ResponsiveDialog`/`IconPicker`/`Input`/`Button` (PR 3/6), `RowMenu` (PR 6) for row actions; `grep`
+for direct `Popover`/`Dialog.Root`/`@base-ui` usage inside `BudgetCategories.tsx` returns zero
+matches. Verify green (see 15.1-15.6's combined evidence above). Committed on
+`feat/nextjs-ui-fixes-15b-budget-categories-mutations` (Position 15b, Base
+`feat/nextjs-ui-fixes-15a-icon-picker`, Depends on: PR 15a, Follow-up: PR 15c). Line-count
+checkpoint: **604 changed lines** (556 insertions + 48 deletions, 5 files) vs
+`feat/nextjs-ui-fixes-15a-icon-picker` — see the "SECOND SPLIT" note above for how this number was
+reached (928 combined, re-measured after removing 15.7-15.10's code).
+
+**Tasks 15.7-15.13 deferred to PR 15c** (see "SECOND SPLIT" note above) — not started in this
+batch:
+
 - [ ] 15.7 **RED**: spec scenario "Category drill-down lists only that category's transfers":
       given a category with 2 of the group's 5 total transfers, its accordion row's transfer
       history (loaded via `/api/transfers/by-category?categoryId=...`) lists exactly those 2.
@@ -1162,6 +1223,13 @@ numbered had that fallback triggered.
       `TransferService.getTransfersForCategory` — the widget test asserts correct consumption,
       not server-side filtering logic, which belongs to that route's own existing tests).
       Fails — no drill-down UI exists yet.
+
+      **Implemented once already** (in this same session, before the second split — see the
+      "SECOND SPLIT" note): `TransferHistory` component, `useTransfersByCategory` hook in
+      `app/_data/transfers.ts`, `queryKeys.transfersByCategory` in `lib/query-keys.ts`, and a RED
+      test asserting exactly 2 `category-transfer-row` elements from a mocked
+      `/api/transfers/by-category` response — all fully green before being removed from this
+      branch and preserved in the scratchpad for PR 15c's own commit.
 - [ ] 15.8 **GREEN**: Add the per-category transfer-history drill-down panel, fetching
       `/api/transfers/by-category`. Green.
 - [ ] 15.9 **RED**: extend — the accordion's own inline budget-transfer form (per ADR-9's file
@@ -1173,11 +1241,12 @@ numbered had that fallback triggered.
       no inline reimplementation (the `ui-design-system` spec's standing "no inline
       reimplementation" requirement applies here as much as anywhere).
 - [ ] 15.12 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual:
-      create/update/delete-with-confirmation category flows; per-category drill-down shows the
-      correct filtered transfer subset; inline transfer submission from within an expanded row.
-- [ ] 15.13 Commit + PR 15 (Position 15 of 16, Depends on: PR 14, Follow-up: none — leaf
-      slice; reverting this alone per the Rollback Plan leaves PR 14's read-only accordion
-      intact and working).
+      per-category drill-down shows the correct filtered transfer subset; inline transfer
+      submission from within an expanded row. (Create/update/delete-with-confirmation flows
+      already verified in PR 15b.)
+- [ ] 15.13 Commit + PR 15c (forked from PR 15b, Depends on: PR 15b, Follow-up: none — leaf
+      slice; reverting this alone leaves PR 15b's working CRUD dialogs intact, and reverting
+      15b+15c together leaves PR 14's read-only accordion intact, per the Rollback Plan).
 
 ## PR 16 — `SavingsGoalList` + savings prefetch + `ExpenseForm` quick action — **flagged, highest risk**
 

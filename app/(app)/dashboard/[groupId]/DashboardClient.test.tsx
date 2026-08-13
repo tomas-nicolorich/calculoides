@@ -66,6 +66,18 @@ describe("DashboardClient", () => {
   beforeEach(() => {
     fetchMock = vi.fn<(input: string) => Promise<Response>>();
     vi.stubGlobal("fetch", fetchMock);
+    // `BudgetCategories`' create/edit/delete dialogs (PR 15) always mount
+    // `ResponsiveDialog`, which calls `useIsMobile()` even while closed —
+    // mirrors `ResponsiveDialog.test.tsx`'s own stub.
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
   });
 
   afterEach(() => {

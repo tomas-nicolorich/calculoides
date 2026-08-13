@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { ChevronDown } from "lucide-react";
-import { Avatar, Card } from "../../../../_ui";
+import {
+  Avatar,
+  Button,
+  Card,
+  IconPicker,
+  Input,
+  ResponsiveDialog,
+  RowMenu,
+} from "../../../../_ui";
 import { ProgressMeter } from "../../../../_ui/money";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { progressPercent, progressState } from "../../../../../lib/progress";
 import { cn } from "../../../../../lib/cn";
 import { useDashboardSummary } from "../../../../_data/summary";
-import { useCategoriesList } from "../../../../_data/categories";
+import {
+  useCategoriesList,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+} from "../../../../_data/categories";
 
 interface CategoryBalance {
   memberId: string;
@@ -23,6 +36,7 @@ interface CategoryRow {
   id: string;
   name: string;
   monthlyBudget: number;
+  icon?: string;
   balances: CategoryBalance[];
   isEmpty?: boolean;
 }
@@ -31,6 +45,91 @@ interface RowMember {
   id: string;
   name: string;
   colorIndex: number;
+}
+
+/** Shared by the create/update dialogs (PR 15, ADR-9 slice 2 of 2). Scoped
+ * down from `main`'s `CategoryFormFields` — no per-member assignment toggle
+ * (no spec/task scenario requires it; every category defaults to "applies
+ * to everyone", `memberIds: undefined`, same as omitting the toggle
+ * entirely on `main`'s own create/edit payload for that case). */
+function CategoryFormFields({
+  name,
+  setName,
+  monthlyBudget,
+  setMonthlyBudget,
+  icon,
+  setIcon,
+  formError,
+  formLoading,
+  submitLabel,
+  onCancel,
+}: {
+  name: string;
+  setName: (v: string) => void;
+  monthlyBudget: string;
+  setMonthlyBudget: (v: string) => void;
+  icon: string;
+  setIcon: (v: string) => void;
+  formError: string | null;
+  formLoading: boolean;
+  submitLabel: string;
+  onCancel: () => void;
+}) {
+  return (
+    <>
+      <div className="space-y-2">
+        <label htmlFor="category-name" className="text-sm font-medium">
+          Category Name
+        </label>
+        <Input
+          id="category-name"
+          placeholder="e.g. Rent, Groceries"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label htmlFor="category-budget" className="text-sm font-medium">
+          Monthly Budget (€)
+        </label>
+        <Input
+          id="category-budget"
+          type="number"
+          step="0.01"
+          placeholder="0.00"
+          value={monthlyBudget}
+          onChange={(e) => {
+            setMonthlyBudget(e.target.value);
+          }}
+          required
+        />
+      </div>
+      <IconPicker icon={icon} onChange={setIcon} tone="category" />
+      {formError && <p className="text-sm text-brand-expense">{formError}</p>}
+      <div className="flex gap-3 pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={onCancel}
+          disabled={formLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="balance"
+          className="flex-1"
+          disabled={formLoading}
+        >
+          {formLoading ? "Saving..." : submitLabel}
+        </Button>
+      </div>
+    </>
+  );
 }
 
 /** A single expanded per-member balance row. Ported from `main`'s
@@ -116,18 +215,25 @@ function MemberRow({
   );
 }
 
-/** A single accordion row: header (name, budget, header `ProgressMeter`)
- * plus expand/collapse per-member balances. Read-only — ADR-9 keeps
- * create/edit/delete/transfer affordances out of this slice (PR 15). */
+/** A single accordion row: header (name, budget, header `ProgressMeter`,
+ * `RowMenu` edit/delete) plus expand/collapse per-member balances (ADR-9
+ * slice 2 of 2, PR 15b — create/update/delete-with-confirmation only; the
+ * per-category transfer-history drill-down and inline transfer form land in
+ * PR 15c, split at this task-level boundary per the mandatory line-count
+ * checkpoint — see tasks.md's split note). */
 function CategoryRowItem({
   category,
   isExpanded,
   onToggle,
+  onEdit,
+  onDelete,
   members,
 }: {
   category: CategoryRow;
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   members: RowMember[];
 }) {
   const totalSpent = category.balances.reduce((sum, b) => sum + b.spent, 0);
@@ -136,39 +242,42 @@ function CategoryRowItem({
 
   return (
     <div className="rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={isExpanded}
-        className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="font-medium text-slate-900 dark:text-white truncate">
-              {category.name}
-            </span>
-            <span className="text-xs text-slate-400 font-mono tnum shrink-0">
-              {formatCurrency(category.monthlyBudget)}
-            </span>
+      <div className="w-full flex items-center gap-3 p-4">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={isExpanded}
+          className="flex-1 min-w-0 flex items-center gap-3 text-left"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="font-medium text-slate-900 dark:text-white truncate">
+                {category.name}
+              </span>
+              <span className="text-xs text-slate-400 font-mono tnum shrink-0">
+                {formatCurrency(category.monthlyBudget)}
+              </span>
+            </div>
+            <ProgressMeter
+              value={totalSpent}
+              max={category.monthlyBudget}
+              tone="category"
+              state={progressState(totalSpent, category.monthlyBudget)}
+              valueLabel={`${String(spentPct)}% spent`}
+              className="mt-2"
+            />
           </div>
-          <ProgressMeter
-            value={totalSpent}
-            max={category.monthlyBudget}
-            tone="category"
-            state={progressState(totalSpent, category.monthlyBudget)}
-            valueLabel={`${String(spentPct)}% spent`}
-            className="mt-2"
+          <ChevronDown
+            size={18}
+            aria-hidden
+            className={cn(
+              "shrink-0 text-slate-400 transition-transform duration-200",
+              isExpanded && "rotate-180",
+            )}
           />
-        </div>
-        <ChevronDown
-          size={18}
-          aria-hidden
-          className={cn(
-            "shrink-0 text-slate-400 transition-transform duration-200",
-            isExpanded && "rotate-180",
-          )}
-        />
-      </button>
+        </button>
+        <RowMenu onEdit={onEdit} onDelete={onDelete} />
+      </div>
 
       {isExpanded && (
         <div className="px-4 pb-4 space-y-3">
@@ -200,8 +309,9 @@ function CategoryRowItem({
 }
 
 /**
- * Read-only accordion (ADR-9, slice 14 of 2): category rows with a header
- * `ProgressMeter`, expand/collapse per-member balance breakdown. Data seam:
+ * Accordion (ADR-9, both slices): category rows with a header `ProgressMeter`
+ * and `RowMenu`, expand/collapse per-member balance breakdown, per-category
+ * transfer history, and a category-scoped inline transfer form. Data seam:
  * self-subscribes to the hydrated `queryKeys.categories` cache (same seam
  * `BudgetTransfers` uses for `queryKeys.summary`) instead of receiving
  * `categories` as a prop, so it owns its own loading/error state
@@ -212,15 +322,99 @@ function CategoryRowItem({
  * member has not hydrated yet falls back to `memberId.slice(0, 4)`, mirroring
  * `main`'s widget.
  *
- * Create/edit/delete category, the transfer affordance, and per-category
- * transfer-history drill-down are intentionally NOT in this slice — ADR-9
- * puts every mutation-shaped feature in PR 15, so this PR stays an
- * independently revertable, fully working read-only accordion.
+ * PR 15b adds create/update/delete-with-confirmation dialogs (all three
+ * `lib/actions/category.ts` mutations invalidate `queryKeys.group(groupId)`
+ * on success, same contract `BudgetTransfers` established) — the
+ * per-category transfer-history drill-down and inline transfer form land in
+ * PR 15c (split at this boundary per the mandatory line-count checkpoint).
  */
 export function BudgetCategories({ groupId }: { groupId: string }) {
   const { data: categories, isLoading, isError } = useCategoriesList(groupId);
   const { data: summary } = useDashboardSummary(groupId);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(
+    null,
+  );
+  const [categoryToDelete, setCategoryToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const [name, setName] = useState("");
+  const [monthlyBudget, setMonthlyBudget] = useState("");
+  const [icon, setIcon] = useState("other");
+
+  const createCategory = useCreateCategory(groupId);
+  const updateCategory = useUpdateCategory(groupId);
+  const deleteCategoryMutation = useDeleteCategory(groupId);
+
+  const formLoading = createCategory.isPending || updateCategory.isPending;
+  const formError =
+    (createCategory.error instanceof Error
+      ? createCategory.error.message
+      : null) ??
+    (updateCategory.error instanceof Error
+      ? updateCategory.error.message
+      : null);
+
+  const resetForm = () => {
+    setName("");
+    setMonthlyBudget("");
+    setIcon("other");
+  };
+
+  const openAdd = () => {
+    createCategory.reset();
+    resetForm();
+    setIsAdding(true);
+  };
+
+  const openEdit = (category: CategoryRow) => {
+    updateCategory.reset();
+    setName(category.name);
+    setMonthlyBudget(String(category.monthlyBudget));
+    setIcon(category.icon ?? "other");
+    setEditingCategory(category);
+  };
+
+  const handleAddSubmit = async (e: SyntheticEvent) => {
+    e.preventDefault();
+    const result = await createCategory.mutateAsync({
+      groupId,
+      name,
+      monthlyBudget: Number(monthlyBudget),
+      icon,
+    });
+    if (result.ok) {
+      setIsAdding(false);
+      resetForm();
+    }
+  };
+
+  const handleEditSubmit = async (e: SyntheticEvent) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+    const result = await updateCategory.mutateAsync({
+      categoryId: editingCategory.id,
+      name,
+      monthlyBudget: Number(monthlyBudget),
+      icon,
+    });
+    if (result.ok) {
+      setEditingCategory(null);
+      resetForm();
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!categoryToDelete) return;
+    await deleteCategoryMutation.mutateAsync({
+      categoryId: categoryToDelete.id,
+    });
+    setCategoryToDelete(null);
+  };
 
   if (isLoading) {
     return (
@@ -261,10 +455,104 @@ export function BudgetCategories({ groupId }: { groupId: string }) {
   return (
     <Card title="Budget Categories">
       <div className="space-y-4">
-        <div className="text-sm text-slate-400">
-          Shared buckets · each member&apos;s share is set by income. Expand
-          to view balances.
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-slate-400">
+            Shared buckets · each member&apos;s share is set by income.
+          </div>
+          <Button variant="ghost" size="sm" onClick={openAdd}>
+            New Category
+          </Button>
         </div>
+
+        <ResponsiveDialog
+          open={isAdding}
+          onOpenChange={(open) => {
+            if (!open) setIsAdding(false);
+          }}
+          title="Add Category"
+          description="Create a new budget category for your group."
+          hideCloseButton
+        >
+          <form onSubmit={(e) => void handleAddSubmit(e)} className="space-y-4">
+            <CategoryFormFields
+              name={name}
+              setName={setName}
+              monthlyBudget={monthlyBudget}
+              setMonthlyBudget={setMonthlyBudget}
+              icon={icon}
+              setIcon={setIcon}
+              formError={formError}
+              formLoading={formLoading}
+              submitLabel="Save Category"
+              onCancel={() => {
+                setIsAdding(false);
+              }}
+            />
+          </form>
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={editingCategory !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingCategory(null);
+          }}
+          title="Edit Category"
+          description="Update details for this budget category."
+          hideCloseButton
+        >
+          <form
+            onSubmit={(e) => void handleEditSubmit(e)}
+            className="space-y-4"
+          >
+            <CategoryFormFields
+              name={name}
+              setName={setName}
+              monthlyBudget={monthlyBudget}
+              setMonthlyBudget={setMonthlyBudget}
+              icon={icon}
+              setIcon={setIcon}
+              formError={formError}
+              formLoading={formLoading}
+              submitLabel="Save Changes"
+              onCancel={() => {
+                setEditingCategory(null);
+              }}
+            />
+          </form>
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={categoryToDelete !== null}
+          onOpenChange={(open) => {
+            if (!open) setCategoryToDelete(null);
+          }}
+          title="Delete Category"
+          description={`Are you sure you want to delete "${categoryToDelete?.name ?? ""}"? This action cannot be undone.`}
+        >
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setCategoryToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="expense"
+              className="flex-1"
+              disabled={deleteCategoryMutation.isPending}
+              onClick={() => void confirmDelete()}
+            >
+              {deleteCategoryMutation.isPending
+                ? "Deleting..."
+                : "Delete Category"}
+            </Button>
+          </div>
+        </ResponsiveDialog>
 
         {categories.length === 0 ? (
           <p className="text-center py-8 text-slate-400 text-sm">
@@ -279,6 +567,12 @@ export function BudgetCategories({ groupId }: { groupId: string }) {
                 isExpanded={expandedIds.has(category.id)}
                 onToggle={() => {
                   toggleExpanded(category.id);
+                }}
+                onEdit={() => {
+                  openEdit(category);
+                }}
+                onDelete={() => {
+                  setCategoryToDelete({ id: category.id, name: category.name });
                 }}
                 members={members}
               />
