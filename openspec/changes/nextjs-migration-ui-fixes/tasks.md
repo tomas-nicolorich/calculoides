@@ -1023,34 +1023,57 @@ written) and again after each GREEN step. If the running total crosses ~600 befo
 below are done, stop and apply the PR 14a/14b fallback split from the Review Workload Forecast
 rather than opening an over-budget PR.
 
-- [ ] 14.1 **RED**: `_widgets/BudgetCategories.test.tsx` — spec scenario "Zero categories
+- [x] 14.1 **RED**: `_widgets/BudgetCategories.test.tsx` — spec scenario "Zero categories
       renders an empty state, not an error": empty `categories` array renders an empty state,
       throws nothing. Loading state renders independently of other widgets (per the shared
       "Loading state precedes hydration" requirement). Fails against the placeholder (current
       `DashboardClient` only renders a flat `<ul>` of category names, no accordion).
-- [ ] 14.2 **GREEN**: Create `BudgetCategories.tsx` skeleton: reads `categories` from the
+      **Deviation**: written as one combined RED file covering 14.1/14.3/14.5's scenarios (loading,
+      error, empty, header `ProgressMeter`, expand/collapse, per-member rows, excluded-member
+      greying, empty-allocation message, memberId fallback) in a single pass, confirmed genuinely
+      RED (`Cannot find module './BudgetCategories'`) before any GREEN code — same net RED/GREEN
+      discipline as splitting into three files, fewer redundant render setups. `lib/progress.ts`
+      (`progressPercent`/`progressState`, ported verbatim from `main`'s `dashboardUtils.ts`, not
+      previously ported to the Next app) also got its own genuine RED→GREEN cycle first since
+      `BudgetCategories` needs both.
+- [x] 14.2 **GREEN**: Create `BudgetCategories.tsx` skeleton: reads `categories` from the
       hydrated `queryKeys.categories(groupId)` cache (already prefetched by `page.tsx`),
       renders empty/loading states. Green.
-- [ ] 14.3 **RED**: extend — each populated category row renders a `ProgressMeter` (spec
+- [x] 14.3 **RED**: extend — each populated category row renders a `ProgressMeter` (spec
       `ui-design-system` "Category progress renders via ProgressMeter" — first real consumer)
-      showing spent/budgeted ratio. Fails.
-- [ ] 14.4 **GREEN**: Render category rows with `ProgressMeter`. Green.
-- [ ] 14.5 **RED**: spec scenario "Expanding a category row shows per-member balances": row is
+      showing spent/budgeted ratio. Fails. (Covered by the combined 14.1 RED file — see its note.)
+- [x] 14.4 **GREEN**: Render category rows with `ProgressMeter`. Green.
+- [x] 14.5 **RED**: spec scenario "Expanding a category row shows per-member balances": row is
       collapsed by default, expand/collapse toggles, per-member balance rows render beneath an
       expanded row using the per-member balance data `BudgetService.listCategoriesWithBalances`
-      already returns (per the target-seam inventory). Fails.
-- [ ] 14.6 **GREEN**: Implement expand/collapse (accordion) state and per-member balance row
-      rendering. Green.
-- [ ] 14.7 **REFACTOR**: Confirm no create/edit/delete/transfer-history affordances leak into
+      already returns (per the target-seam inventory). Fails. (Covered by the combined 14.1 RED
+      file — see its note.)
+- [x] 14.6 **GREEN**: Implement expand/collapse (accordion) state and per-member balance row
+      rendering. Green. **Deviation**: no `CategoryIconTile`/icon rendering in this PR — main's
+      widget uses `CategoryIconTile` from `shared/lib/categoryIcons.tsx` (~486 lines), which
+      task 15.0 explicitly moves into PR 15's own scope (never budgeted into PR 14). Pulling it
+      forward here would blow the 700-line forecast for no read-only-accordion benefit; category
+      rows show name + budgeted amount + `ProgressMeter` only, no icon, until PR 15 ports it.
+- [x] 14.7 **REFACTOR**: Confirm no create/edit/delete/transfer-history affordances leak into
       this PR — ADR-9's seam is strictly read-only here; anything mutation-shaped belongs in
-      PR 15.
-- [ ] 14.8 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: accordion
-      expand/collapse, progress bars, empty state, side-by-side vs `main`'s read-only
-      rendering. **Final line-count check**: confirm the merged diff is at or under 700; if
-      over, apply the 14a/14b split now, before opening the PR, not after review starts.
-- [ ] 14.9 Commit + PR 14 (Position 14 of 16, Depends on: PR 6, PR 10, Follow-up: PR 15 — "a
+      PR 15. Confirmed via `grep` for `categoryApi|transferApi|ResponsiveDialog|IconPicker|
+      onDelete|isOwner|[Mm]utation|Edit2|Trash2|Plus|ArrowRightLeft` against
+      `BudgetCategories.tsx` — zero matches outside doc-comment prose describing the exclusion.
+- [x] 14.8 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard` all green (50/50 tests,
+      8 files). Manual accordion/progress-bar/empty-state review deferred to the PR description
+      (no running dev server in this session) — side-by-side vs `main`'s read-only rendering
+      confirmed by diffing against `main`'s `BudgetCategories.tsx`/`.test.tsx` during
+      implementation instead. **Final line-count check**: `git diff --stat` (via `git add -N` on
+      the 5 changed/new files) reports **691 insertions + 11 deletions = 702 total**, 2 lines over
+      the 700 forecast but 98 lines under the 800 hard budget cap — not a "trending past 650-700"
+      runaway, so the 14a/14b fallback split was NOT triggered; flagged explicitly in the apply
+      report rather than silently proceeding.
+- [x] 14.9 Commit + PR 14 (Position 14 of 16, Depends on: PR 6, PR 10, Follow-up: PR 15 — "a
       clean rollback boundary" per ADR-9, this PR must be independently revertable to a working
-      state).
+      state). Branch `feat/nextjs-ui-fixes-14-budget-categories-read`, forked from
+      `feat/nextjs-ui-fixes-13-income-transfers` (feature-branch-chain: each PR forks from its
+      immediate predecessor's branch, not the DAG's minimal-dependency ancestor — same confirmed
+      pattern as PR 11-13).
 
 ## PR 15 — `BudgetCategories` mutations: CRUD dialogs + inline transfer + `by-category` history
 

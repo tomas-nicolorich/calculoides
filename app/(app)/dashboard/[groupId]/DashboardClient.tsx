@@ -6,18 +6,19 @@ import { IncomeOverview } from "./_widgets/IncomeOverview";
 import { RemainingBalance } from "./_widgets/RemainingBalance";
 import { RecentExpenses } from "./_widgets/RecentExpenses";
 import { BudgetTransfers } from "./_widgets/BudgetTransfers";
+import { BudgetCategories } from "./_widgets/BudgetCategories";
 
 /**
  * ADR-0003 two-column dashboard shell (PR 12). Six named widget slots;
- * `IncomeOverview`, `RemainingBalance`, `RecentExpenses`, and
- * `BudgetTransfers` are wired to real data — `BudgetCategories` and
- * `SavingsGoalList` render as `WidgetStub` placeholders until PR 14-16 land.
- * Each slot owns its own loading boundary by self-subscribing to the query
- * it needs — there is no page-level `summaryLoading || …` early return
- * blocking the whole grid (spec: "Loading state precedes hydration"). The
- * heading only reads `summary?.groupName`, so it degrades gracefully
- * (blank) while its own query is still loading, without gating the grid
- * below it.
+ * `IncomeOverview`, `RemainingBalance`, `RecentExpenses`, `BudgetTransfers`,
+ * and `BudgetCategories` (PR 14, read-only accordion — mutations land in
+ * PR 15) are wired to real data — `SavingsGoalList` still renders as a
+ * `WidgetStub` placeholder until PR 16 lands. Each slot owns its own loading
+ * boundary by self-subscribing to the query it needs — there is no
+ * page-level `summaryLoading || …` early return blocking the whole grid
+ * (spec: "Loading state precedes hydration"). The heading only reads
+ * `summary?.groupName`, so it degrades gracefully (blank) while its own
+ * query is still loading, without gating the grid below it.
  */
 export function DashboardClient({ groupId }: { groupId: string }) {
   const { data: summary } = useDashboardSummary(groupId);
@@ -48,7 +49,7 @@ export function DashboardClient({ groupId }: { groupId: string }) {
         </div>
 
         <div className="flex flex-col gap-6">
-          <WidgetStub title="Budget Categories" />
+          <BudgetCategories groupId={groupId} />
           <WidgetStub title="Savings Goals" />
         </div>
       </div>
@@ -56,7 +57,7 @@ export function DashboardClient({ groupId }: { groupId: string }) {
   );
 }
 
-/** Placeholder for a widget slot not yet wired (PR 13-16). Renders as a
+/** Placeholder for a widget slot not yet wired (PR 16). Renders as a
  * clean, static `Card` — never a broken layout or an error. */
 function WidgetStub({ title }: { title: string }) {
   return (
