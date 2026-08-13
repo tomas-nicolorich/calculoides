@@ -15,12 +15,16 @@ import {
   update as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
 } from "../../../../../lib/actions/category";
+import { create as createTransferAction } from "../../../../../lib/actions/transfer";
 import { BudgetCategories } from "./BudgetCategories";
 
 vi.mock("../../../../../lib/actions/category", () => ({
   create: vi.fn(),
   update: vi.fn(),
   deleteCategory: vi.fn(),
+}));
+vi.mock("../../../../../lib/actions/transfer", () => ({
+  create: vi.fn(),
 }));
 
 const GROUP_ID = "33333333-3333-4333-8333-333333333333";
@@ -143,6 +147,17 @@ function jsonResponse(body: unknown) {
   );
 }
 
+/** Base UI's `Select.Item` only commits once pointer-highlighted first —
+ * mirrors `Select.test.tsx`'s/`BudgetTransfers.test.tsx`'s `selectOption`
+ * helper. */
+function selectOption(name: string | RegExp) {
+  const option = screen.getByRole("option", { name });
+  fireEvent.pointerMove(option);
+  fireEvent.pointerDown(option);
+  fireEvent.pointerUp(option);
+  fireEvent.click(option);
+}
+
 /** Minimal `matchMedia` stub carrying only what `useIsMobile` depends on —
  * `ResponsiveDialog` (used by the create/edit/delete dialogs) always calls
  * it, even while closed, mirrors `ResponsiveDialog.test.tsx`'s own stub. */
@@ -158,11 +173,38 @@ function stubMatchMedia() {
   );
 }
 
+const TRANSFERS_BY_CATEGORY_FIXTURE = [
+  {
+    id: "ct1",
+    amount: 50,
+    date: "2026-06-01T00:00:00.000Z",
+    fromMember: { member: { user: { name: "Alice Smith" } } },
+    toMember: { member: { user: { name: "Bob Jones" } } },
+  },
+  {
+    id: "ct2",
+    amount: 20,
+    date: "2026-06-02T00:00:00.000Z",
+    fromMember: { member: { user: { name: "Bob Jones" } } },
+    toMember: { member: { user: { name: "Alice Smith" } } },
+  },
+];
+
 describe("BudgetCategories", () => {
   let fetchMock: FetchMock;
 
   beforeEach(() => {
     fetchMock = vi.fn<(input: string) => Promise<Response>>();
+    // Default only covers the drill-down's own lazy fetch (fired whenever a
+    // row expands, independent of the summary/categories hydration this
+    // suite's pre-existing tests exercise) — everything else stays
+    // unmocked, same as before this task's additions, so tests asserting
+    // "no client fetch"/un-hydrated fallback behavior are unaffected.
+    fetchMock.mockImplementation((url: string) =>
+      url.includes("/api/transfers/by-category")
+        ? jsonResponse([])
+        : (undefined as unknown as Promise<Response>),
+    );
     vi.stubGlobal("fetch", fetchMock);
     stubMatchMedia();
   });
@@ -173,6 +215,7 @@ describe("BudgetCategories", () => {
     vi.mocked(createCategoryAction).mockReset();
     vi.mocked(updateCategoryAction).mockReset();
     vi.mocked(deleteCategoryAction).mockReset();
+    vi.mocked(createTransferAction).mockReset();
   });
 
   // dashboard-view: "Loading state precedes hydration" — this widget shows
@@ -357,11 +400,11 @@ describe("BudgetCategories", () => {
       RENT_CATEGORY,
       { id: "c2", name: "Groceries", monthlyBudget: 400, balances: [] },
     ];
-    fetchMock.mockImplementation((url: string) =>
-      url.includes("/api/categories")
-        ? jsonResponse(updatedCategories)
-        : jsonResponse(SUMMARY_FIXTURE),
-    );
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes("/api/categories")) return jsonResponse(updatedCategories);
+      if (url.includes("/api/transfers/by-category")) return jsonResponse([]);
+      return jsonResponse(SUMMARY_FIXTURE);
+    });
 
     await renderHydrated([RENT_CATEGORY]);
     await screen.findByText("Rent");
@@ -392,11 +435,11 @@ describe("BudgetCategories", () => {
     const updatedCategories: CategoryFixture[] = [
       { ...RENT_CATEGORY, name: "Rent (updated)" },
     ];
-    fetchMock.mockImplementation((url: string) =>
-      url.includes("/api/categories")
-        ? jsonResponse(updatedCategories)
-        : jsonResponse(SUMMARY_FIXTURE),
-    );
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes("/api/categories")) return jsonResponse(updatedCategories);
+      if (url.includes("/api/transfers/by-category")) return jsonResponse([]);
+      return jsonResponse(SUMMARY_FIXTURE);
+    });
 
     await renderHydrated([RENT_CATEGORY]);
     await screen.findByText("Rent");
@@ -436,11 +479,11 @@ describe("BudgetCategories", () => {
       ok: true,
       data: { success: true as const },
     });
-    fetchMock.mockImplementation((url: string) =>
-      url.includes("/api/categories")
-        ? jsonResponse([])
-        : jsonResponse(SUMMARY_FIXTURE),
-    );
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes("/api/categories")) return jsonResponse([]);
+      if (url.includes("/api/transfers/by-category")) return jsonResponse([]);
+      return jsonResponse(SUMMARY_FIXTURE);
+    });
 
     await renderHydrated([RENT_CATEGORY]);
     await screen.findByText("Rent");
@@ -460,9 +503,55 @@ describe("BudgetCategories", () => {
     });
   });
 
-  // The per-category transfer-history drill-down and the category-scoped
-  // inline transfer form (dashboard-view: "Category drill-down lists only
-  // that category's transfers" / "Creating a transfer invalidates the group
-  // cache") land in PR 15c — split from this PR's CRUD-only scope per the
-  // mandatory line-count checkpoint (see tasks.md's split note).
+  // dashboard-view: "Category drill-down lists only that category's
+  // transfers" — the widget asserts correct consumption of the route's
+  // response, not the route's own server-side filtering (that belongs to
+  // `by-category/route.test.ts`).
+  it("shows only this category's transfers in its expanded drill-down, fetched via /api/transfers/by-category", async () => {
+    fetchMock.mockImplementation((url: string) =>
+      url.includes("/api/transfers/by-category")
+        ? jsonResponse(TRANSFERS_BY_CATEGORY_FIXTURE)
+        : jsonResponse(SUMMARY_FIXTURE),
+    );
+
+    await renderHydrated([RENT_CATEGORY]);
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `/api/transfers/by-category?categoryId=${RENT_CATEGORY.id}`,
+        ),
+      );
+    });
+    expect(await screen.findAllByTestId("category-transfer-row")).toHaveLength(2);
+  });
+
+  // dashboard-view: "Creating a transfer invalidates the group cache" (the
+  // category-scoped inline form half, task 15.9/15.10).
+  it("submits the category-scoped inline transfer form via transfer.create, locked to this category", async () => {
+    vi.mocked(createTransferAction).mockResolvedValue({
+      ok: true,
+      data: { id: "t3" },
+    } as Awaited<ReturnType<typeof createTransferAction>>);
+
+    await renderHydrated([RENT_CATEGORY]);
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
+
+    fireEvent.click(screen.getByLabelText("From"));
+    selectOption("Alice Smith");
+    fireEvent.click(screen.getByLabelText("To"));
+    selectOption("Bob Jones");
+    fireEvent.change(screen.getByLabelText("Amount"), {
+      target: { value: "25" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add Transfer" }));
+
+    await waitFor(() => {
+      expect(createTransferAction).toHaveBeenCalledWith(
+        { categoryId: "c1", fromMemberId: "m1", toMemberId: "m2", amount: 25 },
+        expect.anything(),
+      );
+    });
+  });
 });

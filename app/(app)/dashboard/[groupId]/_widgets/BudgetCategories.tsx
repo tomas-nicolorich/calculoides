@@ -10,6 +10,7 @@ import {
   Input,
   ResponsiveDialog,
   RowMenu,
+  Select,
 } from "../../../../_ui";
 import { ProgressMeter } from "../../../../_ui/money";
 import { formatCurrency } from "../../../../../lib/format-currency";
@@ -22,6 +23,10 @@ import {
   useUpdateCategory,
   useDeleteCategory,
 } from "../../../../_data/categories";
+import {
+  useCreateTransfer,
+  useTransfersByCategory,
+} from "../../../../_data/transfers";
 
 interface CategoryBalance {
   memberId: string;
@@ -132,6 +137,186 @@ function CategoryFormFields({
   );
 }
 
+/** A labelled `Select`, mirrors `BudgetTransfers.tsx`'s `LabeledSelect`. */
+function LabeledSelect({
+  id,
+  label,
+  value,
+  onValueChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const labelId = `${id}-label`;
+  return (
+    <div>
+      <label htmlFor={id} id={labelId} className="text-xs text-slate-500">
+        {label}
+      </label>
+      <Select
+        id={id}
+        labelId={labelId}
+        value={value}
+        onValueChange={onValueChange}
+        options={options}
+        placeholder="Select…"
+      />
+    </div>
+  );
+}
+
+/** Per-category drill-down (dashboard-view: "Category drill-down lists only
+ * that category's transfers"). Only fetches while its row is expanded. */
+function TransferHistory({
+  groupId,
+  categoryId,
+  isExpanded,
+}: {
+  groupId: string;
+  categoryId: string;
+  isExpanded: boolean;
+}) {
+  const { data, isLoading } = useTransfersByCategory(
+    groupId,
+    categoryId,
+    isExpanded,
+  );
+
+  if (!isExpanded) return null;
+
+  return (
+    <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+      <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">
+        Transfer History
+      </p>
+      {isLoading && <p className="text-xs text-slate-400">Loading…</p>}
+      {!isLoading && (!data || data.length === 0) && (
+        <p className="text-xs text-slate-400">No transfers yet</p>
+      )}
+      {data?.map((transfer) => (
+        <div
+          key={transfer.id}
+          data-testid="category-transfer-row"
+          className="flex items-center justify-between gap-2 text-xs text-slate-500"
+        >
+          <span>
+            {transfer.fromMember?.member?.user?.name ?? "?"} →{" "}
+            {transfer.toMember?.member?.user?.name ?? "?"}
+          </span>
+          <span className="font-mono tnum shrink-0">
+            {formatCurrency(transfer.amount)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Category-scoped inline transfer form (ADR-9 file list: "inline
+ * budget-transfer form → `lib/actions/transfer.create`, scoped to a single
+ * category from within its expanded row"). Only members with a non-excluded
+ * balance in this category are offered — mirrors `main`'s
+ * `transferCategoryMemberIds` restriction. */
+function CategoryTransferForm({
+  groupId,
+  category,
+  members,
+}: {
+  groupId: string;
+  category: CategoryRow;
+  members: RowMember[];
+}) {
+  const [fromMemberId, setFromMemberId] = useState("");
+  const [toMemberId, setToMemberId] = useState("");
+  const [amount, setAmount] = useState("");
+  const mutation = useCreateTransfer(groupId);
+
+  const eligibleIds = new Set(
+    category.balances.filter((b) => !b.excluded).map((b) => b.memberId),
+  );
+  const eligibleMembers = members.filter((m) => eligibleIds.has(m.id));
+  const options = eligibleMembers.map((m) => ({ value: m.id, label: m.name }));
+
+  const parsedAmount = parseFloat(amount);
+  const isValid =
+    fromMemberId !== "" &&
+    toMemberId !== "" &&
+    fromMemberId !== toMemberId &&
+    !isNaN(parsedAmount) &&
+    parsedAmount > 0;
+
+  const handleSubmit = async () => {
+    if (!isValid) return;
+    await mutation.mutateAsync({
+      categoryId: category.id,
+      fromMemberId,
+      toMemberId,
+      amount: parsedAmount,
+    });
+    setFromMemberId("");
+    setToMemberId("");
+    setAmount("");
+  };
+
+  return (
+    <form
+      aria-label={`Transfer within ${category.name}`}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit();
+      }}
+      className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800"
+    >
+      <LabeledSelect
+        id={`category-transfer-from-${category.id}`}
+        label="From"
+        value={fromMemberId}
+        onValueChange={setFromMemberId}
+        options={options}
+      />
+      <LabeledSelect
+        id={`category-transfer-to-${category.id}`}
+        label="To"
+        value={toMemberId}
+        onValueChange={setToMemberId}
+        options={options}
+      />
+      <div className="col-span-2">
+        <label
+          htmlFor={`category-transfer-amount-${category.id}`}
+          className="text-xs text-slate-500"
+        >
+          Amount
+        </label>
+        <Input
+          id={`category-transfer-amount-${category.id}`}
+          type="number"
+          step="0.01"
+          prefix="€"
+          value={amount}
+          onChange={(e) => {
+            setAmount(e.target.value);
+          }}
+          placeholder="0.00"
+        />
+      </div>
+      <Button
+        type="submit"
+        variant="transfer"
+        size="sm"
+        className="col-span-2"
+        disabled={!isValid || mutation.isPending}
+      >
+        {mutation.isPending ? "Adding…" : "Add Transfer"}
+      </Button>
+    </form>
+  );
+}
+
 /** A single expanded per-member balance row. Ported from `main`'s
  * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx` `MemberRow`
  * markup, minus the transfer affordance (ADR-9: mutation-shaped features
@@ -216,12 +401,12 @@ function MemberRow({
 }
 
 /** A single accordion row: header (name, budget, header `ProgressMeter`,
- * `RowMenu` edit/delete) plus expand/collapse per-member balances (ADR-9
- * slice 2 of 2, PR 15b — create/update/delete-with-confirmation only; the
- * per-category transfer-history drill-down and inline transfer form land in
- * PR 15c, split at this task-level boundary per the mandatory line-count
- * checkpoint — see tasks.md's split note). */
+ * `RowMenu` edit/delete) plus expand/collapse per-member balances, the
+ * per-category transfer-history drill-down, and the category-scoped inline
+ * transfer form (ADR-9 slice 2 of 2 — PR 15 adds the mutation-shaped
+ * affordances PR 14 intentionally left out). */
 function CategoryRowItem({
+  groupId,
   category,
   isExpanded,
   onToggle,
@@ -229,6 +414,7 @@ function CategoryRowItem({
   onDelete,
   members,
 }: {
+  groupId: string;
   category: CategoryRow;
   isExpanded: boolean;
   onToggle: () => void;
@@ -302,6 +488,16 @@ function CategoryRowItem({
               />
             ))}
           </div>
+          <TransferHistory
+            groupId={groupId}
+            categoryId={category.id}
+            isExpanded={isExpanded}
+          />
+          <CategoryTransferForm
+            groupId={groupId}
+            category={category}
+            members={members}
+          />
         </div>
       )}
     </div>
@@ -322,11 +518,11 @@ function CategoryRowItem({
  * member has not hydrated yet falls back to `memberId.slice(0, 4)`, mirroring
  * `main`'s widget.
  *
- * PR 15b adds create/update/delete-with-confirmation dialogs (all three
+ * PR 15 adds create/update/delete-with-confirmation dialogs (all three
  * `lib/actions/category.ts` mutations invalidate `queryKeys.group(groupId)`
- * on success, same contract `BudgetTransfers` established) — the
- * per-category transfer-history drill-down and inline transfer form land in
- * PR 15c (split at this boundary per the mandatory line-count checkpoint).
+ * on success, same contract `BudgetTransfers` established), the per-category
+ * transfer-history drill-down, and the category-scoped inline transfer form
+ * — every mutation-shaped affordance ADR-9 deferred out of PR 14.
  */
 export function BudgetCategories({ groupId }: { groupId: string }) {
   const { data: categories, isLoading, isError } = useCategoriesList(groupId);
@@ -563,6 +759,7 @@ export function BudgetCategories({ groupId }: { groupId: string }) {
             {categories.map((category) => (
               <CategoryRowItem
                 key={category.id}
+                groupId={groupId}
                 category={category}
                 isExpanded={expandedIds.has(category.id)}
                 onToggle={() => {

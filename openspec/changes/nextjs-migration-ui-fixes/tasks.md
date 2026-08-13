@@ -1117,8 +1117,9 @@ already-implemented change was split at the next natural vertical seam inside PR
 - **PR 15c** (`feat/nextjs-ui-fixes-15c-budget-transfer-drilldown`, forked from PR 15b once
   committed): tasks 15.7-15.13 — per-category transfer-history drill-down
   (`TransferHistory`/`useTransfersByCategory`/`queryKeys.transfersByCategory`), the category-scoped
-  inline transfer form (`CategoryTransferForm`/`LabeledSelect`), REFACTOR/verify/commit. Deferred
-  to a follow-up batch.
+  inline transfer form (`CategoryTransferForm`/`LabeledSelect`), REFACTOR/verify/commit. Completed
+  in the same session immediately after PR 15b, by restoring the already-implemented-and-verified
+  code from the scratchpad copy taken before the second split (see 15.7's own note).
 
 This section's remaining tasks (15.1-15.13) keep their original PR-15 numbering; "PR 15" in this
 file now refers to the 15a+15b+15c triple collectively, same "split at the natural seam, don't ask
@@ -1212,10 +1213,9 @@ checkpoint: **604 changed lines** (556 insertions + 48 deletions, 5 files) vs
 `feat/nextjs-ui-fixes-15a-icon-picker` — see the "SECOND SPLIT" note above for how this number was
 reached (928 combined, re-measured after removing 15.7-15.10's code).
 
-**Tasks 15.7-15.13 deferred to PR 15c** (see "SECOND SPLIT" note above) — not started in this
-batch:
+**Tasks 15.7-15.13 (PR 15c)** — implemented in the same session immediately after PR 15b:
 
-- [ ] 15.7 **RED**: spec scenario "Category drill-down lists only that category's transfers":
+- [x] 15.7 **RED**: spec scenario "Category drill-down lists only that category's transfers":
       given a category with 2 of the group's 5 total transfers, its accordion row's transfer
       history (loaded via `/api/transfers/by-category?categoryId=...`) lists exactly those 2.
       Mock the route response, assert the widget filters/renders only the returned set (the
@@ -1224,29 +1224,53 @@ batch:
       not server-side filtering logic, which belongs to that route's own existing tests).
       Fails — no drill-down UI exists yet.
 
-      **Implemented once already** (in this same session, before the second split — see the
-      "SECOND SPLIT" note): `TransferHistory` component, `useTransfersByCategory` hook in
-      `app/_data/transfers.ts`, `queryKeys.transfersByCategory` in `lib/query-keys.ts`, and a RED
-      test asserting exactly 2 `category-transfer-row` elements from a mocked
-      `/api/transfers/by-category` response — all fully green before being removed from this
-      branch and preserved in the scratchpad for PR 15c's own commit.
-- [ ] 15.8 **GREEN**: Add the per-category transfer-history drill-down panel, fetching
-      `/api/transfers/by-category`. Green.
-- [ ] 15.9 **RED**: extend — the accordion's own inline budget-transfer form (per ADR-9's file
+      Implemented once already, before the second split (see the "SECOND SPLIT" note above) as
+      part of the combined RED/GREEN pass across all of 15.1-15.13 — genuinely RED first (module
+      import error against a not-yet-existing `TransferHistory`/`CategoryTransferForm`), then
+      GREEN, then verified fully green (18/18) before the checkpoint triggered the split. The
+      code (widget additions, `app/_data/transfers.ts`'s `useTransfersByCategory`,
+      `lib/query-keys.ts`'s `transfersByCategory`, and both test cases below) was preserved in
+      the scratchpad and restored verbatim onto PR 15b's base to become this PR — re-run and
+      reconfirmed green here, not re-derived from scratch.
+- [x] 15.8 **GREEN**: Add the per-category transfer-history drill-down panel, fetching
+      `/api/transfers/by-category`. `TransferHistory` renders per-transfer rows (`from → to`,
+      amount) with `data-testid="category-transfer-row"`, lazily fetched only while its row is
+      expanded (`useTransfersByCategory(groupId, categoryId, isExpanded)` — `enabled: isExpanded`
+      keeps unexpanded rows fetch-free, same "no client fetch until needed" discipline the rest
+      of this widget follows). The route returns Prisma's raw nested relation shape
+      (`fromMember.member.user.name`, not the flattened `fromMemberName` shape `TransfersList`
+      uses elsewhere) — a dedicated `CategoryTransferHistoryItem` type documents this instead of
+      reusing `TransfersList`. Green.
+- [x] 15.9 **RED**: extend — the accordion's own inline budget-transfer form (per ADR-9's file
       list: "inline budget-transfer form → `lib/actions/transfer.create`", scoped to a single
       category from within its expanded row) submits and invalidates
       `queryKeys.group(groupId)`. Fails.
-- [ ] 15.10 **GREEN**: Add the category-scoped inline transfer form. Green.
-- [ ] 15.11 **REFACTOR**: Confirm every dialog/form here reuses PR 3/6's ported primitives —
+- [x] 15.10 **GREEN**: Add the category-scoped inline transfer form. `CategoryTransferForm`
+      reuses `BudgetTransfers.tsx`'s `LabeledSelect` pattern (re-declared locally — `BudgetTransfers`
+      doesn't export it) for From/To `Select`s, restricted to members with a non-excluded balance
+      in this category (mirrors `main`'s `transferCategoryMemberIds` restriction), no category
+      `Select` since it's locked to `category.id` from the enclosing row. `useCreateTransfer`
+      (PR 13's hook, unmodified) wires the mutation. Green.
+- [x] 15.11 **REFACTOR**: Confirm every dialog/form here reuses PR 3/6's ported primitives —
       no inline reimplementation (the `ui-design-system` spec's standing "no inline
-      reimplementation" requirement applies here as much as anywhere).
-- [ ] 15.12 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual:
-      per-category drill-down shows the correct filtered transfer subset; inline transfer
-      submission from within an expanded row. (Create/update/delete-with-confirmation flows
-      already verified in PR 15b.)
-- [ ] 15.13 Commit + PR 15c (forked from PR 15b, Depends on: PR 15b, Follow-up: none — leaf
+      reimplementation" requirement applies here as much as anywhere). Confirmed: `Select`
+      (`LabeledSelect`'s only primitive dependency), `Input`, `Button` — `grep` for direct
+      `Popover`/`Dialog.Root`/`@base-ui` usage inside `BudgetCategories.tsx` returns zero matches
+      (same check PR 15b's own REFACTOR step ran).
+- [x] 15.12 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: per-category
+      drill-down shows the correct filtered transfer subset; inline transfer submission from
+      within an expanded row. `npm run typecheck`, `npx eslint app lib proxy.ts next.config.ts
+      --max-warnings 0`, `npx vitest run "app/(app)/dashboard/[groupId]/_widgets/
+      BudgetCategories.test.tsx"` (18/18) and full `npm test` (95 files / 479 tests) all green.
+      Manual flows verified via the same mocked-fetch/mocked-Server-Action harness the automated
+      suite uses (no live dev server in this sandboxed session, same constraint PR 14/15b noted).
+      **Line-count checkpoint**: `git diff --stat` vs `feat/nextjs-ui-fixes-15b-budget-categories-
+      mutations` = **382 changed lines** (353 insertions + 29 deletions, 4 files) — comfortably
+      under the 800 hard cap.
+- [x] 15.13 Commit + PR 15c (forked from PR 15b, Depends on: PR 15b, Follow-up: none — leaf
       slice; reverting this alone leaves PR 15b's working CRUD dialogs intact, and reverting
-      15b+15c together leaves PR 14's read-only accordion intact, per the Rollback Plan).
+      15b+15c together leaves PR 14's read-only accordion intact, per the Rollback Plan). Branch
+      `feat/nextjs-ui-fixes-15c-budget-transfer-drilldown`.
 
 ## PR 16 — `SavingsGoalList` + savings prefetch + `ExpenseForm` quick action — **flagged, highest risk**
 

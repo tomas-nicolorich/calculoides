@@ -34,4 +34,10 @@ export const queryKeys = {
     ["group", groupId, "expenses", strip(filters)] as const,
   transfers: (groupId: string, filters: TransferFilters = {}) =>
     ["group", groupId, "transfers", strip(filters)] as const,
+  // PR 15: `BudgetCategories`' per-category drill-down (`/api/transfers/by-category`,
+  // distinct route from `transfers` above). Still nested under the `["group", groupId]`
+  // prefix so a category/transfer mutation's `invalidateGroupQueries` call also
+  // invalidates any open drill-down.
+  transfersByCategory: (groupId: string, categoryId: string) =>
+    ["group", groupId, "transfers-by-category", categoryId] as const,
 } as const;
