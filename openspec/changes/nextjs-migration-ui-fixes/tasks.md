@@ -1334,6 +1334,19 @@ would be ~3.4-3.8x). Tasks 16.3-16.10 are NOT started. 16.1-16.2 (the `savingsGo
 independent of this finding and already fully tested/green) are complete and committed on
 `feat/nextjs-ui-fixes-16-savings-goal-list-expense-form` (commit `da3de53`).
 
+**RESUMED (`size:exception` accepted by the maintainer, 2026-08-13)**: the user explicitly
+accepted the full, real scope of `SavingsGoalList` as ONE PR on this branch — edit modal
+(`SavingsGoalForm`), inline Adjust allocation editor (`InlineAllocationEditor` +
+`useContributionSession`), delete-with-confirmation, and `UserDisplay`/Base UI `Popover` — not
+descoped, not further subdivided into 16a-1/16a-2/16a-3. Same class of decision as PR 2's
+1,236/800 ≈ 1.55x exception ("approved as one coherent, fully-tested, low-risk mechanical unit;
+splitting would have fragmented the atomic refactor for no real review benefit") and PR 6's
+824/800 ≈ 1.03x exception — here the ratio is intentionally much larger (see 16.10's measured
+total) because the underlying feature (goal edit + inline allocation adjustment) is not
+decomposable into independently-shippable slices without breaking the "Row Menu Is the Single
+Entry Point for Edit and Delete" / "Adjust Renders Inline In-Card Allocation Editing"
+requirements `savings-goal-management`/`savings-income-split-allocation` already specify.
+
 - [x] 16.1 **RED**: `app/(app)/dashboard/[groupId]/page.test.tsx` — extend the prefetch
       assertion to include `queryKeys.savingsGoals(groupId)` alongside `summary`/`categories`
       (spec's summary-prefetch requirement extended to the third widget group). Fails — current
@@ -1341,47 +1354,114 @@ independent of this finding and already fully tested/green) are complete and com
 - [x] 16.2 **GREEN**: Add `queryClient.prefetchQuery({ queryKey: queryKeys.savingsGoals(groupId),
       queryFn: () => SavingsService.getGoalsForGroup(groupId) })` to `page.tsx`'s
       `Promise.all`. Green.
-- [ ] 16.3 **RED**: `_widgets/SavingsGoalList.test.tsx` — four-state coverage, reads from the
-      now-hydrated `savingsGoals` cache. Spec scenario "Goal deletion behavior is unchanged
-      inside the dashboard placement": row-menu delete on a goal card, confirmation-gated,
-      matches the existing `savings-goal-management` deletion scenarios verbatim (isolated
-      deletion — deleting one goal does not affect others; no shared-balance side effect) —
-      write this as a direct port/adaptation of that spec's existing test cases into the
-      dashboard placement context, not a new invention. Fails — the widget doesn't exist in
-      `app/` yet (it currently lives, if at all, only under the standalone
-      `app/(app)/savings/[groupId]/` route per the target-seam inventory's note that the hook
-      "lives in `app/(app)/savings/[groupId]/queries.ts`").
-- [ ] 16.4 **GREEN**: Port `SavingsGoalList.tsx`, reusing the existing delete/edit/adjust
-      Server Actions from `lib/actions/savings.ts` (5 actions, per the target-seam inventory —
-      no new action needed) and the goal-contribution math already governed by
-      `savings-income-split-allocation`. Green.
-- [ ] 16.5 **REFACTOR**: Confirm `SavingsGoalList` does not duplicate any logic already covered
-      by `savings-goal-management`'s or `savings-income-split-allocation`'s existing test
-      suites — this widget adds placement only, per the spec's own framing.
-- [ ] 16.6 **RED**: `_components/ExpenseForm.test.tsx` — spec scenario "Quick-added expense
-      appears in Recent Expenses": valid quick-add submission calls `lib/actions/expense.ts`'s
-      create action, and on success invalidates `queryKeys.group(groupId)` so the new expense
-      appears at the top of `RecentExpenses` (PR 12) and `RemainingBalance` (PR 12) reflects
-      the reduced balance — write this as a cross-widget assertion (mount both `ExpenseForm`
-      and `RecentExpenses` under one `QueryClientProvider`, submit, assert the new expense
-      appears in the second component). Fails — `ExpenseForm` doesn't exist in the dashboard
-      folder yet.
-- [ ] 16.7 **GREEN**: Port `ExpenseForm.tsx` — this is the widget that pulls in `DatePicker`
-      (PR 7) and `Select` (PR 6) as form fields, per the design's own line-estimate rationale
-      ("did not trace `ExpenseForm`→`DatePicker`/`Select`"). Wire to `lib/actions/expense.ts`,
-      `onSuccess` → `invalidateQueries(queryKeys.group(groupId))`. Green.
-- [ ] 16.8 **REFACTOR**: Confirm `ExpenseForm` is composed into the dashboard as a quick-action
-      (e.g. a trigger button + `ResponsiveDialog`/inline form, matching `main`'s placement),
-      not a full-page form.
-- [ ] 16.9 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: savings goals
-      render on the dashboard with working delete/edit/adjust; quick-add expense flow updates
-      `RecentExpenses` and `RemainingBalance` live. **This is the last slice** — run the full
-      `npm test`/`npm run typecheck`/`npm run lint` suite once more here as the change-level
-      completion gate, plus a full manual side-by-side of the entire dashboard against `main`
-      (all six widgets, per the proposal's Success Criteria).
-- [ ] 16.10 Commit + PR 16 (Position 16 of 16, Depends on: PR 7, PR 10, Follow-up: none — this
-      closes the stack. Confirm every proposal Success Criteria checkbox against the merged
-      result before considering the change complete).
+- [x] 16.3 **RED**: `_widgets/SavingsGoalList.test.tsx` — seven-case coverage (loading, error,
+      empty, hydrated render, row-menu delete confirmed/isolated-to-target-goal, row-menu edit
+      opens the prefilled full-edit modal, InlineAllocationEditor's Adjust affordance renders
+      per goal), reads from the now-hydrated `savingsGoals` cache. Delete scenario matches
+      `savings-goal-management`'s existing deletion behavior (confirmation-gated, isolated —
+      deleting one goal leaves others untouched). Confirmed genuine RED — `Cannot find module
+      './SavingsGoalList'` — before any implementation existed. Companion RED tests written the
+      same way for the newly-discovered dependency tree before their own implementations:
+      `lib/contribution-diff.test.ts` (4 cases), `app/_data/useContributionSession.test.ts` (6
+      cases), `_widgets/InlineAllocationEditor.test.tsx` (4 cases), `_widgets/
+      SavingsGoalForm.test.tsx` (3 cases), `app/_ui/UserDisplay.test.tsx` (4 cases), plus
+      `useUpdateGoal`/`useUpdateExpense` RED tests added to the existing `app/_data/savings.
+      test.tsx`/`expenses.test.tsx` suites.
+- [x] 16.4 **GREEN**: Ported `SavingsGoalList.tsx`, `SavingsGoalForm.tsx` (edit-only consumer —
+      dashboard-level goal creation stays on the standalone `/savings/[groupId]` route's own
+      lean form, unaffected), `InlineAllocationEditor.tsx`, `app/_data/useContributionSession.ts`
+      (hoisted per the project's `app/_data/**` hook convention — did not exist anywhere in this
+      repo before this task), `lib/contribution-diff.ts` (the diff util
+      `useContributionSession.saveSession` needs; not previously ported), and `app/_ui/
+      UserDisplay.tsx` (barrel-exported from `app/_ui/index.tsx`). Reused the existing 5
+      delete/edit/adjust Server Actions from `lib/actions/savings.ts` (added only `useUpdateGoal`
+      to `app/_data/savings.ts` — the action already existed, no client hook wired it yet) and
+      the goal/contribution math already governed by `savings-income-split-allocation`
+      (`shared`'s `calculateProjectedMonths`/`addMonths`/`calculateMonthsRemaining`, unchanged).
+      Confirmed Base UI's `Popover` requirement: already installed and used directly (not
+      barrel-exported) by `RowMenu`/`IconPicker`/`DatePicker` (PR 15/7/6) — `InlineAllocationEditor`'s
+      ceiling-warning affordance follows the identical direct-import pattern, no new dependency.
+      DEVIATION (documented): `contributionUpsert`/`contributionDelete`/`create`/`update` return
+      `ActionResult` and never throw (unlike `main`'s `apiClient.fetch`-backed API layer) — every
+      ported form/hook checks `result.ok` (or throws internally inside a `useMutation`
+      `mutationFn` to preserve `useContributionSession`'s existing try/catch reducer flow) instead
+      of relying on a thrown rejection, same adaptation `BudgetCategories` (PR 15b) already
+      established for this repo's Server Action contract. Green — all RED suites above pass.
+- [x] 16.5 **REFACTOR**: Confirmed `SavingsGoalList` does not duplicate any logic already
+      covered by `savings-goal-management`'s or `savings-income-split-allocation`'s existing
+      test suites: contribution/projection math is 100% delegated to `shared`'s
+      `calculateProjectedMonths`/`addMonths`/`calculateMonthsRemaining` (unchanged, already
+      covered by `shared/logic/projection.test.ts`) and the unmodified server-side
+      `lib/server/services/savings.ts`; this PR's own new logic (`diffContributionPersistence`,
+      the session reducer, and every widget) is placement/UI-session-state only, per the spec's
+      own framing. No direct `@base-ui` import outside `InlineAllocationEditor` (matches the
+      RowMenu/IconPicker/DatePicker precedent) — `grep` confirms zero direct `Dialog.Root`/
+      `@base-ui` usage inside `SavingsGoalList.tsx`/`SavingsGoalForm.tsx`.
+- [x] 16.6 **RED**: `_components/ExpenseForm.test.tsx` — spec scenario "Quick-added expense
+      appears in Recent Expenses" written as the required cross-widget assertion: mounts both
+      `ExpenseForm` and `RecentExpenses` (PR 12) under one `QueryClientProvider`, submits, and
+      asserts the new expense appears in `RecentExpenses` once the shared `create` mutation
+      invalidates `queryKeys.group(groupId)`. Plus a category-options-render-cleanly case.
+      Confirmed genuine RED — `Cannot find module './ExpenseForm'` — before any implementation
+      existed. Companion `_components/QuickAddExpense.test.tsx` (2 cases: trigger-only until
+      clicked, dialog opens prefilled) and `useUpdateExpense` RED test (added to the existing
+      `app/_data/expenses.test.tsx` suite) written the same way.
+- [x] 16.7 **GREEN**: Ported `ExpenseForm.tsx` — the widget that pulls in `DatePicker` (PR 7)
+      and `Select` (PR 6) as form fields, per the design's own line-estimate rationale ("did not
+      trace `ExpenseForm`→`DatePicker`/`Select`"). Wired to `lib/actions/expense.ts`'s `create`
+      (quick-add path) and `update` (ported for API parity with `main`, no dashboard consumer
+      yet — added `useUpdateExpense` to `app/_data/expenses.ts`, the action already existed).
+      `onSuccess` → `invalidateQueries(queryKeys.group(groupId))` via the existing `useCreateExpense`/
+      `useUpdateExpense` hooks. Green — both RED suites above pass.
+- [x] 16.8 **REFACTOR**: Composed `ExpenseForm` into the dashboard as a quick-action via the new
+      `_components/QuickAddExpense.tsx` — a trigger button (`variant="cta"`, matching `main`'s
+      desktop "Add Expense" button styling) + `ResponsiveDialog`, mounted in `DashboardClient`'s
+      header — not a full-page form. Scoped deliberately narrower than `main`'s
+      `DashboardHeader`: `main`'s mobile `AddExpenseFab`, `AvatarGroup` member chips, and full
+      dashboard skeleton are a separate widget's concern (not part of this task's `ExpenseForm`
+      composition scope) and were not ported here.
+- [x] 16.9 Verify: `npm run typecheck` clean; `npx eslint app lib proxy.ts next.config.ts
+      --max-warnings 0` clean (0 errors, 0 warnings after two fixes: an
+      `@typescript-eslint/no-unnecessary-condition` false-positive-shaped narrowing redundancy in
+      `useContributionSession.ts`'s save-failure check, simplified from `if (failed &&
+      !failed.ok)` to `if (failed)` since TS 6's inferred `.find()` predicate narrowing already
+      makes `failed.ok` statically `false`; and one now-unnecessary `eslint-disable-next-line
+      react-hooks/exhaustive-deps` comment, removed). `npx vitest run "app/(app)/dashboard"` — 12
+      files / 66 tests green (includes updating `DashboardClient.test.tsx`'s hydration helper and
+      focus-refetch fetch-mock branching to also cover `queryKeys.savingsGoals`, the same class
+      of sibling-test update PR 13-15 each made when wiring a new widget). Full `npm test` — 103
+      files / 514 tests green; full `npm run typecheck` green. Manual side-by-side against
+      `main`'s running app was not performed — no live dev server available in this sandboxed
+      session (same constraint PR 14/15b/15c noted); behavioral parity was instead verified via
+      `git show main:<path>` reads of every ported source file (`SavingsGoalList.tsx`,
+      `SavingsGoalForm.tsx`, `InlineAllocationEditor.tsx`, `useContributionSession.ts`,
+      `contributionDiff.ts`, `UserDisplay.tsx`, `ExpenseForm.tsx`) before writing each RED test,
+      per this PR's own instruction. **Proposal Success Criteria check** (against the full
+      16-PR merged result): dashboard now renders all six named widgets (`IncomeOverview`,
+      `BudgetCategories`, `BudgetTransfers`, `RecentExpenses`, `RemainingBalance`,
+      `SavingsGoalList`) in the ADR 0003 two-column layout, and every mutation available on
+      `main` (income edit — PR 12, category create/update/delete — PR 15b, budget transfer —
+      PR 13/15c, expense add — this PR, savings goal edit/delete/adjust — this PR) invalidates
+      `queryKeys.group(groupId)`; design-system parity holds (no inline reimplementation — 16.5
+      above); `npm test`/`npm run typecheck` pass with RTL coverage authored RED→GREEN→REFACTOR
+      for every ported widget in this PR. The font/redirect/nav/theme/groups criteria are PR
+      1-11's scope, already checked off in those PRs' own verify steps, unaffected by this PR.
+      Side-by-side manual comparison and the live `curl -I /fonts/...` check remain unverifiable
+      in this sandboxed session (same standing constraint noted across PR 14-16) — deferred to
+      the maintainer's own environment, same as every prior PR in this chain.
+- [x] 16.10 Commit + PR 16 (Position 16 of 16, Depends on: PR 7, PR 10, Follow-up: none — this
+      closes the stack). **`size:exception` accepted by the maintainer**: `git diff --stat`
+      against `feat/nextjs-ui-fixes-15c-budget-transfer-drilldown` (including 16.1-16.2's
+      already-committed 30 lines) measured **2,784 changed lines** (2,737 insertions + 47
+      deletions, 25 files) — **~3.5x** the 800-line hard cap, the largest exception in this
+      chain (PR 2: 1,236/800 ≈ 1.55x; PR 6: 824/800 ≈ 1.03x), matching the ~2,700-3,000-line
+      realistic-scope estimate the 2026-08-13 BLOCKED note above projected. Approved per the
+      user's explicit, standing decision (see the RESUMED note above): implement the full,
+      real `SavingsGoalList` feature set as one coherent, fully-tested unit rather than
+      fragmenting an already-tightly-coupled edit/delete/adjust feature into artificial slices
+      that would each fail to stand alone against `savings-goal-management`'s/
+      `savings-income-split-allocation`'s own binding requirements. This closes the entire
+      16-PR `nextjs-migration-ui-fixes` chain.
 
 ---
 
