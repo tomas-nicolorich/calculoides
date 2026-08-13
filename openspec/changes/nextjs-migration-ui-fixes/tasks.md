@@ -1289,11 +1289,56 @@ apply the 16a (`SavingsGoalList`)/16b (`ExpenseForm`) fallback split from the Re
 Forecast — do not attempt to compress scope to fit; the two components are already
 independently shippable per this row's own two-part unit description.
 
-- [ ] 16.1 **RED**: `app/(app)/dashboard/[groupId]/page.test.tsx` — extend the prefetch
+**BLOCKED (scope discovery, 2026-08-13, before 16.3's RED was written)**: same class of gap
+PR 6 found for `IconPicker`→`categoryIcons.tsx` (untraced transitive dependency), but larger.
+`main`'s real `SavingsGoalList` is not a self-contained 270-line file — the dashboard-view
+spec's binding requirement ("existing delete/edit/adjust lifecycle" + `savings-goal-management`'s
+own requirements "Row Menu Is the Single Entry Point for Edit and Delete", "Row-menu Edit opens
+the full-edit modal", "Adjust Renders Inline In-Card Allocation Editing") pulls in a whole
+untraced sub-tree, confirmed via `git show main:<path> | wc -l`:
+
+| File | Lines | Status in this repo |
+|---|---:|---|
+| `features/savings/SavingsGoalList.tsx` | 270 | budgeted (partially) |
+| `features/savings/SavingsGoalList.test.tsx` | 504 | not budgeted |
+| `features/savings/SavingsGoalForm.tsx` (edit modal, RowMenu's Edit target) | 216 | not budgeted at all |
+| `features/savings/SavingsGoalForm.test.tsx` | 269 | not budgeted at all |
+| `features/savings/InlineAllocationEditor.tsx` (Adjust, inline) | 353 | not budgeted at all |
+| `features/savings/InlineAllocationEditor.test.tsx` | 417 | not budgeted at all |
+| `entities/savings-goal/useContributionSession.ts` (Adjust's live-edit math — the exact hook `savings-income-split-allocation`'s Change 2 scenarios reference) | 314 | not budgeted, and not yet ported to `app/_data/**` anywhere |
+| `entities/savings-goal/useContributionSession.test.ts` | not measured | not budgeted |
+| `shared/ui/UserDisplay.tsx` (avatar+name row `InlineAllocationEditor` renders) | not measured | **does not exist under `app/_ui/**` yet** — no PR 1-15 ported it |
+| Base UI `Popover` primitive (`InlineAllocationEditor`'s edit-amount affordance) | — | not yet installed/used anywhere in `app/_ui/**` (PRs 3-7 used Dialog/Select, never Popover) |
+
+Just the six measured `SavingsGoalList`+`SavingsGoalForm`+`InlineAllocationEditor` files alone
+total **1,829 lines** (src 839 / tests 990) against this row's entire **786-line budget for
+BOTH `SavingsGoalList` and `ExpenseForm`** — before `useContributionSession`
+(src+test, likely 300-500 more), `UserDisplay`, the new Base UI `Popover` wrapper, or
+`ExpenseForm` itself (main: 230 src / 124 test) are added. Realistic total for this row's
+original two-part scope is in the **~2,700-3,000 line range**, roughly **3.4-3.8x** the 786
+forecast and **3.4-3.8x** the 800 hard cap even taken alone (i.e. 16a — `SavingsGoalList` and
+its now-discovered dependency tree — would *by itself*, before `ExpenseForm`, already be
+~1.5-2x over the 800 hard cap).
+
+Per this PR's own explicit instruction ("if even 16a alone is trending over 700 on its own,
+tell me explicitly... needing a size:exception conversation, not a further silent split"), this
+executor is stopping here rather than inventing a further split unilaterally. This is not a
+"trending over ~700, apply the pre-planned 16a/16b split" situation — the pre-planned split
+itself does not fit; 16a alone needs further subdivision (candidate seams, not yet agreed:
+16a-1 `SavingsGoalList` display + delete-only per the dashboard-view spec's one tested
+scenario; 16a-2 `SavingsGoalForm` edit modal; 16a-3 `InlineAllocationEditor` +
+`useContributionSession` + `UserDisplay` + Base UI `Popover` adjust sub-system; 16b
+`ExpenseForm`, unaffected by this finding) or a `size:exception` far larger than any prior one
+in this chain (PR 2's accepted exception was 1,236/800 ≈ 1.55x; PR 6's was 824/800 ≈ 1.03x; this
+would be ~3.4-3.8x). Tasks 16.3-16.10 are NOT started. 16.1-16.2 (the `savingsGoals` prefetch,
+independent of this finding and already fully tested/green) are complete and committed on
+`feat/nextjs-ui-fixes-16-savings-goal-list-expense-form` (commit `da3de53`).
+
+- [x] 16.1 **RED**: `app/(app)/dashboard/[groupId]/page.test.tsx` — extend the prefetch
       assertion to include `queryKeys.savingsGoals(groupId)` alongside `summary`/`categories`
       (spec's summary-prefetch requirement extended to the third widget group). Fails — current
       `page.tsx` only prefetches `summary` and `categories`.
-- [ ] 16.2 **GREEN**: Add `queryClient.prefetchQuery({ queryKey: queryKeys.savingsGoals(groupId),
+- [x] 16.2 **GREEN**: Add `queryClient.prefetchQuery({ queryKey: queryKeys.savingsGoals(groupId),
       queryFn: () => SavingsService.getGoalsForGroup(groupId) })` to `page.tsx`'s
       `Promise.all`. Green.
 - [ ] 16.3 **RED**: `_widgets/SavingsGoalList.test.tsx` — four-state coverage, reads from the
