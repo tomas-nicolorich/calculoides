@@ -26,11 +26,13 @@ const SUMMARY_FIXTURE = {
 };
 
 const CATEGORIES_FIXTURE: unknown[] = [];
+const SAVINGS_GOALS_FIXTURE: unknown[] = [];
 
 /** Simulates the server's `prefetchQuery` + `dehydrate` step (2.1-2.2).
- * Hydrates both `queryKeys.summary` and `queryKeys.categories` — `page.tsx`
- * prefetches both server-side, and `BudgetTransfers`' inline create-transfer
- * form is now a `queryKeys.categories` consumer too (13.6). */
+ * Hydrates `queryKeys.summary`, `queryKeys.categories`, and (16.1-16.2)
+ * `queryKeys.savingsGoals` — `page.tsx` prefetches all three server-side,
+ * and `BudgetTransfers`' inline create-transfer form is also a
+ * `queryKeys.categories` consumer (13.6). */
 async function prefetchServerClient(): Promise<QueryClient> {
   const serverClient = createQueryClient();
   await Promise.all([
@@ -41,6 +43,10 @@ async function prefetchServerClient(): Promise<QueryClient> {
     serverClient.prefetchQuery({
       queryKey: queryKeys.categories(GROUP_ID),
       queryFn: () => Promise.resolve(CATEGORIES_FIXTURE),
+    }),
+    serverClient.prefetchQuery({
+      queryKey: queryKeys.savingsGoals(GROUP_ID),
+      queryFn: () => Promise.resolve(SAVINGS_GOALS_FIXTURE),
     }),
   ]);
   return serverClient;
@@ -140,18 +146,19 @@ describe("DashboardClient", () => {
     const serverClient = await prefetchServerClient();
     const browserClient = createQueryClient({ queries: { staleTime: 300 } });
 
-    fetchMock.mockImplementation((url: string) =>
-      Promise.resolve(
-        new Response(
-          JSON.stringify(
-            url.includes("/api/categories")
-              ? CATEGORIES_FIXTURE
-              : SUMMARY_FIXTURE,
-          ),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        ),
-      ),
-    );
+    fetchMock.mockImplementation((url: string) => {
+      const body = url.includes("/api/categories")
+        ? CATEGORIES_FIXTURE
+        : url.includes("/api/savings")
+          ? SAVINGS_GOALS_FIXTURE
+          : SUMMARY_FIXTURE;
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    });
 
     renderHydrated(serverClient, browserClient);
     expect(await screen.findByText("Roomies")).toBeInTheDocument();

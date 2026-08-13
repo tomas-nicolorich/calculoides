@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, type ExpenseFilters } from "../../lib/query-keys";
 import type { ExpensesList } from "shared/src/types/redesign";
-import { create, deleteExpense, deleteAll } from "../../lib/actions/expense";
+import {
+  create,
+  update,
+  deleteExpense,
+  deleteAll,
+} from "../../lib/actions/expense";
 import { fetchJson } from "./fetch-json";
 import { invalidateGroupQueries } from "./invalidate";
 
@@ -33,6 +38,15 @@ export function useCreateExpense(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: create,
+    onSuccess: () => invalidateGroupQueries(queryClient, groupId),
+  });
+}
+
+/** Backs `ExpenseForm`'s edit path (PR 16). */
+export function useUpdateExpense(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: update,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }

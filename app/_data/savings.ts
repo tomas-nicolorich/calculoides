@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/query-keys";
 import {
   create,
+  update,
   deleteGoal,
   contributionUpsert,
   contributionDelete,
@@ -56,6 +57,15 @@ export function useCreateGoal(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: create,
+    onSuccess: () => invalidateGroupQueries(queryClient, groupId),
+  });
+}
+
+/** Backs `SavingsGoalForm`'s row-menu edit path (PR 16). */
+export function useUpdateGoal(groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: update,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }

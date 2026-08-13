@@ -21,6 +21,7 @@ export type { AvatarSize, AvatarProps, AvatarGroupProps } from "./Avatar";
 export { IconPicker } from "./IconPicker";
 export { CategoryIconTile, CATEGORY_ICON_GROUPS } from "./categoryIcons";
 export type { CategoryIconTileProps, CategoryIconTileSize } from "./categoryIcons";
+export { UserDisplay } from "./UserDisplay";
 
 export function Input({
   className,
