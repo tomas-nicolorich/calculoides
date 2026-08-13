@@ -12,6 +12,7 @@ const {
   isGroupMemberMock,
   getGroupSummaryMock,
   listCategoriesMock,
+  getGoalsForGroupMock,
 } = vi.hoisted(() => ({
   getUserMock: vi.fn(),
   notFoundMock: vi.fn(() => {
@@ -20,6 +21,7 @@ const {
   isGroupMemberMock: vi.fn(),
   getGroupSummaryMock: vi.fn(),
   listCategoriesMock: vi.fn(),
+  getGoalsForGroupMock: vi.fn(),
 }));
 
 vi.mock("../../../../lib/supabase/server", () => ({
@@ -44,6 +46,10 @@ vi.mock("../../../../lib/server/services/budget", () => ({
   BudgetService: { listCategoriesWithBalances: listCategoriesMock },
 }));
 
+vi.mock("../../../../lib/server/services/savings", () => ({
+  SavingsService: { getGoalsForGroup: getGoalsForGroupMock },
+}));
+
 import DashboardPage from "./page";
 
 const USER_ID = "user-1";
@@ -56,6 +62,7 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
     isGroupMemberMock.mockReset();
     getGroupSummaryMock.mockReset();
     listCategoriesMock.mockReset();
+    getGoalsForGroupMock.mockReset();
   });
 
   // resource-authorization: "Group-Scoped Budget Resources Require
@@ -80,6 +87,7 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
     isGroupMemberMock.mockResolvedValue(true);
     getGroupSummaryMock.mockResolvedValue({ groupName: "Roomies" });
     listCategoriesMock.mockResolvedValue([]);
+    getGoalsForGroupMock.mockResolvedValue([]);
 
     const result = await DashboardPage({
       params: Promise.resolve({ groupId: GROUP_ID }),
@@ -89,6 +97,22 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
     expect(isGroupMemberMock).toHaveBeenCalledWith(USER_ID, GROUP_ID);
     expect(getGroupSummaryMock).toHaveBeenCalledWith(GROUP_ID);
     expect(listCategoriesMock).toHaveBeenCalledWith(GROUP_ID);
+  });
+
+  // dashboard-view: "One Server Prefetch Feeds the Summary-Dependent
+  // Widgets" — extended to the third widget group, `savingsGoals` (16.1).
+  it("prefetches savingsGoals alongside summary and categories", async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
+    isGroupMemberMock.mockResolvedValue(true);
+    getGroupSummaryMock.mockResolvedValue({ groupName: "Roomies" });
+    listCategoriesMock.mockResolvedValue([]);
+    getGoalsForGroupMock.mockResolvedValue([]);
+
+    await DashboardPage({
+      params: Promise.resolve({ groupId: GROUP_ID }),
+    });
+
+    expect(getGoalsForGroupMock).toHaveBeenCalledWith(GROUP_ID);
   });
 
   // dashboard-view: "No client-side waterfall for summary-backed widgets" —
@@ -112,6 +136,7 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
       recentTransfers: [],
     });
     listCategoriesMock.mockResolvedValue([]);
+    getGoalsForGroupMock.mockResolvedValue([]);
 
     const result = await DashboardPage({
       params: Promise.resolve({ groupId: GROUP_ID }),

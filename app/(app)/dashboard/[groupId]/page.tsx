@@ -8,6 +8,7 @@ import { createClient } from "../../../../lib/supabase/server";
 import { isGroupMember } from "../../../../lib/server/authz";
 import { SummaryService } from "../../../../lib/server/services/summary";
 import { BudgetService } from "../../../../lib/server/services/budget";
+import { SavingsService } from "../../../../lib/server/services/savings";
 import { createQueryClient } from "../../../../lib/query-client";
 import { queryKeys } from "../../../../lib/query-keys";
 import { DashboardClient } from "./DashboardClient";
@@ -62,6 +63,10 @@ export default async function DashboardPage({
     queryClient.prefetchQuery({
       queryKey: queryKeys.categories(groupId),
       queryFn: () => BudgetService.listCategoriesWithBalances(groupId),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.savingsGoals(groupId),
+      queryFn: () => SavingsService.getGoalsForGroup(groupId),
     }),
   ]);
 
