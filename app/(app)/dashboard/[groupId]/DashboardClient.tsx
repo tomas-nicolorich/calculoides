@@ -2,20 +2,22 @@
 
 import { Card } from "../../../_ui";
 import { useDashboardSummary } from "../../../_data/summary";
+import { IncomeOverview } from "./_widgets/IncomeOverview";
 import { RemainingBalance } from "./_widgets/RemainingBalance";
 import { RecentExpenses } from "./_widgets/RecentExpenses";
+import { BudgetTransfers } from "./_widgets/BudgetTransfers";
 
 /**
  * ADR-0003 two-column dashboard shell (PR 12). Six named widget slots;
- * `RemainingBalance` and `RecentExpenses` are wired to real data in this PR
- * — the other four (`IncomeOverview`, `BudgetTransfers`, `BudgetCategories`,
- * `SavingsGoalList`) render as `WidgetStub` placeholders until PR 13-16
- * land. Each slot owns its own loading boundary by self-subscribing to the
- * query it needs — there is no page-level `summaryLoading || …` early
- * return blocking the whole grid (spec: "Loading state precedes
- * hydration"). The heading only reads `summary?.groupName`, so it degrades
- * gracefully (blank) while its own query is still loading, without gating
- * the grid below it.
+ * `IncomeOverview`, `RemainingBalance`, `RecentExpenses`, and
+ * `BudgetTransfers` are wired to real data — `BudgetCategories` and
+ * `SavingsGoalList` render as `WidgetStub` placeholders until PR 14-16 land.
+ * Each slot owns its own loading boundary by self-subscribing to the query
+ * it needs — there is no page-level `summaryLoading || …` early return
+ * blocking the whole grid (spec: "Loading state precedes hydration"). The
+ * heading only reads `summary?.groupName`, so it degrades gracefully
+ * (blank) while its own query is still loading, without gating the grid
+ * below it.
  */
 export function DashboardClient({ groupId }: { groupId: string }) {
   const { data: summary } = useDashboardSummary(groupId);
@@ -39,10 +41,10 @@ export function DashboardClient({ groupId }: { groupId: string }) {
         data-testid="dashboard-grid"
       >
         <div className="flex flex-col gap-6 3xl:col-span-2 3xl:grid 3xl:grid-cols-2">
-          <WidgetStub title="Income Overview" />
+          <IncomeOverview groupId={groupId} />
           <RemainingBalance groupId={groupId} />
           <RecentExpenses groupId={groupId} />
-          <WidgetStub title="Budget Transfers" />
+          <BudgetTransfers groupId={groupId} />
         </div>
 
         <div className="flex flex-col gap-6">

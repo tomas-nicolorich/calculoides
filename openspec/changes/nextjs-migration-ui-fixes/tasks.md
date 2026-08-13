@@ -933,18 +933,32 @@ Support Inline Creation and Per-Category History"* (the standalone widget's own 
 half — the accordion drill-down half is PR 15).
 **Budget**: 364 src / 200 tests / **564** total. **Depends on**: PR 12.
 
-- [ ] 13.1 **RED**: `_widgets/IncomeOverview.test.tsx` — four-state coverage; renders each
+- [x] 13.1 **RED**: `_widgets/IncomeOverview.test.tsx` — four-state coverage; renders each
       member's income via `MemberBar` (spec `ui-design-system` "Member income split renders as
       a stacked bar" — this is the first real consumer of that primitive); an income-edit
       action uses `Button variant="income"` (spec `ui-design-system` "An income-related action
       uses the income variant"). Fails.
-- [ ] 13.2 **GREEN**: Port `IncomeOverview.tsx`. Green.
-- [ ] 13.3 **RED**: extend `IncomeOverview.test.tsx` — income-edit mutation: submitting a new
+      **Note**: genuine RED — module not found (`./IncomeOverview` did not exist).
+- [x] 13.2 **GREEN**: Port `IncomeOverview.tsx`. Green.
+      **Note**: 5/5 green (read-only states + edit-form-open, staged before mutation
+      wiring). Data seam self-subscribes to `useDashboardSummary(groupId)` like
+      `RemainingBalance`/`RecentExpenses`, instead of `main`'s prop-drilled
+      `totalIncome`/`members`. `main`'s bespoke `useIncomeSession` client-preview hook has no
+      equivalent in this app (not ported) — replaced with plain `useState` + a direct
+      `updateIncome` mutation per edited member (13.4), a data-seam simplification, not a
+      visual deviation.
+- [x] 13.3 **RED**: extend `IncomeOverview.test.tsx` — income-edit mutation: submitting a new
       income value calls `lib/actions/member.ts` `updateIncome`, and on success invalidates
       `queryKeys.group(groupId)` (dashboard-view's general invalidation contract). Fails.
-- [ ] 13.4 **GREEN**: Wire the income-edit form to `updateIncome`, `onSuccess` →
+      **Note**: genuine RED — `updateIncome` mock asserted `0` calls against the staged
+      no-op `handleConfirm`; confirmed failing before wiring.
+- [x] 13.4 **GREEN**: Wire the income-edit form to `updateIncome`, `onSuccess` →
       `invalidateQueries(queryKeys.group(groupId))`. Green.
-- [ ] 13.5 **RED**: `_widgets/BudgetTransfers.test.tsx` — four-state coverage; a status badge
+      **Note**: 6/6 green. New hoisted hook `app/_data/members.ts` `useUpdateIncome` (ADR-2),
+      mirroring `useCreateTransfer`'s `onSuccess` → `invalidateGroupQueries` contract.
+      Confirm submits only members whose income actually changed (`Promise.all` of
+      `mutateAsync` calls), not the full roster unconditionally.
+- [x] 13.5 **RED**: `_widgets/BudgetTransfers.test.tsx` — four-state coverage; a status badge
       uses `Badge variant="transfer"` (spec `ui-design-system` "A transfer-related badge uses
       the transfer variant" — this is the first real consumer); spec scenario "Creating a
       transfer invalidates the group cache": valid inline transfer submission calls
@@ -952,14 +966,49 @@ half — the accordion drill-down half is PR 15).
       `BudgetTransfers`/`RemainingBalance` both reflect the new transfer (write this as two
       assertions: the widget's own list re-renders, and a companion assertion/spy confirms
       `RemainingBalance`'s query key was invalidated too). Fails.
-- [ ] 13.6 **GREEN**: Port `BudgetTransfers.tsx` with its own inline creation form → `transfer.create`.
+      **Note**: genuine RED — module not found (`./BudgetTransfers` did not exist). The
+      "companion assertion" reads `fetchMock` for the refetched `/api/summary?groupId=` URL —
+      `RemainingBalance` reads the identical `queryKeys.summary(groupId)` key `BudgetTransfers`
+      does, so one refetch proves both reflect the invalidation.
+- [x] 13.6 **GREEN**: Port `BudgetTransfers.tsx` with its own inline creation form → `transfer.create`.
       Green.
-- [ ] 13.7 **REFACTOR**: Confirm `IncomeOverview` and `BudgetTransfers` slot into the two-column
+      **Note**: 6/6 green. Badge tone (component prop name, not `variant`) placed on each
+      row's category tag — genuinely new vs. `main` (`main`'s widget only linked out to a
+      separate `/transfers` page; this port's inline create form and per-row badge are
+      dashboard-view spec additions, not `main`-parity requirements). Create form uses
+      `useCategoriesList`/`useCreateTransfer` (already-existing `_data` hooks) plus a new
+      `LabeledSelect` local helper to dedupe the three category/from/to `Select` fields'
+      accessible-name wiring.
+- [x] 13.7 **REFACTOR**: Confirm `IncomeOverview` and `BudgetTransfers` slot into the two-column
       grid PR 12 established, at their ADR-0003 positions.
-- [ ] 13.8 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: income edit
+      **Note**: `DashboardClient.tsx` left-column stack now reads `IncomeOverview` →
+      `RemainingBalance` → `RecentExpenses` → `BudgetTransfers` (matches PR 12's documented
+      ADR-0003 order; only `BudgetCategories`/`SavingsGoalList` remain stubs). Updated
+      `DashboardClient.test.tsx`'s hydration helper to also prefetch `queryKeys.categories`
+      (now a `BudgetTransfers` dependency) and widened the window-focus refetch test's
+      `staleTime`/sleep margin (100ms→300ms / 250ms→600ms) — `DashboardClient` now mounts 5
+      `queryKeys.summary` observers instead of 3, which flaked the pre-sleep "not yet called"
+      assertion under full-suite concurrent load (same category of flake the PR 12 comment
+      already documented once).
+- [x] 13.8 Verify: typecheck, lint, `npx vitest run app/(app)/dashboard`. Manual: income edit
       persists and reflects across widgets; inline transfer creation updates both
       `BudgetTransfers` and `RemainingBalance` without reload.
-- [ ] 13.9 Commit + PR 13 (Position 13 of 16, Depends on: PR 12, Follow-up: none — leaf
+      **Note**: `tsc --noEmit -p tsconfig.next.json`, `eslint app lib proxy.ts next.config.ts
+      --max-warnings 0`, and the full `npx vitest run` suite (91 files / 438 tests, run twice
+      to rule out the flake above) all green. **Deferred**: no browser available in this
+      environment — manual side-by-side not performed (same constraint noted on PR 10/11).
+      **Budget deviation (flagged)**: actual diff is ~1,032 changed lines (production: 551 —
+      `BudgetTransfers.tsx` 307, `IncomeOverview.tsx` 202, `app/_data/members.ts` 18,
+      `DashboardClient.tsx` 24; tests: 446 — `IncomeOverview.test.tsx` 181,
+      `BudgetTransfers.test.tsx` 265, `DashboardClient.test.tsx` diff 35) vs. the 564-line
+      forecast, over the session's stated 800-line review budget. Cause: the inline
+      transfer-creation form (3 labelled `Select` fields + validation) and full mutation/
+      four-state RTL coverage for two widgets are inherently larger than the forecast assumed
+      — consistent with this change's documented pattern of underestimating (design.md: prior
+      slices overshot 1.7–3.2×). One trim pass already applied (merged 2 redundant test cases,
+      extracted a `LabeledSelect` helper) before flagging this for the orchestrator/maintainer
+      to accept as `size:exception` for this specific PR.
+- [x] 13.9 Commit + PR 13 (Position 13 of 16, Depends on: PR 12, Follow-up: none — leaf
       slice within the dashboard chain; PR 14–16 branch from PR 7/PR 10, not from PR 13).
 
 ## PR 14 — `BudgetCategories` read/accordion (ADR-9) — **flagged, highest-risk-of-two**

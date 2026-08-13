@@ -25,13 +25,24 @@ const SUMMARY_FIXTURE = {
   recentTransfers: [],
 };
 
-/** Simulates the server's `prefetchQuery` + `dehydrate` step (2.1-2.2). */
+const CATEGORIES_FIXTURE: unknown[] = [];
+
+/** Simulates the server's `prefetchQuery` + `dehydrate` step (2.1-2.2).
+ * Hydrates both `queryKeys.summary` and `queryKeys.categories` — `page.tsx`
+ * prefetches both server-side, and `BudgetTransfers`' inline create-transfer
+ * form is now a `queryKeys.categories` consumer too (13.6). */
 async function prefetchServerClient(): Promise<QueryClient> {
   const serverClient = createQueryClient();
-  await serverClient.prefetchQuery({
-    queryKey: queryKeys.summary(GROUP_ID),
-    queryFn: () => Promise.resolve(SUMMARY_FIXTURE),
-  });
+  await Promise.all([
+    serverClient.prefetchQuery({
+      queryKey: queryKeys.summary(GROUP_ID),
+      queryFn: () => Promise.resolve(SUMMARY_FIXTURE),
+    }),
+    serverClient.prefetchQuery({
+      queryKey: queryKeys.categories(GROUP_ID),
+      queryFn: () => Promise.resolve(CATEGORIES_FIXTURE),
+    }),
+  ]);
   return serverClient;
 }
 
@@ -106,21 +117,27 @@ describe("DashboardClient", () => {
   // `refetchOnWindowFocus` interacts with React's/jsdom's own scheduling,
   // which fake timers destabilize) instead of waiting out the production
   // 30s default; the 30s constant itself is `createQueryClient`'s own
-  // concern, not re-asserted here. Margin widened from the original 20ms/
-  // 50ms pair (DashboardClient now mounts 3 `queryKeys.summary` observers —
-  // header, `RemainingBalance`, `RecentExpenses` — instead of 1, which cost
-  // enough extra real render time under full-suite concurrent load to flake
-  // the pre-sleep "not yet called" assertion).
+  // concern, not re-asserted here. Margin widened again (13.7):
+  // `DashboardClient` now mounts 5 `queryKeys.summary` observers (header,
+  // `IncomeOverview`, `RemainingBalance`, `RecentExpenses`,
+  // `BudgetTransfers`) plus a `queryKeys.categories` observer
+  // (`BudgetTransfers`' create-transfer form), which cost enough extra real
+  // render time under full-suite concurrent load to flake the pre-sleep
+  // "not yet called" assertion at the prior 100ms/250ms pair.
   it("refetches via the GET Route Handler on window focus once stale", async () => {
     const serverClient = await prefetchServerClient();
-    const browserClient = createQueryClient({ queries: { staleTime: 100 } });
+    const browserClient = createQueryClient({ queries: { staleTime: 300 } });
 
-    fetchMock.mockImplementation(() =>
+    fetchMock.mockImplementation((url: string) =>
       Promise.resolve(
-        new Response(JSON.stringify(SUMMARY_FIXTURE), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify(
+            url.includes("/api/categories")
+              ? CATEGORIES_FIXTURE
+              : SUMMARY_FIXTURE,
+          ),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
       ),
     );
 
@@ -128,8 +145,8 @@ describe("DashboardClient", () => {
     expect(await screen.findByText("Roomies")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
 
-    // Real sleep past the 100ms staleTime override above.
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    // Real sleep past the 300ms staleTime override above.
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     act(() => {
       window.dispatchEvent(new Event("visibilitychange"));
