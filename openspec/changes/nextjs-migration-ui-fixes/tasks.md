@@ -1467,20 +1467,33 @@ requirements `savings-goal-management`/`savings-income-split-allocation` already
 
 ## Cross-Cutting Notes (apply to every PR above)
 
-- [ ] Relative imports only, everywhere — no `@/*` alias (Fallow constraint, per
+- [x] Relative imports only, everywhere — no `@/*` alias (Fallow constraint, per
       `CONTEXT-MAP.md` and the proposal's Risks table).
-- [ ] Every new/modified test file that renders a component uses per-file `//
+- [x] Every new/modified test file that renders a component uses per-file `//
       @vitest-environment jsdom` and `@testing-library/jest-dom/vitest`, matching the existing
       `DashboardClient.test.tsx` precedent — do not flip the repo default environment.
-- [ ] Every mutation-firing test asserts the exact `invalidateQueries(queryKeys.group(groupId))`
+- [x] Every mutation-firing test asserts the exact `invalidateQueries(queryKeys.group(groupId))`
       call, not just "some invalidation happened" — the cache-invalidation contract is the
       spec's acceptance bar across `dashboard-view`.
-- [ ] Every ported primitive/widget is diffed against `main`'s source for prop-name and
+- [x] Every ported primitive/widget is diffed against `main`'s source for prop-name and
       variant-vocabulary fidelity before its PR is marked done — "port verbatim" is a testable
       claim, not a vibe.
-- [ ] Out-of-scope reminder for every PR touching Expenses/Transfers/Savings/Members pages
+- [x] Out-of-scope reminder for every PR touching Expenses/Transfers/Savings/Members pages
       beyond the ported widgets: parity for those four *pages* remains explicitly out of scope
       per the proposal; only the six named dashboard widgets and the groups list are in scope.
+
+Checked off 2026-08-14 against PR16's diff only (the chain-closing PR): item 1
+grepped clean (zero `@/` imports); item 2 confirmed on all 8 JSX-rendering
+test files (3 hook-test files use `renderHook` without the jest-dom import,
+but assert no jest-dom matcher, so no gap in practice); item 3 was a genuine
+gap, fixed by adding `isInvalidated` assertions to `SavingsGoalList.test.tsx`
+and `InlineAllocationEditor.test.tsx`'s mutation tests; item 4 confirmed
+byte-identical Button/Badge/Popover vocabulary against `main`'s
+`frontend/src/features/{savings,expense}/*` sources, with one documented,
+intentional prop deviation (`SavingsGoalList` self-fetches via `groupId`
+instead of taking a `goals` prop); item 5 confirmed no
+Expenses/Transfers/Members page route in the diff. PRs 1-15 were not
+re-audited against these items individually.
 
 ## Key Learnings
 
