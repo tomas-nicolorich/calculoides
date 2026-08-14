@@ -165,7 +165,7 @@ describe("SavingsGoalList", () => {
   // savings-goal-management: deleting one goal does not affect others.
   it("row-menu delete, confirmed, deletes only the targeted goal", async () => {
     mockDelete.mockResolvedValue({ ok: true, data: { success: true } });
-    await renderHydrated([GOAL_A, GOAL_B]);
+    const queryClient = await renderHydrated([GOAL_A, GOAL_B]);
     await screen.findByText("Vacation Fund");
 
     fireEvent.click(screen.getAllByLabelText("Row options")[0]);
@@ -183,6 +183,14 @@ describe("SavingsGoalList", () => {
         expect.anything(),
       );
     });
+
+    // client-data-cache: mutation invalidates via `invalidateGroupQueries`
+    // (`invalidateQueries({ queryKey: queryKeys.group(groupId) })`), not just
+    // "some invalidation happened".
+    expect(
+      queryClient.getQueryState(queryKeys.savingsGoals(GROUP_ID))
+        ?.isInvalidated,
+    ).toBe(true);
   });
 
   it("row-menu edit opens the full-edit modal prefilled with the goal", async () => {

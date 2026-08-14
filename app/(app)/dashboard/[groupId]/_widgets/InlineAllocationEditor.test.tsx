@@ -4,6 +4,7 @@ import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createQueryClient } from "../../../../../lib/query-client";
+import { queryKeys } from "../../../../../lib/query-keys";
 import {
   contributionUpsert,
   contributionDelete,
@@ -49,11 +50,13 @@ const GOAL: SavingsGoal = {
 };
 
 function renderEditor(goal: SavingsGoal = GOAL) {
+  const queryClient = createQueryClient();
   render(
-    <QueryClientProvider client={createQueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <InlineAllocationEditor goal={goal} />
     </QueryClientProvider>,
   );
+  return queryClient;
 }
 
 describe("InlineAllocationEditor", () => {
@@ -92,7 +95,11 @@ describe("InlineAllocationEditor", () => {
       ok: true,
       data: undefined,
     } as unknown as Awaited<ReturnType<typeof contributionUpsert>>);
-    renderEditor();
+    const queryClient = renderEditor();
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.summary(GOAL.groupId),
+      queryFn: () => Promise.resolve({ groupName: "Roomies" }),
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Adjust" }));
     const input = screen.getByLabelText("Override amount for Alice");
@@ -105,6 +112,14 @@ describe("InlineAllocationEditor", () => {
       memberId: "member-1",
       amount: 150,
     });
+
+    // client-data-cache: mutation invalidates via `invalidateGroupQueries`
+    // (`invalidateQueries({ queryKey: queryKeys.group(groupId) })`), not just
+    // "some invalidation happened".
+    expect(
+      queryClient.getQueryState(queryKeys.summary(GOAL.groupId))
+        ?.isInvalidated,
+    ).toBe(true);
   });
 
   it("Cancel discards edits and returns to the read-only display", () => {
