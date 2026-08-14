@@ -1,6 +1,6 @@
 /**
  * Server-only Supabase env resolution shared by `server.ts` and
- * `middleware.ts`. Throws loudly instead of using a non-null assertion —
+ * `proxy.ts`. Throws loudly instead of using a non-null assertion —
  * a missing server env var should fail the request, not silently pass an
  * empty string to `createServerClient`.
  */
