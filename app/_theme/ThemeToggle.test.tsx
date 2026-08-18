@@ -4,6 +4,39 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { ThemeToggle } from "./ThemeToggle";
 
+/**
+ * Node's built-in `localStorage` global (stable, but inert without
+ * `--localstorage-file`) shadows jsdom's working `window.localStorage`
+ * inside Vitest's jsdom pool: Vitest only repopulates a window key onto
+ * `global` when that key isn't already present on `global`, and Node
+ * defines `localStorage` itself. Install a minimal in-memory stand-in so
+ * this file's `window.localStorage` calls behave like a real Storage.
+ */
+function installMemoryLocalStorage() {
+  const store = new Map<string, string>();
+  const storage: Storage = {
+    getItem: (key) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key, value) => {
+      store.set(key, String(value));
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    key: (index) => Array.from(store.keys())[index] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+  Object.defineProperty(window, "localStorage", {
+    value: storage,
+    configurable: true,
+  });
+}
+installMemoryLocalStorage();
+
 type ChangeListener = (event: { matches: boolean }) => void;
 
 /** Stubs `window.matchMedia` and returns a helper to fire "change" events. */
@@ -30,7 +63,7 @@ function stubMatchMedia(prefersDark: boolean) {
 
 describe("ThemeToggle", () => {
   beforeEach(() => {
-    localStorage.clear();
+    window.localStorage.clear();
     document.documentElement.classList.remove("dark");
     stubMatchMedia(false);
   });
@@ -50,7 +83,7 @@ describe("ThemeToggle", () => {
 
   // theme-preference: "Toggling back to light mode"
   it("removes .dark from <html> when toggled back to light mode", () => {
-    localStorage.setItem("theme", "dark");
+    window.localStorage.setItem("theme", "dark");
     render(<ThemeToggle />);
     expect(document.documentElement.classList.contains("dark")).toBe(true);
 
@@ -65,25 +98,25 @@ describe("ThemeToggle", () => {
 
     fireEvent.click(screen.getByRole("button"));
 
-    expect(localStorage.getItem("theme")).toBe("dark");
+    expect(window.localStorage.getItem("theme")).toBe("dark");
   });
 
   // theme-preference: "First-ever visit with no stored preference"
   it("falls back to a default without writing to storage until the first interaction", () => {
     render(<ThemeToggle />);
 
-    expect(localStorage.getItem("theme")).toBeNull();
+    expect(window.localStorage.getItem("theme")).toBeNull();
 
     fireEvent.click(screen.getByRole("button"));
 
-    expect(localStorage.getItem("theme")).not.toBeNull();
+    expect(window.localStorage.getItem("theme")).not.toBeNull();
   });
 
   // theme-preference: "OS preference changes after a manual choice is
   // already stored"
   it("does not change the applied theme when the OS preference changes after a manual choice is stored", () => {
     const { fireChange } = stubMatchMedia(false);
-    localStorage.setItem("theme", "light");
+    window.localStorage.setItem("theme", "light");
     render(<ThemeToggle />);
     expect(document.documentElement.classList.contains("dark")).toBe(false);
 
