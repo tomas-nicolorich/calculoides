@@ -54,9 +54,9 @@ Per-phase forecast (lines = additions + deletions, against the 800-line session 
 
 ## Phase 0: Prerequisite & CI Gate
 
-- [ ] 0.1 Merge `fix/supabase-rls-and-api-authorization` into `develop` before starting migration work — `develop` is the bottom-of-stack base branch for PR 1a.
-- [ ] 0.2 Create `.github/workflows/ci.yml` running `npm test`, `npm run lint`, `npm run typecheck` on PRs. (proposal Success Criteria)
-- [ ] 0.3 Document the D5 PR gate: no Server Action/Route Handler merges without its ownership/membership test in the same PR. (Threat Matrix: "Route Handler reached before its authz check ports")
+- [x] 0.1 Merge `fix/supabase-rls-and-api-authorization` into `develop` before starting migration work — `develop` is the bottom-of-stack base branch for PR 1a. (Merged via PR #189, commit `006c5ec`.)
+- [x] 0.2 Create `.github/workflows/ci.yml` running `npm test`, `npm run lint`, `npm run typecheck` on PRs. (proposal Success Criteria) (Present: lint, typecheck, test, build on PRs/pushes to `main`/`develop`.)
+- [x] 0.3 Document the D5 PR gate: no Server Action/Route Handler merges without its ownership/membership test in the same PR. (Threat Matrix: "Route Handler reached before its authz check ports") (Documented in `.github/PULL_REQUEST_TEMPLATE.md`'s "Authorization gate" checklist item, referencing this change's `design.md`.)
 
 ## Phase 1a: Next.js Shell
 
