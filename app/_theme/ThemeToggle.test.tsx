@@ -15,9 +15,9 @@ import { ThemeToggle } from "./ThemeToggle";
 function installMemoryLocalStorage() {
   const store = new Map<string, string>();
   const storage: Storage = {
-    getItem: (key) => (store.has(key) ? store.get(key)! : null),
+    getItem: (key) => store.get(key) ?? null,
     setItem: (key, value) => {
-      store.set(key, String(value));
+      store.set(key, value);
     },
     removeItem: (key) => {
       store.delete(key);
