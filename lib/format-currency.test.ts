@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCurrency } from "./format-currency";
+import { formatCurrency, formatCurrencyCompact } from "./format-currency";
 
 /**
  * PR 12: pure formatting helper ported verbatim from `main`'s
@@ -18,5 +18,15 @@ describe("formatCurrency", () => {
 
   it("formats a negative amount with the sign before the currency symbol", () => {
     expect(formatCurrency(-42.5)).toBe("-€42.50");
+  });
+});
+
+describe("formatCurrencyCompact", () => {
+  it("formats amounts under 1M the same as formatCurrency", () => {
+    expect(formatCurrencyCompact(1234.5)).toBe(formatCurrency(1234.5));
+  });
+
+  it("collapses amounts at or above 1M to compact notation", () => {
+    expect(formatCurrencyCompact(1_200_000)).toBe("€1.2M");
   });
 });

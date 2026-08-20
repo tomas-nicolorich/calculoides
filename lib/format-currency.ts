@@ -11,3 +11,14 @@ export function formatCurrency(amount: number): string {
     currency: "EUR",
   }).format(amount);
 }
+
+/** Same as `formatCurrency`, but collapses amounts ≥ 1M to compact notation (e.g. "€1.2M"). */
+export function formatCurrencyCompact(amount: number): string {
+  if (Math.abs(amount) < 1_000_000) return formatCurrency(amount);
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amount);
+}

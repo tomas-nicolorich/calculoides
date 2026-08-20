@@ -25,16 +25,93 @@ describe("GroupsClient", () => {
             id: "abc123",
             name: "Roomies",
             role: "MEMBER",
-            members: [{ id: "m1" }, { id: "m2" }, { id: "m3" }],
+            members: [
+              { id: "m1", income: 0, user: { name: "Ana", email: "a@b.com" } },
+              { id: "m2", income: 0, user: { name: "Bea", email: "b@b.com" } },
+              { id: "m3", income: 0, user: { name: "Cy", email: "c@b.com" } },
+            ],
           },
         ]}
       />,
     );
 
     expect(screen.getByText("Roomies")).toBeInTheDocument();
-    expect(screen.getByText("member · 3 members")).toBeInTheDocument();
+    expect(screen.getByText("member")).toBeInTheDocument();
+    expect(screen.getByText("3 members")).toBeInTheDocument();
     // The card must not be built from the old plain `<li>` markup.
     expect(container.querySelectorAll("li")).toHaveLength(0);
+  });
+
+  // Group icon, member avatars, and the trailing chevron round out card
+  // parity with `main`'s `GroupsPage`.
+  it("renders the group icon well, member avatars, and a trailing chevron", () => {
+    const { container } = render(
+      <GroupsClient
+        groups={[
+          {
+            id: "abc123",
+            name: "Roomies",
+            role: "OWNER",
+            members: [
+              { id: "m1", income: 0, user: { name: "Ana", email: "a@b.com" } },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTitle("Ana")).toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-chevron-right")).toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-users")).toBeInTheDocument();
+  });
+
+  // "Group Income" only renders when at least one member has income set.
+  it("shows the summed group income when members have income", () => {
+    render(
+      <GroupsClient
+        groups={[
+          {
+            id: "abc123",
+            name: "Roomies",
+            role: "OWNER",
+            members: [
+              {
+                id: "m1",
+                income: 1500,
+                user: { name: "Ana", email: "a@b.com" },
+              },
+              {
+                id: "m2",
+                income: 500,
+                user: { name: "Bea", email: "b@b.com" },
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Group Income")).toBeInTheDocument();
+    expect(screen.getByText("€2,000.00")).toBeInTheDocument();
+  });
+
+  it("omits the income figure when no member has income", () => {
+    render(
+      <GroupsClient
+        groups={[
+          {
+            id: "abc123",
+            name: "Roomies",
+            role: "OWNER",
+            members: [
+              { id: "m1", income: 0, user: { name: "Ana", email: "a@b.com" } },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.queryByText("Group Income")).not.toBeInTheDocument();
   });
 
   // Scenario: "Selecting a group navigates to its dashboard" — already true
