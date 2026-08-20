@@ -52,6 +52,7 @@ export function CompleteProfileForm() {
           value={name}
           onChange={setName}
           autoFocus
+          className="dark:bg-slate-800"
         />
 
         <FormError message={error} />

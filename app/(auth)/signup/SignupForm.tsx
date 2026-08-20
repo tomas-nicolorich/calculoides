@@ -106,6 +106,7 @@ export function SignupForm() {
           placeholder="Your name"
           value={name}
           onChange={setName}
+          className="dark:bg-slate-800"
         />
         <FormField
           id="email"
@@ -114,6 +115,7 @@ export function SignupForm() {
           placeholder="name@example.com"
           value={email}
           onChange={setEmail}
+          className="dark:bg-slate-800"
         />
         <FormField
           id="password"
@@ -122,6 +124,7 @@ export function SignupForm() {
           placeholder="••••••••"
           value={password}
           onChange={setPassword}
+          className="dark:bg-slate-800"
         />
         <div className="space-y-2">
           <FormField
@@ -131,6 +134,7 @@ export function SignupForm() {
             placeholder="••••••••"
             value={confirmPassword}
             onChange={setConfirmPassword}
+            className="dark:bg-slate-800"
           />
           <PasswordMismatchWarning show={passwordsDoNotMatch} />
         </div>

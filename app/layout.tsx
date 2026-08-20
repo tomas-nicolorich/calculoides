@@ -6,6 +6,9 @@ import { THEME_SCRIPT } from "./_theme/theme-script";
 export const metadata: Metadata = {
   title: "Calculoides",
   description: "Shared budget tracking for groups.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

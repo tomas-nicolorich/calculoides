@@ -123,6 +123,7 @@ export function ResetPasswordForm() {
           placeholder="••••••••"
           value={password}
           onChange={setPassword}
+          className="dark:bg-slate-800"
         />
         <FormField
           id="confirm"
@@ -131,6 +132,7 @@ export function ResetPasswordForm() {
           placeholder="••••••••"
           value={confirm}
           onChange={setConfirm}
+          className="dark:bg-slate-800"
         />
 
         <FormError message={error} />

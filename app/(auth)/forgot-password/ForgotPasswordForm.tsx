@@ -76,6 +76,7 @@ export function ForgotPasswordForm() {
           placeholder="name@example.com"
           value={email}
           onChange={setEmail}
+          className="dark:bg-slate-800"
         />
 
         <FormError message={error} />

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Card, Input, IconButton } from "../../_ui";
+import { cn } from "../../../lib/cn";
 
 // Shared by every app/(auth)/** page: the card shell, header, a labeled
 // input, and the inline error message. Extracted from the original
@@ -44,6 +45,7 @@ export function FormField({
   autoComplete,
   autoFocus,
   endAdornment,
+  className,
 }: {
   id: string;
   label: string;
@@ -55,6 +57,7 @@ export function FormField({
   autoComplete?: string;
   autoFocus?: boolean;
   endAdornment?: ReactNode;
+  className?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -76,7 +79,7 @@ export function FormField({
           required={required}
           autoComplete={autoComplete}
           autoFocus={autoFocus}
-          className={endAdornment ? "pr-10" : undefined}
+          className={cn(endAdornment && "pr-10", className)}
         />
         {endAdornment}
       </div>
