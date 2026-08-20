@@ -72,4 +72,15 @@ describe("NavItemLink", () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  // Collapsed rail width — icon-only, label moves to aria-label/tooltip.
+  it("renders icon-only with the label as aria-label when collapsed", () => {
+    usePathnameMock.mockReturnValue("/groups");
+
+    render(<NavItemLink item={DASHBOARD_ITEM} groupId="abc123" collapsed />);
+
+    const link = screen.getByRole("link", { name: "Dashboard" });
+    expect(link).toHaveAttribute("aria-label", "Dashboard");
+    expect(link).not.toHaveTextContent("Dashboard");
+  });
 });

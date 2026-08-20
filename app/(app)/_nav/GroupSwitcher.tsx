@@ -5,6 +5,7 @@ import { Menu } from "@base-ui/react/menu";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronsUpDown } from "lucide-react";
 import type { ShellGroup } from "../AppShell";
+import { cn } from "../../../lib/cn";
 
 // Matches the group-scoped route prefixes from NAV_ITEMS. `/members` is
 // deliberately excluded — it is `?groupId=` scoped, not a path segment.
@@ -32,7 +33,13 @@ function resolveGroupId(
  * `GroupService.getGroupsForUser` upstream), with an empty state pointing
  * to `/groups` when the user belongs to none.
  */
-export function GroupSwitcher({ groups }: { groups: ShellGroup[] }) {
+export function GroupSwitcher({
+  groups,
+  collapsed = false,
+}: {
+  groups: ShellGroup[];
+  collapsed?: boolean;
+}) {
   const params = useParams<{ groupId?: string }>();
   const pathname = usePathname();
   const groupId = resolveGroupId(params.groupId, pathname);
@@ -51,7 +58,10 @@ export function GroupSwitcher({ groups }: { groups: ShellGroup[] }) {
           <button
             type="button"
             aria-label="Switch group"
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 outline-none transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            className={cn(
+              "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 outline-none transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
+              collapsed && "justify-center px-0",
+            )}
           />
         }
       >
@@ -60,7 +70,9 @@ export function GroupSwitcher({ groups }: { groups: ShellGroup[] }) {
           aria-hidden="true"
           className="shrink-0 text-brand-balance"
         />
-        <span className="min-w-0 flex-1 truncate">{triggerLabel}</span>
+        {!collapsed && (
+          <span className="min-w-0 flex-1 truncate">{triggerLabel}</span>
+        )}
       </Menu.Trigger>
 
       <Menu.Portal>

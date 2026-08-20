@@ -6,6 +6,7 @@ import {
   PiggyBank,
   Contact,
   Users,
+  User,
 } from "lucide-react";
 import type { BadgeTone } from "../../_ui/Badge";
 
@@ -22,7 +23,8 @@ export interface NavItem {
     | "transfers"
     | "savings"
     | "members"
-    | "groups";
+    | "groups"
+    | "profile";
   label: string;
   icon: LucideIcon;
   href: (groupId: string | null) => string;
@@ -87,6 +89,15 @@ export const NAV_ITEMS: readonly NavItem[] = [
     requiresGroup: false,
     showInTabBar: true,
     tone: "category",
+  },
+  {
+    key: "profile",
+    label: "Profile",
+    icon: User,
+    href: () => "/profile",
+    requiresGroup: false,
+    showInTabBar: false,
+    tone: "balance",
   },
 ];
 

@@ -42,7 +42,6 @@ interface RenderedElement<P> {
 
 interface AppShellProps {
   groups: { id: string; name: string }[];
-  user: { id: string; name: string | null; email: string };
 }
 
 describe("app/(app)/layout", () => {
@@ -149,10 +148,5 @@ describe("app/(app)/layout", () => {
       { id: "group-1", name: "Roomies" },
       { id: "group-2", name: "Weekend House" },
     ]);
-    expect(appShellProps.user).toEqual({
-      id: "user-1",
-      name: "Ana",
-      email: "a@b.com",
-    });
   });
 });

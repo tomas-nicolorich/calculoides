@@ -35,11 +35,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <Providers>
       <AppShell
         groups={groups.map((group) => ({ id: group.id, name: group.name }))}
-        user={{
-          id: authUser.id,
-          name: profile.name,
-          email: profile.email,
-        }}
       >
         {children}
       </AppShell>

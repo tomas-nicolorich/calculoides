@@ -4,13 +4,52 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { AppShell } from "./AppShell";
 
+/**
+ * Node's built-in `localStorage` global (stable, but inert without
+ * `--localstorage-file`) shadows jsdom's working `window.localStorage`
+ * inside Vitest's jsdom pool. `useSidebarCollapsed`/`ThemeToggle` both read
+ * it on mount, so install a minimal in-memory stand-in (mirrors
+ * `app/_theme/ThemeToggle.test.tsx`).
+ */
+function installMemoryLocalStorage() {
+  const store = new Map<string, string>();
+  const storage: Storage = {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => {
+      store.set(key, value);
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    key: (index) => Array.from(store.keys())[index] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+  Object.defineProperty(window, "localStorage", {
+    value: storage,
+    configurable: true,
+  });
+}
+installMemoryLocalStorage();
+
+// `ThemeToggle` reads `matchMedia` for its OS-preference fallback on mount.
+window.matchMedia = vi.fn().mockReturnValue({
+  matches: false,
+  media: "(prefers-color-scheme: dark)",
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+});
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/abc123",
   useParams: () => ({ groupId: "abc123" }),
 }));
 
 const GROUPS = [{ id: "group-1", name: "Roomies" }];
-const USER = { id: "user-1", name: "Ana", email: "a@b.com" };
 
 describe("AppShell", () => {
   afterEach(() => {
@@ -20,7 +59,7 @@ describe("AppShell", () => {
   // app-navigation-shell: "Desktop viewport shows the sidebar tree"
   it("renders the desktop sidebar tree gated by hidden md:flex", () => {
     render(
-      <AppShell groups={GROUPS} user={USER}>
+      <AppShell groups={GROUPS}>
         <p>page content</p>
       </AppShell>,
     );
@@ -39,7 +78,7 @@ describe("AppShell", () => {
   // page module.
   it("renders children received as a prop", () => {
     render(
-      <AppShell groups={GROUPS} user={USER}>
+      <AppShell groups={GROUPS}>
         <p>page content</p>
       </AppShell>,
     );
@@ -52,7 +91,7 @@ describe("AppShell", () => {
   // the mobile tree is gated by `md:hidden` alone, never a JS check.
   it("renders the mobile top/tab bar tree gated by md:hidden", () => {
     const { container } = render(
-      <AppShell groups={GROUPS} user={USER}>
+      <AppShell groups={GROUPS}>
         <p>page content</p>
       </AppShell>,
     );

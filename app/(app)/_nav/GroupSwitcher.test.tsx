@@ -52,4 +52,14 @@ describe("GroupSwitcher", () => {
       screen.getByRole("menuitem", { name: "Weekend House" }),
     ).toBeInTheDocument();
   });
+
+  // Collapsed rail width — icon-only trigger, no visible label text.
+  it("hides the trigger label when collapsed", () => {
+    useParamsMock.mockReturnValue({ groupId: "abc123" });
+    usePathnameMock.mockReturnValue("/dashboard/abc123");
+    render(<GroupSwitcher groups={GROUPS} collapsed />);
+    expect(
+      screen.getByRole("button", { name: "Switch group" }),
+    ).not.toHaveTextContent("Roomies");
+  });
 });

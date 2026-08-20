@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { cn } from "../../lib/cn";
 
 const THEME_STORAGE_KEY = "theme";
 
@@ -26,7 +27,7 @@ function resolveInitialIsDark(): boolean {
  * "First Load Without a Stored Preference Falls Back Once, Without Ongoing
  * OS Sync").
  */
-export function ThemeToggle() {
+export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
   const [isDark, setIsDark] = useState(resolveInitialIsDark);
 
   useEffect(() => {
@@ -44,23 +45,28 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label="Toggle Dark Mode"
-      className="flex w-full items-center justify-between gap-3 rounded-xl p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+      className={cn(
+        "flex w-full items-center gap-3 rounded-xl p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800",
+        collapsed ? "justify-center" : "justify-between",
+      )}
     >
       <span className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
         <span aria-hidden="true">{isDark ? "🌙" : "☀️"}</span>
-        Dark Mode
+        {!collapsed && "Dark Mode"}
       </span>
-      <span
-        className={`h-5 w-10 rounded-full p-1 transition-colors ${
-          isDark ? "bg-brand-balance" : "bg-slate-200 dark:bg-slate-700"
-        }`}
-      >
+      {!collapsed && (
         <span
-          className={`block h-3 w-3 rounded-full bg-white transition-transform ${
-            isDark ? "translate-x-5" : "translate-x-0"
+          className={`h-5 w-10 rounded-full p-1 transition-colors ${
+            isDark ? "bg-brand-balance" : "bg-slate-200 dark:bg-slate-700"
           }`}
-        />
-      </span>
+        >
+          <span
+            className={`block h-3 w-3 rounded-full bg-white transition-transform ${
+              isDark ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </span>
+      )}
     </button>
   );
 }
