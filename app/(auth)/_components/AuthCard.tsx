@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { Card, Input, IconButton } from "../../_ui";
 
 // Shared by every app/(auth)/** page: the card shell, header, a labeled
 // input, and the inline error message. Extracted from the original
@@ -18,7 +19,7 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <div className="w-full max-w-md mx-auto bg-card rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+    <Card className="w-full max-w-md mx-auto">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           {title}
@@ -28,7 +29,7 @@ export function AuthCard({
         </p>
       </div>
       {children}
-    </div>
+    </Card>
   );
 }
 
@@ -64,7 +65,7 @@ export function FormField({
         {label}
       </label>
       <div className="relative">
-        <input
+        <Input
           id={id}
           type={type}
           placeholder={placeholder}
@@ -75,7 +76,7 @@ export function FormField({
           required={required}
           autoComplete={autoComplete}
           autoFocus={autoFocus}
-          className={`w-full rounded-md px-3 py-2 text-sm ${endAdornment ? "pr-10" : ""}`}
+          className={endAdornment ? "pr-10" : undefined}
         />
         {endAdornment}
       </div>
@@ -91,15 +92,17 @@ export function PasswordVisibilityToggle({
   onToggle: () => void;
 }) {
   return (
-    <button
+    <IconButton
       type="button"
+      size="sm"
+      hover="neutral"
       aria-label={visible ? "Hide password" : "Show password"}
       aria-pressed={visible}
       onClick={onToggle}
-      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      className="absolute right-1 top-1/2 -translate-y-1/2"
     >
       {visible ? <EyeOff size={16} /> : <Eye size={16} />}
-    </button>
+    </IconButton>
   );
 }
 

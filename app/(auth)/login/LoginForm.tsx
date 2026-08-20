@@ -4,6 +4,7 @@ import { useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
+import { Button } from "../../_ui";
 import {
   AuthCard,
   FormField,
@@ -19,13 +20,10 @@ function toLoginErrorMessage(message: string): string {
 
 /**
  * Lean port of `frontend/src/features/auth/ui/LoginForm.tsx` for the
- * cookie-session (`@supabase/ssr`) flow. Deliberately does not pull in the
- * `shared/ui` atom library or `react-router-dom` — those are wired for the
- * Vite app and porting the full atom tree here would blow past this
- * phase's ~600-700 line review budget for a component that gets replaced
- * again once `components/**` migrates (design.md File Changes). Visual
- * base styling for the inputs comes from `app/globals.css`'s `@layer base`
- * rules (ported verbatim from `frontend/src/app/index.css`).
+ * cookie-session (`@supabase/ssr`) flow. Uses the `app/_ui` atom library
+ * (`Button`, plus `Card`/`Input`/`IconButton` via `AuthCard`) for the same
+ * styling `main`'s `shared/ui` atoms provide, but not `react-router-dom` —
+ * that's wired for the Vite app and this uses Next's own routing instead.
  */
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -108,13 +106,14 @@ export function LoginForm() {
 
         <FormError message={error} />
 
-        <button
+        <Button
           type="submit"
+          variant="cta"
+          className="w-full h-10 mt-6"
           disabled={loading}
-          className="w-full h-10 mt-6 rounded-md bg-brand-balance text-white font-medium disabled:opacity-60"
         >
           {loading ? "Signing in..." : "Sign In"}
-        </button>
+        </Button>
 
         <div className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
           Don&apos;t have an account?{" "}

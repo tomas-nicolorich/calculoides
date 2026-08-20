@@ -4,6 +4,7 @@ import { useEffect, useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
+import { Button } from "../../_ui";
 import { AuthCard, FormField, FormError } from "../_components/AuthCard";
 
 function useRecoverySession(): boolean | null {
@@ -134,13 +135,13 @@ export function ResetPasswordForm() {
 
         <FormError message={error} />
 
-        <button
+        <Button
           type="submit"
+          className="w-full h-10 mt-2"
           disabled={submitting}
-          className="w-full rounded-md bg-brand-balance text-white font-semibold h-10 mt-2 disabled:opacity-60"
         >
           {submitting ? "Updating..." : "Update Password"}
-        </button>
+        </Button>
       </form>
     </AuthCard>
   );

@@ -3,6 +3,7 @@
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
+import { Button } from "../../_ui";
 import { AuthCard, FormField, FormError } from "../_components/AuthCard";
 
 function ResetLinkSent({ email }: { email: string }) {
@@ -79,13 +80,13 @@ export function ForgotPasswordForm() {
 
         <FormError message={error} />
 
-        <button
+        <Button
           type="submit"
+          className="w-full h-10 mt-2"
           disabled={loading}
-          className="w-full rounded-md bg-brand-balance text-white font-semibold h-10 mt-2 disabled:opacity-60"
         >
           {loading ? "Sending..." : "Send Reset Link"}
-        </button>
+        </Button>
 
         <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
           <p className="text-sm text-slate-500 dark:text-slate-400">

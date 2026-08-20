@@ -3,6 +3,7 @@
 import { useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import { upsert } from "../../../lib/actions/user";
+import { Button } from "../../_ui";
 import { AuthCard, FormField, FormError } from "../_components/AuthCard";
 
 export function CompleteProfileForm() {
@@ -55,13 +56,14 @@ export function CompleteProfileForm() {
 
         <FormError message={error} />
 
-        <button
+        <Button
           type="submit"
+          variant="cta"
+          className="w-full h-10 mt-6"
           disabled={loading}
-          className="w-full h-10 mt-6 rounded-md bg-brand-balance text-white font-medium disabled:opacity-60"
         >
           {loading ? "Saving..." : "Continue"}
-        </button>
+        </Button>
       </form>
     </AuthCard>
   );

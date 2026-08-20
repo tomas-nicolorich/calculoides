@@ -4,6 +4,7 @@ import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
 import { upsert } from "../../../lib/actions/user";
+import { Button } from "../../_ui";
 import { AuthCard, FormField, FormError } from "../_components/AuthCard";
 
 // Isolates the two-step signUp-then-provision-profile flow so the form's
@@ -136,13 +137,14 @@ export function SignupForm() {
 
         <FormError message={error} />
 
-        <button
+        <Button
           type="submit"
+          variant="income"
+          className="w-full h-10 mt-6"
           disabled={loading}
-          className="w-full h-10 mt-6 rounded-md bg-brand-income text-white font-medium disabled:opacity-60"
         >
           {loading ? "Creating account..." : "Sign Up"}
-        </button>
+        </Button>
 
         <div className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
           Already have an account?{" "}
