@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { cn } from "../../lib/cn";
 
 const THEME_STORAGE_KEY = "theme";
@@ -51,7 +52,11 @@ export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
       )}
     >
       <span className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
-        <span aria-hidden="true">{isDark ? "🌙" : "☀️"}</span>
+        {isDark ? (
+          <Moon size={18} aria-hidden="true" className="text-brand-balance" />
+        ) : (
+          <Sun size={18} aria-hidden="true" className="text-amber-500" />
+        )}
         {!collapsed && "Dark Mode"}
       </span>
       {!collapsed && (
