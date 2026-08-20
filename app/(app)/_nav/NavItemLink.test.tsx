@@ -19,6 +19,7 @@ const DASHBOARD_ITEM: NavItem = {
   href: (groupId) => (groupId ? `/dashboard/${groupId}` : "/groups"),
   requiresGroup: true,
   showInTabBar: true,
+  tone: "balance",
 };
 
 describe("NavItemLink", () => {

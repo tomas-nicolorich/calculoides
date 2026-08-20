@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Menu } from "@base-ui/react/menu";
 import { useParams, usePathname } from "next/navigation";
-import { ChevronDown, Users } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import type { ShellGroup } from "../AppShell";
 
 // Matches the group-scoped route prefixes from NAV_ITEMS. `/members` is
@@ -55,17 +55,12 @@ export function GroupSwitcher({ groups }: { groups: ShellGroup[] }) {
           />
         }
       >
-        <Users
+        <ChevronsUpDown
           size={18}
           aria-hidden="true"
           className="shrink-0 text-brand-balance"
         />
         <span className="min-w-0 flex-1 truncate">{triggerLabel}</span>
-        <ChevronDown
-          size={16}
-          aria-hidden="true"
-          className="shrink-0 text-slate-400"
-        />
       </Menu.Trigger>
 
       <Menu.Portal>
