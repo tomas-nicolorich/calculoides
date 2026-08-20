@@ -44,6 +44,15 @@ RESEND_API_KEY=
 FRONTEND_URL=                    # used for invitation email links
 ```
 
+`NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` are required for the
+Supabase client to initialize in the *browser* — without them, `lib/supabase/client.ts`
+fails silently and login/signup/reset-password hang with no error feedback.
+They're distinct from the server-only `SUPABASE_URL`/`SUPABASE_ANON_KEY` above,
+and from the legacy Vite-era `VITE_SUPABASE_*` vars, which this app doesn't read
+at all — a stale `.env.local` carried over from the old `frontend/` app (only
+`SUPABASE_URL`/`SUPABASE_ANON_KEY`/`VITE_SUPABASE_*` set) is a common way to hit
+this.
+
 Run the app in development — one process, no separate API server:
 
 ```bash

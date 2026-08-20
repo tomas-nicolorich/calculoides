@@ -5,10 +5,16 @@ import { IconButton } from "./IconButton";
 
 interface RowMenuProps {
   onEdit?: () => void;
-  onDelete: () => void;
+  /**
+   * Optional so a caller with a non-owner-gated delete permission (e.g.
+   * `BudgetCategories`' owner-only category delete) can omit it entirely
+   * rather than rendering a Delete option that would only fail server-side.
+   */
+  onDelete?: () => void;
 }
 
-/** Ported verbatim from `main`'s `shared/ui/RowMenu.tsx`. */
+/** Ported from `main`'s `shared/ui/RowMenu.tsx`; `onDelete` made optional
+ * here to support permission-gated callers `main` didn't have. */
 export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
   const [open, setOpen] = useState(false);
 
@@ -49,18 +55,20 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
                 <span>Edit</span>
               </button>
             )}
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onDelete();
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-sm text-brand-expense hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left outline-none cursor-pointer"
-            >
-              <Trash2 size={14} />
-              <span>Delete</span>
-            </button>
+            {onDelete && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  onDelete();
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-sm text-brand-expense hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left outline-none cursor-pointer"
+              >
+                <Trash2 size={14} />
+                <span>Delete</span>
+              </button>
+            )}
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

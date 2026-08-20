@@ -6,6 +6,7 @@ import {
   Avatar,
   Button,
   Card,
+  CategoryIconTile,
   IconPicker,
   Input,
   ResponsiveDialog,
@@ -409,6 +410,7 @@ function CategoryRowItem({
   groupId,
   category,
   isExpanded,
+  isOwner,
   onToggle,
   onEdit,
   onDelete,
@@ -417,6 +419,7 @@ function CategoryRowItem({
   groupId: string;
   category: CategoryRow;
   isExpanded: boolean;
+  isOwner: boolean;
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -435,6 +438,7 @@ function CategoryRowItem({
           aria-expanded={isExpanded}
           className="flex-1 min-w-0 flex items-center gap-3 text-left"
         >
+          <CategoryIconTile icon={category.icon} size="md" />
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-medium text-slate-900 dark:text-white truncate">
@@ -462,7 +466,7 @@ function CategoryRowItem({
             )}
           />
         </button>
-        <RowMenu onEdit={onEdit} onDelete={onDelete} />
+        <RowMenu onEdit={onEdit} onDelete={isOwner ? onDelete : undefined} />
       </div>
 
       {isExpanded && (
@@ -524,9 +528,16 @@ function CategoryRowItem({
  * transfer-history drill-down, and the category-scoped inline transfer form
  * — every mutation-shaped affordance ADR-9 deferred out of PR 14.
  */
-export function BudgetCategories({ groupId }: { groupId: string }) {
+export function BudgetCategories({
+  groupId,
+  currentUserId,
+}: {
+  groupId: string;
+  currentUserId: string;
+}) {
   const { data: categories, isLoading, isError } = useCategoriesList(groupId);
   const { data: summary } = useDashboardSummary(groupId);
+  const isOwner = summary?.ownerId === currentUserId;
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const [isAdding, setIsAdding] = useState(false);
@@ -762,6 +773,7 @@ export function BudgetCategories({ groupId }: { groupId: string }) {
                 groupId={groupId}
                 category={category}
                 isExpanded={expandedIds.has(category.id)}
+                isOwner={isOwner}
                 onToggle={() => {
                   toggleExpanded(category.id);
                 }}

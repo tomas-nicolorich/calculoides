@@ -98,8 +98,20 @@ export const BudgetService = {
       // allocation was computed — the frontend renders an empty state.
       const isEmpty = !relevantMembers.some((m) => m.income > 0);
 
+      // Only plain objects can cross the RSC boundary — `category.expenses`/
+      // `category.transfers`/`category.memberLinks` carry live Prisma
+      // `Decimal` amounts and are omitted here (unused downstream;
+      // `balances`/`totalSpent` are already the derived numeric figures
+      // consumers need), and `monthlyBudget` is coerced to `Number` instead
+      // of spread raw.
       return {
-        ...category,
+        id: category.id,
+        groupId: category.groupId,
+        name: category.name,
+        icon: category.icon,
+        monthlyBudget: Number(category.monthlyBudget),
+        createdAt: category.createdAt,
+        updatedAt: category.updatedAt,
         balances: enrichedBalances,
         isEmpty,
         totalSpent: enrichedBalances.reduce((acc, b) => acc + b.spent, 0),

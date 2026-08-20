@@ -5,10 +5,12 @@ import "@testing-library/jest-dom/vitest";
 import { RowMenu } from "./RowMenu";
 
 /**
- * PR 6 (spec `ui-design-system`): ported verbatim from `main`'s
+ * PR 6 (spec `ui-design-system`): ported from `main`'s
  * `shared/ui/RowMenu.tsx` — a Base UI `Popover`-backed row-actions menu.
- * `onEdit` is optional (only rendered when provided); `onDelete` is
- * required, matching `main`'s exact prop contract.
+ * Both `onEdit` and `onDelete` are optional; each item only renders when
+ * its handler is provided (`onDelete` was widened past `main`'s
+ * always-required contract to support permission-gated callers, e.g.
+ * `BudgetCategories`' owner-only delete).
  */
 describe("RowMenu", () => {
   afterEach(() => {
@@ -60,5 +62,15 @@ describe("RowMenu", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits the Delete item when onDelete is not provided", () => {
+    render(<RowMenu onEdit={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete" }),
+    ).not.toBeInTheDocument();
   });
 });

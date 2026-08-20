@@ -72,7 +72,7 @@ export default async function DashboardPage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DashboardClient groupId={groupId} />
+      <DashboardClient groupId={groupId} currentUserId={user.id} />
     </HydrationBoundary>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 // Shared by every app/(auth)/** page: the card shell, header, a labeled
 // input, and the inline error message. Extracted from the original
@@ -41,6 +42,7 @@ export function FormField({
   required = true,
   autoComplete,
   autoFocus,
+  endAdornment,
 }: {
   id: string;
   label: string;
@@ -51,6 +53,7 @@ export function FormField({
   required?: boolean;
   autoComplete?: string;
   autoFocus?: boolean;
+  endAdornment?: ReactNode;
 }) {
   return (
     <div className="space-y-2">
@@ -60,20 +63,43 @@ export function FormField({
       >
         {label}
       </label>
-      <input
-        id={id}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-        required={required}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        className="w-full rounded-md px-3 py-2 text-sm"
-      />
+      <div className="relative">
+        <input
+          id={id}
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value);
+          }}
+          required={required}
+          autoComplete={autoComplete}
+          autoFocus={autoFocus}
+          className={`w-full rounded-md px-3 py-2 text-sm ${endAdornment ? "pr-10" : ""}`}
+        />
+        {endAdornment}
+      </div>
     </div>
+  );
+}
+
+export function PasswordVisibilityToggle({
+  visible,
+  onToggle,
+}: {
+  visible: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={visible ? "Hide password" : "Show password"}
+      aria-pressed={visible}
+      onClick={onToggle}
+      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+    >
+      {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
   );
 }
 

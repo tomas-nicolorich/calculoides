@@ -68,7 +68,7 @@ async function renderHydrated() {
   render(
     <QueryClientProvider client={createQueryClient()}>
       <HydrationBoundary state={dehydratedState}>
-        <QuickAddExpense groupId={GROUP_ID} />
+        <QuickAddExpense groupId={GROUP_ID} currentUserId="user-2" />
       </HydrationBoundary>
     </QueryClientProvider>,
   );
@@ -85,17 +85,23 @@ describe("QuickAddExpense", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders only a trigger button until clicked — no dialog, no full-page form", async () => {
+  it("renders only trigger buttons until clicked — no dialog, no full-page form", async () => {
     await renderHydrated();
 
-    expect(screen.getByRole("button", { name: /add expense/i })).toBeInTheDocument();
+    // Desktop button + mobile FAB, both labeled "Add Expense" (CSS-gated by
+    // breakpoint, both present in the a11y tree in jsdom).
+    expect(
+      screen.getAllByRole("button", { name: /add expense/i }),
+    ).toHaveLength(2);
     expect(screen.queryByLabelText("Description")).not.toBeInTheDocument();
   });
 
   it("clicking the trigger opens a dialog with ExpenseForm's fields, prefilled from the hydrated cache", async () => {
     await renderHydrated();
 
-    fireEvent.click(screen.getByRole("button", { name: /add expense/i }));
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /add expense/i })[0],
+    );
 
     expect(screen.getByLabelText("Description")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("combobox", { name: /category/i }));

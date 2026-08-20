@@ -79,4 +79,8 @@ describe("app/_ui barrel", () => {
   it("re-exports IconPicker", () => {
     expect(barrel.IconPicker).toBeTypeOf("function");
   });
+
+  it("re-exports AddExpenseFab", () => {
+    expect(barrel.AddExpenseFab).toBeTypeOf("function");
+  });
 });

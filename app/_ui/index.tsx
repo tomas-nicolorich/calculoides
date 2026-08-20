@@ -22,6 +22,8 @@ export { IconPicker } from "./IconPicker";
 export { CategoryIconTile, CATEGORY_ICON_GROUPS } from "./categoryIcons";
 export type { CategoryIconTileProps, CategoryIconTileSize } from "./categoryIcons";
 export { UserDisplay } from "./UserDisplay";
+export { AddExpenseFab } from "./AddExpenseFab";
+export type { AddExpenseFabProps } from "./AddExpenseFab";
 
 export function Input({
   className,

@@ -1,25 +1,32 @@
 "use client";
 
+import { Avatar, AvatarGroup, ReloadButton } from "../../../_ui";
+import { queryKeys } from "../../../../lib/query-keys";
 import { useDashboardSummary } from "../../../_data/summary";
 import { IncomeOverview } from "./_widgets/IncomeOverview";
 import { RemainingBalance } from "./_widgets/RemainingBalance";
 import { RecentExpenses } from "./_widgets/RecentExpenses";
 import { BudgetTransfers } from "./_widgets/BudgetTransfers";
 import { BudgetCategories } from "./_widgets/BudgetCategories";
-import { SavingsGoalList } from "./_widgets/SavingsGoalList";
 import { QuickAddExpense } from "./_components/QuickAddExpense";
 
 /**
- * ADR-0003 two-column dashboard shell (PR 12). Six named widget slots — all
- * wired to real data as of PR 16 (`SavingsGoalList` replaces the
- * `WidgetStub` placeholder that held its place through PR 12-15). Each slot
- * owns its own loading boundary by self-subscribing to the query it needs —
- * there is no page-level `summaryLoading || …` early return blocking the
- * whole grid (spec: "Loading state precedes hydration"). The heading only
- * reads `summary?.groupName`, so it degrades gracefully (blank) while its
- * own query is still loading, without gating the grid below it.
+ * ADR-0003 two-column dashboard shell (PR 12). Widget slots are all wired to
+ * real data. Each slot owns its own loading boundary by self-subscribing to
+ * the query it needs — there is no page-level `summaryLoading || …` early
+ * return blocking the whole grid (spec: "Loading state precedes hydration").
+ * The heading only reads `summary?.groupName`, so it degrades gracefully
+ * (blank) while its own query is still loading, without gating the grid
+ * below it. Savings goals live only on the dedicated `/savings` page, not
+ * here.
  */
-export function DashboardClient({ groupId }: { groupId: string }) {
+export function DashboardClient({
+  groupId,
+  currentUserId,
+}: {
+  groupId: string;
+  currentUserId: string;
+}) {
   const { data: summary } = useDashboardSummary(groupId);
 
   return (
@@ -33,10 +40,21 @@ export function DashboardClient({ groupId }: { groupId: string }) {
             {summary?.groupName}
           </h1>
           <p className="text-slate-500">
-            Shared budget · {summary?.members.length ?? 0} members
+            Shared budget
+            {summary ? ` · ${String(summary.members.length)} members` : ""}
           </p>
         </div>
-        <QuickAddExpense groupId={groupId} />
+        <div className="flex items-center gap-4">
+          <ReloadButton queryKey={queryKeys.group(groupId)} />
+          {summary && summary.members.length > 0 && (
+            <AvatarGroup max={3} size="sm">
+              {summary.members.map((m, index) => (
+                <Avatar key={m.id} size="sm" name={m.name} colorIndex={index} />
+              ))}
+            </AvatarGroup>
+          )}
+          <QuickAddExpense groupId={groupId} currentUserId={currentUserId} />
+        </div>
       </header>
 
       <div
@@ -51,8 +69,7 @@ export function DashboardClient({ groupId }: { groupId: string }) {
         </div>
 
         <div className="flex flex-col gap-6">
-          <BudgetCategories groupId={groupId} />
-          <SavingsGoalList groupId={groupId} />
+          <BudgetCategories groupId={groupId} currentUserId={currentUserId} />
         </div>
       </div>
     </div>

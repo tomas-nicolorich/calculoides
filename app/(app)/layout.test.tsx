@@ -81,17 +81,40 @@ describe("app/(app)/layout", () => {
     );
   });
 
-  // Triangulation: a verified session renders children instead of redirecting.
+  // Triangulation: a verified session with a completed profile renders
+  // children instead of redirecting.
   it("renders children for a verified session", async () => {
     getUserMock.mockResolvedValue({
       data: { user: { id: "user-1", email: "a@b.com" } },
       error: null,
+    });
+    getUserServiceMock.mockResolvedValue({
+      id: "user-1",
+      name: "Ana",
+      email: "a@b.com",
     });
 
     const result = await Layout({ children: "protected content" });
 
     expect(redirectMock).not.toHaveBeenCalled();
     expect(result).toBeTruthy();
+  });
+
+  // Mirrors `main`'s `AuthProvider.profileIncomplete` gate: a verified
+  // session with no user row yet (a fresh signup whose profile-provisioning
+  // step never ran) is routed to complete it before reaching the app.
+  it("redirects to /complete-profile when the session has no user profile row", async () => {
+    getUserMock.mockResolvedValue({
+      data: { user: { id: "user-1", email: "a@b.com" } },
+      error: null,
+    });
+    getUserServiceMock.mockResolvedValue(null);
+
+    await expect(Layout({ children: "protected content" })).rejects.toThrow(
+      "NEXT_REDIRECT:/complete-profile",
+    );
+
+    expect(redirectMock).toHaveBeenCalledWith("/complete-profile");
   });
 
   // app-navigation-shell: "Switcher lists the signed-in user's groups" —

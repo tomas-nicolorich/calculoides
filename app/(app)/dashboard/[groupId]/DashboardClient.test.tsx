@@ -57,7 +57,7 @@ function renderHydrated(serverClient: QueryClient, browserClient: QueryClient) {
   render(
     <QueryClientProvider client={browserClient}>
       <HydrationBoundary state={dehydratedState}>
-        <DashboardClient groupId={GROUP_ID} />
+        <DashboardClient groupId={GROUP_ID} currentUserId="user-1" />
       </HydrationBoundary>
     </QueryClientProvider>,
   );
@@ -99,7 +99,7 @@ describe("DashboardClient", () => {
 
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <DashboardClient groupId={GROUP_ID} />
+        <DashboardClient groupId={GROUP_ID} currentUserId="user-1" />
       </QueryClientProvider>,
     );
 
@@ -112,7 +112,6 @@ describe("DashboardClient", () => {
     expect(screen.getByText("Income Overview")).toBeInTheDocument();
     expect(screen.getByText("Budget Transfers")).toBeInTheDocument();
     expect(screen.getByText("Budget Categories")).toBeInTheDocument();
-    expect(screen.getByText("Savings Goals")).toBeInTheDocument();
   });
 
   // client-data-cache: "Server-Component-served read has no query key" —

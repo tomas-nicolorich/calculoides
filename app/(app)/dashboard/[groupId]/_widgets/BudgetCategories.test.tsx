@@ -110,6 +110,7 @@ const RENT_CATEGORY: CategoryFixture = {
 async function renderHydrated(
   categories: CategoryFixture[] | null,
   summary: typeof SUMMARY_FIXTURE | null = SUMMARY_FIXTURE,
+  currentUserId = SUMMARY_FIXTURE.ownerId,
 ) {
   const serverClient = new QueryClient();
   if (summary !== null) {
@@ -129,7 +130,7 @@ async function renderHydrated(
   render(
     <QueryClientProvider client={browserClient}>
       <HydrationBoundary state={dehydratedState}>
-        <BudgetCategories groupId={GROUP_ID} />
+        <BudgetCategories groupId={GROUP_ID} currentUserId={currentUserId} />
       </HydrationBoundary>
     </QueryClientProvider>,
   );
@@ -225,7 +226,7 @@ describe("BudgetCategories", () => {
 
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <BudgetCategories groupId={GROUP_ID} />
+        <BudgetCategories groupId={GROUP_ID} currentUserId="user-1" />
       </QueryClientProvider>,
     );
 
@@ -241,7 +242,7 @@ describe("BudgetCategories", () => {
       <QueryClientProvider
         client={createQueryClient({ queries: { retry: false } })}
       >
-        <BudgetCategories groupId={GROUP_ID} />
+        <BudgetCategories groupId={GROUP_ID} currentUserId="user-1" />
       </QueryClientProvider>,
     );
 
@@ -472,6 +473,21 @@ describe("BudgetCategories", () => {
 
     expect(deleteCategoryAction).not.toHaveBeenCalled();
     expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
+  });
+
+  // dashboard-view: "Delete option is owner-only" — the server already
+  // rejects a non-owner delete (`lib/actions/category.ts`'s `isGroupOwner`
+  // check), this asserts the UI doesn't dead-end a non-owner into it.
+  it("omits the Delete row-menu item for a non-owner member", async () => {
+    await renderHydrated([RENT_CATEGORY], SUMMARY_FIXTURE, "user-2");
+    await screen.findByText("Rent");
+
+    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
+
+    expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete" }),
+    ).not.toBeInTheDocument();
   });
 
   it("calls deleteCategory only after the confirm step, and the deleted category disappears once the group cache invalidates", async () => {

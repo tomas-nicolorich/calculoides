@@ -18,17 +18,21 @@ async function signUpAndProvisionProfile(
   password: string,
   name: string,
 ): Promise<string | null> {
-  const supabase = createClient();
-  const { data, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-  });
-  if (authError) return authError.message;
+  try {
+    const supabase = createClient();
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (authError) return authError.message;
 
-  if (data.session) {
-    await upsert({ name });
+    if (data.session) {
+      await upsert({ name });
+    }
+    return null;
+  } catch {
+    return "Something went wrong. Please try again.";
   }
-  return null;
 }
 
 function arePasswordsMismatched(password: string, confirmPassword: string) {

@@ -285,8 +285,19 @@ export const SavingsService = {
       const projectedMonths = calculateMonthsRemaining(now, projectedDate);
       const varianceMonths = projectedMonths - targetMonths;
 
+      // Only plain objects can cross the RSC boundary — `goal.contributions`
+      // carries live Prisma `Decimal` `customAmount` values and is omitted
+      // here; `finalContributions`/`breakdown` above already coerced every
+      // contribution (including overrides) to `Number`, so nothing downstream
+      // needs the raw rows.
       return {
-        ...goal,
+        id: goal.id,
+        groupId: goal.groupId,
+        name: goal.name,
+        icon: goal.icon,
+        targetDate: goal.targetDate,
+        createdAt: goal.createdAt,
+        updatedAt: goal.updatedAt,
         targetAmount,
         currentAmount,
         projectedDate,

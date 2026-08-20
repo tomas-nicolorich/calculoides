@@ -4,7 +4,12 @@ import { useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
-import { AuthCard, FormField, FormError } from "../_components/AuthCard";
+import {
+  AuthCard,
+  FormField,
+  FormError,
+  PasswordVisibilityToggle,
+} from "../_components/AuthCard";
 
 function toLoginErrorMessage(message: string): string {
   return message === "Invalid login credentials"
@@ -25,6 +30,7 @@ function toLoginErrorMessage(message: string): string {
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -34,20 +40,25 @@ export function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
-      setError(toLoginErrorMessage(signInError.message));
+      if (signInError) {
+        setError(toLoginErrorMessage(signInError.message));
+        return;
+      }
+
+      router.push("/groups");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.push("/groups");
-    router.refresh();
   };
 
   return (
@@ -71,11 +82,19 @@ export function LoginForm() {
         <FormField
           id="password"
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="••••••••"
           value={password}
           onChange={setPassword}
           autoComplete="current-password"
+          endAdornment={
+            <PasswordVisibilityToggle
+              visible={showPassword}
+              onToggle={() => {
+                setShowPassword((prev) => !prev);
+              }}
+            />
+          }
         />
 
         <div className="flex items-center justify-end">

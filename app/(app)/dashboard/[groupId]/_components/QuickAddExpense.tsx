@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Button, ResponsiveDialog } from "../../../../_ui";
+import { AddExpenseFab, Button, ResponsiveDialog } from "../../../../_ui";
 import { useDashboardSummary } from "../../../../_data/summary";
 import { useCategoriesList } from "../../../../_data/categories";
 import { ExpenseForm } from "./ExpenseForm";
@@ -17,15 +17,26 @@ import { ExpenseForm } from "./ExpenseForm";
  * already-hydrated `queryKeys.summary`/`queryKeys.categories` caches, same
  * "no per-widget waterfall" convention every dashboard widget follows.
  */
-export function QuickAddExpense({ groupId }: { groupId: string }) {
+export function QuickAddExpense({
+  groupId,
+  currentUserId,
+}: {
+  groupId: string;
+  currentUserId: string;
+}) {
   const [open, setOpen] = useState(false);
   const { data: summary } = useDashboardSummary(groupId);
   const { data: categories } = useCategoriesList(groupId);
+
+  const defaultPayerId = summary?.members.find(
+    (m) => m.userId === currentUserId,
+  )?.id;
 
   return (
     <>
       <Button
         variant="cta"
+        className="hidden md:inline-flex"
         onClick={() => {
           setOpen(true);
         }}
@@ -33,6 +44,14 @@ export function QuickAddExpense({ groupId }: { groupId: string }) {
         <Plus size={16} className="mr-1" />
         Add Expense
       </Button>
+
+      <div className="md:hidden">
+        <AddExpenseFab
+          onClick={() => {
+            setOpen(true);
+          }}
+        />
+      </div>
 
       <ResponsiveDialog
         open={open}
@@ -45,6 +64,7 @@ export function QuickAddExpense({ groupId }: { groupId: string }) {
           groupId={groupId}
           categories={categories ?? []}
           members={summary?.members ?? []}
+          defaultPayerId={defaultPayerId}
           onSuccess={() => {
             setOpen(false);
           }}

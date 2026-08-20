@@ -27,14 +27,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     UserService.getUser(authUser.id),
   ]);
 
+  if (!profile) {
+    redirect("/complete-profile");
+  }
+
   return (
     <Providers>
       <AppShell
         groups={groups.map((group) => ({ id: group.id, name: group.name }))}
         user={{
           id: authUser.id,
-          name: profile?.name ?? null,
-          email: profile?.email ?? authUser.email ?? "",
+          name: profile.name,
+          email: profile.email,
         }}
       >
         {children}
