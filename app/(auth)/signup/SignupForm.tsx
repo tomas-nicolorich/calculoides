@@ -106,7 +106,7 @@ export function SignupForm() {
           placeholder="Your name"
           value={name}
           onChange={setName}
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
         />
         <FormField
           id="email"
@@ -115,7 +115,7 @@ export function SignupForm() {
           placeholder="name@example.com"
           value={email}
           onChange={setEmail}
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
         />
         <FormField
           id="password"
@@ -124,7 +124,7 @@ export function SignupForm() {
           placeholder="••••••••"
           value={password}
           onChange={setPassword}
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
         />
         <div className="space-y-2">
           <FormField
@@ -134,7 +134,7 @@ export function SignupForm() {
             placeholder="••••••••"
             value={confirmPassword}
             onChange={setConfirmPassword}
-            className="dark:bg-slate-800"
+            className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
           />
           <PasswordMismatchWarning show={passwordsDoNotMatch} />
         </div>

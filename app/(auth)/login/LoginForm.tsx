@@ -76,7 +76,7 @@ export function LoginForm() {
           onChange={setEmail}
           autoComplete="email"
           autoFocus
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
         />
         <FormField
           id="password"
@@ -86,7 +86,7 @@ export function LoginForm() {
           value={password}
           onChange={setPassword}
           autoComplete="current-password"
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
           endAdornment={
             <PasswordVisibilityToggle
               visible={showPassword}

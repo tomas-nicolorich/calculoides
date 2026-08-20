@@ -123,7 +123,7 @@ export function ResetPasswordForm() {
           placeholder="••••••••"
           value={password}
           onChange={setPassword}
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
         />
         <FormField
           id="confirm"
@@ -132,7 +132,7 @@ export function ResetPasswordForm() {
           placeholder="••••••••"
           value={confirm}
           onChange={setConfirm}
-          className="dark:bg-slate-800"
+          className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:ring-brand-balance"
         />
 
         <FormError message={error} />
