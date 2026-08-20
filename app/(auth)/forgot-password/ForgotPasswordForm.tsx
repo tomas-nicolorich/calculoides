@@ -2,6 +2,7 @@
 
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
+import { MailCheck, Info } from "lucide-react";
 import { createClient } from "../../../lib/supabase/client";
 import { Button } from "../../_ui";
 import { AuthCard, FormField, FormError } from "../_components/AuthCard";
@@ -9,7 +10,11 @@ import { AuthCard, FormField, FormError } from "../_components/AuthCard";
 function ResetLinkSent({ email }: { email: string }) {
   return (
     <AuthCard title="Reset Password" subtitle="Check your inbox">
-      <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl mb-4">
+      <div className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl mb-4">
+        <MailCheck
+          className="text-brand-balance shrink-0 mt-0.5"
+          size={18}
+        />
         <p className="text-sm text-slate-600 dark:text-slate-400">
           If an account exists for{" "}
           <strong className="text-slate-900 dark:text-white">
@@ -89,7 +94,8 @@ export function ForgotPasswordForm() {
           {loading ? "Sending..." : "Send Reset Link"}
         </Button>
 
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+        <div className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+          <Info className="text-slate-400 shrink-0 mt-0.5" size={18} />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             You&apos;ll get an email with a secure link to set a new password.
             Remembered it?{" "}
