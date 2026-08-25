@@ -10,10 +10,16 @@ bower_components
 .pnp.*
 .yarn-integrity
 
+# bun.lock is the project's lockfile; other package managers' lockfiles are ignored
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Build & framework output
 build/
 dist/
 .next
+next-env.d.ts
 out
 .nuxt
 .vuepress/dist
