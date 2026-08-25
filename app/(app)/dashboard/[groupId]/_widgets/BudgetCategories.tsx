@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type SyntheticEvent } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { ArrowRightLeft, ChevronDown, Plus } from "lucide-react";
 import {
   Avatar,
   Button,
@@ -138,38 +138,6 @@ function CategoryFormFields({
   );
 }
 
-/** A labelled `Select`, mirrors `BudgetTransfers.tsx`'s `LabeledSelect`. */
-function LabeledSelect({
-  id,
-  label,
-  value,
-  onValueChange,
-  options,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  const labelId = `${id}-label`;
-  return (
-    <div>
-      <label htmlFor={id} id={labelId} className="text-xs text-slate-500">
-        {label}
-      </label>
-      <Select
-        id={id}
-        labelId={labelId}
-        value={value}
-        onValueChange={onValueChange}
-        options={options}
-        placeholder="Select…"
-      />
-    </div>
-  );
-}
-
 /** Per-category drill-down (dashboard-view: "Category drill-down lists only
  * that category's transfers"). Only fetches while its row is expanded. */
 function TransferHistory({
@@ -217,117 +185,18 @@ function TransferHistory({
   );
 }
 
-/** Category-scoped inline transfer form (ADR-9 file list: "inline
- * budget-transfer form → `lib/actions/transfer.create`, scoped to a single
- * category from within its expanded row"). Only members with a non-excluded
- * balance in this category are offered — mirrors `main`'s
- * `transferCategoryMemberIds` restriction. */
-function CategoryTransferForm({
-  groupId,
-  category,
-  members,
-}: {
-  groupId: string;
-  category: CategoryRow;
-  members: RowMember[];
-}) {
-  const [fromMemberId, setFromMemberId] = useState("");
-  const [toMemberId, setToMemberId] = useState("");
-  const [amount, setAmount] = useState("");
-  const mutation = useCreateTransfer(groupId);
-
-  const eligibleIds = new Set(
-    category.balances.filter((b) => !b.excluded).map((b) => b.memberId),
-  );
-  const eligibleMembers = members.filter((m) => eligibleIds.has(m.id));
-  const options = eligibleMembers.map((m) => ({ value: m.id, label: m.name }));
-
-  const parsedAmount = parseFloat(amount);
-  const isValid =
-    fromMemberId !== "" &&
-    toMemberId !== "" &&
-    fromMemberId !== toMemberId &&
-    !isNaN(parsedAmount) &&
-    parsedAmount > 0;
-
-  const handleSubmit = async () => {
-    if (!isValid) return;
-    await mutation.mutateAsync({
-      categoryId: category.id,
-      fromMemberId,
-      toMemberId,
-      amount: parsedAmount,
-    });
-    setFromMemberId("");
-    setToMemberId("");
-    setAmount("");
-  };
-
-  return (
-    <form
-      aria-label={`Transfer within ${category.name}`}
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleSubmit();
-      }}
-      className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800"
-    >
-      <LabeledSelect
-        id={`category-transfer-from-${category.id}`}
-        label="From"
-        value={fromMemberId}
-        onValueChange={setFromMemberId}
-        options={options}
-      />
-      <LabeledSelect
-        id={`category-transfer-to-${category.id}`}
-        label="To"
-        value={toMemberId}
-        onValueChange={setToMemberId}
-        options={options}
-      />
-      <div className="col-span-2">
-        <label
-          htmlFor={`category-transfer-amount-${category.id}`}
-          className="text-xs text-slate-500"
-        >
-          Amount
-        </label>
-        <Input
-          id={`category-transfer-amount-${category.id}`}
-          type="number"
-          step="0.01"
-          prefix="€"
-          value={amount}
-          onChange={(e) => {
-            setAmount(e.target.value);
-          }}
-          placeholder="0.00"
-        />
-      </div>
-      <Button
-        type="submit"
-        variant="transfer"
-        size="sm"
-        className="col-span-2"
-        disabled={!isValid || mutation.isPending}
-      >
-        {mutation.isPending ? "Adding…" : "Add Transfer"}
-      </Button>
-    </form>
-  );
-}
-
 /** A single expanded per-member balance row. Ported from `main`'s
  * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx` `MemberRow`
- * markup, minus the transfer affordance (ADR-9: mutation-shaped features
- * belong in PR 15). */
+ * markup, including the transfer-trigger icon that opens the shared
+ * "Transfer Budget" dialog locked to this member as the From side. */
 function MemberRow({
   balance,
   member,
+  onTransfer,
 }: {
   balance: CategoryBalance;
   member: RowMember | undefined;
+  onTransfer: () => void;
 }) {
   const displayName = member?.name ?? balance.memberId.slice(0, 4);
 
@@ -379,9 +248,28 @@ function MemberRow({
             {displayName}
           </span>
         </div>
-        <span className="text-sm font-medium font-mono tnum shrink-0">
-          {formatCurrency(balance.quota)}
-        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={onTransfer}
+            className="p-1.5 text-brand-transfer bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded transition-all"
+            title="Initiate Transfer"
+            aria-label={`Transfer from ${displayName}`}
+          >
+            <ArrowRightLeft size={14} />
+          </button>
+          <span
+            className="text-xs rounded-full px-2 py-0.5 font-mono tnum"
+            style={{
+              backgroundColor: `color-mix(in srgb, var(--color-member-${String((member?.colorIndex ?? 0) + 1)}) 14%, transparent)`,
+              color: `var(--color-member-${String((member?.colorIndex ?? 0) + 1)})`,
+            }}
+          >
+            {balance.percentage.toFixed(1)}%
+          </span>
+          <span className="text-sm font-medium font-mono tnum">
+            {formatCurrency(balance.quota)}
+          </span>
+        </div>
       </div>
       <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
         <span>
@@ -402,10 +290,10 @@ function MemberRow({
 }
 
 /** A single accordion row: header (name, budget, header `ProgressMeter`,
- * `RowMenu` edit/delete) plus expand/collapse per-member balances, the
- * per-category transfer-history drill-down, and the category-scoped inline
- * transfer form (ADR-9 slice 2 of 2 — PR 15 adds the mutation-shaped
- * affordances PR 14 intentionally left out). */
+ * `RowMenu` edit/delete) plus expand/collapse per-member balances and the
+ * per-category transfer-history drill-down. Each member row's transfer icon
+ * opens the widget-level "Transfer Budget" dialog via `onTransfer`, locked
+ * to that member as the From side. */
 function CategoryRowItem({
   groupId,
   category,
@@ -414,6 +302,7 @@ function CategoryRowItem({
   onToggle,
   onEdit,
   onDelete,
+  onTransfer,
   members,
 }: {
   groupId: string;
@@ -423,6 +312,7 @@ function CategoryRowItem({
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onTransfer: (category: CategoryRow, balance: CategoryBalance) => void;
   members: RowMember[];
 }) {
   const totalSpent = category.balances.reduce((sum, b) => sum + b.spent, 0);
@@ -489,6 +379,9 @@ function CategoryRowItem({
                 key={balance.memberId}
                 balance={balance}
                 member={members.find((m) => m.id === balance.memberId)}
+                onTransfer={() => {
+                  onTransfer(category, balance);
+                }}
               />
             ))}
           </div>
@@ -496,11 +389,6 @@ function CategoryRowItem({
             groupId={groupId}
             categoryId={category.id}
             isExpanded={isExpanded}
-          />
-          <CategoryTransferForm
-            groupId={groupId}
-            category={category}
-            members={members}
           />
         </div>
       )}
@@ -510,11 +398,14 @@ function CategoryRowItem({
 
 /**
  * Accordion (ADR-9, both slices): category rows with a header `ProgressMeter`
- * and `RowMenu`, expand/collapse per-member balance breakdown, per-category
- * transfer history, and a category-scoped inline transfer form. Data seam:
- * self-subscribes to the hydrated `queryKeys.categories` cache (same seam
- * `BudgetTransfers` uses for `queryKeys.summary`) instead of receiving
- * `categories` as a prop, so it owns its own loading/error state
+ * and `RowMenu`, expand/collapse per-member balance breakdown and
+ * per-category transfer history, plus a widget-level "Transfer Budget"
+ * dialog shared across every category — opened from a member row's
+ * transfer-trigger icon, locked to that member as the From side (ported
+ * from `main`'s `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`).
+ * Data seam: self-subscribes to the hydrated `queryKeys.categories` cache
+ * (same seam `BudgetTransfers` uses for `queryKeys.summary`) instead of
+ * receiving `categories` as a prop, so it owns its own loading/error state
  * independent of the other five widgets (spec: "Loading state precedes
  * hydration"). Member names/avatar colours are resolved from
  * `queryKeys.summary`'s `members` array (array position = `colorIndex`,
@@ -525,8 +416,8 @@ function CategoryRowItem({
  * PR 15 adds create/update/delete-with-confirmation dialogs (all three
  * `lib/actions/category.ts` mutations invalidate `queryKeys.group(groupId)`
  * on success, same contract `BudgetTransfers` established), the per-category
- * transfer-history drill-down, and the category-scoped inline transfer form
- * — every mutation-shaped affordance ADR-9 deferred out of PR 14.
+ * transfer-history drill-down, and the shared "Transfer Budget" dialog —
+ * every mutation-shaped affordance ADR-9 deferred out of PR 14.
  */
 export function BudgetCategories({
   groupId,
@@ -553,9 +444,21 @@ export function BudgetCategories({
   const [monthlyBudget, setMonthlyBudget] = useState("");
   const [icon, setIcon] = useState("other");
 
+  const [transferCategory, setTransferCategory] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [transferCategoryMemberIds, setTransferCategoryMemberIds] = useState<
+    string[]
+  >([]);
+  const [transferFromMemberId, setTransferFromMemberId] = useState("");
+  const [transferToMemberId, setTransferToMemberId] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+
   const createCategory = useCreateCategory(groupId);
   const updateCategory = useUpdateCategory(groupId);
   const deleteCategoryMutation = useDeleteCategory(groupId);
+  const transferBudget = useCreateTransfer(groupId);
 
   const formLoading = createCategory.isPending || updateCategory.isPending;
   const formError =
@@ -623,6 +526,30 @@ export function BudgetCategories({
     setCategoryToDelete(null);
   };
 
+  const openTransfer = (category: CategoryRow, balance: CategoryBalance) => {
+    setTransferCategory({ id: category.id, name: category.name });
+    setTransferCategoryMemberIds(
+      category.balances.filter((b) => !b.excluded).map((b) => b.memberId),
+    );
+    setTransferFromMemberId(balance.memberId);
+    setTransferToMemberId("");
+    setTransferAmount("");
+    transferBudget.reset();
+  };
+
+  const handleTransferSubmit = async (e: SyntheticEvent) => {
+    e.preventDefault();
+    if (!transferCategory) return;
+    await transferBudget.mutateAsync({
+      categoryId: transferCategory.id,
+      fromMemberId: transferFromMemberId,
+      toMemberId: transferToMemberId,
+      amount: Number(transferAmount),
+    });
+    setTransferCategory(null);
+    setTransferAmount("");
+  };
+
   if (isLoading) {
     return (
       <Card title="Budget Categories" data-testid="budget-categories-loading">
@@ -646,6 +573,12 @@ export function BudgetCategories({
     name: m.name,
     colorIndex: index,
   }));
+
+  const transferFromMember = members.find(
+    (m) => m.id === transferFromMemberId,
+  );
+  const transferFromFirstName =
+    transferFromMember?.name.split(" ")[0] ?? transferFromMemberId;
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -785,11 +718,96 @@ export function BudgetCategories({
                 onDelete={() => {
                   setCategoryToDelete({ id: category.id, name: category.name });
                 }}
+                onTransfer={openTransfer}
                 members={members}
               />
             ))}
           </div>
         )}
+
+        <ResponsiveDialog
+          open={transferCategory !== null}
+          onOpenChange={(open) => {
+            if (!open) setTransferCategory(null);
+          }}
+          hideCloseButton
+          title="Transfer Budget"
+          description={
+            transferCategory
+              ? `Move budget from ${transferFromFirstName}'s share of ${transferCategory.name} to another member.`
+              : ""
+          }
+        >
+          <form
+            onSubmit={(e) => void handleTransferSubmit(e)}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <label className="text-sm font-medium">From</label>
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+                {transferFromMember && (
+                  <Avatar
+                    name={transferFromMember.name}
+                    colorIndex={transferFromMember.colorIndex}
+                    size="sm"
+                  />
+                )}
+                <span>
+                  From {transferFromFirstName}
+                  {transferCategory ? ` · ${transferCategory.name}` : ""}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">To Member</label>
+              <Select
+                value={transferToMemberId}
+                onValueChange={setTransferToMemberId}
+                placeholder="Select recipient"
+                options={members
+                  .filter(
+                    (m) =>
+                      transferCategoryMemberIds.includes(m.id) &&
+                      m.id !== transferFromMemberId,
+                  )
+                  .map((m) => ({ value: m.id, label: m.name }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount (€)</label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={transferAmount}
+                onChange={(e) => {
+                  setTransferAmount(e.target.value);
+                }}
+                required
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setTransferCategory(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="transfer"
+                className="flex-1"
+                disabled={transferBudget.isPending || !transferToMemberId}
+              >
+                {transferBudget.isPending ? "Processing..." : "Send Transfer"}
+              </Button>
+            </div>
+          </form>
+        </ResponsiveDialog>
       </div>
     </Card>
   );

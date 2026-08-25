@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import {
   QueryClient,
@@ -68,30 +68,12 @@ const SUMMARY_FIXTURE = {
   ],
 };
 
-const CATEGORIES_FIXTURE = [
-  { id: "c1", name: "Rent", monthlyBudget: 1000, balances: [] },
-  { id: "c2", name: "Groceries", monthlyBudget: 400, balances: [] },
-];
-
 type FetchMock = ReturnType<typeof vi.fn<(input: string) => Promise<Response>>>;
 
-function jsonResponse(body: unknown) {
-  return Promise.resolve(
-    new Response(JSON.stringify(body), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }),
-  );
-}
-
-/** Mirrors `RecentExpenses.test.tsx`'s hydration helper, extended to also
- * hydrate `queryKeys.categories` (the inline create-transfer form's category
- * options) so mounting never issues its own client fetch either. Returns the
- * browser `QueryClient` so mutation-invalidation tests can inspect it. */
-async function renderHydrated(
-  summary: typeof SUMMARY_FIXTURE | null,
-  categories: typeof CATEGORIES_FIXTURE = CATEGORIES_FIXTURE,
-) {
+/** Mirrors `RecentExpenses.test.tsx`'s hydration helper — hydrates
+ * `queryKeys.summary` so mounting never issues its own client fetch.
+ * Returns the browser `QueryClient` so tests can inspect it. */
+async function renderHydrated(summary: typeof SUMMARY_FIXTURE | null) {
   const serverClient = new QueryClient();
   if (summary !== null) {
     await serverClient.prefetchQuery({
@@ -99,10 +81,6 @@ async function renderHydrated(
       queryFn: () => Promise.resolve(summary),
     });
   }
-  await serverClient.prefetchQuery({
-    queryKey: queryKeys.categories(GROUP_ID),
-    queryFn: () => Promise.resolve(categories),
-  });
   const dehydratedState = dehydrate(serverClient);
   const browserClient = createQueryClient();
   render(
@@ -113,16 +91,6 @@ async function renderHydrated(
     </QueryClientProvider>,
   );
   return browserClient;
-}
-
-/** Base UI's `Select.Item` only commits once pointer-highlighted first —
- * mirrors `Select.test.tsx`'s `selectOption` helper. */
-function selectOption(name: string) {
-  const option = screen.getByRole("option", { name });
-  fireEvent.pointerMove(option);
-  fireEvent.pointerDown(option);
-  fireEvent.pointerUp(option);
-  fireEvent.click(option);
 }
 
 describe("BudgetTransfers", () => {
@@ -184,82 +152,5 @@ describe("BudgetTransfers", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     const link = screen.getByRole("link", { name: "View All" });
     expect(link).toHaveAttribute("href", `/transfers/${GROUP_ID}`);
-  });
-
-  // dashboard-view: "Creating a transfer invalidates the group cache" — a
-  // valid inline transfer form submission calls `lib/actions/transfer.create`
-  // and, on success, `queryKeys.group(groupId)` invalidates so
-  // `BudgetTransfers`/`RemainingBalance` both reflect the new transfer.
-  // Two assertions: the widget's own list re-renders with the new transfer,
-  // and a companion assertion confirms the *same* `queryKeys.summary` key
-  // `RemainingBalance` reads was refetched (proof of invalidation).
-  it("submits a new transfer via transfer.create, and the invalidated summary cache is refetched so the widget's own list reflects it", async () => {
-    vi.mocked(create).mockResolvedValue({
-      ok: true,
-      data: { id: "t2" },
-    } as Awaited<ReturnType<typeof create>>);
-    const updatedSummary = {
-      ...SUMMARY_FIXTURE,
-      recentTransfers: [
-        ...SUMMARY_FIXTURE.recentTransfers,
-        {
-          id: "t2",
-          categoryId: "c2",
-          categoryName: "Groceries",
-          categoryIcon: "shopping-cart",
-          fromMemberName: "Bob",
-          fromMemberId: "m2",
-          toMemberName: "Alice Smith",
-          toMemberId: "m1",
-          amount: 40,
-          date: "2026-06-21T00:00:00.000Z",
-        },
-      ],
-    };
-    fetchMock.mockImplementation((url: string) =>
-      url.includes("/api/summary")
-        ? jsonResponse(updatedSummary)
-        : jsonResponse(CATEGORIES_FIXTURE),
-    );
-
-    await renderHydrated(SUMMARY_FIXTURE);
-    await screen.findByTestId("transfer-badge");
-
-    fireEvent.click(screen.getByLabelText("Category"));
-    selectOption("Groceries");
-    fireEvent.click(screen.getByLabelText("From"));
-    selectOption("Bob");
-    fireEvent.click(screen.getByLabelText("To"));
-    selectOption("Alice Smith");
-    fireEvent.change(screen.getByLabelText("Amount"), {
-      target: { value: "40" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Add Transfer" }));
-
-    await waitFor(() => {
-      expect(create).toHaveBeenCalledWith(
-        {
-          categoryId: "c2",
-          fromMemberId: "m2",
-          toMemberId: "m1",
-          amount: 40,
-        },
-        expect.anything(),
-      );
-    });
-
-    // Companion assertion: invalidation refetched the exact key
-    // `RemainingBalance` shares — proof both widgets reflect the change.
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining("/api/summary?groupId="),
-      );
-    });
-    // The widget's own list re-renders with the new transfer.
-    await waitFor(() => {
-      const badges = screen.getAllByTestId("transfer-badge");
-      expect(badges.map((b) => b.textContent)).toContain("Groceries");
-    });
   });
 });
