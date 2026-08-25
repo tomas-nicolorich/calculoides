@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type SyntheticEvent } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import {
   Avatar,
   Button,
@@ -664,9 +664,11 @@ export function BudgetCategories({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div className="text-sm text-slate-400">
-            Shared buckets · each member&apos;s share is set by income.
+            Shared buckets · each member&apos;s share is set by income. Expand
+            to view and transfer.
           </div>
           <Button variant="ghost" size="sm" onClick={openAdd}>
+            <Plus size={16} className="mr-1" />
             New Category
           </Button>
         </div>

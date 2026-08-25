@@ -4,7 +4,6 @@ import {
   Receipt,
   ArrowLeftRight,
   PiggyBank,
-  Contact,
   Users,
   User,
 } from "lucide-react";
@@ -70,16 +69,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     requiresGroup: true,
     showInTabBar: true,
     tone: "income",
-  },
-  {
-    key: "members",
-    label: "Members",
-    icon: Contact,
-    // `/members` has no `[groupId]` segment — scoped by `?groupId=` instead.
-    href: (groupId) => (groupId ? `/members?groupId=${groupId}` : "/groups"),
-    requiresGroup: true,
-    showInTabBar: false,
-    tone: "neutral",
   },
   {
     key: "groups",
