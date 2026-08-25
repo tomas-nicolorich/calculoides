@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
-import { Avatar, Badge, Card } from "../../../../_ui";
+import { Avatar, Card } from "../../../../_ui";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { useDashboardSummary } from "../../../../_data/summary";
 
@@ -29,9 +29,8 @@ function resolveMemberDisplay(
   return { name: member?.name ?? fallbackName, colorIndex };
 }
 
-/** A single transfer row: marker icon + from→to sub-line + a transfer-tone
- * category badge (ui-design-system: "A transfer-related badge uses the
- * transfer variant") + amount. */
+/** A single transfer row: marker icon + category name + from→to sub-line +
+ * amount. */
 function TransferRow({
   transfer,
   members,
@@ -68,10 +67,10 @@ function TransferRow({
         <ArrowRightLeft size={18} />
       </span>
       <div className="flex-1 min-w-0">
-        <Badge tone="transfer" size="sm" data-testid="transfer-badge">
+        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
           {transfer.categoryName}
-        </Badge>
-        <p className="flex items-center gap-1 mt-1 text-xs text-slate-500 truncate">
+        </p>
+        <p className="flex items-center gap-1 text-xs text-slate-500 truncate">
           <Avatar size="xs" name={from.name} colorIndex={from.colorIndex} />
           <span>{from.name.split(" ")[0]}</span>
           <ArrowRight size={12} aria-hidden />
@@ -88,13 +87,11 @@ function TransferRow({
 
 /**
  * Ported from `main`'s `frontend/src/widgets/dashboard/ui/BudgetTransfers.tsx`
- * read markup (marker icon + from→to sub-line, zebra-striped rows). Data
- * seam: self-subscribes to the hydrated `queryKeys.summary` cache instead of
- * receiving `transfers`/`members` as props (same seam
- * `RemainingBalance`/`RecentExpenses` use). One genuine addition beyond
- * `main` (dashboard-view spec, not a `main` parity requirement): a
- * `Badge tone="transfer"` category tag per row. Transfer creation happens
- * from `BudgetCategories`' member-row transfer icon + shared dialog, mirroring
+ * read markup (marker icon + category name + from→to sub-line, zebra-striped
+ * rows). Data seam: self-subscribes to the hydrated `queryKeys.summary`
+ * cache instead of receiving `transfers`/`members` as props (same seam
+ * `RemainingBalance`/`RecentExpenses` use). Transfer creation happens from
+ * `BudgetCategories`' member-row transfer icon + shared dialog, mirroring
  * `main` — this widget only links out to a separate `/transfers` page.
  */
 export function BudgetTransfers({ groupId }: { groupId: string }) {

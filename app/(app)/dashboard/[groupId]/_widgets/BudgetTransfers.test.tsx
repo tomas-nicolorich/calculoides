@@ -141,13 +141,10 @@ describe("BudgetTransfers", () => {
     expect(await screen.findByText("No recent transfers")).toBeInTheDocument();
   });
 
-  // ui-design-system: "A transfer-related badge uses the transfer variant" —
-  // the first real consumer of `Badge tone="transfer"`.
-  it("renders each transfer with a transfer-tone category badge from the hydrated cache without a client fetch", async () => {
+  it("renders each transfer with its category name from the hydrated cache without a client fetch", async () => {
     await renderHydrated(SUMMARY_FIXTURE);
 
-    const badge = await screen.findByTestId("transfer-badge");
-    expect(badge).toHaveTextContent("Rent");
+    expect(await screen.findByText("Rent")).toBeInTheDocument();
     expect(screen.getByText("€150.00")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
     const link = screen.getByRole("link", { name: "View All" });

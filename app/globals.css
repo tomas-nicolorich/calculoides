@@ -90,6 +90,18 @@
   --color-input: var(--color-slate-800);
 }
 
+/* Per-member colours (--color-member-*) are darkened for avatar-background
+   contrast (see globals.css member palette comment) and read too dark as
+   *text* on the dashboard's already-dark card backgrounds. Consumers that
+   use a member colour as text set --pill-color and add this class to get a
+   lightened variant in dark mode only. */
+.member-pill-text {
+  color: var(--pill-color);
+}
+.dark .member-pill-text {
+  color: color-mix(in srgb, var(--pill-color) 100%, white 40%);
+}
+
 @layer base {
   html {
     font-size: 16px;

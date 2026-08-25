@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type SyntheticEvent } from "react";
+import { useState, type CSSProperties, type SyntheticEvent } from "react";
 import { ArrowRightLeft, ChevronDown, Plus } from "lucide-react";
 import {
   Avatar,
@@ -258,11 +258,13 @@ function MemberRow({
             <ArrowRightLeft size={14} />
           </button>
           <span
-            className="text-xs rounded-full px-2 py-0.5 font-mono tnum"
-            style={{
-              backgroundColor: `color-mix(in srgb, var(--color-member-${String((member?.colorIndex ?? 0) + 1)}) 14%, transparent)`,
-              color: `var(--color-member-${String((member?.colorIndex ?? 0) + 1)})`,
-            }}
+            className="member-pill-text text-xs rounded-full px-2 py-0.5 font-mono tnum"
+            style={
+              {
+                backgroundColor: `color-mix(in srgb, var(--color-member-${String((member?.colorIndex ?? 0) + 1)}) 14%, transparent)`,
+                "--pill-color": `var(--color-member-${String((member?.colorIndex ?? 0) + 1)})`,
+              } as CSSProperties
+            }
           >
             {balance.percentage.toFixed(1)}%
           </span>
