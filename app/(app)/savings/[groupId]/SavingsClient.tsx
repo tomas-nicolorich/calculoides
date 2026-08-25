@@ -1,310 +1,157 @@
 "use client";
 
-import { useState, type SyntheticEvent } from "react";
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useSavingsGoalsList, toFriendlySavingsError } from "../../../_data/savings";
 import {
-  useSavingsGoalsList,
-  useCreateGoal,
-  useDeleteGoal,
-  useContributionUpsert,
-  useContributionDelete,
-  type SavingsGoal,
-  type SavingsContributionBreakdown,
-} from "../../../_data/savings";
+  Alert,
+  Button,
+  Card,
+  ReloadButton,
+  ResponsiveDialog,
+  Skeleton,
+} from "../../../_ui";
+import { queryKeys } from "../../../../lib/query-keys";
+import { SavingsGoalList } from "./_components/SavingsGoalList";
+import { SavingsGoalForm } from "./_components/SavingsGoalForm";
 
-/** One goal's contribution-override row, extracted to keep {@link SavingsGoalItem} shallow. */
-function ContributionRow({
-  entry,
-  draftValue,
-  onDraftChange,
-  onSave,
-  onReset,
-}: {
-  entry: SavingsContributionBreakdown;
-  draftValue: string;
-  onDraftChange: (value: string) => void;
-  onSave: () => void;
-  onReset: () => void;
-}) {
+function GoalCardSkeleton() {
   return (
-    <li className="flex items-center justify-between gap-3 text-sm">
-      <span className="text-slate-600 dark:text-slate-300">
-        {entry.user?.name ?? entry.memberId}: ${entry.actualAmount}
-        {entry.isOverridden ? " (override)" : ""}
-      </span>
-      <div className="flex items-center gap-2">
-        <input
-          value={draftValue}
-          onChange={(event) => {
-            onDraftChange(event.target.value);
-          }}
-          placeholder="Override"
-          type="number"
-          className="h-8 w-24 rounded-md border border-slate-300 dark:border-slate-700 px-2"
-        />
-        <button
-          type="button"
-          onClick={onSave}
-          className="text-xs text-brand-balance"
-        >
-          Save
-        </button>
-        {entry.isOverridden && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-xs text-red-600"
-          >
-            Reset
-          </button>
-        )}
-      </div>
-    </li>
-  );
-}
-
-/** One savings goal card, extracted to keep {@link SavingsGoalsListView} shallow. */
-function SavingsGoalItem({
-  goal,
-  contributionDrafts,
-  onDraftChange,
-  onDeleteGoal,
-  onSaveContribution,
-  onResetContribution,
-}: {
-  goal: SavingsGoal;
-  contributionDrafts: Record<string, string>;
-  onDraftChange: (draftKey: string, value: string) => void;
-  onDeleteGoal: () => void;
-  onSaveContribution: (memberId: string) => void;
-  onResetContribution: (memberId: string) => void;
-}) {
-  return (
-    <li className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-card p-4 space-y-3">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="font-medium text-slate-900 dark:text-white">
-            {goal.name}
-          </p>
-          <p className="text-sm text-slate-500">
-            {goal.currentAmount} / {goal.targetAmount}
-          </p>
+    <Card>
+      <div className="flex justify-between items-start pb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-9 rounded-lg" />
+            <Skeleton className="h-5 w-32" />
+          </div>
+          <Skeleton className="h-4 w-28 mt-2.5" />
         </div>
-        <button
-          type="button"
-          onClick={onDeleteGoal}
-          className="text-sm text-red-600"
-        >
-          Delete
-        </button>
+        <Skeleton className="h-5 w-16 rounded-full" />
       </div>
-
-      {goal.breakdown.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {goal.breakdown.map((entry) => {
-            const draftKey = `${goal.id}:${entry.memberId}`;
-            return (
-              <ContributionRow
-                key={entry.memberId}
-                entry={entry}
-                draftValue={contributionDrafts[draftKey] ?? ""}
-                onDraftChange={(value) => {
-                  onDraftChange(draftKey, value);
-                }}
-                onSave={() => {
-                  onSaveContribution(entry.memberId);
-                }}
-                onReset={() => {
-                  onResetContribution(entry.memberId);
-                }}
-              />
-            );
-          })}
-        </ul>
-      )}
-    </li>
-  );
-}
-
-/** Extracted from {@link SavingsClient} to keep its own cognitive complexity low. */
-function SavingsGoalsListView({
-  goals,
-  isLoading,
-  contributionDrafts,
-  onDraftChange,
-  onDeleteGoal,
-  onSaveContribution,
-  onResetContribution,
-}: {
-  goals: SavingsGoal[];
-  isLoading: boolean;
-  contributionDrafts: Record<string, string>;
-  onDraftChange: (draftKey: string, value: string) => void;
-  onDeleteGoal: (goalId: string) => void;
-  onSaveContribution: (goalId: string, memberId: string) => void;
-  onResetContribution: (goalId: string, memberId: string) => void;
-}) {
-  if (isLoading) return <p data-testid="savings-loading">Loading…</p>;
-  if (goals.length === 0) {
-    return (
-      <p className="text-slate-500">No savings goals yet for this group.</p>
-    );
-  }
-
-  return (
-    <ul className="flex flex-col gap-4" data-testid="savings-list">
-      {goals.map((goal) => (
-        <SavingsGoalItem
-          key={goal.id}
-          goal={goal}
-          contributionDrafts={contributionDrafts}
-          onDraftChange={onDraftChange}
-          onDeleteGoal={() => {
-            onDeleteGoal(goal.id);
-          }}
-          onSaveContribution={(memberId) => {
-            onSaveContribution(goal.id, memberId);
-          }}
-          onResetContribution={(memberId) => {
-            onResetContribution(goal.id, memberId);
-          }}
-        />
-      ))}
-    </ul>
+      <Skeleton className="h-2 w-full rounded-full mt-3" />
+      <div className="grid grid-cols-2 gap-4 mt-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+        <div className="space-y-1.5">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <div className="space-y-1.5 flex flex-col items-end">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      </div>
+      <div className="space-y-2 mt-4">
+        {Array.from({ length: 2 }, (_, i) => (
+          <div
+            key={i}
+            className="flex justify-between items-center py-2 px-3 rounded-md bg-slate-100 dark:bg-slate-800"
+          >
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-3.5 w-20" />
+            </div>
+            <Skeleton className="h-4 w-14" />
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 
 /**
- * Lean Next-app port of `frontend/src/pages/savings/ui/SavingsPage.tsx`
- * (6b.4) — plain Tailwind, create/delete goal and upsert/delete contribution
- * overrides wired through `lib/actions/savings.ts` Server Actions with
- * group-scoped cache invalidation, same "lean, not a full port" precedent as
- * `ExpensesClient`/`TransfersClient` (4b.6, 5.8). Full
- * dialog/skeleton/allocation-editor UI is out of this phase's scope.
+ * Full port of prod's `frontend/src/pages/savings/ui/SavingsPage.tsx` —
+ * replaces the earlier lean stub (plain inputs/buttons, no dialogs, no
+ * skeleton, manual override text-buttons). Adapted to this repo's data
+ * seam: `groupId` comes as a prop (no react-router `useParams`), and the
+ * list/mutation hooks are the hoisted `app/_data/savings.ts` ones.
  */
 export function SavingsClient({ groupId }: { groupId: string }) {
-  const { data: goals, isLoading } = useSavingsGoalsList(groupId);
-  const createGoal = useCreateGoal(groupId);
-  const removeGoal = useDeleteGoal(groupId);
-  const upsertContribution = useContributionUpsert(groupId);
-  const removeContribution = useContributionDelete(groupId);
+  const [createOpen, setCreateOpen] = useState(false);
+  const { data: goals, isLoading, error, refetch } =
+    useSavingsGoalsList(groupId);
 
-  const [name, setName] = useState("");
-  const [targetAmount, setTargetAmount] = useState("");
-  const [targetDate, setTargetDate] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [contributionDrafts, setContributionDrafts] = useState<
-    Record<string, string>
-  >({});
+  if (isLoading) {
+    return (
+      <div
+        className="p-4 md:p-8 max-w-6xl mx-auto space-y-8"
+        aria-hidden="true"
+      >
+        <header className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-56" />
+          </div>
+          <Skeleton className="h-9 w-40 rounded-md" />
+        </header>
 
-  const handleCreate = async (event: SyntheticEvent) => {
-    event.preventDefault();
-    setError(null);
-
-    const result = await createGoal.mutateAsync({
-      groupId,
-      name,
-      targetAmount: Number(targetAmount),
-      targetDate,
-    });
-
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-
-    setName("");
-    setTargetAmount("");
-    setTargetDate("");
-  };
-
-  const handleContributionSave = async (goalId: string, memberId: string) => {
-    const draftKey = `${goalId}:${memberId}`;
-    const amount = Number(contributionDrafts[draftKey]);
-    if (Number.isNaN(amount)) return;
-
-    const result = await upsertContribution.mutateAsync({
-      goalId,
-      memberId,
-      amount,
-    });
-
-    if (result.ok) {
-      setContributionDrafts((prev) =>
-        Object.fromEntries(
-          Object.entries(prev).filter(([key]) => key !== draftKey),
-        ),
-      );
-    }
-  };
-
-  const goalsList = goals ?? [];
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-36" />
+          <div className="grid gap-6 md:grid-cols-2">
+            <GoalCardSkeleton />
+            <GoalCardSkeleton />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          Savings Goals
-        </h1>
+    <div className="p-4 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <header className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Savings Goals
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">
+            Plan and track your group savings goals
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ReloadButton queryKey={queryKeys.group(groupId)} />
+          <Button
+            variant="cta"
+            onClick={() => {
+              setCreateOpen(true);
+            }}
+          >
+            <Plus size={16} className="mr-1" />
+            Add Savings Goal
+          </Button>
+        </div>
       </header>
 
-      <form
-        onSubmit={(event) => {
-          void handleCreate(event);
-        }}
-        className="flex flex-wrap items-end gap-3"
-      >
-        <input
-          value={name}
-          onChange={(event) => {
-            setName(event.target.value);
+      {error && (
+        <Alert
+          action={{
+            label: "Retry",
+            onClick: () => {
+              void refetch();
+            },
           }}
-          placeholder="Goal name"
-          className="h-10 flex-1 min-w-40 rounded-md border border-slate-300 dark:border-slate-700 px-3"
-        />
-        <input
-          value={targetAmount}
-          onChange={(event) => {
-            setTargetAmount(event.target.value);
-          }}
-          placeholder="Target amount"
-          type="number"
-          className="h-10 w-36 rounded-md border border-slate-300 dark:border-slate-700 px-3"
-        />
-        <input
-          value={targetDate}
-          onChange={(event) => {
-            setTargetDate(event.target.value);
-          }}
-          placeholder="YYYY-MM-DD"
-          className="h-10 rounded-md border border-slate-300 dark:border-slate-700 px-3"
-        />
-        <button
-          type="submit"
-          disabled={createGoal.isPending}
-          className="h-10 px-4 rounded-md bg-brand-balance text-white font-medium disabled:opacity-60"
         >
-          {createGoal.isPending ? "Adding..." : "Add Goal"}
-        </button>
-        {error && <p className="text-sm text-red-600 w-full">{error}</p>}
-      </form>
+          {error instanceof Error
+            ? toFriendlySavingsError(error.message)
+            : "Something went wrong. Please try again."}
+        </Alert>
+      )}
 
-      <SavingsGoalsListView
-        goals={goalsList}
-        isLoading={isLoading}
-        contributionDrafts={contributionDrafts}
-        onDraftChange={(draftKey, value) => {
-          setContributionDrafts((prev) => ({ ...prev, [draftKey]: value }));
-        }}
-        onDeleteGoal={(goalId) => {
-          void removeGoal.mutateAsync({ goalId });
-        }}
-        onSaveContribution={(goalId, memberId) => {
-          void handleContributionSave(goalId, memberId);
-        }}
-        onResetContribution={(goalId, memberId) => {
-          void removeContribution.mutateAsync({ goalId, memberId });
-        }}
-      />
+      <SavingsGoalList groupId={groupId} goals={goals ?? []} />
+
+      <ResponsiveDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="New Savings Goal"
+        description="We'll split the monthly contribution by each member's income share."
+      >
+        <SavingsGoalForm
+          groupId={groupId}
+          onSuccess={() => {
+            setCreateOpen(false);
+          }}
+          onCancel={() => {
+            setCreateOpen(false);
+          }}
+        />
+      </ResponsiveDialog>
     </div>
   );
 }
