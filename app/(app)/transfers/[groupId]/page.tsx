@@ -1,18 +1,30 @@
 import { notFound } from "next/navigation";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createClient } from "../../../../lib/supabase/server";
 import { isGroupMember } from "../../../../lib/server/authz";
+import { TransferService } from "../../../../lib/server/services/transfer";
+import { createQueryClient } from "../../../../lib/query-client";
+import { queryKeys } from "../../../../lib/query-keys";
 import { TransfersClient } from "./TransfersClient";
 
+/** Mirrors `TransfersClient`'s default (no-filter) call to `useTransfersList`
+ * (`categoryId`/`memberId` `undefined`, `limit: PAGE_SIZE`, `offset: 0`) —
+ * must stay in sync with `TransfersClient.PAGE_SIZE` (25) so this prefetch's
+ * query key is an exact hit for the client hook's first render. */
+const PAGE_SIZE = 25;
+
 /**
- * Server Component gate for the Transfers route (5.8). No
- * `HydrationBoundary`/prefetch — design.md's Server Action vs Route Handler
- * table places `/api/transfers` in the "Route Handler GET" row
- * (filtered/paginated/refetch-on-focus), not "Server Component (no
- * endpoint)", so the transfers list itself is purely client-owned via
- * TanStack Query (`TransfersClient`/`./queries.ts`), same precedent as
- * `app/(app)/expenses/[groupId]/page.tsx` (4b.6). Same membership-gate
- * precedent as the Dashboard/Expenses Server Components: `notFound()` hides
- * both "doesn't exist" and "not a member" behind one response.
+ * Server Component for the Transfers route (double-skeleton fix). Prefetches
+ * the exact same TanStack Query key `useTransfersList`'s default (no-filter)
+ * call reads, then hands it to the client via `HydrationBoundary` — same
+ * pattern as `app/(app)/expenses/[groupId]/page.tsx`.
+ * `TransferService.listTransfers` already returns the fully-mapped wire
+ * shape (unlike `ExpenseService.listExpenses`), matching
+ * `app/api/transfers/route.ts`'s own precedent of doing no extra mapping, so
+ * the prefetch below calls it directly with no reshaping. `await`ing the
+ * prefetch keeps `loading.tsx` as the only skeleton shown, same rationale as
+ * the Expenses route. Same membership-gate precedent as
+ * `app/(app)/expenses/[groupId]/page.tsx`.
  */
 export default async function TransfersPage({
   params,
@@ -35,5 +47,27 @@ export default async function TransfersPage({
     notFound();
   }
 
-  return <TransfersClient groupId={groupId} />;
+  const queryClient = createQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.transfers(groupId, { limit: PAGE_SIZE, offset: 0 }),
+    queryFn: async () => {
+      const { transfers, total } = await TransferService.listTransfers(
+        groupId,
+        undefined,
+        undefined,
+        PAGE_SIZE,
+        0,
+      );
+      return {
+        transfers,
+        pagination: { total, limit: PAGE_SIZE, offset: 0 },
+      };
+    },
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <TransfersClient groupId={groupId} />
+    </HydrationBoundary>
+  );
 }

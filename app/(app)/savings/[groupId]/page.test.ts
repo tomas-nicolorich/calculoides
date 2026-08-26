@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { ReactElement } from "react";
+import type { DehydratedState } from "@tanstack/react-query";
+import { queryKeys } from "../../../../lib/query-keys";
 
-const { getUserMock, notFoundMock, isGroupMemberMock } = vi.hoisted(() => ({
-  getUserMock: vi.fn(),
-  notFoundMock: vi.fn(() => {
-    throw new Error("NEXT_NOT_FOUND");
-  }),
-  isGroupMemberMock: vi.fn(),
-}));
+const { getUserMock, notFoundMock, isGroupMemberMock, getGoalsForGroupMock } =
+  vi.hoisted(() => ({
+    getUserMock: vi.fn(),
+    notFoundMock: vi.fn(() => {
+      throw new Error("NEXT_NOT_FOUND");
+    }),
+    isGroupMemberMock: vi.fn(),
+    getGoalsForGroupMock: vi.fn(),
+  }));
 
 vi.mock("../../../../lib/supabase/server", () => ({
   createClient: vi.fn(() =>
@@ -22,7 +27,12 @@ vi.mock("../../../../lib/server/authz", () => ({
   isGroupMember: isGroupMemberMock,
 }));
 
+vi.mock("../../../../lib/server/services/savings", () => ({
+  SavingsService: { getGoalsForGroup: getGoalsForGroupMock },
+}));
+
 import SavingsPage from "./page";
+import { SavingsClient } from "./SavingsClient";
 
 const USER_ID = "user-1";
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
@@ -32,6 +42,7 @@ describe("app/(app)/savings/[groupId]/page", () => {
     getUserMock.mockReset();
     notFoundMock.mockClear();
     isGroupMemberMock.mockReset();
+    getGoalsForGroupMock.mockReset();
   });
 
   it("calls notFound for an unauthenticated caller", async () => {
@@ -56,17 +67,53 @@ describe("app/(app)/savings/[groupId]/page", () => {
     await expect(
       SavingsPage({ params: Promise.resolve({ groupId: GROUP_ID }) }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
+
+    expect(getGoalsForGroupMock).not.toHaveBeenCalled();
   });
 
-  it("renders for a member of the group", async () => {
+  // double-skeleton fix: prefetching `queryKeys.savingsGoals(groupId)` — the
+  // exact key `useSavingsGoalsList` reads — then hydrating it into a
+  // `HydrationBoundary`, is what makes `SavingsClient`'s own `isLoading`
+  // skeleton a no-op on first paint — genuinely RED against the prior
+  // client-only-fetch `page.tsx` (no `getGoalsForGroupMock` call, no
+  // `HydrationBoundary` in the returned element).
+  it("prefetches the savings goals list and hydrates it for the client", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
     isGroupMemberMock.mockResolvedValue(true);
+    const goalsFixture = [
+      {
+        id: "goal-1",
+        groupId: GROUP_ID,
+        name: "Vacation",
+        icon: null,
+        targetAmount: 1000,
+        currentAmount: 200,
+        targetDate: new Date("2026-12-01T00:00:00.000Z"),
+        projectedDate: new Date("2026-11-01T00:00:00.000Z"),
+        varianceMonths: 0,
+        isNever: false,
+        breakdown: [],
+      },
+    ];
+    getGoalsForGroupMock.mockResolvedValue(goalsFixture);
 
-    const result = await SavingsPage({
+    const result = (await SavingsPage({
       params: Promise.resolve({ groupId: GROUP_ID }),
-    });
+    })) as ReactElement;
 
-    expect(result).toBeTruthy();
     expect(isGroupMemberMock).toHaveBeenCalledWith(USER_ID, GROUP_ID);
+    expect(getGoalsForGroupMock).toHaveBeenCalledWith(GROUP_ID);
+
+    const state = (result.props as { state: DehydratedState }).state;
+    const key = queryKeys.savingsGoals(GROUP_ID);
+    const query = state.queries.find(
+      (q) => JSON.stringify(q.queryKey) === JSON.stringify(key),
+    );
+    expect(query?.state.data).toEqual(goalsFixture);
+
+    const clientElement = (result.props as { children: ReactElement })
+      .children;
+    expect(clientElement.type).toBe(SavingsClient);
+    expect(clientElement.props).toMatchObject({ groupId: GROUP_ID });
   });
 });

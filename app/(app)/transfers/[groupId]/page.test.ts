@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { ReactElement } from "react";
+import type { DehydratedState } from "@tanstack/react-query";
+import { queryKeys } from "../../../../lib/query-keys";
 
-const { getUserMock, notFoundMock, isGroupMemberMock } = vi.hoisted(() => ({
-  getUserMock: vi.fn(),
-  notFoundMock: vi.fn(() => {
-    throw new Error("NEXT_NOT_FOUND");
-  }),
-  isGroupMemberMock: vi.fn(),
-}));
+const { getUserMock, notFoundMock, isGroupMemberMock, listTransfersMock } =
+  vi.hoisted(() => ({
+    getUserMock: vi.fn(),
+    notFoundMock: vi.fn(() => {
+      throw new Error("NEXT_NOT_FOUND");
+    }),
+    isGroupMemberMock: vi.fn(),
+    listTransfersMock: vi.fn(),
+  }));
 
 vi.mock("../../../../lib/supabase/server", () => ({
   createClient: vi.fn(() =>
@@ -22,7 +27,12 @@ vi.mock("../../../../lib/server/authz", () => ({
   isGroupMember: isGroupMemberMock,
 }));
 
+vi.mock("../../../../lib/server/services/transfer", () => ({
+  TransferService: { listTransfers: listTransfersMock },
+}));
+
 import TransfersPage from "./page";
+import { TransfersClient } from "./TransfersClient";
 
 const USER_ID = "user-1";
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
@@ -32,6 +42,7 @@ describe("app/(app)/transfers/[groupId]/page", () => {
     getUserMock.mockReset();
     notFoundMock.mockClear();
     isGroupMemberMock.mockReset();
+    listTransfersMock.mockReset();
   });
 
   it("calls notFound for an unauthenticated caller", async () => {
@@ -54,17 +65,64 @@ describe("app/(app)/transfers/[groupId]/page", () => {
     await expect(
       TransfersPage({ params: Promise.resolve({ groupId: GROUP_ID }) }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
+
+    expect(listTransfersMock).not.toHaveBeenCalled();
   });
 
-  it("renders for a member of the group", async () => {
+  // double-skeleton fix: prefetching the exact key `useTransfersList`'s
+  // default (no-filter) call reads, then hydrating it into a
+  // `HydrationBoundary`, is what makes `TransfersClient`'s own `isLoading`
+  // skeleton a no-op on first paint — genuinely RED against the prior
+  // client-only-fetch `page.tsx` (no `listTransfersMock` call, no
+  // `HydrationBoundary` in the returned element).
+  it("prefetches the default transfers list and hydrates it for the client", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
     isGroupMemberMock.mockResolvedValue(true);
-
-    const result = await TransfersPage({
-      params: Promise.resolve({ groupId: GROUP_ID }),
+    const transfersFixture = [
+      {
+        id: "transfer-1",
+        categoryId: "category-1",
+        categoryName: "Rent",
+        categoryIcon: "home",
+        fromMemberId: "member-1",
+        fromMemberName: "Alice",
+        toMemberId: "member-2",
+        toMemberName: "Bob",
+        amount: 50,
+        date: new Date("2026-08-01T00:00:00.000Z"),
+      },
+    ];
+    listTransfersMock.mockResolvedValue({
+      transfers: transfersFixture,
+      total: 1,
     });
 
-    expect(result).toBeTruthy();
+    const result = (await TransfersPage({
+      params: Promise.resolve({ groupId: GROUP_ID }),
+    })) as ReactElement;
+
     expect(isGroupMemberMock).toHaveBeenCalledWith(USER_ID, GROUP_ID);
+    expect(listTransfersMock).toHaveBeenCalledWith(
+      GROUP_ID,
+      undefined,
+      undefined,
+      25,
+      0,
+    );
+
+    const state = (result.props as { state: DehydratedState }).state;
+    const key = queryKeys.transfers(GROUP_ID, { limit: 25, offset: 0 });
+    const query = state.queries.find(
+      (q) => JSON.stringify(q.queryKey) === JSON.stringify(key),
+    );
+    expect(query?.state.data).toEqual({
+      transfers: transfersFixture,
+      pagination: { total: 1, limit: 25, offset: 0 },
+    });
+
+    const clientElement = (result.props as { children: ReactElement })
+      .children;
+    expect(clientElement.type).toBe(TransfersClient);
+    expect(clientElement.props).toMatchObject({ groupId: GROUP_ID });
   });
 });
