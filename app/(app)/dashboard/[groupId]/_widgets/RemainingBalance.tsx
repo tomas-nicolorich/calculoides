@@ -2,6 +2,7 @@
 
 import { Avatar, Card } from "../../../../_ui";
 import { StatFigure } from "../../../../_ui/money";
+import { RemainingBalanceSkeleton } from "../_skeletons";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { useDashboardSummary } from "../../../../_data/summary";
 
@@ -19,9 +20,9 @@ export function RemainingBalance({ groupId }: { groupId: string }) {
 
   if (isLoading) {
     return (
-      <Card title="Remaining Balance" data-testid="remaining-balance-loading">
-        <p className="text-sm text-slate-400">Loading…</p>
-      </Card>
+      <div data-testid="remaining-balance-loading">
+        <RemainingBalanceSkeleton />
+      </div>
     );
   }
 

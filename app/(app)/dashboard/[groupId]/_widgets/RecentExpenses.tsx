@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Receipt } from "lucide-react";
 import { Avatar, Card } from "../../../../_ui";
+import { RecentExpensesSkeleton } from "../_skeletons";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { useDashboardSummary } from "../../../../_data/summary";
 
@@ -24,9 +25,9 @@ export function RecentExpenses({ groupId }: { groupId: string }) {
 
   if (isLoading) {
     return (
-      <Card title="Recent Expenses" data-testid="recent-expenses-loading">
-        <p className="text-sm text-slate-400">Loading…</p>
-      </Card>
+      <div data-testid="recent-expenses-loading">
+        <RecentExpensesSkeleton />
+      </div>
     );
   }
 

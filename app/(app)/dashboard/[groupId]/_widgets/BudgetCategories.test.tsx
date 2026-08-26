@@ -219,12 +219,14 @@ describe("BudgetCategories", () => {
     vi.mocked(createTransferAction).mockReset();
   });
 
-  // dashboard-view: "Loading state precedes hydration" — this widget shows
-  // its own loading state independent of the other five widgets.
-  it("shows a loading state before the categories query resolves", () => {
+  // dashboard-view: "Loading state precedes hydration" + "Widget-Level
+  // Loading Indicators Use Skeleton, Not Plain Text" — this widget shows its
+  // own shaped `BudgetCategoriesSkeleton`, independent of the other five
+  // widgets, not a "Loading…" text node.
+  it("shows a shaped skeleton, not plain text, before the categories query resolves", () => {
     fetchMock.mockImplementation(() => new Promise(() => undefined));
 
-    render(
+    const { container } = render(
       <QueryClientProvider client={createQueryClient()}>
         <BudgetCategories groupId={GROUP_ID} currentUserId="user-1" />
       </QueryClientProvider>,
@@ -233,6 +235,10 @@ describe("BudgetCategories", () => {
     expect(
       screen.getByTestId("budget-categories-loading"),
     ).toBeInTheDocument();
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
   });
 
   it("shows an error state when the categories query fails", async () => {
@@ -541,6 +547,27 @@ describe("BudgetCategories", () => {
       );
     });
     expect(await screen.findAllByTestId("category-transfer-row")).toHaveLength(2);
+  });
+
+  // dashboard-view: "Category drill-down shows Skeleton while transfer
+  // history loads" — two shaped skeleton rows, not a "Loading…" text node.
+  it("shows two skeleton rows, not plain text, while the transfer-history drill-down loads", async () => {
+    fetchMock.mockImplementation((url: string) =>
+      url.includes("/api/transfers/by-category")
+        ? new Promise(() => undefined)
+        : jsonResponse(SUMMARY_FIXTURE),
+    );
+
+    await renderHydrated([RENT_CATEGORY]);
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
+
+    const heading = await screen.findByText("Transfer History");
+    const historyContainer = heading.parentElement;
+    expect(historyContainer).not.toBeNull();
+    expect(
+      historyContainer?.querySelectorAll(".animate-pulse").length,
+    ).toBe(2);
+    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
   });
 
   // dashboard-view: "Creating a transfer invalidates the group cache" (the
