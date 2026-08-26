@@ -71,19 +71,19 @@ Both slices sit close enough to the 800-line budget to warrant re-measuring the 
 
 ## Phase 5: Slice B — Data Layer & Regions Module, RED → GREEN (PR #2)
 
-- [ ] 5.1 [RED] Write a test: closed `QuickAddExpense` dialog fires no `useCategoriesList` fetch; opening it fires one. (Decision 4)
-- [ ] 5.2 [GREEN] Add `enabled = true` param to `useCategoriesList(groupId, enabled)` in `app/_data/categories.ts`; wire `QuickAddExpense.tsx` to call `useCategoriesList(groupId, open)`, passing 5.1.
-- [ ] 5.3 Create `app/(app)/dashboard/[groupId]/_regions.tsx` exporting async `SummaryRegion({groupId, currentUserId, summaryPromise, children})`, `CategoriesRegion({groupId, categoriesPromise})`, `SavingsWarmRegion({groupId, savingsPromise})` per the Interfaces contract.
-- [ ] 5.4 [RED] `_regions.test.tsx`: `await SummaryRegion({..., children: null})`, render, assert summary widgets paint with a never-resolving `categoriesPromise`. (dashboard-view: "Loading state precedes hydration, per independent region")
-- [ ] 5.5 [RED] `_regions.test.tsx`: port the existing `fetchMock` assertion onto the awaited region output — no client fetch for an already-hydrated key. (client-data-cache: "A per-region streamed read is still Server-Component-owned")
-- [ ] 5.6 [RED] `_regions.test.tsx`: `SavingsWarmRegion` dehydrates `queryKeys.savingsGoals` and renders nothing visible. (Decision 3)
-- [ ] 5.7 [GREEN] Implement `SummaryRegion`/`CategoriesRegion`/`SavingsWarmRegion` bodies (own ephemeral `createQueryClient()`, `prefetchQuery`, `dehydrate`, `HydrationBoundary`) to pass 5.4–5.6.
+- [x] 5.1 [RED] Write a test: closed `QuickAddExpense` dialog fires no `useCategoriesList` fetch; opening it fires one. (Decision 4)
+- [x] 5.2 [GREEN] Add `enabled = true` param to `useCategoriesList(groupId, enabled)` in `app/_data/categories.ts`; wire `QuickAddExpense.tsx` to call `useCategoriesList(groupId, open)`, passing 5.1.
+- [x] 5.3 Create `app/(app)/dashboard/[groupId]/_regions.tsx` exporting async `SummaryRegion({groupId, currentUserId, summaryPromise, children})`, `CategoriesRegion({groupId, categoriesPromise})`, `SavingsWarmRegion({groupId, savingsPromise})` per the Interfaces contract.
+- [x] 5.4 [RED] `_regions.test.tsx`: `await SummaryRegion({..., children: null})`, render, assert summary widgets paint with a never-resolving `categoriesPromise`. (dashboard-view: "Loading state precedes hydration, per independent region")
+- [x] 5.5 [RED] `_regions.test.tsx`: port the existing `fetchMock` assertion onto the awaited region output — no client fetch for an already-hydrated key. (client-data-cache: "A per-region streamed read is still Server-Component-owned")
+- [x] 5.6 [RED] `_regions.test.tsx`: `SavingsWarmRegion` dehydrates `queryKeys.savingsGoals` and renders nothing visible. (Decision 3)
+- [x] 5.7 [GREEN] Implement `SummaryRegion`/`CategoriesRegion`/`SavingsWarmRegion` bodies (own ephemeral `createQueryClient()`, `prefetchQuery`, `dehydrate`, `HydrationBoundary`) to pass 5.4–5.6.
 
 ## Phase 6: Slice B — Page Restructure, Test Restructure & Spec Deltas (PR #2)
 
-- [ ] 6.1 Restructure `page.tsx`: keep the auth gate (`params` → `createClient` → `getUser` → `isGroupMember`) blocking; start `summaryPromise`/`categoriesPromise`/`savingsPromise` without awaiting, each `void p.catch(() => {})`'d; return nested `<Suspense>` regions — `SummaryRegion` wrapping nested `CategoriesRegion`, `SavingsWarmRegion` as a sibling `fallback={null}`. (dashboard-view: "One Server Prefetch Feeds the Summary-Dependent Widgets"; client-data-cache: "A Streamed Region's Hydration Boundary Must Cover or Nest Below Every Key Its Subtree Reads")
-- [ ] 6.2 Modify `DashboardClient.tsx`: accept `children` for the right column; drop the direct `BudgetCategories` import.
-- [ ] 6.3 [RED] Update `page.test.tsx`: keep the non-member-denied-before-service-touch assertion unchanged; replace `render(await DashboardPage(...))` widget-render assertions with structural assertions (Suspense boundaries + fallbacks present, promises started).
-- [ ] 6.4 [GREEN] Confirm 6.1–6.2 satisfy 6.3's structural assertions.
-- [ ] 6.5 Modify `openspec/specs/dashboard-view/spec.md` and `openspec/specs/client-data-cache/spec.md` deltas per the drafted content (Decision 5).
-- [ ] 6.6 Run `npm test`, `npm run lint`, `npm run typecheck` scoped to Slice B files; confirm all green and measure the actual diff before opening PR #2.
+- [x] 6.1 Restructure `page.tsx`: keep the auth gate (`params` → `createClient` → `getUser` → `isGroupMember`) blocking; start `summaryPromise`/`categoriesPromise`/`savingsPromise` without awaiting, each `void p.catch(() => {})`'d; return nested `<Suspense>` regions — `SummaryRegion` wrapping nested `CategoriesRegion`, `SavingsWarmRegion` as a sibling `fallback={null}`. (dashboard-view: "One Server Prefetch Feeds the Summary-Dependent Widgets"; client-data-cache: "A Streamed Region's Hydration Boundary Must Cover or Nest Below Every Key Its Subtree Reads")
+- [x] 6.2 Modify `DashboardClient.tsx`: accept `children` for the right column; drop the direct `BudgetCategories` import.
+- [x] 6.3 [RED] Update `page.test.tsx`: keep the non-member-denied-before-service-touch assertion unchanged; replace `render(await DashboardPage(...))` widget-render assertions with structural assertions (Suspense boundaries + fallbacks present, promises started).
+- [x] 6.4 [GREEN] Confirm 6.1–6.2 satisfy 6.3's structural assertions.
+- [x] 6.5 Modify `openspec/specs/dashboard-view/spec.md` and `openspec/specs/client-data-cache/spec.md` deltas per the drafted content (Decision 5).
+- [x] 6.6 Run `npm test`, `npm run lint`, `npm run typecheck` scoped to Slice B files; confirm all green and measure the actual diff before opening PR #2.

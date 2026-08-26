@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import {
   QueryClient,
@@ -106,5 +112,54 @@ describe("QuickAddExpense", () => {
     expect(screen.getByLabelText("Description")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("combobox", { name: /category/i }));
     expect(screen.getByRole("option", { name: "Groceries" })).toBeInTheDocument();
+  });
+
+  // design.md Decision 4: `useCategoriesList(groupId, open)` — a closed
+  // dialog must not fire a client fetch for a cold `categories` cache
+  // (the exact waterfall that would break the nested-region hydration
+  // ordering), and opening it must fetch on demand like any other
+  // `enabled`-gated query (`useTransfersByCategory` precedent).
+  it("does not fetch categories while the dialog is closed, and fetches once opened", async () => {
+    // `categories` intentionally left cold — only `summary` is hydrated,
+    // mirroring `QuickAddExpense` living inside `SummaryRegion`'s boundary
+    // while `CategoriesRegion`'s boundary hydrates independently.
+    const serverClient = new QueryClient();
+    await serverClient.prefetchQuery({
+      queryKey: queryKeys.summary(GROUP_ID),
+      queryFn: () => Promise.resolve(SUMMARY_FIXTURE),
+    });
+    const dehydratedState = dehydrate(serverClient);
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify(CATEGORIES_FIXTURE), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <HydrationBoundary state={dehydratedState}>
+          <QuickAddExpense groupId={GROUP_ID} currentUserId="user-2" />
+        </HydrationBoundary>
+      </QueryClientProvider>,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("/api/categories"),
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /add expense/i })[0],
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/categories"),
+      );
+    });
   });
 });

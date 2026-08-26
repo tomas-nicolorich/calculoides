@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
+import { Suspense, type ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { createQueryClient } from "../../../../lib/query-client";
+import { DashboardSkeleton, CategoriesColumnSkeleton } from "./_skeletons";
+import { SummaryRegion, CategoriesRegion, SavingsWarmRegion } from "./_regions";
 
 // `vi.hoisted` — see `app/(app)/layout.test.tsx` for the same TDZ rationale.
 const {
@@ -115,14 +115,15 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
     expect(getGoalsForGroupMock).toHaveBeenCalledWith(GROUP_ID);
   });
 
-  // dashboard-view: "No client-side waterfall for summary-backed widgets" —
-  // the full pipeline (Server Component prefetch → dehydrate →
-  // HydrationBoundary → DashboardClient's widget tree) must render from the
-  // server-fetched data alone; no summary-consuming widget may issue its
-  // own initial client fetch. Extends the `DashboardClient.test.tsx`
-  // `prefetchServerClient()` pattern to the real Server Component output
-  // per the Testing Strategy table's Integration row.
-  it("renders the widget tree from the server prefetch with no client-side fetch", async () => {
+  // design.md Decision 4/Data Flow: RTL's client renderer cannot render an
+  // unresolved async Server Component as JSX (`SummaryRegion`/
+  // `CategoriesRegion`/`SavingsWarmRegion` are all `async`), so this test
+  // no longer calls `render()` — it asserts on the returned element's
+  // *structure* instead: nested (not sibling) Suspense boundaries sharing
+  // `_skeletons.tsx`'s exports as fallbacks, with all three service calls
+  // already started. The widget-render assertions this test used to make
+  // moved to `_regions.test.tsx` (Testing Strategy table, Integration row).
+  it("returns nested Suspense regions with the shared skeleton fallbacks, having already started all three service calls", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
     isGroupMemberMock.mockResolvedValue(true);
     getGroupSummaryMock.mockResolvedValue({
@@ -142,33 +143,69 @@ describe("app/(app)/dashboard/[groupId]/page", () => {
       params: Promise.resolve({ groupId: GROUP_ID }),
     });
 
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    // `BudgetCategories`' create/edit/delete dialogs (PR 15) always mount
-    // `ResponsiveDialog`, which calls `useIsMobile()` even while closed —
-    // mirrors `ResponsiveDialog.test.tsx`'s own stub.
-    vi.stubGlobal(
-      "matchMedia",
-      vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    );
+    // The three service calls were started (not necessarily awaited) by
+    // the time page.tsx returns — proves the promises are hoisted, not
+    // sequentially awaited.
+    expect(getGroupSummaryMock).toHaveBeenCalledWith(GROUP_ID);
+    expect(listCategoriesMock).toHaveBeenCalledWith(GROUP_ID);
+    expect(getGoalsForGroupMock).toHaveBeenCalledWith(GROUP_ID);
 
-    render(
-      <QueryClientProvider client={createQueryClient()}>
-        {result}
-      </QueryClientProvider>,
-    );
+    const resultProps = result.props as { children: ReactElement[] };
+    const [summarySuspense, savingsSuspense] = resultProps.children;
 
-    expect(await screen.findByText("Roomies")).toBeInTheDocument();
-    expect(await screen.findByText("Remaining Balance")).toBeInTheDocument();
-    expect(await screen.findByText("Recent Expenses")).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    // Outer boundary: SummaryRegion, falling back to the exact same
+    // DashboardSkeleton `dashboard/[groupId]/loading.tsx` renders — the
+    // no-visible-swap hand-off `_skeletons.tsx` exists for.
+    expect(summarySuspense.type).toBe(Suspense);
+    expect(
+      (summarySuspense.props as { fallback: ReactElement }).fallback
+        .type,
+    ).toBe(DashboardSkeleton);
 
-    cleanup();
-    vi.unstubAllGlobals();
+    const summaryRegionElement = (
+      summarySuspense.props as { children: ReactElement }
+    ).children;
+    expect(summaryRegionElement.type).toBe(SummaryRegion);
+    expect(
+      (summaryRegionElement.props as { summaryPromise: unknown })
+        .summaryPromise,
+    ).toBeInstanceOf(Promise);
+
+    // Nested (not sibling) boundary: CategoriesRegion lives inside
+    // SummaryRegion's own `children` prop (Decision 4) so `queryKeys.summary`
+    // is guaranteed hydrated before it mounts.
+    const nestedCategoriesSuspense = (
+      summaryRegionElement.props as { children: ReactElement }
+    ).children;
+    expect(nestedCategoriesSuspense.type).toBe(Suspense);
+    expect(
+      (nestedCategoriesSuspense.props as { fallback: ReactElement })
+        .fallback.type,
+    ).toBe(CategoriesColumnSkeleton);
+
+    const categoriesRegionElement = (
+      nestedCategoriesSuspense.props as { children: ReactElement }
+    ).children;
+    expect(categoriesRegionElement.type).toBe(CategoriesRegion);
+    expect(
+      (categoriesRegionElement.props as { categoriesPromise: unknown })
+        .categoriesPromise,
+    ).toBeInstanceOf(Promise);
+
+    // Sibling boundary: the invisible savingsGoals warm-up region, fallback
+    // `null` since no dashboard widget consumes it (Decision 3).
+    expect(savingsSuspense.type).toBe(Suspense);
+    expect(
+      (savingsSuspense.props as { fallback: unknown }).fallback,
+    ).toBeNull();
+
+    const savingsRegionElement = (
+      savingsSuspense.props as { children: ReactElement }
+    ).children;
+    expect(savingsRegionElement.type).toBe(SavingsWarmRegion);
+    expect(
+      (savingsRegionElement.props as { savingsPromise: unknown })
+        .savingsPromise,
+    ).toBeInstanceOf(Promise);
   });
 });

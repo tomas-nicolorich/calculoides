@@ -11,6 +11,7 @@ import {
 import { createQueryClient } from "../../../../lib/query-client";
 import { queryKeys } from "../../../../lib/query-keys";
 import { DashboardClient } from "./DashboardClient";
+import { BudgetCategories } from "./_widgets/BudgetCategories";
 
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
 
@@ -52,12 +53,25 @@ async function prefetchServerClient(): Promise<QueryClient> {
   return serverClient;
 }
 
+/** Real children slot for these tests, mirroring `_regions.tsx`'s
+ * `CategoriesRegion` wrapper div now that `DashboardClient` no longer
+ * imports `BudgetCategories` directly (design.md Decision 4). */
+function categoriesSlot() {
+  return (
+    <div className="flex flex-col gap-6">
+      <BudgetCategories groupId={GROUP_ID} currentUserId="user-1" />
+    </div>
+  );
+}
+
 function renderHydrated(serverClient: QueryClient, browserClient: QueryClient) {
   const dehydratedState = dehydrate(serverClient);
   render(
     <QueryClientProvider client={browserClient}>
       <HydrationBoundary state={dehydratedState}>
-        <DashboardClient groupId={GROUP_ID} currentUserId="user-1" />
+        <DashboardClient groupId={GROUP_ID} currentUserId="user-1">
+          {categoriesSlot()}
+        </DashboardClient>
       </HydrationBoundary>
     </QueryClientProvider>,
   );
@@ -99,7 +113,9 @@ describe("DashboardClient", () => {
 
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <DashboardClient groupId={GROUP_ID} currentUserId="user-1" />
+        <DashboardClient groupId={GROUP_ID} currentUserId="user-1">
+          {categoriesSlot()}
+        </DashboardClient>
       </QueryClientProvider>,
     );
 

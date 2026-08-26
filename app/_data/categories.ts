@@ -9,12 +9,19 @@ import { invalidateGroupQueries } from "./invalidate";
  * Hoisted from `app/(app)/dashboard/[groupId]/queries.ts` per ADR-2.
  * Backs refetch-on-focus for the `queryKeys.categories` tuple the Server
  * Component prefetches into.
+ *
+ * `enabled` (design.md Decision 4, `useTransfersByCategory` precedent):
+ * lets a consumer that mounts before `categories` is guaranteed hydrated
+ * (e.g. `QuickAddExpense`, which lives inside `SummaryRegion`'s boundary,
+ * not `CategoriesRegion`'s) defer its fetch until it actually needs the
+ * data, instead of racing the nested region's own hydration.
  */
-export function useCategoriesList(groupId: string) {
+export function useCategoriesList(groupId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.categories(groupId),
     queryFn: () =>
       fetchJson<CategoryWithBalances[]>(`/api/categories?groupId=${groupId}`),
+    enabled,
   });
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Avatar, AvatarGroup, ReloadButton } from "../../../_ui";
 import { queryKeys } from "../../../../lib/query-keys";
 import { useDashboardSummary } from "../../../_data/summary";
@@ -7,7 +8,6 @@ import { IncomeOverview } from "./_widgets/IncomeOverview";
 import { RemainingBalance } from "./_widgets/RemainingBalance";
 import { RecentExpenses } from "./_widgets/RecentExpenses";
 import { BudgetTransfers } from "./_widgets/BudgetTransfers";
-import { BudgetCategories } from "./_widgets/BudgetCategories";
 import { QuickAddExpense } from "./_components/QuickAddExpense";
 
 /**
@@ -19,13 +19,21 @@ import { QuickAddExpense } from "./_components/QuickAddExpense";
  * (blank) while its own query is still loading, without gating the grid
  * below it. Savings goals live only on the dedicated `/savings` page, not
  * here.
+ *
+ * `children` is the right column (design.md Decision 4/Slice B): this
+ * component no longer imports `BudgetCategories` directly — `page.tsx`'s
+ * nested `<Suspense>` region JSX (`CategoriesRegion`, streamed
+ * independently and nested inside `SummaryRegion`'s own boundary) now owns
+ * that slot.
  */
 export function DashboardClient({
   groupId,
   currentUserId,
+  children,
 }: {
   groupId: string;
   currentUserId: string;
+  children: ReactNode;
 }) {
   const { data: summary } = useDashboardSummary(groupId);
 
@@ -68,9 +76,7 @@ export function DashboardClient({
           <BudgetTransfers groupId={groupId} />
         </div>
 
-        <div className="flex flex-col gap-6">
-          <BudgetCategories groupId={groupId} currentUserId={currentUserId} />
-        </div>
+        {children}
       </div>
     </div>
   );
