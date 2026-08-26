@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useQueryClient, type QueryKey } from "@tanstack/react-query";

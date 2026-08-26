@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { ChevronDown, Search } from "lucide-react";
