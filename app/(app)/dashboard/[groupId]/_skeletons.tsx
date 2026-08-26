@@ -82,6 +82,24 @@ export function BudgetTransfersSkeleton() {
   );
 }
 
+function BudgetCategoryRowSkeleton() {
+  return (
+    <div
+      className="flex items-center gap-3 rounded-2xl border border-slate-100 dark:border-slate-800 p-4"
+      data-testid="budget-categories-skeleton-row"
+    >
+      <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+        <Skeleton className="h-2 w-full rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 export function BudgetCategoriesSkeleton() {
   return (
     <Card title="Budget Categories" data-testid="budget-categories-skeleton">
@@ -90,10 +108,10 @@ export function BudgetCategoriesSkeleton() {
           <Skeleton className="h-4 w-56" />
           <Skeleton className="h-8 w-28 rounded-xl" />
         </div>
-        <div className="space-y-2">
-          <Skeleton className="h-16 w-full rounded-2xl" />
-          <Skeleton className="h-16 w-full rounded-2xl" />
-          <Skeleton className="h-16 w-full rounded-2xl" />
+        <div className="flex flex-col gap-2">
+          <BudgetCategoryRowSkeleton />
+          <BudgetCategoryRowSkeleton />
+          <BudgetCategoryRowSkeleton />
         </div>
       </div>
     </Card>
@@ -126,16 +144,30 @@ export function CategoriesColumnSkeleton() {
 
 /**
  * MUST reproduce `DashboardClient`'s exact container chain — `p-4 md:p-8
- * max-w-7xl mx-auto space-y-8` -> `grid grid-cols-1 lg:grid-cols-2
+ * max-w-7xl mx-auto space-y-8` -> header -> `grid grid-cols-1 lg:grid-cols-2
  * 3xl:grid-cols-3 gap-6 items-start` -> left/right columns — so the
  * `loading.tsx` -> shell -> region hand-offs cause no layout shift
- * (ADR-0003, ADR-0007). The header row (title + reload/avatar affordances)
- * is intentionally omitted: `DashboardClient`'s heading degrades to blank
- * while `summary` is loading rather than reserving skeleton space for it.
+ * (ADR-0003, ADR-0007). The header row mirrors `DashboardClient`'s title +
+ * subtitle + avatar-group + "Add Expense" button shape (`Avatar` `sm` is
+ * `h-[34px] w-[34px]`, `Button` `md` is `h-9`) instead of leaving that space
+ * blank while `summary` is loading.
  */
 export function DashboardSkeleton() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+      <header
+        className="flex flex-wrap items-start justify-between gap-4"
+        data-testid="dashboard-skeleton-header"
+      >
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-[34px] w-[34px] rounded-full" />
+          <Skeleton className="h-9 w-36 rounded-md" />
+        </div>
+      </header>
       <div
         className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-6 items-start"
         data-testid="dashboard-skeleton-grid"
