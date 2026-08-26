@@ -93,7 +93,7 @@ export const SavingsService = {
     currentAmount = 0,
     icon?: string | null,
   ) {
-    return await prisma.savingsGoal.create({
+    const goal = await prisma.savingsGoal.create({
       data: {
         groupId,
         name,
@@ -104,6 +104,14 @@ export const SavingsService = {
         updatedAt: new Date(),
       },
     });
+    // Only plain objects can cross the RSC/Server-Action boundary — Prisma's
+    // `Decimal` fields (`targetAmount`/`currentAmount`) are coerced to
+    // `Number` here, same as `getGoalsForGroup` below.
+    return {
+      ...goal,
+      targetAmount: Number(goal.targetAmount),
+      currentAmount: Number(goal.currentAmount),
+    };
   },
 
   async updateGoal(
@@ -127,7 +135,7 @@ export const SavingsService = {
     });
     if (!membership) throw new Error("Not a member of this group");
 
-    return await prisma.savingsGoal.update({
+    const goal = await prisma.savingsGoal.update({
       where: { id: goalId },
       data: {
         name,
@@ -138,6 +146,13 @@ export const SavingsService = {
         updatedAt: new Date(),
       },
     });
+    // See `createGoal`'s comment: Decimal fields must be coerced to Number
+    // before crossing the RSC/Server-Action boundary.
+    return {
+      ...goal,
+      targetAmount: Number(goal.targetAmount),
+      currentAmount: Number(goal.currentAmount),
+    };
   },
 
   /**
@@ -344,7 +359,7 @@ export const SavingsService = {
       );
     }
 
-    return await prisma.savingsGoalContribution.upsert({
+    const contribution = await prisma.savingsGoalContribution.upsert({
       where: {
         goalId_memberId: { goalId, memberId },
       },
@@ -357,6 +372,9 @@ export const SavingsService = {
         customAmount: amount,
       },
     });
+    // See `createGoal`'s comment: Decimal fields must be coerced to Number
+    // before crossing the RSC/Server-Action boundary.
+    return { ...contribution, customAmount: Number(contribution.customAmount) };
   },
 
   /**

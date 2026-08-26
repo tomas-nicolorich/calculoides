@@ -183,9 +183,12 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
   }));
 
   return (
-    <Card title="Income Overview">
+    <Card>
       <div className="space-y-6">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
+            Income Overview
+          </h3>
           <IconButton aria-label="Edit incomes" size="sm" onClick={handleEdit}>
             <Edit2 size={14} />
           </IconButton>

@@ -544,8 +544,10 @@ describe("BudgetCategories", () => {
   });
 
   // dashboard-view: "Creating a transfer invalidates the group cache" (the
-  // category-scoped inline form half, task 15.9/15.10).
-  it("submits the category-scoped inline transfer form via transfer.create, locked to this category", async () => {
+  // shared Transfer Budget dialog half, task 15.9/15.10) — ported from
+  // `main`'s per-row transfer icon + one shared dialog, locked to whichever
+  // member's icon was clicked.
+  it("opens the shared Transfer Budget dialog from a member row's transfer icon, locked to that member as From, and submits via transfer.create", async () => {
     vi.mocked(createTransferAction).mockResolvedValue({
       ok: true,
       data: { id: "t3" },
@@ -554,14 +556,21 @@ describe("BudgetCategories", () => {
     await renderHydrated([RENT_CATEGORY]);
     fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
 
-    fireEvent.click(screen.getByLabelText("From"));
-    selectOption("Alice Smith");
-    fireEvent.click(screen.getByLabelText("To"));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Transfer from Alice Smith" }),
+    );
+
+    // Dialog opens with Alice locked as the From member (read-only, no
+    // From dropdown) — mirrors `main`'s `transferFromMemberId` lock.
+    expect(await screen.findByText("Transfer Budget")).toBeInTheDocument();
+    expect(screen.getByText("From Alice · Rent")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("combobox"));
     selectOption("Bob Jones");
-    fireEvent.change(screen.getByLabelText("Amount"), {
+    fireEvent.change(screen.getByRole("spinbutton"), {
       target: { value: "25" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add Transfer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Transfer" }));
 
     await waitFor(() => {
       expect(createTransferAction).toHaveBeenCalledWith(

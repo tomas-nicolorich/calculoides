@@ -93,3 +93,27 @@ export function useContributionDelete(groupId: string) {
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }
+
+// Plain-language translations for the errors the savings Server Actions can
+// actually return (`lib/server/errors.ts`'s `STATUS_BY_MESSAGE` table),
+// mirroring prod's `entities/savings-goal/errorMessages.ts` known-case /
+// generic-fallback pattern. Server Actions here return `ActionResult` rather
+// than throwing, so this takes the plain `error` string directly instead of
+// an `unknown` caught value.
+const KNOWN_SAVINGS_ERRORS: Record<string, string> = {
+  "Savings goal not found":
+    "This savings goal no longer exists — it may have already been removed.",
+  "Group member not found": "That member no longer belongs to this group.",
+  "Member does not belong to the group associated with this savings goal":
+    "That member doesn't belong to this group.",
+  "User does not belong to the group associated with this savings goal":
+    "You don't have access to this savings goal.",
+  Unauthorized: "You need to be signed in to do that.",
+  "Access denied to this group": "You don't have access to this group.",
+};
+
+const GENERIC_SAVINGS_ERROR = "Something went wrong. Please try again.";
+
+export function toFriendlySavingsError(error: string): string {
+  return KNOWN_SAVINGS_ERRORS[error] ?? GENERIC_SAVINGS_ERROR;
+}

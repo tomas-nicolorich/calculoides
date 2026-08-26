@@ -84,7 +84,6 @@ describe("SidebarNav", () => {
       "Expenses",
       "Transfers",
       "Savings",
-      "Members",
       "Groups",
       "Profile",
     ]) {

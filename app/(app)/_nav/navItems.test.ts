@@ -8,9 +8,8 @@ function itemFor(key: NavItem["key"]): NavItem {
 }
 
 describe("NAV_ITEMS", () => {
-  // app-navigation-shell: "Members nav item builds a query-string href"
-  it("builds a query-string href for Members, not a path segment", () => {
-    expect(itemFor("members").href("abc123")).toBe("/members?groupId=abc123");
+  it("does not render a Members nav entry", () => {
+    expect(NAV_ITEMS.some((item) => item.key === "members")).toBe(false);
   });
 
   it("builds a plain /segment/[groupId] path for the other group-scoped items", () => {
@@ -28,6 +27,6 @@ describe("NAV_ITEMS", () => {
 
   it("falls back to /groups for a group-scoped item with no active group", () => {
     expect(itemFor("dashboard").href(null)).toBe("/groups");
-    expect(itemFor("members").href(null)).toBe("/groups");
+    expect(itemFor("expenses").href(null)).toBe("/groups");
   });
 });

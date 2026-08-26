@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "../../lib/cn";
 
@@ -12,6 +12,16 @@ function resolveInitialIsDark(): boolean {
   if (stored === "dark") return true;
   if (stored === "light") return false;
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function subscribeNoop() {
+  // No external change events to subscribe to — this store is only ever
+  // read once, on mount, to resolve the SSR-unknowable initial theme.
+  return () => undefined;
+}
+
+function getServerSnapshot() {
+  return false;
 }
 
 /**
@@ -29,7 +39,19 @@ function resolveInitialIsDark(): boolean {
  * OS Sync").
  */
 export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
-  const [isDark, setIsDark] = useState(resolveInitialIsDark);
+  // `useSyncExternalStore` renders the SSR-safe `getServerSnapshot` (false)
+  // on the client's hydration pass too, then re-syncs to the real
+  // `resolveInitialIsDark()` value right after — avoids the Sun/Moon
+  // hydration mismatch a lazy `useState(resolveInitialIsDark)` initializer
+  // produced (it read `window` during render, disagreeing with the server
+  // on the very first client render).
+  const resolvedIsDark = useSyncExternalStore(
+    subscribeNoop,
+    resolveInitialIsDark,
+    getServerSnapshot,
+  );
+  const [override, setOverride] = useState<boolean | null>(null);
+  const isDark = override ?? resolvedIsDark;
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
@@ -37,7 +59,7 @@ export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
 
   const toggle = () => {
     const next = !isDark;
-    setIsDark(next);
+    setOverride(next);
     window.localStorage.setItem(THEME_STORAGE_KEY, next ? "dark" : "light");
   };
 

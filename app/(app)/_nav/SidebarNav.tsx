@@ -32,7 +32,7 @@ export function SidebarNav({ groups }: { groups: ShellGroup[] }) {
   return (
     <aside
       className={cn(
-        "hidden flex-col overflow-x-hidden border-r border-slate-200 bg-white transition-all md:flex dark:border-slate-800 dark:bg-slate-900",
+        "sticky top-0 hidden h-screen flex-col overflow-x-hidden border-r border-slate-200 bg-white transition-all md:flex dark:border-slate-800 dark:bg-slate-900",
         collapsed ? "md:w-[68px]" : "md:w-[232px]",
       )}
     >

@@ -2,7 +2,7 @@
   "name": "calculoides",
   "version": "0.3.0",
   "private": true,
-  "packageManager": "npm@10.8.2",
+  "packageManager": "bun@1.4.0",
   "type": "module",
   "workspaces": [
     "shared"

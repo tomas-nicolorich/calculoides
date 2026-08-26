@@ -35,5 +35,5 @@ export default async function ExpensesPage({
     notFound();
   }
 
-  return <ExpensesClient groupId={groupId} />;
+  return <ExpensesClient groupId={groupId} currentUserId={user.id} />;
 }
