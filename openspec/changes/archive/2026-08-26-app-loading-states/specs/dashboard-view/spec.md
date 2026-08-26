@@ -5,24 +5,32 @@
 ### Requirement: Dashboard Renders the Full Widget Set in a Two-Column Layout
 
 The dashboard page MUST render `IncomeOverview`, `RemainingBalance`,
-`BudgetCategories`, `BudgetTransfers`, `RecentExpenses`, and
-`SavingsGoalList` composed in a two-column layout, replacing the current
-placeholder's bare group-name heading and flat category list.
+`BudgetCategories`, `BudgetTransfers`, and `RecentExpenses` composed in a
+two-column layout, replacing the current placeholder's bare group-name
+heading and flat category list. `SavingsGoalList` is NOT a dashboard
+widget — it renders only on `/savings/[groupId]`; the dashboard's
+`savingsGoals` prefetch exists solely to warm that route's cache ahead of
+navigation (see "One Server Prefetch Feeds the Summary-Dependent Widgets"
+below), not to display goals inline.
 
-(Previously: "Loading state precedes hydration" described independent
-per-widget loading as an aspiration met by inline skeletons after one
-blocking parent await; it now describes literal independent streaming via
-per-query-key `<Suspense>` regions.)
+(Previously: this requirement and its own delta both incorrectly listed
+`SavingsGoalList` as a sixth dashboard widget — a stale carry-over from an
+earlier draft that was never actually implemented as a dashboard-rendered
+widget. Corrected during `sdd-verify`/`sdd-archive` per product decision:
+savings goals stay a `/savings`-only page. "Loading state precedes
+hydration" still describes independent per-widget loading as an aspiration
+met by inline skeletons after one blocking parent await; it now describes
+literal independent streaming via per-query-key `<Suspense>` regions.)
 
-#### Scenario: All six widgets render for a populated group
-- GIVEN a group with members, categories, expenses, transfers, and savings goals
+#### Scenario: All five widgets render for a populated group
+- GIVEN a group with members, categories, expenses, and transfers
 - WHEN `/dashboard/[groupId]` renders
-- THEN `IncomeOverview`, `RemainingBalance`, `BudgetCategories`, `BudgetTransfers`, `RecentExpenses`, and `SavingsGoalList` are all present
+- THEN `IncomeOverview`, `RemainingBalance`, `BudgetCategories`, `BudgetTransfers`, and `RecentExpenses` are all present
 
 #### Scenario: Loading state precedes hydration, per independent region
 - GIVEN the server has not yet resolved one or more of the `summary`, `categories`, or `savingsGoals` prefetches
 - WHEN the page begins streaming
-- THEN each of the three independent data regions shows its own `<Suspense>` fallback, and a slower region does not block a faster region from revealing — not a single page-level spinner blocking all six widgets
+- THEN each of the three independent data regions shows its own `<Suspense>` fallback, and a slower region does not block a faster region from revealing — not a single page-level spinner blocking all five widgets
 
 ### Requirement: One Server Prefetch Feeds the Summary-Dependent Widgets
 
