@@ -47,14 +47,19 @@ export function LoginForm() {
 
       if (signInError) {
         setError(toLoginErrorMessage(signInError.message));
+        setLoading(false);
         return;
       }
 
+      // Leave `loading` true: the component unmounts once /groups
+      // navigates in, and resetting it here (as a blanket `finally` used
+      // to) flipped the button back to "Sign In" while the RSC payload for
+      // /groups was still in flight, leaving that stretch with no
+      // indicator at all.
       router.push("/groups");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
