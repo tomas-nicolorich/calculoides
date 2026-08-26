@@ -107,16 +107,23 @@ describe("BudgetTransfers", () => {
     vi.mocked(create).mockReset();
   });
 
-  it("shows a loading state before the summary query resolves", () => {
+  // dashboard-view: "Widget-Level Loading Indicators Use Skeleton, Not Plain
+  // Text" — a shaped `BudgetTransfersSkeleton`, not a "Loading…" text node.
+  it("shows a shaped skeleton, not plain text, before the summary query resolves", () => {
     fetchMock.mockImplementation(() => new Promise(() => undefined));
 
-    render(
+    const { container } = render(
       <QueryClientProvider client={createQueryClient()}>
         <BudgetTransfers groupId={GROUP_ID} />
       </QueryClientProvider>,
     );
 
-    expect(screen.getByTestId("budget-transfers-loading")).toBeInTheDocument();
+    const loading = screen.getByTestId("budget-transfers-loading");
+    expect(loading).toBeInTheDocument();
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
   });
 
   it("shows an error state when the summary query fails", async () => {

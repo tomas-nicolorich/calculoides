@@ -7,6 +7,8 @@ export { Badge } from "./Badge";
 export { Alert } from "./Alert";
 export type { AlertAction, AlertTone } from "./Alert";
 export { Skeleton } from "./Skeleton";
+export { Spinner } from "./Spinner";
+export type { SpinnerSize } from "./Spinner";
 export { IconButton } from "./IconButton";
 export type { IconButtonHover, IconButtonSize } from "./IconButton";
 export { ReloadButton } from "./ReloadButton";

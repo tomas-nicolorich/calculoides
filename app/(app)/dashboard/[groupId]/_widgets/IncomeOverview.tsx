@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Edit2 } from "lucide-react";
 import { Avatar, Button, IconButton, Input, Alert, Card } from "../../../../_ui";
 import { StatFigure, MemberBar } from "../../../../_ui/money";
+import { IncomeOverviewSkeleton } from "../_skeletons";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { useDashboardSummary } from "../../../../_data/summary";
 import { useUpdateIncome } from "../../../../_data/members";
@@ -33,9 +34,9 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
 
   if (isLoading) {
     return (
-      <Card title="Income Overview" data-testid="income-overview-loading">
-        <p className="text-sm text-slate-400">Loading…</p>
-      </Card>
+      <div data-testid="income-overview-loading">
+        <IncomeOverviewSkeleton />
+      </div>
     );
   }
 

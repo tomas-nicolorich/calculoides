@@ -12,8 +12,10 @@ import {
   ResponsiveDialog,
   RowMenu,
   Select,
+  Skeleton,
 } from "../../../../_ui";
 import { ProgressMeter } from "../../../../_ui/money";
+import { BudgetCategoriesSkeleton } from "../_skeletons";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { progressPercent, progressState } from "../../../../../lib/progress";
 import { cn } from "../../../../../lib/cn";
@@ -162,7 +164,12 @@ function TransferHistory({
       <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">
         Transfer History
       </p>
-      {isLoading && <p className="text-xs text-slate-400">Loading…</p>}
+      {isLoading && (
+        <div className="space-y-1.5">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+      )}
       {!isLoading && (!data || data.length === 0) && (
         <p className="text-xs text-slate-400">No transfers yet</p>
       )}
@@ -554,9 +561,9 @@ export function BudgetCategories({
 
   if (isLoading) {
     return (
-      <Card title="Budget Categories" data-testid="budget-categories-loading">
-        <p className="text-sm text-slate-400">Loading…</p>
-      </Card>
+      <div data-testid="budget-categories-loading">
+        <BudgetCategoriesSkeleton />
+      </div>
     );
   }
 

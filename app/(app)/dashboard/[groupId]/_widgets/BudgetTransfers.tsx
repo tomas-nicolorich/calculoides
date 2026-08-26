@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { Avatar, Card } from "../../../../_ui";
+import { BudgetTransfersSkeleton } from "../_skeletons";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { useDashboardSummary } from "../../../../_data/summary";
 
@@ -99,9 +100,9 @@ export function BudgetTransfers({ groupId }: { groupId: string }) {
 
   if (isLoading) {
     return (
-      <Card title="Budget Transfers" data-testid="budget-transfers-loading">
-        <p className="text-sm text-slate-400">Loading…</p>
-      </Card>
+      <div data-testid="budget-transfers-loading">
+        <BudgetTransfersSkeleton />
+      </div>
     );
   }
 

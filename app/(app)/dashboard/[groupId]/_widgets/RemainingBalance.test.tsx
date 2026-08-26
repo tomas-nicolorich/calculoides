@@ -86,16 +86,23 @@ describe("RemainingBalance", () => {
 
   // No prefetch → useDashboardSummary starts its own (stubbed, never-
   // resolving) fetch and stays in the initial loading state synchronously.
-  it("shows a loading state before the summary query resolves", () => {
+  // dashboard-view: "Widget-Level Loading Indicators Use Skeleton, Not Plain
+  // Text" — a shaped `RemainingBalanceSkeleton`, not a "Loading…" text node.
+  it("shows a shaped skeleton, not plain text, before the summary query resolves", () => {
     fetchMock.mockImplementation(() => new Promise(() => undefined));
 
-    render(
+    const { container } = render(
       <QueryClientProvider client={createQueryClient()}>
         <RemainingBalance groupId={GROUP_ID} />
       </QueryClientProvider>,
     );
 
-    expect(screen.getByTestId("remaining-balance-loading")).toBeInTheDocument();
+    const loading = screen.getByTestId("remaining-balance-loading");
+    expect(loading).toBeInTheDocument();
+    expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
   });
 
   it("shows an error state when the summary query fails", async () => {

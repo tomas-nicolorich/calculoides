@@ -36,6 +36,10 @@ describe("app/_ui barrel", () => {
     expect(barrel.Skeleton).toBeTypeOf("function");
   });
 
+  it("re-exports Spinner", () => {
+    expect(barrel.Spinner).toBeTypeOf("function");
+  });
+
   it("re-exports IconButton", () => {
     expect(barrel.IconButton).toBeTypeOf("function");
   });
