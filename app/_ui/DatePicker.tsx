@@ -1,3 +1,5 @@
+"use client";
+
 import { useRef, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
