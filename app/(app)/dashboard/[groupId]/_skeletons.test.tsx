@@ -91,4 +91,43 @@ describe("_skeletons", () => {
 
     expect(screen.getAllByTestId(/-skeleton$/).length).toBe(5);
   });
+
+  it("DashboardSkeleton reserves header space matching DashboardClient's title/subtitle/avatar/button row", () => {
+    const { container } = render(<DashboardSkeleton />);
+
+    const header = screen.getByTestId("dashboard-skeleton-header");
+    expect(header.tagName).toBe("HEADER");
+    expect(header).toHaveClass(
+      "flex",
+      "flex-wrap",
+      "items-start",
+      "justify-between",
+      "gap-4",
+    );
+
+    const pulses = header.querySelectorAll(".animate-pulse");
+    expect(pulses.length).toBe(4);
+
+    const avatarPlaceholder = container.querySelector(
+      ".animate-pulse.rounded-full",
+    );
+    expect(avatarPlaceholder).toBeInTheDocument();
+  });
+
+  it("BudgetCategoriesSkeleton renders icon+title+progress-bar shaped rows", () => {
+    const { container } = render(<BudgetCategoriesSkeleton />);
+
+    const rows = screen.getAllByTestId("budget-categories-skeleton-row");
+    expect(rows.length).toBe(3);
+
+    for (const row of rows) {
+      const icon = row.querySelector(".animate-pulse.rounded-xl");
+      expect(icon).toBeInTheDocument();
+
+      const bars = row.querySelectorAll(".animate-pulse");
+      expect(bars.length).toBeGreaterThanOrEqual(3);
+    }
+
+    expect(container.querySelectorAll(".h-16").length).toBe(0);
+  });
 });
