@@ -24,24 +24,50 @@ placeholder's bare group-name heading and flat category list.
 - WHEN `/dashboard/[groupId]` renders
 - THEN `IncomeOverview`, `RemainingBalance`, `BudgetCategories`, `BudgetTransfers`, `RecentExpenses`, and `SavingsGoalList` are all present
 
-#### Scenario: Loading state precedes hydration
-- GIVEN the server has not yet resolved the prefetch
+#### Scenario: Loading state precedes hydration, per independent region
+- GIVEN the server has not yet resolved one or more of the `summary`, `categories`, or `savingsGoals` prefetches
 - WHEN the page begins streaming
-- THEN each widget shows its own loading state, not a single page-level spinner blocking all six
+- THEN each of the three independent data regions shows its own `<Suspense>` fallback, and a slower region does not block a faster region from revealing — not a single page-level spinner blocking all six widgets
 
 ### Requirement: One Server Prefetch Feeds the Summary-Dependent Widgets
 
 `app/(app)/dashboard/[groupId]/page.tsx` MUST prefetch `summary`,
-`categories`, and `savingsGoals` server-side and pass them through
-`dehydrate`/`HydrationBoundary`, so `IncomeOverview`, `RemainingBalance`,
-`RecentExpenses`, and `BudgetTransfers` — all four consumers of
-`queryKeys.summary` — hydrate from that one prefetch instead of each firing
-its own client-side fetch.
+`categories`, and `savingsGoals` server-side, each within its own
+`<Suspense>` region and paired `dehydrate`/`HydrationBoundary`, so
+`IncomeOverview`, `RemainingBalance`, `RecentExpenses`, and
+`BudgetTransfers` — all four consumers of `queryKeys.summary` — hydrate
+from that one shared `summary` prefetch/boundary instead of each firing
+its own client-side fetch. The four summary consumers MUST NOT be split
+across more than one `<Suspense>`/`HydrationBoundary` region; splitting
+them would reintroduce a client-side waterfall.
 
 #### Scenario: No client-side waterfall for summary-backed widgets
 - GIVEN the server has prefetched `summary`
 - WHEN the four summary-consuming widgets mount
 - THEN none of them issues its own initial client fetch for summary data — they read the hydrated cache
+
+#### Scenario: Independent regions elsewhere do not fragment the shared summary hydration
+- GIVEN the dashboard renders three independent `<Suspense>` regions (`summary`, `categories`, `savingsGoals`)
+- WHEN `categories` and `savingsGoals` stream in at different times than `summary`
+- THEN all four `queryKeys.summary`-consuming widgets still hydrate together from the one shared `summary` region's prefetch, with no widget issuing its own client fetch
+
+### Requirement: Widget-Level Loading Indicators Use Skeleton, Not Plain Text
+
+`RecentExpenses`, `BudgetCategories` (including its nested
+`TransferHistory` drill-down), `RemainingBalance`, and `IncomeOverview`
+MUST render a `Skeleton`-shaped placeholder for any loading state they own
+independently of the page-level `<Suspense>` fallback (e.g., a
+client-triggered refetch), rather than plain "Loading…" text.
+
+#### Scenario: Category drill-down shows Skeleton while transfer history loads
+- GIVEN a category accordion row is expanded
+- WHEN its `/api/transfers/by-category` request is in flight
+- THEN `TransferHistory` renders a `Skeleton` placeholder, not literal "Loading…" text
+
+#### Scenario: No widget renders literal loading text
+- GIVEN any of the four reconciled widgets is in a loading state
+- WHEN it renders
+- THEN no plain-text "Loading…" string appears in its output
 
 ### Requirement: BudgetCategories Renders an Accordion With Per-Member Balances
 
