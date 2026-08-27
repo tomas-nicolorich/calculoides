@@ -49,7 +49,7 @@ if [ -n "$MIN_VERSION" ] && [ -n "$VERSION" ]; then
       echo "fallow-gate: blocked: $BIN_DESC is fallow $VERSION, below required $MIN_VERSION."
       echo "fallow-gate: older binaries miss the uncommitted-changes fix (v2.46.0) and can"
       echo "fallow-gate: silently pass audits that would otherwise fail."
-      echo "fallow-gate: upgrade the fallow on PATH (e.g. npm install -g fallow@latest or"
+      echo "fallow-gate: upgrade the fallow on PATH (e.g. bun install -g fallow@latest or"
       echo "fallow-gate: cargo install fallow-cli), or set FALLOW_GATE_MIN_VERSION= to disable."
     } >&2
     exit 2

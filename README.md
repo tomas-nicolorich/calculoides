@@ -22,14 +22,14 @@ A single Next.js App Router application at the repo root (`app/`, `lib/`, `proxy
 | root app              | Next.js 16 (App Router), React 19, Prisma 7 (Supabase Postgres via PgBouncer), `@supabase/ssr`, TanStack Query, Tailwind 4, Zod validation, Resend for email, Vitest |
 | [`shared/`](./shared) | Domain types, Zod schemas, and financial calculation logic shared by server and client code                                                                          |
 
-npm workspaces (root app + `shared`) + Turborepo for `shared`'s own pipeline, deployed on Vercel (Next.js framework preset).
+Bun workspaces (root app + `shared`) + Turborepo for `shared`'s own pipeline, deployed on Vercel (Next.js framework preset).
 
 ## Getting started
 
-Requires Node and npm (see `packageManager` in `package.json` for the pinned npm version).
+Requires Bun (see `packageManager` in `package.json` for the pinned version).
 
 ```bash
-npm install
+bun install
 ```
 
 You'll need a Supabase project (Postgres database + auth) and a Resend API key. Set the following environment variables (e.g. in `.env` at the repo root, or your shell):
@@ -56,16 +56,16 @@ this.
 Run the app in development — one process, no separate API server:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 Other common commands:
 
 ```bash
-npm test          # vitest (root) + turbo run test (shared)
-npm run typecheck # tsc -p tsconfig.next.json + turbo run typecheck (shared)
-npm run lint       # eslint (root) + turbo run lint (shared)
-npm run build      # next build
+bun run test      # vitest (root) + turbo run test (shared)
+bun run typecheck # tsc -p tsconfig.next.json + turbo run typecheck (shared)
+bun run lint       # eslint (root) + turbo run lint (shared)
+bun run build      # next build
 ```
 
 ## Project structure
