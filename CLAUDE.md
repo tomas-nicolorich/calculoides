@@ -1,16 +1,46 @@
-## Agent skills
+## Project
 
-### Issue tracker
+Calculoides is a shared expense/budget management app for household groups: costs
+are split proportionally by income across Groups, Budget Categories, Budget Quotas
+(computed live on read), Transfers, Savings Goals (with Contributions), and
+period Archive/Settlement.
 
-Issues live in GitHub Issues (`tomas-nicolorich/calculoides`). See `docs/agents/issue-tracker.md`.
+Stack: Next.js 16 (App Router, root `app/` + `lib/`), React 19, Prisma 7 +
+Supabase Postgres (via PgBouncer), `@supabase/ssr`, TanStack Query, Tailwind 4,
+Zod, Resend. Package manager is bun, with a `shared` bun workspace built via
+Turborepo. Deployed on Vercel.
 
-### Triage labels
+`frontend/` (old Vite SPA) and `api/` (old Express API) are retired from the
+pre-Next.js monorepo — not deployed, kept only for historical reference. Don't
+add new code there.
 
-Uses default mattpocock/skills label vocabulary. See `docs/agents/triage-labels.md`.
+## Commands
 
-### Domain docs
+- `bun install` — install deps (also runs `prisma generate` via postinstall)
+- `bun run dev` — start Next.js dev server
+- `bun run build` / `bun run start:next` — production build / start
+- `bun run test` — vitest (unit) + `turbo run test` (shared workspace)
+- `bun run test:e2e:next` — Playwright e2e
+- `bun run typecheck` — tsc + `turbo run typecheck`
+- `bun run lint` — eslint + `turbo run lint`
+- `bun run prisma:generate` / `bun run prisma:migrate` — schema at `prisma/schema.prisma`
 
-Multi-context monorepo — `CONTEXT-MAP.md` at root points to per-package `CONTEXT.md` files. See `docs/agents/domain.md`.
+Requires Supabase + Resend env vars — see README for the
+`NEXT_PUBLIC_SUPABASE_*` vs server-only var gotcha.
+
+## Domain docs
+
+`shared/CONTEXT.md` is the domain glossary (Groups, Quotas, Settlement, etc.). Read it before
+touching domain logic.
+
+## Conventions
+
+- No `@/*` path alias inside `app/` or `lib/` — use relative imports. `fallow`'s
+  dead-code resolver (`.github/workflows/fallow.yml`) doesn't follow TS path
+  mapping, so alias imports get misreported as unresolved and their targets as unused.
+- `openspec/` is in active use for spec-driven changes (`specs/` per feature,
+  `changes/` for in-flight work) — check it before assuming a feature is undocumented.
+- Husky + lint-staged run eslint --fix and prettier on staged files pre-commit.
 
 ## Agent dispatch rule
 
