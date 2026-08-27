@@ -25,7 +25,7 @@
     "prepare": "husky",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
-    "postinstall": "npm run prisma:generate"
+    "postinstall": "bun run prisma:generate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

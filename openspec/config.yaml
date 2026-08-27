@@ -5,7 +5,7 @@ context: |
   Engram project identity is resolved from git remote `tomas-nicolorich/calculoides`).
 
   Tech stack:
-  - npm workspaces monorepo (`frontend`, `api`, `shared`) orchestrated with Turborepo (`turbo.json`).
+  - Bun workspaces monorepo (`frontend`, `api`, `shared`) orchestrated with Turborepo (`turbo.json`).
   - Frontend: React 19.2, Vite 8, TypeScript 6 (strict), Tailwind CSS 4, react-router-dom 7,
     @base-ui/react, clsx/tailwind-merge. Tests: vitest + @testing-library/react + jsdom.
   - API: Express 5, Prisma 7 ORM (`prisma/schema.prisma` ~900 lines, Postgres via `pg` +
@@ -27,8 +27,8 @@ context: |
     hooks, Fallow static-audit gate (`.fallowrc.json`, `unused-exports`/`unused-dependencies`=warn,
     `circular-dependencies`=error) wired into `.github/workflows/fallow.yml`. Also `claude.yml` /
     `claude-code-review.yml` GitHub Actions.
-  - Root scripts: `npm test` -> `turbo run test`, `npm run lint` -> `turbo run lint`,
-    `npm run typecheck` -> `turbo run typecheck`.
+  - Root scripts: `bun run test` -> `turbo run test`, `bun run lint` -> `turbo run lint`,
+    `bun run typecheck` -> `turbo run typecheck`.
 
   Testing:
   - Test runner: vitest in both `api` and `frontend` workspaces.
@@ -64,11 +64,11 @@ rules:
         CONTEXT-MAP.md
       - Do not bypass Husky pre-commit/pre-push hooks or the Fallow gate
     tdd: true
-    test_command: "npm test"
+    test_command: "bun run test"
 
   verify:
-    test_command: "npm test"
-    build_command: "npm run typecheck"
+    test_command: "bun run test"
+    build_command: "bun run typecheck"
     coverage_threshold: 0
 
   archive:

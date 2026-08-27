@@ -2,12 +2,12 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(npm run typecheck *)",
-      "Bash(npm run typecheck)",
-      "Bash(npm test *)",
-      "Bash(npm test)",
-      "Bash(npm run lint *)",
-      "Bash(npm run lint)",
+      "Bash(bun run typecheck *)",
+      "Bash(bun run typecheck)",
+      "Bash(bun run test *)",
+      "Bash(bun run test)",
+      "Bash(bun run lint *)",
+      "Bash(bun run lint)",
       "Bash(fallow audit *)",
       "Bash(fallow dead-code *)",
       "Bash(fallow dupes *)",
