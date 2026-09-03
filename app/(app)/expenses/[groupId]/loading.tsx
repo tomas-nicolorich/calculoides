@@ -1,10 +1,13 @@
 import { Skeleton } from "../../../_ui";
+import { ExpensesListSkeleton } from "./_skeletons";
 
 /**
  * `expenses/[groupId]` segment fallback (route-loading-states: "Every
  * `(app)` Route Segment Renders a Page-Shaped Skeleton Fallback"). Shaped
  * like `ExpensesClient`'s populated layout: `max-w-7xl` container, header +
- * filter bar + expense rows.
+ * filter bar + expense rows. The row skeletons are the same `_skeletons.tsx`
+ * exports `ExpensesClient` renders in its `isLoading` branch, so mounting
+ * causes no visible swap.
  */
 export default function ExpensesLoading() {
   return (
@@ -21,11 +24,8 @@ export default function ExpensesLoading() {
         <Skeleton className="h-9 w-40 rounded-xl" />
         <Skeleton className="h-9 w-40 rounded-xl" />
       </div>
-      <div className="space-y-2" data-testid="expenses-loading-rows">
-        <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
+      <div data-testid="expenses-loading-rows">
+        <ExpensesListSkeleton />
       </div>
     </div>
   );
