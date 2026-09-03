@@ -60,16 +60,10 @@ them would reintroduce a client-side waterfall.
 
 ### Requirement: Widget-Level Loading Indicators Use Skeleton, Not Plain Text
 
-`RecentExpenses`, `BudgetCategories` (including its nested
-`TransferHistory` drill-down), `RemainingBalance`, and `IncomeOverview`
-MUST render a `Skeleton`-shaped placeholder for any loading state they own
-independently of the page-level `<Suspense>` fallback (e.g., a
-client-triggered refetch), rather than plain "Loading…" text.
-
-#### Scenario: Category drill-down shows Skeleton while transfer history loads
-- GIVEN a category accordion row is expanded
-- WHEN its `/api/transfers/by-category` request is in flight
-- THEN `TransferHistory` renders a `Skeleton` placeholder, not literal "Loading…" text
+`RecentExpenses`, `BudgetCategories`, `RemainingBalance`, and
+`IncomeOverview` MUST render a `Skeleton`-shaped placeholder for any loading
+state they own independently of the page-level `<Suspense>` fallback (e.g.,
+a client-triggered refetch), rather than plain "Loading…" text.
 
 #### Scenario: No widget renders literal loading text
 - GIVEN any of the four reconciled widgets is in a loading state
@@ -104,26 +98,22 @@ every dependent widget reflects the change without a manual reload.
 - THEN `queryKeys.group(groupId)` invalidates and `BudgetCategories` (and any other widget reading category data) reflects the new category
 
 #### Scenario: Deleting a category is confirmed before the call fires
-- GIVEN a category's row menu offers delete
-- WHEN the user selects delete
+- GIVEN an expanded category row offers an inline Edit/Delete action pair (ported from `main`, not a "⋯" row menu)
+- WHEN the user selects Delete
 - THEN a confirmation step precedes the `deleteCategory` Server Action call — a single click does not itself delete
 
-### Requirement: Budget Transfers Support Inline Creation and Per-Category History
+### Requirement: Budget Transfers Support Inline Creation
 
 `BudgetTransfers` MUST support creating a transfer via
-`lib/actions/transfer.create`, and `BudgetCategories`' per-category
-drill-down MUST show that category's transfer history via
-`/api/transfers/by-category`.
+`lib/actions/transfer.create`. Per-category transfer history is not part of
+this widget-parity dashboard — `main`'s `BudgetCategories` has no such
+drill-down, and the accordion row's expanded state ends at the per-member
+balance breakdown.
 
 #### Scenario: Creating a transfer invalidates the group cache
 - GIVEN a valid inline transfer form submission
 - WHEN `transfer.create` resolves
 - THEN `queryKeys.group(groupId)` invalidates and `BudgetTransfers`/`RemainingBalance` reflect the new transfer
-
-#### Scenario: Category drill-down lists only that category's transfers
-- GIVEN a category has 2 of the group's 5 total transfers
-- WHEN its accordion row's transfer history loads via `/api/transfers/by-category`
-- THEN exactly those 2 transfers are listed
 
 ### Requirement: Recent Expenses and Quick-Add Share the Same Invalidation Contract
 

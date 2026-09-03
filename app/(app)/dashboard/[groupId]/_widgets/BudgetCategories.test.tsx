@@ -174,23 +174,6 @@ function stubMatchMedia() {
   );
 }
 
-const TRANSFERS_BY_CATEGORY_FIXTURE = [
-  {
-    id: "ct1",
-    amount: 50,
-    date: "2026-06-01T00:00:00.000Z",
-    fromMember: { member: { user: { name: "Alice Smith" } } },
-    toMember: { member: { user: { name: "Bob Jones" } } },
-  },
-  {
-    id: "ct2",
-    amount: 20,
-    date: "2026-06-02T00:00:00.000Z",
-    fromMember: { member: { user: { name: "Bob Jones" } } },
-    toMember: { member: { user: { name: "Alice Smith" } } },
-  },
-];
-
 describe("BudgetCategories", () => {
   let fetchMock: FetchMock;
 
@@ -434,7 +417,7 @@ describe("BudgetCategories", () => {
     expect(await screen.findByText("Groceries")).toBeInTheDocument();
   });
 
-  it("opens the edit dialog pre-filled from the row menu and updates via category.update", async () => {
+  it("opens the edit dialog pre-filled from the inline Edit button and updates via category.update", async () => {
     vi.mocked(updateCategoryAction).mockResolvedValue({
       ok: true,
       data: { id: "c1", groupId: GROUP_ID },
@@ -449,10 +432,8 @@ describe("BudgetCategories", () => {
     });
 
     await renderHydrated([RENT_CATEGORY]);
-    await screen.findByText("Rent");
-
-    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit category" }));
 
     expect(screen.getByLabelText("Category Name")).toHaveValue("Rent");
     fireEvent.change(screen.getByLabelText("Category Name"), {
@@ -470,12 +451,10 @@ describe("BudgetCategories", () => {
   });
 
   // dashboard-view: "Deleting a category is confirmed before the call fires".
-  it("does not call deleteCategory on a single row-menu click — a confirm step is required first", async () => {
+  it("does not call deleteCategory on a single inline Delete click — a confirm step is required first", async () => {
     await renderHydrated([RENT_CATEGORY]);
-    await screen.findByText("Rent");
-
-    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete category" }));
 
     expect(deleteCategoryAction).not.toHaveBeenCalled();
     expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
@@ -484,15 +463,15 @@ describe("BudgetCategories", () => {
   // dashboard-view: "Delete option is owner-only" — the server already
   // rejects a non-owner delete (`lib/actions/category.ts`'s `isGroupOwner`
   // check), this asserts the UI doesn't dead-end a non-owner into it.
-  it("omits the Delete row-menu item for a non-owner member", async () => {
+  it("omits the inline Delete button for a non-owner member", async () => {
     await renderHydrated([RENT_CATEGORY], SUMMARY_FIXTURE, "user-2");
-    await screen.findByText("Rent");
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
-
-    expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("menuitem", { name: "Delete" }),
+      screen.getByRole("button", { name: "Edit category" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Delete category" }),
     ).not.toBeInTheDocument();
   });
 
@@ -508,10 +487,8 @@ describe("BudgetCategories", () => {
     });
 
     await renderHydrated([RENT_CATEGORY]);
-    await screen.findByText("Rent");
-
-    fireEvent.click(screen.getByRole("button", { name: "Row options" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete category" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete Category" }));
 
     await waitFor(() => {
@@ -523,51 +500,6 @@ describe("BudgetCategories", () => {
     await waitFor(() => {
       expect(screen.queryByText("Rent")).not.toBeInTheDocument();
     });
-  });
-
-  // dashboard-view: "Category drill-down lists only that category's
-  // transfers" — the widget asserts correct consumption of the route's
-  // response, not the route's own server-side filtering (that belongs to
-  // `by-category/route.test.ts`).
-  it("shows only this category's transfers in its expanded drill-down, fetched via /api/transfers/by-category", async () => {
-    fetchMock.mockImplementation((url: string) =>
-      url.includes("/api/transfers/by-category")
-        ? jsonResponse(TRANSFERS_BY_CATEGORY_FIXTURE)
-        : jsonResponse(SUMMARY_FIXTURE),
-    );
-
-    await renderHydrated([RENT_CATEGORY]);
-    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `/api/transfers/by-category?categoryId=${RENT_CATEGORY.id}`,
-        ),
-      );
-    });
-    expect(await screen.findAllByTestId("category-transfer-row")).toHaveLength(2);
-  });
-
-  // dashboard-view: "Category drill-down shows Skeleton while transfer
-  // history loads" — two shaped skeleton rows, not a "Loading…" text node.
-  it("shows two skeleton rows, not plain text, while the transfer-history drill-down loads", async () => {
-    fetchMock.mockImplementation((url: string) =>
-      url.includes("/api/transfers/by-category")
-        ? new Promise(() => undefined)
-        : jsonResponse(SUMMARY_FIXTURE),
-    );
-
-    await renderHydrated([RENT_CATEGORY]);
-    fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
-
-    const heading = await screen.findByText("Transfer History");
-    const historyContainer = heading.parentElement;
-    expect(historyContainer).not.toBeNull();
-    expect(
-      historyContainer?.querySelectorAll(".animate-pulse").length,
-    ).toBe(2);
-    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
   });
 
   // dashboard-view: "Creating a transfer invalidates the group cache" (the
