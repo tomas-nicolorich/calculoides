@@ -14,15 +14,12 @@ const NO_SPINNER_CLASS =
 
 /**
  * Ported from `main`'s `frontend/src/widgets/dashboard/ui/IncomeOverview.tsx`
- * markup (edit-mode per-member rows + read-mode `MemberBar` legend). Data
- * seam: self-subscribes to the hydrated `queryKeys.summary` cache instead of
- * receiving `totalIncome`/`members` as props — same seam
- * `RemainingBalance`/`RecentExpenses` use (spec: "One Server Prefetch Feeds
- * the Summary-Dependent Widgets").
- *
- * Save-action styling deviates from `main` per `ui-design-system`: "An
- * income-related action uses the income variant" — Confirm below uses
- * `variant="income"`, not `main`'s generic `balance` variant.
+ * markup (edit-mode per-member rows + read-mode `MemberBar` legend), including
+ * its `variant="balance"` (blue) Confirm button. Data seam: self-subscribes
+ * to the hydrated `queryKeys.summary` cache instead of receiving
+ * `totalIncome`/`members` as props — same seam `RemainingBalance`/
+ * `RecentExpenses` use (spec: "One Server Prefetch Feeds the
+ * Summary-Dependent Widgets").
  */
 export function IncomeOverview({ groupId }: { groupId: string }) {
   const { data: summary, isLoading, isError } = useDashboardSummary(groupId);
@@ -62,6 +59,26 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
   const validationError = hasInvalidInput
     ? `Enter a valid non-negative income for ${invalidMembers.map((m) => m.name).join(", ")}.`
     : null;
+
+  // Live total/shares while editing (main's `useIncomeSession`, simplified):
+  // a member with an invalid/empty draft keeps contributing their last saved
+  // income to the total rather than dropping out of it mid-edit.
+  const overrideAmounts: Record<string, number> = Object.fromEntries(
+    members.map((m) => {
+      const parsed = parseFloat(rawInputs[m.id] ?? "");
+      return [m.id, !isNaN(parsed) && parsed >= 0 ? parsed : m.income];
+    }),
+  );
+  const liveTotal = Object.values(overrideAmounts).reduce(
+    (sum, amount) => sum + amount,
+    0,
+  );
+  const liveShares: Record<string, number> = Object.fromEntries(
+    Object.entries(overrideAmounts).map(([memberId, amount]) => [
+      memberId,
+      liveTotal > 0 ? (amount / liveTotal) * 100 : 0,
+    ]),
+  );
 
   const handleEdit = () => {
     setRawInputs(
@@ -111,6 +128,12 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
             by the new percentages.
           </p>
 
+          <StatFigure
+            label="Total Group Income"
+            value={formatCurrency(liveTotal)}
+            tone="primary"
+          />
+
           <div className="flex flex-col gap-3">
             {members.map((m, i) => {
               const invalid = isMemberInputInvalid(m.id);
@@ -122,6 +145,9 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
                   <span className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300 min-w-0">
                     <Avatar name={m.name} colorIndex={i} size="xs" />
                     <span className="truncate">{m.name}</span>
+                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 shrink-0">
+                      {(liveShares[m.id] ?? 0).toFixed(1)}%
+                    </span>
                   </span>
                   <Input
                     type="number"
@@ -152,7 +178,7 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-9 rounded-xl text-xs font-bold tracking-widest uppercase"
               onClick={handleClose}
               disabled={updateIncomeMutation.isPending}
             >
@@ -160,8 +186,8 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
             </Button>
             <Button
               type="button"
-              variant="income"
-              className="flex-1"
+              variant="balance"
+              className="flex-1 h-9 rounded-xl text-xs font-bold tracking-widest uppercase"
               onClick={() => {
                 void handleConfirm();
               }}

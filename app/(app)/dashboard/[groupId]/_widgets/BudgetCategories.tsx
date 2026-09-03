@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties, type SyntheticEvent } from "react";
-import { ArrowRightLeft, ChevronDown, Plus } from "lucide-react";
+import { ArrowRightLeft, ChevronDown, Edit2, Plus, Trash2 } from "lucide-react";
 import {
   Avatar,
   Button,
@@ -10,9 +10,7 @@ import {
   IconPicker,
   Input,
   ResponsiveDialog,
-  RowMenu,
   Select,
-  Skeleton,
 } from "../../../../_ui";
 import { ProgressMeter } from "../../../../_ui/money";
 import { BudgetCategoriesSkeleton } from "../_skeletons";
@@ -26,10 +24,7 @@ import {
   useUpdateCategory,
   useDeleteCategory,
 } from "../../../../_data/categories";
-import {
-  useCreateTransfer,
-  useTransfersByCategory,
-} from "../../../../_data/transfers";
+import { useCreateTransfer } from "../../../../_data/transfers";
 
 interface CategoryBalance {
   memberId: string;
@@ -140,58 +135,6 @@ function CategoryFormFields({
   );
 }
 
-/** Per-category drill-down (dashboard-view: "Category drill-down lists only
- * that category's transfers"). Only fetches while its row is expanded. */
-function TransferHistory({
-  groupId,
-  categoryId,
-  isExpanded,
-}: {
-  groupId: string;
-  categoryId: string;
-  isExpanded: boolean;
-}) {
-  const { data, isLoading } = useTransfersByCategory(
-    groupId,
-    categoryId,
-    isExpanded,
-  );
-
-  if (!isExpanded) return null;
-
-  return (
-    <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-      <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">
-        Transfer History
-      </p>
-      {isLoading && (
-        <div className="space-y-1.5">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-full" />
-        </div>
-      )}
-      {!isLoading && (!data || data.length === 0) && (
-        <p className="text-xs text-slate-400">No transfers yet</p>
-      )}
-      {data?.map((transfer) => (
-        <div
-          key={transfer.id}
-          data-testid="category-transfer-row"
-          className="flex items-center justify-between gap-2 text-xs text-slate-500"
-        >
-          <span>
-            {transfer.fromMember?.member?.user?.name ?? "?"} →{" "}
-            {transfer.toMember?.member?.user?.name ?? "?"}
-          </span>
-          <span className="font-mono tnum shrink-0">
-            {formatCurrency(transfer.amount)}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /** A single expanded per-member balance row. Ported from `main`'s
  * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx` `MemberRow`
  * markup, including the transfer-trigger icon that opens the shared
@@ -298,13 +241,11 @@ function MemberRow({
   );
 }
 
-/** A single accordion row: header (name, budget, header `ProgressMeter`,
- * `RowMenu` edit/delete) plus expand/collapse per-member balances and the
- * per-category transfer-history drill-down. Each member row's transfer icon
- * opens the widget-level "Transfer Budget" dialog via `onTransfer`, locked
- * to that member as the From side. */
+/** A single accordion row: header (name, budget, header `ProgressMeter`)
+ * plus expand/collapse per-member balances and inline Edit/Delete actions.
+ * Each member row's transfer icon opens the widget-level "Transfer Budget"
+ * dialog via `onTransfer`, locked to that member as the From side. */
 function CategoryRowItem({
-  groupId,
   category,
   isExpanded,
   isOwner,
@@ -314,7 +255,6 @@ function CategoryRowItem({
   onTransfer,
   members,
 }: {
-  groupId: string;
   category: CategoryRow;
   isExpanded: boolean;
   isOwner: boolean;
@@ -330,43 +270,40 @@ function CategoryRowItem({
 
   return (
     <div className="rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-      <div className="w-full flex items-center gap-3 p-4">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={isExpanded}
-          className="flex-1 min-w-0 flex items-center gap-3 text-left"
-        >
-          <CategoryIconTile icon={category.icon} size="md" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="font-medium text-slate-900 dark:text-white truncate">
-                {category.name}
-              </span>
-              <span className="text-xs text-slate-400 font-mono tnum shrink-0">
-                {formatCurrency(category.monthlyBudget)}
-              </span>
-            </div>
-            <ProgressMeter
-              value={totalSpent}
-              max={category.monthlyBudget}
-              tone="category"
-              state={progressState(totalSpent, category.monthlyBudget)}
-              valueLabel={`${String(spentPct)}% spent`}
-              className="mt-2"
-            />
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
+      >
+        <CategoryIconTile icon={category.icon} size="md" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="font-medium text-slate-900 dark:text-white truncate">
+              {category.name}
+            </span>
+            <span className="text-xs text-slate-400 font-mono tnum shrink-0">
+              {formatCurrency(category.monthlyBudget)}
+            </span>
           </div>
-          <ChevronDown
-            size={18}
-            aria-hidden
-            className={cn(
-              "shrink-0 text-slate-400 transition-transform duration-200",
-              isExpanded && "rotate-180",
-            )}
+          <ProgressMeter
+            value={totalSpent}
+            max={category.monthlyBudget}
+            tone="category"
+            state={progressState(totalSpent, category.monthlyBudget)}
+            valueLabel={`${String(spentPct)}% spent`}
+            className="mt-2"
           />
-        </button>
-        <RowMenu onEdit={onEdit} onDelete={isOwner ? onDelete : undefined} />
-      </div>
+        </div>
+        <ChevronDown
+          size={18}
+          aria-hidden
+          className={cn(
+            "shrink-0 text-slate-400 transition-transform duration-200",
+            isExpanded && "rotate-180",
+          )}
+        />
+      </button>
 
       {isExpanded && (
         <div className="px-4 pb-4 space-y-3">
@@ -394,11 +331,28 @@ function CategoryRowItem({
               />
             ))}
           </div>
-          <TransferHistory
-            groupId={groupId}
-            categoryId={category.id}
-            isExpanded={isExpanded}
-          />
+          <div className="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-brand-balance hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              aria-label="Edit category"
+            >
+              <Edit2 size={14} />
+              Edit
+            </button>
+            {isOwner && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-brand-expense hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                aria-label="Delete category"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -406,12 +360,12 @@ function CategoryRowItem({
 }
 
 /**
- * Accordion (ADR-9, both slices): category rows with a header `ProgressMeter`
- * and `RowMenu`, expand/collapse per-member balance breakdown and
- * per-category transfer history, plus a widget-level "Transfer Budget"
- * dialog shared across every category — opened from a member row's
- * transfer-trigger icon, locked to that member as the From side (ported
- * from `main`'s `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`).
+ * Accordion (ADR-9, both slices): category rows with a header `ProgressMeter`,
+ * expand/collapse per-member balance breakdown and inline Edit/Delete
+ * actions, plus a widget-level "Transfer Budget" dialog shared across every
+ * category — opened from a member row's transfer-trigger icon, locked to
+ * that member as the From side (ported from `main`'s
+ * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`).
  * Data seam: self-subscribes to the hydrated `queryKeys.categories` cache
  * (same seam `BudgetTransfers` uses for `queryKeys.summary`) instead of
  * receiving `categories` as a prop, so it owns its own loading/error state
@@ -424,9 +378,9 @@ function CategoryRowItem({
  *
  * PR 15 adds create/update/delete-with-confirmation dialogs (all three
  * `lib/actions/category.ts` mutations invalidate `queryKeys.group(groupId)`
- * on success, same contract `BudgetTransfers` established), the per-category
- * transfer-history drill-down, and the shared "Transfer Budget" dialog —
- * every mutation-shaped affordance ADR-9 deferred out of PR 14.
+ * on success, same contract `BudgetTransfers` established) and the shared
+ * "Transfer Budget" dialog — every mutation-shaped affordance ADR-9 deferred
+ * out of PR 14.
  */
 export function BudgetCategories({
   groupId,
@@ -714,7 +668,6 @@ export function BudgetCategories({
             {categories.map((category) => (
               <CategoryRowItem
                 key={category.id}
-                groupId={groupId}
                 category={category}
                 isExpanded={expandedIds.has(category.id)}
                 isOwner={isOwner}

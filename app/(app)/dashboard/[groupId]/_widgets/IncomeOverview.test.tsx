@@ -147,12 +147,9 @@ describe("IncomeOverview", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  // ui-design-system "An income-related action uses the income variant"
-  // (Confirm is `Button variant="income"`, verified by source inspection —
-  // strict-tdd bans CSS-class assertions) + dashboard-view's general
-  // invalidation contract: submitting a new income value calls
-  // `lib/actions/member.ts` `updateIncome`, and on success invalidates
-  // `queryKeys.group(groupId)`.
+  // dashboard-view's general invalidation contract: submitting a new income
+  // value calls `lib/actions/member.ts` `updateIncome`, and on success
+  // invalidates `queryKeys.group(groupId)`.
   it("opens the edit form pre-filled, then calls updateIncome for the edited member and invalidates the group cache on save", async () => {
     vi.mocked(updateIncome).mockResolvedValue({
       ok: true,

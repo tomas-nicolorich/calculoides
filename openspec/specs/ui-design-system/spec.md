@@ -32,12 +32,11 @@ app.
 
 `Button` and `Badge` MUST support the semantic variant set `income | balance
 | expense | transfer | category`, mapping each to its designated color
-token, rather than accepting only generic color-role variants.
-
-#### Scenario: An income-related action uses the income variant
-- GIVEN `IncomeOverview` renders a save action
-- WHEN its button is styled
-- THEN it uses `variant="income"`, not a hardcoded color class
+token, rather than accepting only generic color-role variants. Which variant
+a given consumer uses is that consumer's own call — e.g. `IncomeOverview`'s
+Confirm button uses `variant="balance"` (blue), matching `main`'s
+`frontend/src/widgets/dashboard/ui/IncomeOverview.tsx` exactly, not the
+`income` variant.
 
 #### Scenario: A transfer-related badge uses the transfer variant
 - GIVEN `BudgetTransfers` renders a status badge
