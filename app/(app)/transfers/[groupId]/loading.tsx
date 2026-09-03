@@ -1,10 +1,13 @@
 import { Skeleton } from "../../../_ui";
+import { TransfersListSkeleton } from "./_skeletons";
 
 /**
  * `transfers/[groupId]` segment fallback (route-loading-states: "Every
  * `(app)` Route Segment Renders a Page-Shaped Skeleton Fallback"). Shaped
  * like `TransfersClient`'s populated layout: `max-w-4xl` container, header +
- * transfer rows.
+ * transfer rows. The row skeletons are the same `_skeletons.tsx` exports
+ * `TransfersClient` renders in its `isLoading` branch, so mounting causes no
+ * visible swap.
  */
 export default function TransfersLoading() {
   return (
@@ -12,10 +15,8 @@ export default function TransfersLoading() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <Skeleton className="h-8 w-40" />
       </div>
-      <div className="space-y-2" data-testid="transfers-loading-rows">
-        <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
+      <div data-testid="transfers-loading-rows">
+        <TransfersListSkeleton />
       </div>
     </div>
   );

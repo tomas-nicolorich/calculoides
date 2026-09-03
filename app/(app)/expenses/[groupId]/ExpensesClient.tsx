@@ -33,11 +33,14 @@ import {
   ResponsiveDialog,
   RowMenu,
   Select,
-  Skeleton,
 } from "../../../_ui";
 import { formatCurrency } from "../../../../lib/format-currency";
 import { queryKeys } from "../../../../lib/query-keys";
 import { ExpenseForm } from "./_components/ExpenseForm";
+import {
+  ExpensesRowsSkeletonMobile,
+  ExpensesRowsSkeletonDesktop,
+} from "./_skeletons";
 
 type ExpenseDialogState =
   | { mode: "closed" }
@@ -401,23 +404,7 @@ export function ExpensesClient({
 
         <div className="md:hidden -mx-6 border-t border-slate-100 dark:border-slate-800">
           {loading || expensesList === undefined ? (
-            <div aria-hidden="true">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div
-                  key={i}
-                  className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-9.5 w-9.5 rounded-lg" />
-                    <div className="min-w-0 flex-1 flex flex-col gap-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                    <Skeleton className="h-4 w-14" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ExpensesRowsSkeletonMobile />
           ) : expenses.length === 0 ? (
             <EmptyExpenses
               activeFilterCount={activeFilterCount}
@@ -507,23 +494,7 @@ export function ExpensesClient({
           </div>
 
           {loading || expensesList === undefined ? (
-            <div aria-hidden="true">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-[2.2fr_1.4fr_1.4fr_1fr_64px] items-center px-5 py-3 gap-4 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-[38px] w-[38px] rounded-lg" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-16 justify-self-end" />
-                  <div />
-                </div>
-              ))}
-            </div>
+            <ExpensesRowsSkeletonDesktop />
           ) : expenses.length === 0 ? (
             <EmptyExpenses
               activeFilterCount={activeFilterCount}
