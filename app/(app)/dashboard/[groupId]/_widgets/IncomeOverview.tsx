@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Edit2 } from "lucide-react";
 import { Avatar, Button, IconButton, Input, Alert, Card } from "../../../../_ui";
 import { StatFigure, MemberBar } from "../../../../_ui/money";
@@ -11,6 +11,10 @@ import { useUpdateIncome } from "../../../../_data/members";
 
 const NO_SPINNER_CLASS =
   "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+
+// Matches the enter transition below so the panel fades/slides out
+// symmetrically before unmounting, instead of disappearing instantly.
+const CLOSE_ANIMATION_MS = 200;
 
 /**
  * Ported from `main`'s `frontend/src/widgets/dashboard/ui/IncomeOverview.tsx`
@@ -26,8 +30,16 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
   const updateIncomeMutation = useUpdateIncome(groupId);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -81,17 +93,26 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
   );
 
   const handleEdit = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
     setRawInputs(
       Object.fromEntries(members.map((m) => [m.id, String(m.income)])),
     );
     setSaveError(null);
+    setIsClosing(false);
     setIsEditing(true);
   };
 
   const handleClose = () => {
-    setRawInputs({});
-    setSaveError(null);
-    setIsEditing(false);
+    setIsClosing(true);
+    closeTimeoutRef.current = setTimeout(() => {
+      setRawInputs({});
+      setSaveError(null);
+      setIsEditing(false);
+      setIsClosing(false);
+    }, CLOSE_ANIMATION_MS);
   };
 
   // dashboard-view general invalidation contract: only members whose income
@@ -112,17 +133,25 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
           }),
         ),
       );
-      setRawInputs({});
-      setIsEditing(false);
+      setIsClosing(true);
+      closeTimeoutRef.current = setTimeout(() => {
+        setRawInputs({});
+        setIsEditing(false);
+        setIsClosing(false);
+      }, CLOSE_ANIMATION_MS);
     } catch {
       setSaveError("Failed to save income changes.");
     }
   };
 
-  if (isEditing) {
+  if (isEditing || isClosing) {
     return (
       <Card title="Income Overview">
-        <div className="space-y-6">
+        <div
+          className={`space-y-6 transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1 ${
+            isClosing ? "opacity-0 -translate-y-1" : ""
+          }`}
+        >
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[60ch]">
             Updating income re-splits every quota, category, and savings goal
             by the new percentages.
@@ -156,7 +185,7 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
                     aria-label={`Income for ${m.name}`}
                     aria-invalid={invalid}
                     className={`h-8 w-28 font-mono tabular-nums text-xs ${NO_SPINNER_CLASS}`}
-                    disabled={updateIncomeMutation.isPending}
+                    disabled={updateIncomeMutation.isPending || isClosing}
                     value={rawInputs[m.id] ?? ""}
                     onChange={(e) => {
                       setRawInputs((prev) => ({
@@ -180,7 +209,7 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
               variant="outline"
               className="flex-1 h-9 rounded-xl text-xs font-bold tracking-widest uppercase"
               onClick={handleClose}
-              disabled={updateIncomeMutation.isPending}
+              disabled={updateIncomeMutation.isPending || isClosing}
             >
               Close
             </Button>
@@ -191,7 +220,9 @@ export function IncomeOverview({ groupId }: { groupId: string }) {
               onClick={() => {
                 void handleConfirm();
               }}
-              disabled={hasInvalidInput || updateIncomeMutation.isPending}
+              disabled={
+                hasInvalidInput || updateIncomeMutation.isPending || isClosing
+              }
             >
               {updateIncomeMutation.isPending ? "Saving…" : "Confirm"}
             </Button>
