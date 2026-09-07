@@ -40,7 +40,6 @@ touching domain logic.
   mapping, so alias imports get misreported as unresolved and their targets as unused.
 - `openspec/` is in active use for spec-driven changes (`specs/` per feature,
   `changes/` for in-flight work) — check it before assuming a feature is undocumented.
-- Husky + lint-staged run eslint --fix and prettier on staged files pre-commit.
 
 ## Agent dispatch rule
 

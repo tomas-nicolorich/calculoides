@@ -22,7 +22,6 @@
     "lint:next": "eslint app lib proxy.ts next.config.ts --max-warnings 0",
     "typecheck": "tsc --noEmit -p tsconfig.next.json && turbo run typecheck",
     "typecheck:next": "tsc --noEmit -p tsconfig.next.json",
-    "prepare": "husky",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
     "postinstall": "bun run prisma:generate"
@@ -39,22 +38,13 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
-    "lint-staged": "^17.0.5",
-    "prettier": "^3.0.0",
     "prisma": "7.8.0",
     "supabase": "^2.107.0",
     "turbo": "^2.10.8",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.0.0",
     "vitest": "4.1.6"
-  },
-  "lint-staged": {
-    "*.{js,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
   },
   "allowScripts": {
     "esbuild@0.27.0": true,
