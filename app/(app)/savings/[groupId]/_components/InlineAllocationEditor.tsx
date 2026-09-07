@@ -80,7 +80,7 @@ function AllocationCeilingWarning({ show }: { show: boolean }) {
           sideOffset={4}
           collisionPadding={16}
         >
-          <Popover.Popup className="w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-3 text-xs text-slate-600 dark:text-slate-300 animate-in fade-in-50 zoom-in-95 duration-100">
+          <Popover.Popup className="w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-3 text-xs text-slate-600 dark:text-slate-300 transition-[transform,opacity] duration-150 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95">
             This member&apos;s share exceeds what&apos;s currently available in
             the shared balance. You can still save, but the group balance will
             need to cover the difference.
@@ -283,7 +283,7 @@ export function InlineAllocationEditor({
       ))}
 
       {isEditing && (
-        <>
+        <div className="space-y-2 transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
           <Button
             type="button"
             variant="ghost"
@@ -326,7 +326,7 @@ export function InlineAllocationEditor({
           </p>
 
           {session.saveError && (
-            <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+            <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
               {session.saveError}
             </div>
           )}
@@ -353,7 +353,7 @@ export function InlineAllocationEditor({
               {loading ? "Syncing..." : "Save Changes"}
             </Button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
