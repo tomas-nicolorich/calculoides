@@ -96,7 +96,7 @@ export function Select({
           collisionPadding={16}
           alignItemWithTrigger={false}
         >
-          <BaseSelect.Popup className="max-h-60 overflow-y-auto w-full max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1 animate-in fade-in-50 zoom-in-95 duration-100">
+          <BaseSelect.Popup className="max-h-60 overflow-y-auto w-full max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-1 transition-[transform,opacity] duration-150 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95">
             <BaseSelect.List className="space-y-0.5">
               {options.map((option) => (
                 <BaseSelect.Item

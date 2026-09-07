@@ -42,7 +42,11 @@ export function Alert({
     <div
       role="alert"
       aria-live={tone === "error" ? "assertive" : "polite"}
-      className={cn("p-3 rounded-xl text-center", styles.surface, className)}
+      className={cn(
+        "p-3 rounded-xl text-center transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1",
+        styles.surface,
+        className,
+      )}
       {...props}
     >
       <div className={cn("text-sm font-medium", styles.text)}>{children}</div>
