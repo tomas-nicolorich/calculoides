@@ -2,9 +2,6 @@ name: Fallow
 
 on:
   pull_request:
-    branches: [main, develop]
-  push:
-    branches: [main, develop]
 
 permissions:
   contents: read
@@ -15,9 +12,8 @@ jobs:
   audit:
     name: Audit changed files
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -44,7 +40,7 @@ jobs:
 
       - name: Upload SARIF
         if: always() && steps.fallow.outputs.sarif != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: merged-fallow.sarif
           category: fallow-audit
@@ -52,9 +48,8 @@ jobs:
   dead-code:
     name: Full dead code scan
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -71,7 +66,7 @@ jobs:
 
       - name: Upload SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.fallow.outputs.sarif }}
           category: fallow-dead-code
