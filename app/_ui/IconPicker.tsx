@@ -96,7 +96,7 @@ export function IconPicker({
             sideOffset={4}
             collisionPadding={16}
           >
-            <Popover.Popup className="w-80 max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 animate-in fade-in-50 zoom-in-95 duration-100">
+            <Popover.Popup className="w-80 max-w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 transition-[transform,opacity] duration-150 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95">
               <div className="relative">
                 <Search
                   size={15}

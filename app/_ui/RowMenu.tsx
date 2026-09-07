@@ -41,7 +41,7 @@ export function RowMenu({ onEdit, onDelete }: RowMenuProps) {
           <Popover.Popup
             role="menu"
             aria-label="Row options"
-            className="w-32 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 p-1 animate-in fade-in-50 zoom-in-95 duration-100 focus:outline-none"
+            className="w-32 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 p-1 transition-[transform,opacity] duration-150 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95 focus:outline-none"
           >
             {onEdit && (
               <button

@@ -249,7 +249,7 @@ export function SavingsGoalList({ groupId, goals }: SavingsGoalListProps) {
         description="This removes the goal and its earmarking only — your shared balance stays intact."
       >
         {deleteError && (
-          <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 animate-in zoom-in-95">
+          <div className="text-[11px] font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
             {deleteError}
           </div>
         )}

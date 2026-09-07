@@ -26,7 +26,7 @@ export function SavingsClient({ groupId }: { groupId: string }) {
   }
 
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="p-4 max-w-6xl mx-auto space-y-8 transition-opacity duration-300 starting:opacity-0">
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
