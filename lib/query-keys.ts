@@ -1,6 +1,3 @@
-/** Key placeholder used for a disabled query (`groupId === null`). */
-export const NO_GROUP = "__no-group__";
-
 export interface ExpenseFilters {
   categoryId?: string;
   memberId?: string;

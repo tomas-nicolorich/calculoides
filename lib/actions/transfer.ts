@@ -43,7 +43,7 @@ const DeleteAllSchema = z.object({
 // pre-existing record of its own, but `TransferService.createTransfer` still
 // derives the group from it (`category.groupId`) and checks caller
 // membership against that group internally before the write.
-export async function create(
+export async function createTransfer(
   input: unknown,
 ): Promise<
   ActionResult<Awaited<ReturnType<typeof TransferService.createTransfer>>>

@@ -1,7 +1,7 @@
 import { QueryClient, DefaultOptions } from "@tanstack/react-query";
 import { queryKeys } from "./query-keys";
 
-export const BASE_QUERY_DEFAULTS = {
+const BASE_QUERY_DEFAULTS = {
   staleTime: 30_000,
   gcTime: 5 * 60_000,
   retry: 1,
@@ -9,7 +9,7 @@ export const BASE_QUERY_DEFAULTS = {
   refetchOnReconnect: true,
 } satisfies DefaultOptions["queries"];
 
-export const GROUPS_STALE_TIME = 5 * 60_000;
+const GROUPS_STALE_TIME = 5 * 60_000;
 
 export function createQueryClient(
   o: {

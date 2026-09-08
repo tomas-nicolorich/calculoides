@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/query-keys";
 import type { CategoryWithBalances } from "shared/src/types/redesign";
-import { create, update, deleteCategory } from "../../lib/actions/category";
+import {
+  createCategory,
+  update,
+  deleteCategory,
+} from "../../lib/actions/category";
 import { fetchJson } from "./fetch-json";
 import { invalidateGroupQueries } from "./invalidate";
 
@@ -10,7 +14,7 @@ import { invalidateGroupQueries } from "./invalidate";
  * Backs refetch-on-focus for the `queryKeys.categories` tuple the Server
  * Component prefetches into.
  *
- * `enabled` (design.md Decision 4, `useTransfersByCategory` precedent):
+ * `enabled` (design.md Decision 4):
  * lets a consumer that mounts before `categories` is guaranteed hydrated
  * (e.g. `QuickAddExpense`, which lives inside `SummaryRegion`'s boundary,
  * not `CategoriesRegion`'s) defer its fetch until it actually needs the
@@ -34,7 +38,7 @@ export function useCategoriesList(groupId: string, enabled = true) {
 export function useCreateCategory(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: create,
+    mutationFn: createCategory,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }

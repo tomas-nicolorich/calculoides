@@ -1,16 +1,12 @@
 import { cn } from "../../lib/cn";
 
 export { Button } from "./Button";
-export type { ButtonVariant } from "./Button";
 export { Card } from "./Card";
 export { Badge } from "./Badge";
 export { Alert } from "./Alert";
-export type { AlertAction, AlertTone } from "./Alert";
 export { Skeleton } from "./Skeleton";
 export { Spinner } from "./Spinner";
-export type { SpinnerSize } from "./Spinner";
 export { IconButton } from "./IconButton";
-export type { IconButtonHover, IconButtonSize } from "./IconButton";
 export { ReloadButton } from "./ReloadButton";
 export { Logo } from "./Logo";
 export { DialogFooter } from "./Dialog";
@@ -19,13 +15,11 @@ export { RowMenu } from "./RowMenu";
 export { Select } from "./Select";
 export { DatePicker } from "./DatePicker";
 export { Avatar, AvatarGroup } from "./Avatar";
-export type { AvatarSize, AvatarProps, AvatarGroupProps } from "./Avatar";
 export { IconPicker } from "./IconPicker";
-export { CategoryIconTile, CATEGORY_ICON_GROUPS } from "./categoryIcons";
-export type { CategoryIconTileProps, CategoryIconTileSize } from "./categoryIcons";
+export { CategoryIconTile } from "./categoryIcons";
 export { UserDisplay } from "./UserDisplay";
 export { AddExpenseFab } from "./AddExpenseFab";
-export type { AddExpenseFabProps } from "./AddExpenseFab";
+export { Pagination } from "./Pagination";
 
 export function Input({
   className,

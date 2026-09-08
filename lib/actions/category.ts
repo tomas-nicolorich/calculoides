@@ -32,7 +32,7 @@ const DeleteCategorySchema = z.object({
 // 4a.4 found for `deleteAllExpenses`, so the action enforces membership
 // itself before the write. `groupId` here is legitimate, directly-scoped
 // input, same class as `expense.create`'s `categoryId` (4a.1).
-export async function create(
+export async function createCategory(
   input: unknown,
 ): Promise<
   ActionResult<Awaited<ReturnType<typeof BudgetService.createCategory>>>

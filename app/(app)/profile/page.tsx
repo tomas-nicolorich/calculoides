@@ -4,6 +4,26 @@ import { UserService } from "../../../lib/server/services/user";
 import { ProfileClient } from "./ProfileClient";
 
 /**
+ * Resolves the email/display-name fields `ProfileClient` needs, applying the
+ * fallback-to-email display name logic (prod's `usedFallbackName`) for the
+ * nullable `name` column.
+ */
+export function resolveProfileDisplay(
+  authUser: { email?: string | null },
+  profile: { name: string | null; email: string } | null,
+) {
+  const email = authUser.email ?? profile?.email ?? "";
+  const trimmedName = profile?.name?.trim() ?? "";
+  const usedFallbackName = trimmedName.length === 0;
+
+  return {
+    email,
+    usedFallbackName,
+    displayName: usedFallbackName ? email : trimmedName,
+  };
+}
+
+/**
  * Server Component gate for the flat `/profile` route (no `[groupId]`
  * segment — every signed-in user has exactly one profile). Ported from
  * `frontend/src/pages/profile/ui/ProfilePage.tsx` + `useProfileForm.ts`.
@@ -26,13 +46,14 @@ export default async function ProfilePage() {
   }
 
   const profile = await UserService.getUser(authUser.id);
-  const email = authUser.email ?? profile?.email ?? "";
-  const trimmedName = profile?.name?.trim() ?? "";
-  const usedFallbackName = trimmedName.length === 0;
+  const { email, usedFallbackName, displayName } = resolveProfileDisplay(
+    authUser,
+    profile,
+  );
 
   return (
     <ProfileClient
-      initialName={usedFallbackName ? email : trimmedName}
+      initialName={displayName}
       initialUsedFallbackName={usedFallbackName}
       email={email}
     />

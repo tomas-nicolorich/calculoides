@@ -10,11 +10,11 @@ import {
 } from "@tanstack/react-query";
 import { createQueryClient } from "../../../../../lib/query-client";
 import { queryKeys } from "../../../../../lib/query-keys";
-import { create } from "../../../../../lib/actions/transfer";
+import { createTransfer } from "../../../../../lib/actions/transfer";
 import { BudgetTransfers } from "./BudgetTransfers";
 
 vi.mock("../../../../../lib/actions/transfer", () => ({
-  create: vi.fn(),
+  createTransfer: vi.fn(),
   deleteTransfer: vi.fn(),
   deleteAll: vi.fn(),
 }));
@@ -104,7 +104,7 @@ describe("BudgetTransfers", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
-    vi.mocked(create).mockReset();
+    vi.mocked(createTransfer).mockReset();
   });
 
   // dashboard-view: "Widget-Level Loading Indicators Use Skeleton, Not Plain

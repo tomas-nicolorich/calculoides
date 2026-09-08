@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, type TransferFilters } from "../../lib/query-keys";
 import type { TransfersList } from "shared/src/types/redesign";
-import { create, deleteTransfer, deleteAll } from "../../lib/actions/transfer";
+import {
+  createTransfer,
+  deleteTransfer,
+  deleteAll,
+} from "../../lib/actions/transfer";
 import { fetchJson } from "./fetch-json";
 import { invalidateGroupQueries } from "./invalidate";
 
@@ -33,7 +37,7 @@ export function useTransfersList(
 export function useCreateTransfer(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: create,
+    mutationFn: createTransfer,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }
@@ -51,37 +55,5 @@ export function useDeleteAllTransfers(groupId: string) {
   return useMutation({
     mutationFn: deleteAll,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
-  });
-}
-
-/** A single `/api/transfers/by-category` entry — the route returns Prisma's
- * raw relation shape (`fromMember`/`toMember` -> `CategoryMember` ->
- * `GroupMember` -> `user`), unlike `TransfersList`'s flattened
- * `fromMemberName`/`toMemberName` shape. */
-export interface CategoryTransferHistoryItem {
-  id: string;
-  amount: number;
-  date: string;
-  fromMember?: { member?: { user?: { name?: string } } };
-  toMember?: { member?: { user?: { name?: string } } };
-}
-
-// dashboard-view: "Budget Transfers Support Inline Creation and Per-Category
-// History" — `BudgetCategories`' accordion drill-down (PR 15). `enabled`
-// keeps this a lazy fetch: only the expanded row's own query runs, and
-// `invalidateGroupQueries` (any `["group", groupId]`-prefixed mutation)
-// covers this key too since it nests under the same prefix.
-export function useTransfersByCategory(
-  groupId: string,
-  categoryId: string,
-  enabled: boolean,
-) {
-  return useQuery({
-    queryKey: queryKeys.transfersByCategory(groupId, categoryId),
-    queryFn: () =>
-      fetchJson<CategoryTransferHistoryItem[]>(
-        `/api/transfers/by-category?categoryId=${categoryId}`,
-      ),
-    enabled,
   });
 }

@@ -45,13 +45,13 @@ vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
 }));
 
-import { create, update, deleteCategory } from "./category";
+import { createCategory, update, deleteCategory } from "./category";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
 const CATEGORY_ID = "33333333-3333-4333-8333-333333333333";
 
-describe("create", () => {
+describe("createCategory", () => {
   beforeEach(() => {
     getUserMock.mockReset();
     isGroupMemberMock.mockReset();
@@ -73,7 +73,7 @@ describe("create", () => {
       name: "Groceries",
     });
 
-    const result = await create({
+    const result = await createCategory({
       groupId: GROUP_ID,
       name: "Groceries",
       monthlyBudget: 400,
@@ -91,7 +91,7 @@ describe("create", () => {
     getUserMock.mockResolvedValue({ data: { user: { id: USER_ID } } });
     isGroupMemberMock.mockResolvedValue(false);
 
-    const result = await create({
+    const result = await createCategory({
       groupId: GROUP_ID,
       name: "Groceries",
       monthlyBudget: 400,

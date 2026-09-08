@@ -1,6 +1,6 @@
 {
   "name": "calculoides",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "packageManager": "bun@1.4.0",
   "type": "module",
@@ -44,6 +44,7 @@
     "turbo": "^2.10.8",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.0.0",
+    "vite": "8.0.12",
     "vitest": "4.1.6"
   },
   "allowScripts": {

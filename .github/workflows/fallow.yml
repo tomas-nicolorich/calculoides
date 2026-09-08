@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   security-events: write
   pull-requests: write
 
@@ -40,6 +41,7 @@ jobs:
 
       - name: Upload SARIF
         if: always() && steps.fallow.outputs.sarif != ''
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: merged-fallow.sarif
@@ -66,6 +68,7 @@ jobs:
 
       - name: Upload SARIF
         if: always()
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.fallow.outputs.sarif }}

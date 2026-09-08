@@ -38,6 +38,171 @@ interface ExpenseFormProps {
  * thrown rejection — same adaptation `SavingsGoalForm`/`BudgetCategories`
  * already established for this repo's Server Action contract.
  */
+interface ExpenseFormState {
+  description: string;
+  amount: string;
+  categoryId: string;
+  date: string;
+  payerId: string;
+}
+
+/**
+ * Pure shaping of the current form field values into the create/update
+ * Server Action payload. Extracted out of `handleSubmit` so the
+ * create-vs-update branching logic can be tested/read independently of the
+ * mutation call itself.
+ */
+function buildExpensePayload(
+  formState: ExpenseFormState,
+  expense: ExpenseFormProps["expense"],
+) {
+  const { description, amount, categoryId, date, payerId } = formState;
+
+  return expense
+    ? {
+        expenseId: expense.id,
+        description,
+        amount: Number(amount),
+        categoryId,
+        date: new Date(date).toISOString(),
+        payerId,
+      }
+    : {
+        description,
+        amount: Number(amount),
+        categoryId,
+        date: new Date(date).toISOString(),
+        ...(payerId ? { payerId } : {}),
+      };
+}
+
+/**
+ * Wraps `useCreateExpense`/`useUpdateExpense` behind a single `submit`
+ * entrypoint plus combined `loading`/`error` state, so callers don't need
+ * to pick between the two mutations themselves.
+ */
+function useExpenseMutation(
+  groupId: string,
+  expense: ExpenseFormProps["expense"],
+) {
+  const createExpense = useCreateExpense(groupId);
+  const updateExpense = useUpdateExpense(groupId);
+
+  const loading = createExpense.isPending || updateExpense.isPending;
+  const mutationError = createExpense.error ?? updateExpense.error;
+  const error =
+    mutationError instanceof Error ? mutationError.message : null;
+
+  const submit = (payload: ReturnType<typeof buildExpensePayload>) =>
+    expense
+      ? updateExpense.mutateAsync(payload)
+      : createExpense.mutateAsync(payload);
+
+  return { submit, loading, error };
+}
+
+/** Renders nothing when there's no error to show. */
+function ExpenseFormError({ message }: { message: string | null }) {
+  if (!message) return null;
+
+  return (
+    <div className="text-xs font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
+      {message}
+    </div>
+  );
+}
+
+/** Renders nothing when the group has no members to pick a payer from. */
+function PayerField({
+  members,
+  payerId,
+  onPayerChange,
+}: {
+  members: { id: string; name: string }[];
+  payerId: string;
+  onPayerChange: (value: string) => void;
+}) {
+  if (members.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <label
+        id="expense-payer-label"
+        htmlFor="expense-payer"
+        className="text-sm font-medium"
+      >
+        Paid By
+      </label>
+      <Select
+        id="expense-payer"
+        labelId="expense-payer-label"
+        value={payerId}
+        onValueChange={onPayerChange}
+        placeholder="Select member"
+        options={members.map((m) => ({ value: m.id, label: m.name }))}
+      />
+    </div>
+  );
+}
+
+/** Delete/Cancel/Submit action row; button widths and the submit label
+ * adapt to whether an edit-only `onDelete` action is present. */
+function ExpenseFormFooter({
+  loading,
+  categoryId,
+  isEditing,
+  onDelete,
+  onCancel,
+}: {
+  loading: boolean;
+  categoryId: string;
+  isEditing: boolean;
+  onDelete?: () => void;
+  onCancel?: () => void;
+}) {
+  const wideButtons = !onDelete;
+  const submitLabel = loading
+    ? "Saving..."
+    : isEditing
+      ? "Save Changes"
+      : "Log Expense";
+
+  return (
+    <div className="flex gap-3 pt-2 justify-end">
+      {onDelete && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-brand-expense hover:text-red-700 hover:bg-brand-expense/5 mr-auto"
+          onClick={onDelete}
+          disabled={loading}
+        >
+          Delete
+        </Button>
+      )}
+      {onCancel && (
+        <Button
+          type="button"
+          variant="outline"
+          className={wideButtons ? "flex-1" : ""}
+          onClick={onCancel}
+          disabled={loading}
+        >
+          Cancel
+        </Button>
+      )}
+      <Button
+        type="submit"
+        variant="balance"
+        className={wideButtons ? "flex-1" : ""}
+        disabled={loading || !categoryId}
+      >
+        {submitLabel}
+      </Button>
+    </div>
+  );
+}
+
 export function ExpenseForm({
   groupId,
   categories,
@@ -62,33 +227,16 @@ export function ExpenseForm({
     expense?.payerId ?? defaultPayerId ?? "",
   );
 
-  const createExpense = useCreateExpense(groupId);
-  const updateExpense = useUpdateExpense(groupId);
-
-  const loading = createExpense.isPending || updateExpense.isPending;
-  const mutationError = createExpense.error ?? updateExpense.error;
-  const error =
-    mutationError instanceof Error ? mutationError.message : null;
+  const { submit, loading, error } = useExpenseMutation(groupId, expense);
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const result = expense
-      ? await updateExpense.mutateAsync({
-          expenseId: expense.id,
-          description,
-          amount: Number(amount),
-          categoryId,
-          date: new Date(date).toISOString(),
-          payerId,
-        })
-      : await createExpense.mutateAsync({
-          description,
-          amount: Number(amount),
-          categoryId,
-          date: new Date(date).toISOString(),
-          ...(payerId ? { payerId } : {}),
-        });
+    const payload = buildExpensePayload(
+      { description, amount, categoryId, date, payerId },
+      expense,
+    );
+    const result = await submit(payload);
 
     if (!result.ok) return;
 
@@ -180,64 +328,21 @@ export function ExpenseForm({
         />
       </div>
 
-      {members.length > 0 && (
-        <div className="space-y-2">
-          <label
-            id="expense-payer-label"
-            htmlFor="expense-payer"
-            className="text-sm font-medium"
-          >
-            Paid By
-          </label>
-          <Select
-            id="expense-payer"
-            labelId="expense-payer-label"
-            value={payerId}
-            onValueChange={setPayerId}
-            placeholder="Select member"
-            options={members.map((m) => ({ value: m.id, label: m.name }))}
-          />
-        </div>
-      )}
+      <PayerField
+        members={members}
+        payerId={payerId}
+        onPayerChange={setPayerId}
+      />
 
-      {error && (
-        <div className="text-xs font-bold text-brand-expense bg-brand-expense/5 dark:bg-brand-expense/10 dark:text-red-400 p-2 rounded border border-brand-expense/20 dark:border-red-900/30 transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
-          {error}
-        </div>
-      )}
+      <ExpenseFormError message={error} />
 
-      <div className="flex gap-3 pt-2 justify-end">
-        {onDelete && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-brand-expense hover:text-red-700 hover:bg-brand-expense/5 mr-auto"
-            onClick={onDelete}
-            disabled={loading}
-          >
-            Delete
-          </Button>
-        )}
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            className={onDelete ? "" : "flex-1"}
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="submit"
-          variant="balance"
-          className={onDelete ? "" : "flex-1"}
-          disabled={loading || !categoryId}
-        >
-          {loading ? "Saving..." : expense ? "Save Changes" : "Log Expense"}
-        </Button>
-      </div>
+      <ExpenseFormFooter
+        loading={loading}
+        categoryId={categoryId}
+        isEditing={expense !== undefined}
+        onDelete={onDelete}
+        onCancel={onCancel}
+      />
     </form>
   );
 }
