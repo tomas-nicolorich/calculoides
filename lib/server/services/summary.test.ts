@@ -95,23 +95,27 @@ describe("SummaryService.getGroupSummary", () => {
     vi.mocked(prisma.transfer.findMany).mockResolvedValue([]);
 
     const summary = await SummaryService.getGroupSummary(GROUP_ID);
+    if (!summary) throw new Error("expected getGroupSummary to return a summary");
 
-    expect(summary).not.toBeNull();
-    expect(summary?.groupName).toBe("Roomies");
-    expect(summary?.ownerId).toBe(USER_A);
-    expect(summary?.totalIncome).toBe(4000);
-    expect(summary?.totalBudget).toBe(400);
-    expect(summary?.totalSpent).toBe(120);
-    expect(summary?.members).toHaveLength(2);
+    expect(summary).toMatchObject({
+      groupName: "Roomies",
+      ownerId: USER_A,
+      totalIncome: 4000,
+      totalBudget: 400,
+      totalSpent: 120,
+    });
+    expect(summary.members).toHaveLength(2);
 
-    const alice = summary?.members.find((m) => m.id === MEMBER_A);
+    const alice = summary.members.find((m) => m.id === MEMBER_A);
     // 3000/4000 income share = 75% -> spent all of the shared $120 herself.
     expect(alice?.share).toBeCloseTo(75, 0);
     expect(alice?.spent).toBe(120);
 
-    expect(summary?.recentExpenses).toHaveLength(1);
-    expect(summary?.recentExpenses[0]?.categoryName).toBe("Groceries");
-    expect(summary?.recentExpenses[0]?.payerName).toBe("Alice");
+    expect(summary.recentExpenses).toHaveLength(1);
+    expect(summary.recentExpenses[0]).toMatchObject({
+      categoryName: "Groceries",
+      payerName: "Alice",
+    });
   });
 
   it("returns null when the group does not exist", async () => {
@@ -359,6 +363,21 @@ describe("SummaryService.getGroupSummary — members budgeted/remainingQuota par
 // simulated income change (what an income-update + refreshSummary()/
 // getSummary() round-trip does) reflects the new value immediately.
 describe("SummaryService.getGroupSummary — derived values are computed live, never persisted", () => {
+  // Fetches a fresh summary and asserts totalIncome plus each member's share
+  // in one call, so the before/after halves of the live-recompute test below
+  // don't unroll the same three assertions twice.
+  async function expectIncomeShare(
+    expectedTotalIncome: number,
+    expectedShareA: number,
+    expectedShareB: number,
+  ) {
+    const summary = await SummaryService.getGroupSummary(GROUP_ID);
+    expect(summary?.totalIncome).toBe(expectedTotalIncome);
+    const byId = new Map((summary?.members ?? []).map((m) => [m.id, m]));
+    expect(byId.get(MEMBER_A)?.share).toBe(expectedShareA);
+    expect(byId.get(MEMBER_B)?.share).toBe(expectedShareB);
+  }
+
   function mockGroupWithIncomes(incomeA: number, incomeB: number) {
     vi.mocked(prisma.group.findUnique).mockResolvedValue({
       id: GROUP_ID,
@@ -408,25 +427,16 @@ describe("SummaryService.getGroupSummary — derived values are computed live, n
 
   it("recomputes totalIncome and per-member share live after an income change, without any persisted derived field", async () => {
     mockGroupWithIncomes(1000, 1000);
-
-    const before = await SummaryService.getGroupSummary(GROUP_ID);
-    expect(before?.totalIncome).toBe(2000);
-    const byIdBefore = new Map((before?.members ?? []).map((m) => [m.id, m]));
-    expect(byIdBefore.get(MEMBER_A)?.share).toBe(50);
+    await expectIncomeShare(2000, 50, 50);
 
     // Simulate what happens server-side after an `update-income` call: only
     // the raw `income` column changes (proven in
     // api/_tests/logic/group.test.ts), nothing derived is written anywhere.
     // A fresh call (= refreshSummary()/getSummary() from the client) must
-    // recompute live from the new income.
+    // recompute live from the new income — 3000:1000 income ratio -> 75/25
+    // share, not the stale 50/50 from before, and not the decoy 999 stored
+    // on the row.
     mockGroupWithIncomes(3000, 1000);
-
-    const after = await SummaryService.getGroupSummary(GROUP_ID);
-    expect(after?.totalIncome).toBe(4000);
-    const byIdAfter = new Map((after?.members ?? []).map((m) => [m.id, m]));
-    // 3000:1000 income ratio -> 75/25 share, recomputed live — not the stale
-    // 50/50 from before, and not the decoy 999 stored on the row.
-    expect(byIdAfter.get(MEMBER_A)?.share).toBe(75);
-    expect(byIdAfter.get(MEMBER_B)?.share).toBe(25);
+    await expectIncomeShare(4000, 75, 25);
   });
 });
