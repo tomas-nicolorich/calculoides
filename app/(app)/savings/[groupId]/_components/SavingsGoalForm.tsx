@@ -17,6 +17,50 @@ interface SavingsGoalFormProps {
   onCancel?: () => void;
 }
 
+interface SavingsGoalFormState {
+  name: string;
+  targetAmount: string;
+  currentAmount: string;
+  targetDate: string;
+  icon: string;
+}
+
+function initialFormState(goal: SavingsGoal | undefined): SavingsGoalFormState {
+  return {
+    name: goal?.name ?? "",
+    targetAmount: goal?.targetAmount.toString() ?? "",
+    currentAmount: goal?.currentAmount.toString() ?? "0",
+    targetDate: goal?.targetDate
+      ? new Date(goal.targetDate).toISOString().slice(0, 7)
+      : "",
+    icon: goal?.icon ?? "other",
+  };
+}
+
+/**
+ * Owns all five editable fields as one object so `handleSubmit`'s
+ * create-success reset is a single `resetForm()` call instead of five
+ * separate setters.
+ */
+function useSavingsGoalFormState(goal: SavingsGoal | undefined) {
+  const [form, setForm] = useState<SavingsGoalFormState>(() =>
+    initialFormState(goal),
+  );
+
+  const setField = <K extends keyof SavingsGoalFormState>(
+    key: K,
+    value: SavingsGoalFormState[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const resetForm = () => {
+    setForm(initialFormState(undefined));
+  };
+
+  return { form, setField, resetForm };
+}
+
 /**
  * Full port of prod's `frontend/src/features/savings/SavingsGoalForm.tsx`.
  * DEVIATION (documented, same class as `ExpenseForm`/`SavingsClient`'s prior
@@ -32,17 +76,8 @@ export function SavingsGoalForm({
   onCancel,
 }: SavingsGoalFormProps) {
   const isEditing = !!goal;
-  const [name, setName] = useState(goal?.name ?? "");
-  const [targetAmount, setTargetAmount] = useState(
-    goal?.targetAmount.toString() ?? "",
-  );
-  const [currentAmount, setCurrentAmount] = useState(
-    goal?.currentAmount.toString() ?? "0",
-  );
-  const [targetDate, setTargetDate] = useState(
-    goal?.targetDate ? new Date(goal.targetDate).toISOString().slice(0, 7) : "",
-  );
-  const [icon, setIcon] = useState(goal?.icon ?? "other");
+  const { form, setField, resetForm } = useSavingsGoalFormState(goal);
+  const { name, targetAmount, currentAmount, targetDate, icon } = form;
   const [error, setError] = useState<string | null>(null);
 
   const createGoal = useCreateGoal(groupId);
@@ -72,11 +107,7 @@ export function SavingsGoalForm({
     }
 
     if (!isEditing) {
-      setName("");
-      setTargetAmount("");
-      setCurrentAmount("0");
-      setTargetDate("");
-      setIcon("other");
+      resetForm();
     }
     await onSuccess?.();
   };
@@ -101,13 +132,19 @@ export function SavingsGoalForm({
           className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance transition-all"
           value={name}
           onChange={(e) => {
-            setName(e.target.value);
+            setField("name", e.target.value);
           }}
           required
         />
       </div>
 
-      <IconPicker icon={icon} onChange={setIcon} tone="balance" />
+      <IconPicker
+        icon={icon}
+        onChange={(value) => {
+          setField("icon", value);
+        }}
+        tone="balance"
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -126,7 +163,7 @@ export function SavingsGoalForm({
             className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
             value={targetAmount}
             onChange={(e) => {
-              setTargetAmount(e.target.value);
+              setField("targetAmount", e.target.value);
             }}
             required
           />
@@ -148,7 +185,7 @@ export function SavingsGoalForm({
             className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-brand-balance"
             value={currentAmount}
             onChange={(e) => {
-              setCurrentAmount(e.target.value);
+              setField("currentAmount", e.target.value);
             }}
           />
         </div>
@@ -164,7 +201,9 @@ export function SavingsGoalForm({
         <DatePicker
           id="savings-goal-target-date"
           value={targetDate}
-          onChange={setTargetDate}
+          onChange={(value) => {
+            setField("targetDate", value);
+          }}
           granularity="month"
         />
         {!targetDate && (

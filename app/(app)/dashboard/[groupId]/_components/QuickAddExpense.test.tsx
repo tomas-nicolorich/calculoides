@@ -118,7 +118,7 @@ describe("QuickAddExpense", () => {
   // dialog must not fire a client fetch for a cold `categories` cache
   // (the exact waterfall that would break the nested-region hydration
   // ordering), and opening it must fetch on demand like any other
-  // `enabled`-gated query (`useTransfersByCategory` precedent).
+  // `enabled`-gated query.
   it("does not fetch categories while the dialog is closed, and fetches once opened", async () => {
     // `categories` intentionally left cold — only `summary` is hydrated,
     // mirroring `QuickAddExpense` living inside `SummaryRegion`'s boundary

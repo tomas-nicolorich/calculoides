@@ -11,20 +11,20 @@ import {
 import { createQueryClient } from "../../../../../lib/query-client";
 import { queryKeys } from "../../../../../lib/query-keys";
 import {
-  create as createCategoryAction,
+  createCategory,
   update as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
 } from "../../../../../lib/actions/category";
-import { create as createTransferAction } from "../../../../../lib/actions/transfer";
+import { createTransfer } from "../../../../../lib/actions/transfer";
 import { BudgetCategories } from "./BudgetCategories";
 
 vi.mock("../../../../../lib/actions/category", () => ({
-  create: vi.fn(),
+  createCategory: vi.fn(),
   update: vi.fn(),
   deleteCategory: vi.fn(),
 }));
 vi.mock("../../../../../lib/actions/transfer", () => ({
-  create: vi.fn(),
+  createTransfer: vi.fn(),
 }));
 
 const GROUP_ID = "33333333-3333-4333-8333-333333333333";
@@ -196,10 +196,10 @@ describe("BudgetCategories", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
-    vi.mocked(createCategoryAction).mockReset();
+    vi.mocked(createCategory).mockReset();
     vi.mocked(updateCategoryAction).mockReset();
     vi.mocked(deleteCategoryAction).mockReset();
-    vi.mocked(createTransferAction).mockReset();
+    vi.mocked(createTransfer).mockReset();
   });
 
   // dashboard-view: "Loading state precedes hydration" + "Widget-Level
@@ -382,10 +382,10 @@ describe("BudgetCategories", () => {
 
   // dashboard-view: "Creating a category refreshes dependent widgets".
   it("creates a category via category.create and reflects it in the list once the group cache invalidates", async () => {
-    vi.mocked(createCategoryAction).mockResolvedValue({
+    vi.mocked(createCategory).mockResolvedValue({
       ok: true,
       data: { id: "c2", groupId: GROUP_ID },
-    } as Awaited<ReturnType<typeof createCategoryAction>>);
+    } as Awaited<ReturnType<typeof createCategory>>);
     const updatedCategories: CategoryFixture[] = [
       RENT_CATEGORY,
       { id: "c2", name: "Groceries", monthlyBudget: 400, balances: [] },
@@ -409,7 +409,7 @@ describe("BudgetCategories", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save Category" }));
 
     await waitFor(() => {
-      expect(createCategoryAction).toHaveBeenCalledWith(
+      expect(createCategory).toHaveBeenCalledWith(
         { groupId: GROUP_ID, name: "Groceries", monthlyBudget: 400, icon: "other" },
         expect.anything(),
       );
@@ -507,10 +507,10 @@ describe("BudgetCategories", () => {
   // `main`'s per-row transfer icon + one shared dialog, locked to whichever
   // member's icon was clicked.
   it("opens the shared Transfer Budget dialog from a member row's transfer icon, locked to that member as From, and submits via transfer.create", async () => {
-    vi.mocked(createTransferAction).mockResolvedValue({
+    vi.mocked(createTransfer).mockResolvedValue({
       ok: true,
       data: { id: "t3" },
-    } as Awaited<ReturnType<typeof createTransferAction>>);
+    } as Awaited<ReturnType<typeof createTransfer>>);
 
     await renderHydrated([RENT_CATEGORY]);
     fireEvent.click(await screen.findByRole("button", { name: /rent/i }));
@@ -532,7 +532,7 @@ describe("BudgetCategories", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send Transfer" }));
 
     await waitFor(() => {
-      expect(createTransferAction).toHaveBeenCalledWith(
+      expect(createTransfer).toHaveBeenCalledWith(
         { categoryId: "c1", fromMemberId: "m1", toMemberId: "m2", amount: 25 },
         expect.anything(),
       );

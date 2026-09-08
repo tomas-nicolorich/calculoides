@@ -3,15 +3,41 @@ import type { ReactElement } from "react";
 import type { DehydratedState } from "@tanstack/react-query";
 import { queryKeys } from "../../../../lib/query-keys";
 
-const { getUserMock, notFoundMock, isGroupMemberMock, listTransfersMock } =
-  vi.hoisted(() => ({
-    getUserMock: vi.fn(),
-    notFoundMock: vi.fn(() => {
+const {
+  getUserMock,
+  notFoundMock,
+  isGroupMemberMock,
+  requireGroupMemberMock,
+  listTransfersMock,
+} = vi.hoisted(() => {
+  const getUserMock = vi.fn();
+  const notFoundMock = vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  });
+  const isGroupMemberMock = vi.fn();
+  const requireGroupMemberMock = vi.fn(async (groupId: string) => {
+    const {
+      data: { user },
+    } = (await getUserMock()) as { data: { user: { id: string } | null } };
+    if (!user) {
+      notFoundMock();
       throw new Error("NEXT_NOT_FOUND");
-    }),
-    isGroupMemberMock: vi.fn(),
+    }
+    const isMember = (await isGroupMemberMock(user.id, groupId)) as boolean;
+    if (!isMember) {
+      notFoundMock();
+      throw new Error("NEXT_NOT_FOUND");
+    }
+    return { userId: user.id };
+  });
+  return {
+    getUserMock,
+    notFoundMock,
+    isGroupMemberMock,
+    requireGroupMemberMock,
     listTransfersMock: vi.fn(),
-  }));
+  };
+});
 
 vi.mock("../../../../lib/supabase/server", () => ({
   createClient: vi.fn(() =>
@@ -25,6 +51,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("../../../../lib/server/authz", () => ({
   isGroupMember: isGroupMemberMock,
+  requireGroupMember: requireGroupMemberMock,
 }));
 
 vi.mock("../../../../lib/server/services/transfer", () => ({
@@ -42,6 +69,7 @@ describe("app/(app)/transfers/[groupId]/page", () => {
     getUserMock.mockReset();
     notFoundMock.mockClear();
     isGroupMemberMock.mockReset();
+    requireGroupMemberMock.mockClear();
     listTransfersMock.mockReset();
   });
 

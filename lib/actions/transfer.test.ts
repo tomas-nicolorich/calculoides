@@ -50,7 +50,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
 }));
 
-import { create, deleteTransfer, deleteAll } from "./transfer";
+import { createTransfer, deleteTransfer, deleteAll } from "./transfer";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const GROUP_ID = "22222222-2222-4222-8222-222222222222";
@@ -64,7 +64,7 @@ const TO_MEMBER_ID = "66666666-6666-4666-8666-666666666666";
 // `categoryId` (the resource being written into) and checks caller
 // membership against it internally; the action surfaces that denial as a
 // 403 `ActionResult`, same precedent as `expense.ts`'s `create` (4a.1).
-describe("create", () => {
+describe("createTransfer", () => {
   beforeEach(() => {
     getUserMock.mockReset();
     createTransferMock.mockReset();
@@ -84,7 +84,7 @@ describe("create", () => {
       groupId: GROUP_ID,
     });
 
-    const result = await create({
+    const result = await createTransfer({
       categoryId: CATEGORY_ID,
       fromMemberId: FROM_MEMBER_ID,
       toMemberId: TO_MEMBER_ID,
@@ -111,7 +111,7 @@ describe("create", () => {
       new Error("Not a member of this group"),
     );
 
-    const result = await create({
+    const result = await createTransfer({
       categoryId: CATEGORY_ID,
       fromMemberId: FROM_MEMBER_ID,
       toMemberId: TO_MEMBER_ID,
@@ -128,7 +128,7 @@ describe("create", () => {
   it("rejects an unauthenticated caller with 403 and never touches the service", async () => {
     getUserMock.mockResolvedValue({ data: { user: null } });
 
-    const result = await create({
+    const result = await createTransfer({
       categoryId: CATEGORY_ID,
       fromMemberId: FROM_MEMBER_ID,
       toMemberId: TO_MEMBER_ID,

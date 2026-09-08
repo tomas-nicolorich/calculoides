@@ -1,7 +1,5 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { createClient } from "../../../../lib/supabase/server";
-import { isGroupMember } from "../../../../lib/server/authz";
+import { requireGroupMember } from "../../../../lib/server/authz";
 import { SummaryService } from "../../../../lib/server/services/summary";
 import { BudgetService } from "../../../../lib/server/services/budget";
 import { SavingsService } from "../../../../lib/server/services/savings";
@@ -50,19 +48,7 @@ export default async function DashboardPage({
 }) {
   const { groupId } = await params;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    notFound();
-  }
-
-  const isMember = await isGroupMember(user.id, groupId);
-  if (!isMember) {
-    notFound();
-  }
+  const { userId } = await requireGroupMember(groupId);
 
   const summaryPromise = SummaryService.getGroupSummary(groupId);
   void summaryPromise.catch(() => undefined);
@@ -78,13 +64,13 @@ export default async function DashboardPage({
       <Suspense fallback={<DashboardSkeleton />}>
         <SummaryRegion
           groupId={groupId}
-          currentUserId={user.id}
+          currentUserId={userId}
           summaryPromise={summaryPromise}
         >
           <Suspense fallback={<CategoriesColumnSkeleton />}>
             <CategoriesRegion
               groupId={groupId}
-              currentUserId={user.id}
+              currentUserId={userId}
               categoriesPromise={categoriesPromise}
             />
           </Suspense>

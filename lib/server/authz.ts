@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { createClient } from "../supabase/server";
 import { GroupService } from "./services/group";
 
 /**
@@ -28,4 +30,32 @@ export async function isGroupOwner(
   groupId: string,
 ): Promise<boolean> {
   return GroupService.isOwner(groupId, userId);
+}
+
+/**
+ * resource-authorization: "Group-Scoped Budget Resources Require Membership"
+ * — shared route-guard helper for group-scoped Server Components. Collapses
+ * the `createClient` → `getUser` → `isGroupMember` boilerplate duplicated
+ * across the Dashboard/Expenses/Savings/Transfers pages into a single call.
+ * `notFound()` fires both when there's no session and when the user isn't a
+ * group member, so the response never leaks which case occurred.
+ */
+export async function requireGroupMember(
+  groupId: string,
+): Promise<{ userId: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    notFound();
+  }
+
+  const isMember = await isGroupMember(user.id, groupId);
+  if (!isMember) {
+    notFound();
+  }
+
+  return { userId: user.id };
 }

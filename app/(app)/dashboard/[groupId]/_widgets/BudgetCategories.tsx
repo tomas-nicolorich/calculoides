@@ -13,6 +13,7 @@ import {
   Select,
 } from "../../../../_ui";
 import { ProgressMeter } from "../../../../_ui/money";
+import type { ProgressState } from "../../../../_ui/money/ProgressMeter";
 import { BudgetCategoriesSkeleton } from "../_skeletons";
 import { formatCurrency } from "../../../../../lib/format-currency";
 import { progressPercent, progressState } from "../../../../../lib/progress";
@@ -135,55 +136,67 @@ function CategoryFormFields({
   );
 }
 
-/** A single expanded per-member balance row. Ported from `main`'s
- * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx` `MemberRow`
- * markup, including the transfer-trigger icon that opens the shared
- * "Transfer Budget" dialog locked to this member as the From side. */
-function MemberRow({
+/** Pure mapping from a balance's urgency `ProgressState` to the text colour
+ * used for its spent/remaining label. Split out of `MemberRow` so the
+ * branchy colour decision can be reasoned about (and tested) independently
+ * of the row's markup. */
+function getSpendLabelColour(state: ProgressState): string {
+  if (state === "blocked") return "text-brand-expense";
+  if (state === "behind") return "text-brand-transfer";
+  return "text-brand-income";
+}
+
+// Zero-income members are excluded from the allocation (#130): keep them
+// visible but greyed/struck, with no quota, so they don't silently vanish
+// from the category breakdown.
+/** Row for an excluded (zero-income) member: greyed and struck-through,
+ * with no quota/spend figures. */
+function ExcludedMemberRow({
+  displayName,
+  member,
+}: {
+  displayName: string;
+  member: RowMember | undefined;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2 opacity-60"
+      title="No income — not included"
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <Avatar
+          name={displayName}
+          colorIndex={member?.colorIndex ?? 0}
+          size="xs"
+        />
+        <span className="text-sm font-medium text-slate-500 line-through truncate">
+          {displayName}
+        </span>
+      </div>
+      <span className="text-xs text-slate-400 shrink-0">
+        No income — not included
+      </span>
+    </div>
+  );
+}
+
+/** Row for an active (non-excluded) member: avatar/name, transfer-trigger
+ * icon opening the shared "Transfer Budget" dialog, percentage pill, quota
+ * amount, spent/remaining line and `ProgressMeter`. */
+function ActiveMemberRow({
   balance,
   member,
+  displayName,
   onTransfer,
 }: {
   balance: CategoryBalance;
   member: RowMember | undefined;
+  displayName: string;
   onTransfer: () => void;
 }) {
-  const displayName = member?.name ?? balance.memberId.slice(0, 4);
-
-  // Zero-income members are excluded from the allocation (#130): keep them
-  // visible but greyed/struck, with no quota, so they don't silently vanish
-  // from the category breakdown.
-  if (balance.excluded) {
-    return (
-      <div
-        className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2 opacity-60"
-        title="No income — not included"
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <Avatar
-            name={displayName}
-            colorIndex={member?.colorIndex ?? 0}
-            size="xs"
-          />
-          <span className="text-sm font-medium text-slate-500 line-through truncate">
-            {displayName}
-          </span>
-        </div>
-        <span className="text-xs text-slate-400 shrink-0">
-          No income — not included
-        </span>
-      </div>
-    );
-  }
-
   const isOver = balance.remainingQuota < 0;
   const state = progressState(balance.spent, balance.quota);
-  const spendLabelColour =
-    state === "blocked"
-      ? "text-brand-expense"
-      : state === "behind"
-        ? "text-brand-transfer"
-        : "text-brand-income";
+  const spendLabelColour = getSpendLabelColour(state);
 
   return (
     <div className="rounded-lg bg-slate-50 dark:bg-slate-800/40 px-3 py-2 space-y-2">
@@ -238,6 +251,37 @@ function MemberRow({
       </div>
       <ProgressMeter value={balance.spent} max={balance.quota} state={state} />
     </div>
+  );
+}
+
+/** A single expanded per-member balance row. Ported from `main`'s
+ * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx` `MemberRow`
+ * markup, including the transfer-trigger icon that opens the shared
+ * "Transfer Budget" dialog locked to this member as the From side.
+ * Dispatches to `ExcludedMemberRow`/`ActiveMemberRow` based on the balance's
+ * `excluded` flag. */
+function MemberRow({
+  balance,
+  member,
+  onTransfer,
+}: {
+  balance: CategoryBalance;
+  member: RowMember | undefined;
+  onTransfer: () => void;
+}) {
+  const displayName = member?.name ?? balance.memberId.slice(0, 4);
+
+  if (balance.excluded) {
+    return <ExcludedMemberRow displayName={displayName} member={member} />;
+  }
+
+  return (
+    <ActiveMemberRow
+      balance={balance}
+      member={member}
+      displayName={displayName}
+      onTransfer={onTransfer}
+    />
   );
 }
 
@@ -359,69 +403,20 @@ function CategoryRowItem({
   );
 }
 
-/**
- * Accordion (ADR-9, both slices): category rows with a header `ProgressMeter`,
- * expand/collapse per-member balance breakdown and inline Edit/Delete
- * actions, plus a widget-level "Transfer Budget" dialog shared across every
- * category — opened from a member row's transfer-trigger icon, locked to
- * that member as the From side (ported from `main`'s
- * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`).
- * Data seam: self-subscribes to the hydrated `queryKeys.categories` cache
- * (same seam `BudgetTransfers` uses for `queryKeys.summary`) instead of
- * receiving `categories` as a prop, so it owns its own loading/error state
- * independent of the other five widgets (spec: "Loading state precedes
- * hydration"). Member names/avatar colours are resolved from
- * `queryKeys.summary`'s `members` array (array position = `colorIndex`,
- * same convention `IncomeOverview`/`BudgetTransfers` use); a balance whose
- * member has not hydrated yet falls back to `memberId.slice(0, 4)`, mirroring
- * `main`'s widget.
- *
- * PR 15 adds create/update/delete-with-confirmation dialogs (all three
- * `lib/actions/category.ts` mutations invalidate `queryKeys.group(groupId)`
- * on success, same contract `BudgetTransfers` established) and the shared
- * "Transfer Budget" dialog — every mutation-shaped affordance ADR-9 deferred
- * out of PR 14.
- */
-export function BudgetCategories({
-  groupId,
-  currentUserId,
-}: {
-  groupId: string;
-  currentUserId: string;
-}) {
-  const { data: categories, isLoading, isError } = useCategoriesList(groupId);
-  const { data: summary } = useDashboardSummary(groupId);
-  const isOwner = summary?.ownerId === currentUserId;
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
+/** Add/Edit category dialog state (PR 15): the shared name/budget/icon form
+ * fields, plus the create/update mutations that back them. Both dialogs
+ * share one form state since only one can be open at a time. */
+function useCategoryFormDialogs(groupId: string) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(
     null,
   );
-  const [categoryToDelete, setCategoryToDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-
   const [name, setName] = useState("");
   const [monthlyBudget, setMonthlyBudget] = useState("");
   const [icon, setIcon] = useState("other");
 
-  const [transferCategory, setTransferCategory] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [transferCategoryMemberIds, setTransferCategoryMemberIds] = useState<
-    string[]
-  >([]);
-  const [transferFromMemberId, setTransferFromMemberId] = useState("");
-  const [transferToMemberId, setTransferToMemberId] = useState("");
-  const [transferAmount, setTransferAmount] = useState("");
-
   const createCategory = useCreateCategory(groupId);
   const updateCategory = useUpdateCategory(groupId);
-  const deleteCategoryMutation = useDeleteCategory(groupId);
-  const transferBudget = useCreateTransfer(groupId);
 
   const formLoading = createCategory.isPending || updateCategory.isPending;
   const formError =
@@ -450,6 +445,14 @@ export function BudgetCategories({
     setMonthlyBudget(String(category.monthlyBudget));
     setIcon(category.icon ?? "other");
     setEditingCategory(category);
+  };
+
+  const closeAdd = () => {
+    setIsAdding(false);
+  };
+
+  const closeEdit = () => {
+    setEditingCategory(null);
   };
 
   const handleAddSubmit = async (e: SyntheticEvent) => {
@@ -481,6 +484,45 @@ export function BudgetCategories({
     }
   };
 
+  return {
+    isAdding,
+    editingCategory,
+    name,
+    setName,
+    monthlyBudget,
+    setMonthlyBudget,
+    icon,
+    setIcon,
+    formError,
+    formLoading,
+    openAdd,
+    openEdit,
+    closeAdd,
+    closeEdit,
+    handleAddSubmit,
+    handleEditSubmit,
+  };
+}
+
+/** Delete-with-confirmation state (PR 15): which category is pending
+ * deletion (drives the confirm dialog's open state) plus the delete
+ * mutation itself. */
+function useCategoryDelete(groupId: string) {
+  const [categoryToDelete, setCategoryToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const deleteCategoryMutation = useDeleteCategory(groupId);
+
+  const openDelete = (category: { id: string; name: string }) => {
+    setCategoryToDelete(category);
+  };
+
+  const cancelDelete = () => {
+    setCategoryToDelete(null);
+  };
+
   const confirmDelete = async () => {
     if (!categoryToDelete) return;
     await deleteCategoryMutation.mutateAsync({
@@ -488,6 +530,32 @@ export function BudgetCategories({
     });
     setCategoryToDelete(null);
   };
+
+  return {
+    categoryToDelete,
+    isPending: deleteCategoryMutation.isPending,
+    openDelete,
+    cancelDelete,
+    confirmDelete,
+  };
+}
+
+/** Widget-level "Transfer Budget" dialog state (task 15.9/15.10): shared
+ * across every category, opened from a member row's transfer-trigger icon
+ * and locked to that member as the From side. */
+function useBudgetTransferDialog(groupId: string) {
+  const [transferCategory, setTransferCategory] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [transferCategoryMemberIds, setTransferCategoryMemberIds] = useState<
+    string[]
+  >([]);
+  const [transferFromMemberId, setTransferFromMemberId] = useState("");
+  const [transferToMemberId, setTransferToMemberId] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+
+  const transferBudget = useCreateTransfer(groupId);
 
   const openTransfer = (category: CategoryRow, balance: CategoryBalance) => {
     setTransferCategory({ id: category.id, name: category.name });
@@ -498,6 +566,10 @@ export function BudgetCategories({
     setTransferToMemberId("");
     setTransferAmount("");
     transferBudget.reset();
+  };
+
+  const closeTransfer = () => {
+    setTransferCategory(null);
   };
 
   const handleTransferSubmit = async (e: SyntheticEvent) => {
@@ -512,6 +584,283 @@ export function BudgetCategories({
     setTransferCategory(null);
     setTransferAmount("");
   };
+
+  return {
+    transferCategory,
+    transferCategoryMemberIds,
+    transferFromMemberId,
+    transferToMemberId,
+    setTransferToMemberId,
+    transferAmount,
+    setTransferAmount,
+    isPending: transferBudget.isPending,
+    openTransfer,
+    closeTransfer,
+    handleTransferSubmit,
+  };
+}
+
+/** "Add Category" dialog body, wired to `useCategoryFormDialogs`'s state. */
+function AddCategoryDialog({
+  form,
+}: {
+  form: ReturnType<typeof useCategoryFormDialogs>;
+}) {
+  return (
+    <ResponsiveDialog
+      open={form.isAdding}
+      onOpenChange={(open) => {
+        if (!open) form.closeAdd();
+      }}
+      title="Add Category"
+      description="Create a new budget category for your group."
+      hideCloseButton
+    >
+      <form
+        onSubmit={(e) => void form.handleAddSubmit(e)}
+        className="space-y-4"
+      >
+        <CategoryFormFields
+          name={form.name}
+          setName={form.setName}
+          monthlyBudget={form.monthlyBudget}
+          setMonthlyBudget={form.setMonthlyBudget}
+          icon={form.icon}
+          setIcon={form.setIcon}
+          formError={form.formError}
+          formLoading={form.formLoading}
+          submitLabel="Save Category"
+          onCancel={form.closeAdd}
+        />
+      </form>
+    </ResponsiveDialog>
+  );
+}
+
+/** "Edit Category" dialog body, wired to `useCategoryFormDialogs`'s state. */
+function EditCategoryDialog({
+  form,
+}: {
+  form: ReturnType<typeof useCategoryFormDialogs>;
+}) {
+  return (
+    <ResponsiveDialog
+      open={form.editingCategory !== null}
+      onOpenChange={(open) => {
+        if (!open) form.closeEdit();
+      }}
+      title="Edit Category"
+      description="Update details for this budget category."
+      hideCloseButton
+    >
+      <form
+        onSubmit={(e) => void form.handleEditSubmit(e)}
+        className="space-y-4"
+      >
+        <CategoryFormFields
+          name={form.name}
+          setName={form.setName}
+          monthlyBudget={form.monthlyBudget}
+          setMonthlyBudget={form.setMonthlyBudget}
+          icon={form.icon}
+          setIcon={form.setIcon}
+          formError={form.formError}
+          formLoading={form.formLoading}
+          submitLabel="Save Changes"
+          onCancel={form.closeEdit}
+        />
+      </form>
+    </ResponsiveDialog>
+  );
+}
+
+/** "Delete Category" confirmation dialog body, wired to
+ * `useCategoryDelete`'s state. */
+function DeleteCategoryDialog({
+  deleteState,
+}: {
+  deleteState: ReturnType<typeof useCategoryDelete>;
+}) {
+  return (
+    <ResponsiveDialog
+      open={deleteState.categoryToDelete !== null}
+      onOpenChange={(open) => {
+        if (!open) deleteState.cancelDelete();
+      }}
+      title="Delete Category"
+      description={`Are you sure you want to delete "${deleteState.categoryToDelete?.name ?? ""}"? This action cannot be undone.`}
+    >
+      <div className="flex gap-3 pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={deleteState.cancelDelete}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          variant="expense"
+          className="flex-1"
+          disabled={deleteState.isPending}
+          onClick={() => void deleteState.confirmDelete()}
+        >
+          {deleteState.isPending ? "Deleting..." : "Delete Category"}
+        </Button>
+      </div>
+    </ResponsiveDialog>
+  );
+}
+
+/** Widget-level "Transfer Budget" dialog body, wired to
+ * `useBudgetTransferDialog`'s state. Locked to the From member selected via
+ * a member row's transfer-trigger icon; `members` resolves the To-member
+ * picker options and both members' display names/avatars. */
+function TransferBudgetDialog({
+  transfer,
+  members,
+}: {
+  transfer: ReturnType<typeof useBudgetTransferDialog>;
+  members: RowMember[];
+}) {
+  const transferFromMember = members.find(
+    (m) => m.id === transfer.transferFromMemberId,
+  );
+  const transferFromFirstName =
+    transferFromMember?.name.split(" ")[0] ?? transfer.transferFromMemberId;
+
+  return (
+    <ResponsiveDialog
+      open={transfer.transferCategory !== null}
+      onOpenChange={(open) => {
+        if (!open) transfer.closeTransfer();
+      }}
+      hideCloseButton
+      title="Transfer Budget"
+      description={
+        transfer.transferCategory
+          ? `Move budget from ${transferFromFirstName}'s share of ${transfer.transferCategory.name} to another member.`
+          : ""
+      }
+    >
+      <form
+        onSubmit={(e) => void transfer.handleTransferSubmit(e)}
+        className="space-y-4"
+      >
+        <div className="space-y-2">
+          <label className="text-sm font-medium">From</label>
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+            {transferFromMember && (
+              <Avatar
+                name={transferFromMember.name}
+                colorIndex={transferFromMember.colorIndex}
+                size="sm"
+              />
+            )}
+            <span>
+              From {transferFromFirstName}
+              {transfer.transferCategory
+                ? ` · ${transfer.transferCategory.name}`
+                : ""}
+            </span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">To Member</label>
+          <Select
+            value={transfer.transferToMemberId}
+            onValueChange={transfer.setTransferToMemberId}
+            placeholder="Select recipient"
+            options={members
+              .filter(
+                (m) =>
+                  transfer.transferCategoryMemberIds.includes(m.id) &&
+                  m.id !== transfer.transferFromMemberId,
+              )
+              .map((m) => ({ value: m.id, label: m.name }))}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Amount (€)</label>
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={transfer.transferAmount}
+            onChange={(e) => {
+              transfer.setTransferAmount(e.target.value);
+            }}
+            required
+          />
+        </div>
+        <div className="flex gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={transfer.closeTransfer}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="transfer"
+            className="flex-1"
+            disabled={transfer.isPending || !transfer.transferToMemberId}
+          >
+            {transfer.isPending ? "Processing..." : "Send Transfer"}
+          </Button>
+        </div>
+      </form>
+    </ResponsiveDialog>
+  );
+}
+
+/**
+ * Accordion (ADR-9, both slices): category rows with a header `ProgressMeter`,
+ * expand/collapse per-member balance breakdown and inline Edit/Delete
+ * actions, plus a widget-level "Transfer Budget" dialog shared across every
+ * category — opened from a member row's transfer-trigger icon, locked to
+ * that member as the From side (ported from `main`'s
+ * `frontend/src/widgets/dashboard/ui/BudgetCategories.tsx`).
+ * Data seam: self-subscribes to the hydrated `queryKeys.categories` cache
+ * (same seam `BudgetTransfers` uses for `queryKeys.summary`) instead of
+ * receiving `categories` as a prop, so it owns its own loading/error state
+ * independent of the other five widgets (spec: "Loading state precedes
+ * hydration"). Member names/avatar colours are resolved from
+ * `queryKeys.summary`'s `members` array (array position = `colorIndex`,
+ * same convention `IncomeOverview`/`BudgetTransfers` use); a balance whose
+ * member has not hydrated yet falls back to `memberId.slice(0, 4)`, mirroring
+ * `main`'s widget.
+ *
+ * PR 15 adds create/update/delete-with-confirmation dialogs (all three
+ * `lib/actions/category.ts` mutations invalidate `queryKeys.group(groupId)`
+ * on success, same contract `BudgetTransfers` established) and the shared
+ * "Transfer Budget" dialog — every mutation-shaped affordance ADR-9 deferred
+ * out of PR 14.
+ *
+ * The four independent state clusters (accordion expansion, add/edit form,
+ * delete confirmation, transfer dialog) live in three custom hooks
+ * (`useCategoryFormDialogs`, `useCategoryDelete`, `useBudgetTransferDialog`)
+ * plus this component's own `expandedIds`; each dialog's body is a named
+ * sub-component wired to its hook's returned state.
+ */
+export function BudgetCategories({
+  groupId,
+  currentUserId,
+}: {
+  groupId: string;
+  currentUserId: string;
+}) {
+  const { data: categories, isLoading, isError } = useCategoriesList(groupId);
+  const { data: summary } = useDashboardSummary(groupId);
+  const isOwner = summary?.ownerId === currentUserId;
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const form = useCategoryFormDialogs(groupId);
+  const deleteState = useCategoryDelete(groupId);
+  const transfer = useBudgetTransferDialog(groupId);
 
   if (isLoading) {
     return (
@@ -537,12 +886,6 @@ export function BudgetCategories({
     colorIndex: index,
   }));
 
-  const transferFromMember = members.find(
-    (m) => m.id === transferFromMemberId,
-  );
-  const transferFromFirstName =
-    transferFromMember?.name.split(" ")[0] ?? transferFromMemberId;
-
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -563,101 +906,15 @@ export function BudgetCategories({
             Shared buckets · each member&apos;s share is set by income. Expand
             to view and transfer.
           </div>
-          <Button variant="ghost" size="sm" onClick={openAdd}>
+          <Button variant="ghost" size="sm" onClick={form.openAdd}>
             <Plus size={16} className="mr-1" />
             New Category
           </Button>
         </div>
 
-        <ResponsiveDialog
-          open={isAdding}
-          onOpenChange={(open) => {
-            if (!open) setIsAdding(false);
-          }}
-          title="Add Category"
-          description="Create a new budget category for your group."
-          hideCloseButton
-        >
-          <form onSubmit={(e) => void handleAddSubmit(e)} className="space-y-4">
-            <CategoryFormFields
-              name={name}
-              setName={setName}
-              monthlyBudget={monthlyBudget}
-              setMonthlyBudget={setMonthlyBudget}
-              icon={icon}
-              setIcon={setIcon}
-              formError={formError}
-              formLoading={formLoading}
-              submitLabel="Save Category"
-              onCancel={() => {
-                setIsAdding(false);
-              }}
-            />
-          </form>
-        </ResponsiveDialog>
-
-        <ResponsiveDialog
-          open={editingCategory !== null}
-          onOpenChange={(open) => {
-            if (!open) setEditingCategory(null);
-          }}
-          title="Edit Category"
-          description="Update details for this budget category."
-          hideCloseButton
-        >
-          <form
-            onSubmit={(e) => void handleEditSubmit(e)}
-            className="space-y-4"
-          >
-            <CategoryFormFields
-              name={name}
-              setName={setName}
-              monthlyBudget={monthlyBudget}
-              setMonthlyBudget={setMonthlyBudget}
-              icon={icon}
-              setIcon={setIcon}
-              formError={formError}
-              formLoading={formLoading}
-              submitLabel="Save Changes"
-              onCancel={() => {
-                setEditingCategory(null);
-              }}
-            />
-          </form>
-        </ResponsiveDialog>
-
-        <ResponsiveDialog
-          open={categoryToDelete !== null}
-          onOpenChange={(open) => {
-            if (!open) setCategoryToDelete(null);
-          }}
-          title="Delete Category"
-          description={`Are you sure you want to delete "${categoryToDelete?.name ?? ""}"? This action cannot be undone.`}
-        >
-          <div className="flex gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                setCategoryToDelete(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="expense"
-              className="flex-1"
-              disabled={deleteCategoryMutation.isPending}
-              onClick={() => void confirmDelete()}
-            >
-              {deleteCategoryMutation.isPending
-                ? "Deleting..."
-                : "Delete Category"}
-            </Button>
-          </div>
-        </ResponsiveDialog>
+        <AddCategoryDialog form={form} />
+        <EditCategoryDialog form={form} />
+        <DeleteCategoryDialog deleteState={deleteState} />
 
         {categories.length === 0 ? (
           <p className="text-center py-8 text-slate-400 text-sm">
@@ -675,101 +932,22 @@ export function BudgetCategories({
                   toggleExpanded(category.id);
                 }}
                 onEdit={() => {
-                  openEdit(category);
+                  form.openEdit(category);
                 }}
                 onDelete={() => {
-                  setCategoryToDelete({ id: category.id, name: category.name });
+                  deleteState.openDelete({
+                    id: category.id,
+                    name: category.name,
+                  });
                 }}
-                onTransfer={openTransfer}
+                onTransfer={transfer.openTransfer}
                 members={members}
               />
             ))}
           </div>
         )}
 
-        <ResponsiveDialog
-          open={transferCategory !== null}
-          onOpenChange={(open) => {
-            if (!open) setTransferCategory(null);
-          }}
-          hideCloseButton
-          title="Transfer Budget"
-          description={
-            transferCategory
-              ? `Move budget from ${transferFromFirstName}'s share of ${transferCategory.name} to another member.`
-              : ""
-          }
-        >
-          <form
-            onSubmit={(e) => void handleTransferSubmit(e)}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <label className="text-sm font-medium">From</label>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
-                {transferFromMember && (
-                  <Avatar
-                    name={transferFromMember.name}
-                    colorIndex={transferFromMember.colorIndex}
-                    size="sm"
-                  />
-                )}
-                <span>
-                  From {transferFromFirstName}
-                  {transferCategory ? ` · ${transferCategory.name}` : ""}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">To Member</label>
-              <Select
-                value={transferToMemberId}
-                onValueChange={setTransferToMemberId}
-                placeholder="Select recipient"
-                options={members
-                  .filter(
-                    (m) =>
-                      transferCategoryMemberIds.includes(m.id) &&
-                      m.id !== transferFromMemberId,
-                  )
-                  .map((m) => ({ value: m.id, label: m.name }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Amount (€)</label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={transferAmount}
-                onChange={(e) => {
-                  setTransferAmount(e.target.value);
-                }}
-                required
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  setTransferCategory(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="transfer"
-                className="flex-1"
-                disabled={transferBudget.isPending || !transferToMemberId}
-              >
-                {transferBudget.isPending ? "Processing..." : "Send Transfer"}
-              </Button>
-            </div>
-          </form>
-        </ResponsiveDialog>
+        <TransferBudgetDialog transfer={transfer} members={members} />
       </div>
     </Card>
   );

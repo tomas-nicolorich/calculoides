@@ -7,7 +7,7 @@ import { Card, Skeleton } from "../../../_ui";
  * branch, so the hand-off between them renders pixel-identical markup.
  */
 
-export function GoalCardSkeleton() {
+function GoalCardSkeleton() {
   return (
     <Card>
       <div className="flex justify-between items-start pb-2">

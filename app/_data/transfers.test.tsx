@@ -8,7 +8,10 @@ import { queryKeys } from "../../lib/query-keys";
 import { useTransfersList, useCreateTransfer } from "./transfers";
 
 vi.mock("../../lib/actions/transfer", () => ({
-  create: vi.fn().mockResolvedValue({ ok: true, data: { id: "transfer-1" } }),
+  createTransfer: vi.fn().mockResolvedValue({
+    ok: true,
+    data: { id: "transfer-1" },
+  }),
   deleteTransfer: vi.fn(),
   deleteAll: vi.fn(),
 }));

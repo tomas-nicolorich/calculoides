@@ -99,66 +99,77 @@ function computeForecastColor(
   return rebasedMonths <= targetMonths ? "green" : "amber";
 }
 
+type ContributionSessionActionHandlers = {
+  [K in ContributionSessionAction["type"]]: (
+    state: ContributionSessionState,
+    action: Extract<ContributionSessionAction, { type: K }>,
+  ) => ContributionSessionState;
+};
+
+const contributionSessionActionHandlers: ContributionSessionActionHandlers = {
+  sessionStart: (state, action) => {
+    const { snapshot } = action;
+    return {
+      ...state,
+      phase: "editing",
+      overrideAmounts: snapshot,
+      sessionStartSnapshot: snapshot,
+      preResetSnapshot: null,
+    };
+  },
+  overrideAmount: (state, action) => {
+    if (state.phase !== "editing") return state;
+    if (isNaN(action.amount) || action.amount < 0) return state;
+    return {
+      ...state,
+      overrideAmounts: {
+        ...state.overrideAmounts,
+        [action.memberId]: action.amount,
+      },
+    };
+  },
+  resetToIncomeSplit: (state) => {
+    if (state.phase !== "editing") return state;
+    return {
+      ...state,
+      preResetSnapshot: state.overrideAmounts,
+      overrideAmounts: {},
+    };
+  },
+  undoReset: (state) => {
+    if (state.phase !== "editing" || state.preResetSnapshot === null)
+      return state;
+    return {
+      ...state,
+      overrideAmounts: state.preResetSnapshot,
+      preResetSnapshot: null,
+    };
+  },
+  saveStart: (state) => {
+    if (state.phase !== "editing") return state;
+    return { ...state, phase: "saving" };
+  },
+  saveSuccess: () => {
+    return { ...initialState };
+  },
+  saveFailure: (state) => {
+    if (state.phase !== "saving") return state;
+    return { ...state, phase: "editing" };
+  },
+  cancelSession: (state) => {
+    return { ...initialState, overrideAmounts: state.sessionStartSnapshot };
+  },
+};
+
 function reducer(
   state: ContributionSessionState,
   action: ContributionSessionAction,
 ): ContributionSessionState {
-  switch (action.type) {
-    case "sessionStart": {
-      const { snapshot } = action;
-      return {
-        ...state,
-        phase: "editing",
-        overrideAmounts: snapshot,
-        sessionStartSnapshot: snapshot,
-        preResetSnapshot: null,
-      };
-    }
-    case "overrideAmount": {
-      if (state.phase !== "editing") return state;
-      if (isNaN(action.amount) || action.amount < 0) return state;
-      return {
-        ...state,
-        overrideAmounts: {
-          ...state.overrideAmounts,
-          [action.memberId]: action.amount,
-        },
-      };
-    }
-    case "resetToIncomeSplit": {
-      if (state.phase !== "editing") return state;
-      return {
-        ...state,
-        preResetSnapshot: state.overrideAmounts,
-        overrideAmounts: {},
-      };
-    }
-    case "undoReset": {
-      if (state.phase !== "editing" || state.preResetSnapshot === null)
-        return state;
-      return {
-        ...state,
-        overrideAmounts: state.preResetSnapshot,
-        preResetSnapshot: null,
-      };
-    }
-    case "saveStart": {
-      if (state.phase !== "editing") return state;
-      return { ...state, phase: "saving" };
-    }
-    case "saveSuccess": {
-      return { ...initialState };
-    }
-    case "saveFailure": {
-      if (state.phase !== "saving") return state;
-      return { ...state, phase: "editing" };
-    }
-    case "cancelSession": {
-      return { ...initialState, overrideAmounts: state.sessionStartSnapshot };
-    }
-    default:
-      return state;
-  }
+  const handler = contributionSessionActionHandlers[action.type] as (
+    state: ContributionSessionState,
+    action: ContributionSessionAction,
+  ) => ContributionSessionState;
+  return handler(state, action);
 }
 
 /**

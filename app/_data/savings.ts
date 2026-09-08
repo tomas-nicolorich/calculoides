@@ -1,12 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/query-keys";
-import {
-  create,
-  update,
-  deleteGoal,
-  contributionUpsert,
-  contributionDelete,
-} from "../../lib/actions/savings";
+import { create, update, deleteGoal } from "../../lib/actions/savings";
 import { fetchJson } from "./fetch-json";
 import { invalidateGroupQueries } from "./invalidate";
 
@@ -74,22 +68,6 @@ export function useDeleteGoal(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteGoal,
-    onSuccess: () => invalidateGroupQueries(queryClient, groupId),
-  });
-}
-
-export function useContributionUpsert(groupId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: contributionUpsert,
-    onSuccess: () => invalidateGroupQueries(queryClient, groupId),
-  });
-}
-
-export function useContributionDelete(groupId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: contributionDelete,
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }

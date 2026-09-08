@@ -1,7 +1,5 @@
-import { notFound } from "next/navigation";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { createClient } from "../../../../lib/supabase/server";
-import { isGroupMember } from "../../../../lib/server/authz";
+import { requireGroupMember } from "../../../../lib/server/authz";
 import { ExpenseService } from "../../../../lib/server/services/expense";
 import { createQueryClient } from "../../../../lib/query-client";
 import { queryKeys } from "../../../../lib/query-keys";
@@ -48,19 +46,7 @@ export default async function ExpensesPage({
 }) {
   const { groupId } = await params;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    notFound();
-  }
-
-  const isMember = await isGroupMember(user.id, groupId);
-  if (!isMember) {
-    notFound();
-  }
+  const { userId } = await requireGroupMember(groupId);
 
   const queryClient = createQueryClient();
   await queryClient.prefetchQuery({
@@ -97,7 +83,7 @@ export default async function ExpensesPage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ExpensesClient groupId={groupId} currentUserId={user.id} />
+      <ExpensesClient groupId={groupId} currentUserId={userId} />
     </HydrationBoundary>
   );
 }
