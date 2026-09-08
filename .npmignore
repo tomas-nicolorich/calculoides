@@ -9,12 +9,7 @@ build/
 .superpowers/
 .vscode/
 .idea/
-src/
-api/
-frontend/
 prisma/
-specs/
-tests/
 tsconfig.json
 eslint.config.js
 .prettierrc

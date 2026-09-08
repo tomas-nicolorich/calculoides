@@ -5,52 +5,50 @@ context: |
   Engram project identity is resolved from git remote `tomas-nicolorich/calculoides`).
 
   Tech stack:
-  - npm workspaces monorepo (`frontend`, `api`, `shared`) orchestrated with Turborepo (`turbo.json`).
-  - Frontend: React 19.2, Vite 8, TypeScript 6 (strict), Tailwind CSS 4, react-router-dom 7,
-    @base-ui/react, clsx/tailwind-merge. Tests: vitest + @testing-library/react + jsdom.
-  - API: Express 5, Prisma 7 ORM (`prisma/schema.prisma` ~900 lines, Postgres via `pg` +
-    `@prisma/adapter-pg`), Supabase JS client, Zod 4 validation, tsx for local dev server,
-    deployed as Vercel functions (`vercel.json`). Tests: vitest (needs Supabase env vars via
-    `api/vitest.config.ts`).
-  - Shared package: cross-workspace domain types/zod schemas, commonjs.
+  - Next.js 16 (App Router, root `app/` + `lib/`), React 19, TypeScript (strict), Tailwind CSS 4.
+  - Prisma 7 ORM (`prisma/schema.prisma`) + Supabase Postgres via PgBouncer, `@supabase/ssr` for
+    auth/session handling, TanStack Query for client data fetching, Zod validation, Resend for
+    transactional email.
+  - Package manager: bun, with a `shared` bun workspace (cross-context domain types/zod schemas)
+    built via Turborepo (`turbo.json`).
+  - `frontend/` (old Vite SPA) and `api/` (old Express API) are retired from the pre-Next.js
+    monorepo — not deployed, not part of the active codebase.
   - Deployment target: Vercel.
 
   Architecture/conventions:
-  - Multi-context monorepo: `CONTEXT-MAP.md` at root indexes per-package `CONTEXT.md`
-    (frontend/api/shared) — see `docs/agents/domain.md`.
-  - ADRs recorded in `docs/adr/0001..0011` (design-system adoption, dashboard layout/fidelity,
-    transfers parity, etc.).
-  - Issue tracker: GitHub Issues on `tomas-nicolorich/calculoides` (`docs/agents/issue-tracker.md`);
-    triage labels follow mattpocock/skills vocabulary (`docs/agents/triage-labels.md`).
+  - Domain glossary at `shared/CONTEXT.md` (Groups, Budget Categories, Quotas, Transfers, Savings
+    Goals, Archive/Settlement) — read before touching domain logic.
+  - No `@/*` path alias inside `app/` or `lib/` — use relative imports (the Fallow dead-code
+    resolver doesn't follow TS path mapping).
+  - Issue tracker: GitHub Issues on `tomas-nicolorich/calculoides`.
   - Quality gates: ESLint (flat config, typescript-eslint strict+stylistic type-checked), Prettier
     (devDependency, invoked via lint-staged, no standalone script), Husky pre-commit/pre-push
     hooks, Fallow static-audit gate (`.fallowrc.json`, `unused-exports`/`unused-dependencies`=warn,
     `circular-dependencies`=error) wired into `.github/workflows/fallow.yml`. Also `claude.yml` /
     `claude-code-review.yml` GitHub Actions.
-  - Root scripts: `npm test` -> `turbo run test`, `npm run lint` -> `turbo run lint`,
-    `npm run typecheck` -> `turbo run typecheck`.
+  - Root scripts: `bun run test` -> vitest + `turbo run test`, `bun run lint` -> eslint +
+    `turbo run lint`, `bun run typecheck` -> tsc + `turbo run typecheck`.
 
   Testing:
-  - Test runner: vitest in both `api` and `frontend` workspaces.
-  - No E2E test tooling detected (no Playwright/Cypress).
-  - Coverage: v8 provider configured in `api/vitest.config.ts`; not explicitly configured for
-    `frontend`.
+  - Unit tests: vitest at root (`app/**`, `lib/**`, `shared/**`, `proxy.ts`) plus `turbo run test`
+    for the `shared` workspace.
+  - E2E: Playwright (`bun run test:e2e:next`, `playwright.config.ts`).
   - Strict TDD: enabled (RED-GREEN-REFACTOR expected for implementation work).
 
 rules:
   proposal:
     - Include rollback plan for risky changes
-    - State which workspace(s) are affected (api, frontend, shared)
+    - State which areas are affected (app, lib, shared, prisma)
 
   specs:
     - Use Given/When/Then for scenarios
     - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
-    - Group requirements by domain package (api/frontend/shared) when cross-cutting
+    - Group requirements by domain concept (Groups, Categories, Quotas, Transfers, Savings,
+      Archive/Settlement) when cross-cutting
 
   design:
     - Include sequence diagrams for complex flows
     - Document architecture decisions with rationale
-    - Reference existing ADRs in docs/adr/ when a decision extends or supersedes one
 
   tasks:
     - Group by phase, use hierarchical numbering
@@ -60,15 +58,14 @@ rules:
   apply:
     guidelines:
       - Follow existing code patterns
-      - Respect the multi-context monorepo boundaries (frontend/api/shared) documented in
-        CONTEXT-MAP.md
+      - Read `shared/CONTEXT.md` before touching domain logic
       - Do not bypass Husky pre-commit/pre-push hooks or the Fallow gate
     tdd: true
-    test_command: "npm test"
+    test_command: "bun run test"
 
   verify:
-    test_command: "npm test"
-    build_command: "npm run typecheck"
+    test_command: "bun run test"
+    build_command: "bun run typecheck"
     coverage_threshold: 0
 
   archive:

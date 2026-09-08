@@ -3,16 +3,16 @@
   "ignorePatterns": [
     "**/__mocks__/**",
     "prisma.config.ts",
-    "frontend/src/test/setup.ts",
     "**/prisma/client/**",
-    "frontend/dist/**",
-    "api/dist/**",
-    "api/_src/handlers/users.ts",
-    "frontend/scripts/screenshot.mjs"
+    "next-env.d.ts"
   ],
   "duplicates": {
     "minOccurrences": 3
   },
+  "ignoreDependencies": [
+    "postcss-load-config",
+    "dotenv"
+  ],
   "rules": {
     "unused-files": "warn",
     "unused-exports": "warn",

@@ -2,7 +2,7 @@
 
 Calculoides is a shared expense and budget management application for household groups, where costs are distributed proportionally based on individual incomes.
 
-This package contains the core domain types, Zod schemas, and financial logic shared between `api/` and `frontend/`.
+This package contains the core domain types, Zod schemas, and financial logic shared across the Next.js app (`app/`, `lib/`).
 
 ## Language
 
@@ -69,8 +69,9 @@ _Avoid_: Allocation, payment
 The default state of **Contributions** for a **Savings Goal** in which every member's monthly amount is distributed proportionally by their **Income Percentage**. No overrides are active. Serves as the canonical reset target when a member wants to discard custom **Contribution** values.
 _Avoid_: Auto-split, default allocation, proportional split
 
-**Starting Amount**:
-An initial sum of money already saved toward a **Savings Goal** at the time of its creation, reducing the remaining amount needed to reach the target.
+**Current Amount**:
+The running balance already saved toward a **Savings Goal**. There is no separate "starting amount" field — the same value is set at creation (to record any amount already saved) and then edited directly by members over time; it is not incremented automatically by **Contributions**.
+_Avoid_: Starting amount, saved so far
 
 **Target Date**:
 The user-defined date by which a **Savings Goal** is intended to be fully funded.

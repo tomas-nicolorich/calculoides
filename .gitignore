@@ -10,10 +10,16 @@ bower_components
 .pnp.*
 .yarn-integrity
 
+# bun.lock is the project's lockfile; other package managers' lockfiles are ignored
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Build & framework output
 build/
 dist/
 .next
+next-env.d.ts
 out
 .nuxt
 .vuepress/dist
@@ -48,6 +54,9 @@ lib-cov
 .npm
 .eslintcache
 .stylelintcache
+
+# Dual-graph MCP context
+.dual-graph-context/
 .cache/
 .parcel-cache
 .rpt2_cache/
@@ -81,6 +90,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Playwright verification screenshots
 .playwright-mcp/
 /*.png
+test-results/
+playwright-report/
+playwright-report-next/
 
 # Project tooling & agent state
 .claude/**
@@ -89,7 +101,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 !.claude/hooks/**
 .agents
 .atl/
-.codegraph/
 .serena
 .gemini
 .superpowers
@@ -103,3 +114,4 @@ headroom_memory.db
 .tokensave/
 .gga
 .impeccable/
+.dual-graph/

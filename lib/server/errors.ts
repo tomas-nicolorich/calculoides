@@ -1,0 +1,43 @@
+// One message→status table, reused by both Route Handlers and Server
+// Actions. Ports the existing catch-block mappings from
+// `api/_src/handlers/{groups,transactions}.ts` into a single, extensible
+// lookup — later phases (3b-6a) append their own entries here.
+const STATUS_BY_MESSAGE: Record<string, 400 | 403 | 404 | 500> = {
+  // Not found
+  "Group not found": 404,
+  "Member not found": 404,
+  "Category not found": 404,
+  "Expense not found": 404,
+  "Transfer not found": 404,
+  "Savings goal not found": 404,
+  "Group member not found": 404,
+
+  // Ownership / membership denial
+  "Unauthorized access to group": 403,
+  "Unauthorized: not a member of this group": 403,
+  "Not a member of this group": 403,
+  "Access denied to this group": 403,
+  "Only the owner can transfer ownership": 403,
+  "Only the group owner can archive expenses": 403,
+  "Only the group owner can undo archiving": 403,
+  "Only the owner can remove other members": 403,
+  "Only group owners can delete categories": 403,
+  "Payer is not a member of this group": 403,
+  "User email not found in session": 400,
+  "Member does not belong to the group associated with this savings goal": 403,
+  "User does not belong to the group associated with this savings goal": 403,
+
+  // Validation failures
+  "New owner must be a member of the group": 400,
+  "User is already a member of this group": 400,
+  "Both members must be assigned to this category to transfer budget.": 400,
+};
+
+/**
+ * Maps a thrown Error's message to its HTTP-equivalent status. Unknown
+ * messages default to 500 (internal error) — the same behavior
+ * `withErrorHandling` falls back to for uncaught error shapes.
+ */
+export function toStatus(message: string): 400 | 403 | 404 | 500 {
+  return STATUS_BY_MESSAGE[message] ?? 500;
+}

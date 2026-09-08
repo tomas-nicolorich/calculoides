@@ -1,49 +1,75 @@
 {
   "name": "calculoides",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "packageManager": "npm@10.8.2",
+  "packageManager": "bun@1.4.0",
   "type": "module",
   "workspaces": [
-    "frontend",
-    "api",
     "shared"
   ],
   "scripts": {
-    "dev": "turbo run dev start:api",
-    "dev:local": "turbo run dev start:api:local",
-    "build": "turbo run build",
-    "test": "turbo run test",
+    "dev": "next dev",
+    "dev:local": "next dev",
+    "dev:next": "next dev",
+    "build": "next build",
+    "build:next": "next build",
+    "start:next": "next start",
+    "test": "vitest run --config vitest.config.ts && turbo run test",
+    "test:next": "vitest run --config vitest.config.ts",
+    "test:e2e:next": "playwright test -c playwright.config.ts",
     "test:local": "cross-env CALC_ENVIRONMENT=test-local turbo run test",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "prepare": "husky",
-    "postinstall": "npm run prisma:generate -w api"
+    "lint": "eslint app lib proxy.ts next.config.ts --max-warnings 0 && turbo run lint",
+    "lint:next": "eslint app lib proxy.ts next.config.ts --max-warnings 0",
+    "typecheck": "tsc --noEmit -p tsconfig.next.json && turbo run typecheck",
+    "typecheck:next": "tsc --noEmit -p tsconfig.next.json",
+    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
+    "postinstall": "bun run prisma:generate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/pg": "^8.20.0",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^17.0.5",
-    "prettier": "^3.0.0",
+    "jsdom": "^29.1.1",
+    "prisma": "7.8.0",
     "supabase": "^2.107.0",
     "turbo": "^2.10.8",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.0.0"
-  },
-  "lint-staged": {
-    "*.{js,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+    "typescript-eslint": "^8.0.0",
+    "vite": "8.0.12",
+    "vitest": "4.1.6"
   },
   "allowScripts": {
     "esbuild@0.27.0": true,
     "prisma@7.8.0": true,
     "@prisma/engines@7.8.0": true
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "7.8.0",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tanstack/react-query": "^5.101.4",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.31.0",
+    "next": "^16.3.0",
+    "pg": "^8.20.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "resend": "^6.12.3",
+    "shared": "workspace:*",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.3",
+    "zod": "4.4.3"
   }
 }
