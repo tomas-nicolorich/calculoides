@@ -13,12 +13,81 @@
     "postcss-load-config",
     "dotenv"
   ],
+  "boundaries": {
+    "zones": [
+      { "name": "services", "patterns": ["lib/server/services/**", "lib/server/errors.ts", "lib/server/errors.test.ts"] },
+      { "name": "authz", "patterns": ["lib/server/authz.ts", "lib/server/authz.test.ts"] },
+      { "name": "prisma", "patterns": ["lib/prisma.ts"] },
+      { "name": "actions", "patterns": ["lib/actions/**"] },
+      { "name": "api", "patterns": ["app/api/**"] },
+      {
+        "name": "pages",
+        "patterns": [
+          "app/(app)/**",
+          "app/(auth)/**",
+          "app/layout.tsx",
+          "app/layout.test.tsx",
+          "app/page.tsx",
+          "app/page.test.tsx",
+          "app/providers.tsx"
+        ]
+      },
+      { "name": "data", "patterns": ["app/_data/**"] },
+      { "name": "ui", "patterns": ["app/_ui/**", "app/_theme/**"] },
+      { "name": "hooks", "patterns": ["lib/hooks/**"] },
+      { "name": "supabase", "patterns": ["lib/supabase/**"] },
+      {
+        "name": "utils",
+        "patterns": [
+          "lib/cn.ts",
+          "lib/cn.test.ts",
+          "lib/contribution-diff.ts",
+          "lib/contribution-diff.test.ts",
+          "lib/format-currency.ts",
+          "lib/format-currency.test.ts",
+          "lib/progress.ts",
+          "lib/progress.test.ts",
+          "lib/query-client.ts",
+          "lib/query-keys.ts",
+          "lib/select-options.ts"
+        ]
+      },
+      { "name": "shared", "patterns": ["shared/**"] }
+    ],
+    "rules": [
+      { "from": "services", "allow": ["prisma", "shared"] },
+      { "from": "authz", "allow": ["services", "supabase", "shared"] },
+      { "from": "actions", "allow": ["services", "authz", "supabase", "shared"] },
+      { "from": "api", "allow": ["services", "authz", "supabase", "shared"] },
+      { "from": "pages", "allow": ["services", "authz", "actions", "supabase", "data", "ui", "utils", "shared"] },
+      { "from": "data", "allow": ["actions", "utils", "shared"] },
+      { "from": "ui", "allow": ["hooks", "utils", "shared"] },
+      { "from": "hooks", "allow": [] },
+      { "from": "supabase", "allow": [] },
+      { "from": "prisma", "allow": [] },
+      { "from": "utils", "allow": ["shared"], "allowTypeOnly": ["data", "ui"] }
+    ],
+    "coverage": {
+      "requireAllFiles": true,
+      "allowUnmatched": [
+        "proxy.ts",
+        "proxy.test.ts",
+        "next.config.ts",
+        "middleware.ts",
+        "app/globals.css",
+        "eslint.config.js",
+        "playwright.config.ts",
+        "vitest.config.ts"
+      ]
+    }
+  },
   "rules": {
     "unused-files": "warn",
     "unused-exports": "warn",
     "unused-types": "warn",
     "unused-dependencies": "warn",
     "unused-dev-dependencies": "warn",
-    "circular-dependencies": "error"
+    "circular-dependencies": "error",
+    "boundary-violation": "error"
   }
 }
