@@ -6,7 +6,7 @@ import { AddExpenseFab, Button, ResponsiveDialog } from "../../../../_ui";
 import { useDashboardSummary } from "../../../../_data/summary";
 import { useCategoriesList } from "../../../../_data/categories";
 import { ExpenseForm } from "./ExpenseForm";
-import type { DashboardSummary } from "shared/src/types/redesign";
+import type { DashboardSummary } from "shared";
 
 /**
  * Composes `ExpenseForm` as a dashboard quick-action (PR 16, task 16.8):

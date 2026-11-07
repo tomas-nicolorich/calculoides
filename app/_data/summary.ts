@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/query-keys";
-import type { DashboardSummary } from "shared/src/types/redesign";
+import type { DashboardSummary } from "shared";
 import { fetchJson } from "./fetch-json";
 
 /**

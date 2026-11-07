@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/query-keys";
-import type { CategoryWithBalances } from "shared/src/types/redesign";
+import type { CategoryWithBalances } from "shared";
 import {
   createCategory,
   update,

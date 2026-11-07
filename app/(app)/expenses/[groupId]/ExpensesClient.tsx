@@ -13,7 +13,7 @@ import type {
   CategoryWithBalances,
   DashboardSummary,
   ExpensesList,
-} from "shared/src/types/redesign";
+} from "shared";
 import {
   useExpensesList,
   useDeleteExpense,

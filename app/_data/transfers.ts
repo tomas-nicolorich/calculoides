@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, type TransferFilters } from "../../lib/query-keys";
-import type { TransfersList } from "shared/src/types/redesign";
+import type { TransfersList } from "shared";
 import {
   createTransfer,
   deleteTransfer,

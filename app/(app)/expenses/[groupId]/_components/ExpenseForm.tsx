@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, DatePicker, Input, Select } from "../../../../_ui";
 import { useCreateExpense, useUpdateExpense } from "../../../../_data/expenses";
-import type { CategoryWithBalances } from "shared/src/types/redesign";
+import type { CategoryWithBalances } from "shared";
 
 interface ExpenseFormProps {
   groupId: string;

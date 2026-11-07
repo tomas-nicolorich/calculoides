@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, type ExpenseFilters } from "../../lib/query-keys";
-import type { ExpensesList } from "shared/src/types/redesign";
+import type { ExpensesList } from "shared";
 import {
   create,
   update,

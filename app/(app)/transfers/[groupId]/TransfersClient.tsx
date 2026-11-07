@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Info, SlidersHorizontal, Trash2, X } from "lucide-react";
-import type { TransfersList } from "shared/src/types/redesign";
+import type { TransfersList } from "shared";
 import {
   useTransfersList,
   useDeleteTransfer,

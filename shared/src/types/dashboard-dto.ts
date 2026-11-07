@@ -6,7 +6,7 @@ import {
   CategoryBalanceSchema,
   RecentExpenseSchema,
   TransfersListSchema,
-} from "../schemas/redesign";
+} from "../schemas/dashboard-dto";
 
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;
 export type RecentExpense = z.infer<typeof RecentExpenseSchema>;
