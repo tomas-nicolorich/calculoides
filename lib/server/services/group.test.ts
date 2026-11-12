@@ -26,6 +26,7 @@ vi.mock("../../prisma", () => ({
       findMany: vi.fn(),
       update: vi.fn(),
       findUnique: vi.fn(),
+      count: vi.fn(),
     },
     groupMember: {
       findFirst: vi.fn(),
@@ -38,6 +39,25 @@ vi.mock("../../prisma", () => ({
 describe("GroupService Integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("hasAccess counts the group scoped to its owner or members", async () => {
+    vi.mocked(prisma.group.count).mockResolvedValue(1);
+
+    await expect(GroupService.hasAccess("group-1", "user-1")).resolves.toBe(
+      true,
+    );
+    expect(prisma.group.count).toHaveBeenCalledWith({
+      where: {
+        id: "group-1",
+        OR: [{ ownerId: "user-1" }, { members: { some: { userId: "user-1" } } }],
+      },
+    });
+
+    vi.mocked(prisma.group.count).mockResolvedValue(0);
+    await expect(GroupService.hasAccess("group-1", "user-2")).resolves.toBe(
+      false,
+    );
   });
 
   it("should create a group and its first member", async () => {

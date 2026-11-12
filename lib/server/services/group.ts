@@ -234,6 +234,20 @@ export const GroupService = {
     });
   },
 
+  /**
+   * True when the user owns the group or is one of its members — the same
+   * rule `getGroupsForUser` lists by, answered with one count query.
+   */
+  async hasAccess(groupId: string, userId: string) {
+    const count = await prisma.group.count({
+      where: {
+        id: groupId,
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+      },
+    });
+    return count > 0;
+  },
+
   async isOwner(groupId: string, userId: string) {
     const group = await prisma.group.findUnique({
       where: { id: groupId },
