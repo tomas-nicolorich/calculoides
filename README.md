@@ -15,14 +15,14 @@ See [`shared/CONTEXT.md`](./shared/CONTEXT.md) for the full domain glossary.
 
 ## Tech stack
 
-A single Next.js App Router application at the repo root (`app/`, `lib/`, `proxy.ts`) — Server Components query Prisma directly, mutations are Server Actions, and every session/authorization check runs server-side via `@supabase/ssr`. `frontend/` and `api/` are retired (`openspec/changes/nextjs-migration`); `shared/` remains a workspace.
+A single Next.js App Router application at the repo root (`app/`, `lib/`, `proxy.ts`) — Server Components query Prisma directly, mutations are Server Actions, and every session/authorization check runs server-side via `@supabase/ssr`. The old `frontend/` and `api/` packages are deleted (`openspec/changes/archive/2026-08-18-nextjs-migration`); `shared/` remains a workspace.
 
 | Package               | Stack                                                                                                                                                                |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | root app              | Next.js 16 (App Router), React 19, Prisma 7 (Supabase Postgres via PgBouncer), `@supabase/ssr`, TanStack Query, Tailwind 4, Zod validation, Resend for email, Vitest |
 | [`shared/`](./shared) | Domain types, Zod schemas, and financial calculation logic shared by server and client code                                                                          |
 
-Bun workspaces (root app + `shared`) + Turborepo for `shared`'s own pipeline, deployed on Vercel (Next.js framework preset).
+Bun workspaces (root app + `shared`) + Turborepo for `shared`'s typecheck, deployed on Vercel (Next.js framework preset).
 
 ## Getting started
 
@@ -35,7 +35,8 @@ bun install
 You'll need a Supabase project (Postgres database + auth) and a Resend API key. Set the following environment variables (e.g. in `.env` at the repo root, or your shell):
 
 ```bash
-DATABASE_URL=                    # Supabase Postgres connection string (via PgBouncer)
+DATABASE_URL=                    # Supabase Postgres connection string (via PgBouncer), read by the app (lib/prisma.ts)
+POSTGRES_PRISMA_URL=             # connection string read by the Prisma CLI (prisma.config.ts), e.g. for migrations
 SUPABASE_URL=                    # server-side Supabase client (proxy.ts, lib/supabase/server.ts)
 SUPABASE_ANON_KEY=
 NEXT_PUBLIC_SUPABASE_URL=        # browser Supabase client (lib/supabase/client.ts)
@@ -62,25 +63,24 @@ bun run dev
 Other common commands:
 
 ```bash
-bun run test      # vitest (root) + turbo run test (shared)
+bun run test      # vitest (app, lib, shared)
 bun run typecheck # tsc -p tsconfig.next.json + turbo run typecheck (shared)
-bun run lint       # eslint (root) + turbo run lint (shared)
-bun run build      # next build
+bun run lint      # eslint (app, lib, shared)
+bun run build     # next build
 ```
 
 ## Project structure
 
 ```
-app/       Next.js App Router: route segments, Server Actions, Route Handlers, proxy.ts
+app/       Next.js App Router: route segments, Route Handlers (app/api), UI primitives (app/_ui), data hooks (app/_data)
 lib/       Server-only services (lib/server/services), Server Actions (lib/actions), Supabase clients
 shared/    Domain types, Zod schemas, financial logic — imported by both server and client code
-frontend/  Retired Vite SPA — kept only where its source is not yet fully superseded; not deployed
-api/       Retired Express/Vercel-functions backend — docs kept for historical context; not deployed
-prisma/    Prisma schema (repo root)
-docs/      ADRs, design docs, glossary
+prisma/    Prisma schema and migrations
+openspec/  Specs per feature (specs/) and archived change proposals (changes/archive/)
+proxy.ts   Session refresh and the signed-out redirect for protected routes
 ```
 
-Each package has its own `CONTEXT.md` with domain and code conventions — see [`CONTEXT-MAP.md`](./CONTEXT-MAP.md).
+[`shared/CONTEXT.md`](./shared/CONTEXT.md) holds the domain glossary.
 
 ## Deployment
 

@@ -9,22 +9,22 @@ period Archive/Settlement.
 
 Stack: Next.js 16 (App Router, root `app/` + `lib/`), React 19, Prisma 7 +
 Supabase Postgres (via PgBouncer), `@supabase/ssr`, TanStack Query, Tailwind 4,
-Zod, Resend. Package manager is bun, with a `shared` bun workspace built via
-Turborepo. Deployed on Vercel.
+Zod, Resend. Package manager is bun, with a `shared` bun workspace typechecked
+via Turborepo. Deployed on Vercel.
 
-`frontend/` (old Vite SPA) and `api/` (old Express API) are retired from the
-pre-Next.js monorepo — not deployed, kept only for historical reference. Don't
-add new code there.
+The pre-Next.js `frontend/` (Vite SPA) and `api/` (Express API) are deleted;
+code comments that cite `frontend/...` or `api/_src/...` paths describe where
+the code was ported from.
 
 ## Commands
 
 - `bun install` — install deps (also runs `prisma generate` via postinstall)
 - `bun run dev` — start Next.js dev server
 - `bun run build` / `bun run start:next` — production build / start
-- `bun run test` — vitest (unit) + `turbo run test` (shared workspace)
-- `bun run test:e2e:next` — Playwright e2e
-- `bun run typecheck` — tsc + `turbo run typecheck`
-- `bun run lint` — eslint + `turbo run lint`
+- `bun run test` — vitest (unit, covers `app/`, `lib/`, `shared/`)
+- `bun run test:e2e:next` — Playwright e2e (no `e2e/` specs exist yet)
+- `bun run typecheck` — tsc + `turbo run typecheck` (shared workspace)
+- `bun run lint` — eslint (covers `app/`, `lib/`, `shared/`)
 - `bun run prisma:generate` / `bun run prisma:migrate` — schema at `prisma/schema.prisma`
 
 Requires Supabase + Resend env vars — see README for the
