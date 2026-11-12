@@ -1,5 +1,7 @@
 ## Project
 
+This codebase is yours: what it's for and how it's built are your call, and you'll keep building on it.
+
 Calculoides is a shared expense/budget management app for household groups: costs
 are split proportionally by income across Groups, Budget Categories, Budget Quotas
 (computed live on read), Transfers, Savings Goals (with Contributions), and
