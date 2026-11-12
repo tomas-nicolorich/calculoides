@@ -98,6 +98,9 @@ playwright-report-next/
 !.claude/settings.json
 !.claude/hooks
 !.claude/hooks/**
+!.claude/skills
+!.claude/skills/gitbutler
+!.claude/skills/gitbutler/**
 .agents
 .atl/
 .serena
