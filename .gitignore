@@ -55,8 +55,7 @@ lib-cov
 .eslintcache
 .stylelintcache
 
-# Dual-graph MCP context
-.dual-graph-context/
+# Caches
 .cache/
 .parcel-cache
 .rpt2_cache/
@@ -107,11 +106,8 @@ playwright-report-next/
 .pi
 .fallow/
 .specify/
-.headroom
-headroom_memory.db
 .knowledge
 .memsearch
 .tokensave/
 .gga
 .impeccable/
-.dual-graph/
