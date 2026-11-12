@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
 import { loadEnv } from "vite";
-import path from "path";
 
 // Root-level Vitest config for the Next.js shell (`app/**`, `lib/**`,
 // `proxy.ts`). Server Components and the routing proxy are plain
@@ -11,11 +10,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
 
   return {
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./"),
-      },
-    },
     test: {
       environment: "node",
       include: [
@@ -23,16 +17,13 @@ export default defineConfig(({ mode }) => {
         "app/**/*.test.ts",
         "app/**/*.test.tsx",
         "lib/**/*.test.ts",
-        // Phase 7.2: `shared/logic/{projection,rounding}.test.ts` rehomed
-        // from `api/_tests/logic/**` — `shared/` has no vitest devDependency
-        // of its own, so root Vitest covers it (mirrors how `lib/**` above
-        // already covers the rehomed `api/_src/services/**` tests).
+        // `shared/` has no vitest devDependency of its own, so root Vitest
+        // runs its tests.
         "shared/**/*.test.ts",
       ],
       env: {
         // Vitest (unlike `next dev`/`next build`) does not auto-load
-        // `.env.local` — mirrors `frontend/vite.config.ts`'s fallback
-        // pattern. `@supabase/ssr` itself is mocked in these tests, so
+        // `.env.local`. `@supabase/ssr` itself is mocked in these tests, so
         // these values only need to satisfy `getSupabaseServerEnv`'s
         // presence check, never reach a real network call.
         SUPABASE_URL: env.SUPABASE_URL || "https://placeholder.supabase.co",

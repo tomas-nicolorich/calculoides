@@ -52,8 +52,8 @@ export default tseslint.config(
   {
     // Next.js App Router file conventions (`metadata`, `generateMetadata`,
     // `viewport`, route `config`) require exporting non-component values
-    // alongside the default component — the opposite of Vite Fast Refresh's
-    // assumption that `frontend/`'s config targets.
+    // alongside the default component, which `react-refresh` (a Vite Fast
+    // Refresh rule) would flag.
     files: ["app/**/*.{ts,tsx}", "proxy.ts"],
     rules: {
       "react-refresh/only-export-components": "off",

@@ -11,7 +11,7 @@ const DashboardMemberSchema = z.object({
   budgeted: z.number().nonnegative(),
 });
 
-export const RecentExpenseSchema = z.object({
+const RecentExpenseSchema = z.object({
   id: z.uuid(),
   description: z.string(),
   amount: z.number().positive(),
@@ -55,7 +55,7 @@ export const DashboardSummarySchema = z.object({
   recentTransfers: z.array(TransferSchema),
 });
 
-export const CategoryBalanceSchema = z.object({
+const CategoryBalanceSchema = z.object({
   memberId: z.uuid(),
   quota: z.number().nonnegative(),
   /** Canonical 1dp display share (0..100); sums to exactly 100.0 per category. */

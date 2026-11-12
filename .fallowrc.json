@@ -1,9 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "ignorePatterns": [
-    "**/__mocks__/**",
     "prisma.config.ts",
-    "**/prisma/client/**",
     "next-env.d.ts"
   ],
   "duplicates": {

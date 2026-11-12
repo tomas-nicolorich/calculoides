@@ -6,8 +6,8 @@ import { isGroupMember, isGroupOwner } from "../server/authz";
 import { GroupService } from "../server/services/group";
 import { ArchiveService } from "../server/services/archive";
 import { InvitationService } from "../server/services/invitation";
-import { toStatus } from "../server/errors";
-import { ActionResult, ok, fail } from "./result";
+import { ActionResult, ok, fail, fromThrown } from "./result";
+import { getAuthenticatedUserId } from "./session";
 import {
   CreateGroupSchema,
   ArchiveBodySchema,
@@ -32,14 +32,6 @@ const RespondInviteSchema = z.object({
   action: z.enum(["ACCEPT", "REJECT"]),
 });
 
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
-
 async function getAuthenticatedUser(): Promise<{
   id: string;
   email?: string;
@@ -50,11 +42,6 @@ async function getAuthenticatedUser(): Promise<{
   } = await supabase.auth.getUser();
   if (!user) return null;
   return { id: user.id, email: user.email };
-}
-
-function fromThrown<T>(err: unknown): ActionResult<T> {
-  const message = err instanceof Error ? err.message : String(err);
-  return fail(message, toStatus(message));
 }
 
 // resource-authorization: "Group Access Requires Membership or Ownership"

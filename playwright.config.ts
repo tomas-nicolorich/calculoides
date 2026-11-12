@@ -20,8 +20,8 @@ export default defineConfig({
   ],
   webServer: {
     command: process.env.CI
-      ? "npm run build:next && npm run start:next -- -p 3210"
-      : "npm run dev:next -- -p 3210",
+      ? "bun run build && bun run start:next -p 3210"
+      : "bun run dev -p 3210",
     port: 3210,
     reuseExistingServer: !process.env.CI,
   },

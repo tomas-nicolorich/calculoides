@@ -3,8 +3,7 @@
 import { z } from "zod";
 import { createClient } from "../supabase/server";
 import { UserService } from "../server/services/user";
-import { toStatus } from "../server/errors";
-import { ActionResult, ok, fail } from "./result";
+import { ActionResult, ok, fail, fromThrown } from "./result";
 
 // Server Action ported from `api/_src/handlers/users.ts`'s `upsert` route
 // (3b.7). resource-authorization: "User Profile Access Is Self-Scoped" — the
@@ -46,7 +45,6 @@ export async function upsert(
     );
     return ok(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return fail(message, toStatus(message));
+    return fromThrown(err);
   }
 }
