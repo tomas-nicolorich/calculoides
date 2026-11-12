@@ -302,18 +302,17 @@ describe("SummaryService.getGroupSummary — members budgeted/remainingQuota par
       },
     ] as any);
 
-    // Flat fromMemberId/toMemberId are what the balance-calc loop actually
-    // reads; nested fromMember/toMember are what the separate
-    // recentTransfers mapping reads. Both must be present or the service
-    // throws.
+    // Flat fromMemberId/toMemberId are `category_members` ids (the Transfer
+    // foreign keys). The balance math and the recentTransfers mapping must
+    // both read the group member ids from the nested fromMember/toMember.
     vi.mocked(prisma.transfer.findMany).mockResolvedValue([
       {
         id: TRANSFER_2,
         categoryId: CATEGORY_ID,
         amount: 20,
         date: new Date("2026-06-12T10:00:00.000Z"),
-        fromMemberId: MEMBER_B,
-        toMemberId: MEMBER_A,
+        fromMemberId: "category-member-b",
+        toMemberId: "category-member-a",
         fromMember: { memberId: MEMBER_B },
         toMember: { memberId: MEMBER_A },
       },

@@ -38,7 +38,25 @@ describe("Budget & Transfer Services Extensions", () => {
   });
 
   describe("BudgetService.updateCategory", () => {
-    it("should update category details and recreate member links in transaction", async () => {
+    it("leaves member links (and the transfers that cascade from them) untouched when no member subset is sent", async () => {
+      vi.mocked(prisma.category.update).mockResolvedValue({
+        id: "cat-123",
+      } as unknown as Category);
+      vi.mocked(prisma.category.findUnique).mockResolvedValue({
+        groupId: "group-123",
+      } as unknown as Category);
+      vi.mocked(prisma.groupMember.findFirst).mockResolvedValue({
+        id: "member-1",
+      } as unknown as Prisma.GroupMemberGetPayload<Record<string, never>>);
+
+      await BudgetService.updateCategory("cat-123", "Rent", 900, "user-123");
+
+      expect(prisma.category.update).toHaveBeenCalled();
+      expect(prisma.categoryMember.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.categoryMember.createMany).not.toHaveBeenCalled();
+    });
+
+    it("should update category details and sync member links in transaction", async () => {
       const categoryId = "cat-123";
       const updatedData = {
         id: categoryId,
@@ -75,8 +93,9 @@ describe("Budget & Transfer Services Extensions", () => {
         }),
       });
 
+      // Only members who left the subset lose their link.
       expect(prisma.categoryMember.deleteMany).toHaveBeenCalledWith({
-        where: { categoryId },
+        where: { categoryId, memberId: { notIn: ["member-1", "member-2"] } },
       });
 
       expect(prisma.categoryMember.createMany).toHaveBeenCalledWith({
@@ -84,6 +103,7 @@ describe("Budget & Transfer Services Extensions", () => {
           { categoryId, memberId: "member-1" },
           { categoryId, memberId: "member-2" },
         ],
+        skipDuplicates: true,
       });
 
       expect(result).toEqual(updatedData);
@@ -96,24 +116,21 @@ describe("Budget & Transfer Services Extensions", () => {
       const categoryId = "cat-123";
       const memberId = "member-123";
 
-      // Mock finding group categories
-      vi.mocked(prisma.category.findMany).mockResolvedValue([
-        { id: categoryId },
-        { id: "cat-456" },
-      ] as unknown as Category[]);
-
       // Mock transfers fetch
       vi.mocked(prisma.transfer.findMany).mockResolvedValue([] as Transfer[]);
       vi.mocked(prisma.transfer.count).mockResolvedValue(0);
 
       await TransferService.listTransfers(groupId, categoryId, memberId, 10, 0);
 
+      // The group scope must survive a caller-supplied categoryId, or a
+      // member of one group could list another group's transfers.
       expect(prisma.transfer.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
+          where: {
+            category: { groupId },
             categoryId: categoryId,
             OR: [{ fromMember: { memberId } }, { toMember: { memberId } }],
-          }),
+          },
         }),
       );
     });
@@ -121,10 +138,6 @@ describe("Budget & Transfer Services Extensions", () => {
     it("should select category id and icon and map them onto each transfer", async () => {
       const groupId = "group-123";
       const categoryId = "cat-123";
-
-      vi.mocked(prisma.category.findMany).mockResolvedValue([
-        { id: categoryId },
-      ] as unknown as Category[]);
 
       vi.mocked(prisma.transfer.findMany).mockResolvedValue([
         {

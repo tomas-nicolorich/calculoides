@@ -209,6 +209,12 @@ export const SavingsService = {
         categoryId: { in: categoryIds },
         date: { gte: startOfMonth },
       },
+      // `Transfer.fromMemberId`/`toMemberId` reference `category_members`
+      // rows; the balance math needs the group member ids behind them.
+      include: {
+        fromMember: { select: { memberId: true } },
+        toMember: { select: { memberId: true } },
+      },
     });
 
     const budgetedTotals = calculateMemberBudgetedTotals(
@@ -225,8 +231,8 @@ export const SavingsService = {
       })),
       transfers.map((t) => ({
         categoryId: t.categoryId,
-        fromMemberId: t.fromMemberId,
-        toMemberId: t.toMemberId,
+        fromMemberId: t.fromMember.memberId,
+        toMemberId: t.toMember.memberId,
         amount: Number(t.amount),
       })),
     );

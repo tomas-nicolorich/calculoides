@@ -11,6 +11,9 @@ vi.mock("../../prisma", () => ({
     groupMember: {
       findFirst: vi.fn(),
     },
+    category: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -18,8 +21,10 @@ import { prisma } from "../../prisma";
 const mockPrisma = prisma as unknown as {
   expense: { findUnique: Mock; update: Mock };
   groupMember: { findFirst: Mock };
+  category: { findFirst: Mock };
 };
 
+const OTHER_ID = "550e8400-e29b-41d4-a716-446655440009";
 const EXPENSE_ID = "550e8400-e29b-41d4-a716-446655440001";
 const GROUP_ID = "550e8400-e29b-41d4-a716-446655440002";
 const CATEGORY_ID = "550e8400-e29b-41d4-a716-446655440003";
@@ -107,5 +112,58 @@ describe("ExpenseService.updateExpense", () => {
         USER_ID,
       ),
     ).rejects.toThrow("Not a member of this group");
+  });
+
+  it("rejects moving the expense into a category of another group", async () => {
+    mockPrisma.expense.findUnique.mockResolvedValue(existingExpense);
+    mockPrisma.groupMember.findFirst.mockResolvedValue({ id: PAYER_ID });
+    mockPrisma.category.findFirst.mockResolvedValue(null);
+
+    await expect(
+      ExpenseService.updateExpense(
+        EXPENSE_ID,
+        {
+          description: "X",
+          amount: 1,
+          date: "2024-01-01",
+          categoryId: OTHER_ID,
+          payerId: PAYER_ID,
+        },
+        USER_ID,
+      ),
+    ).rejects.toThrow("Category not found");
+
+    expect(mockPrisma.category.findFirst).toHaveBeenCalledWith({
+      where: { id: OTHER_ID, groupId: GROUP_ID },
+      select: { id: true },
+    });
+    expect(mockPrisma.expense.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects a payer who is not a member of the expense's group", async () => {
+    mockPrisma.expense.findUnique.mockResolvedValue(existingExpense);
+    mockPrisma.groupMember.findFirst
+      .mockResolvedValueOnce({ id: PAYER_ID }) // caller membership
+      .mockResolvedValueOnce(null); // new payer lookup
+
+    await expect(
+      ExpenseService.updateExpense(
+        EXPENSE_ID,
+        {
+          description: "X",
+          amount: 1,
+          date: "2024-01-01",
+          categoryId: CATEGORY_ID,
+          payerId: OTHER_ID,
+        },
+        USER_ID,
+      ),
+    ).rejects.toThrow("Payer is not a member of this group");
+
+    expect(mockPrisma.groupMember.findFirst).toHaveBeenLastCalledWith({
+      where: { id: OTHER_ID, groupId: GROUP_ID },
+      select: { id: true },
+    });
+    expect(mockPrisma.expense.update).not.toHaveBeenCalled();
   });
 });

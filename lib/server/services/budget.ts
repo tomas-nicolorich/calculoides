@@ -35,6 +35,8 @@ export const BudgetService = {
           where: { isArchived: false },
         },
         transfers: {
+          // A Transfer does not persist across an Archive boundary.
+          where: { archivedPeriod: null },
           include: {
             fromMember: { select: { memberId: true } },
             toMember: { select: { memberId: true } },
@@ -181,32 +183,27 @@ export const BudgetService = {
         },
       });
 
-      await tx.categoryMember.deleteMany({
-        where: { categoryId },
-      });
-
-      if (memberIds && memberIds.length > 0) {
-        await tx.categoryMember.createMany({
-          data: memberIds.map((memberId) => ({
-            categoryId,
-            memberId,
-          })),
+      // Transfers reference `category_members` rows with ON DELETE CASCADE,
+      // so deleting a link deletes that member's transfers in this category.
+      // Leave the links alone unless the caller sends a Member Subset, and
+      // then remove only the members who left it.
+      if (memberIds !== undefined) {
+        await tx.categoryMember.deleteMany({
+          where: { categoryId, memberId: { notIn: memberIds } },
         });
+
+        if (memberIds.length > 0) {
+          await tx.categoryMember.createMany({
+            data: memberIds.map((memberId) => ({
+              categoryId,
+              memberId,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
 
       return category;
-    });
-  },
-
-  async listCategories(groupId: string) {
-    return await prisma.category.findMany({
-      where: { groupId },
-      include: {
-        expenses: {
-          where: { isArchived: false },
-        },
-        transfers: true,
-      },
     });
   },
 

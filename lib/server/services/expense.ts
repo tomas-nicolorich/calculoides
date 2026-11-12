@@ -56,29 +56,6 @@ export const ExpenseService = {
   },
 
   /**
-   * Retrieves expenses for a category.
-   * Mandated by BUG-014 to include payer user names.
-   */
-  async getExpensesByCategory(categoryId: string) {
-    return await prisma.expense.findMany({
-      where: {
-        categoryId,
-        isArchived: false,
-      },
-      include: {
-        payer: {
-          include: {
-            user: {
-              select: { name: true, email: true },
-            },
-          },
-        },
-      },
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-    });
-  },
-
-  /**
    * Lists expenses for a group with pagination and optional category filtering.
    */
   async listExpenses(
@@ -175,6 +152,24 @@ export const ExpenseService = {
 
     if (!membership) throw new Error("Not a member of this group");
 
+    // The new category and payer must belong to the expense's own group;
+    // otherwise a member could move an expense into another group's budget.
+    const groupId = expense.category.groupId;
+    if (fields.categoryId !== expense.categoryId) {
+      const category = await prisma.category.findFirst({
+        where: { id: fields.categoryId, groupId },
+        select: { id: true },
+      });
+      if (!category) throw new Error("Category not found");
+    }
+    if (fields.payerId !== expense.payerId) {
+      const payer = await prisma.groupMember.findFirst({
+        where: { id: fields.payerId, groupId },
+        select: { id: true },
+      });
+      if (!payer) throw new Error("Payer is not a member of this group");
+    }
+
     return await prisma.expense.update({
       where: { id: expenseId },
       data: {
@@ -221,27 +216,6 @@ export const ExpenseService = {
 
     return await prisma.expense.delete({
       where: { id: expenseId },
-    });
-  },
-
-  /**
-   * Archives all expenses in a group (for end-of-month reset).
-   */
-  async archiveGroupExpenses(groupId: string) {
-    // Find all categories in the group
-    const categories = await prisma.category.findMany({
-      where: { groupId },
-      select: { id: true },
-    });
-
-    return await prisma.expense.updateMany({
-      where: {
-        categoryId: { in: categories.map((c) => c.id) },
-        isArchived: false,
-      },
-      data: {
-        isArchived: true,
-      },
     });
   },
 

@@ -84,18 +84,6 @@ describe("ExpenseService Integration", () => {
     );
   });
 
-  it("should order getExpensesByCategory by date desc, then createdAt desc as a tiebreak", async () => {
-    vi.mocked(prisma.expense.findMany).mockResolvedValue([]);
-
-    await ExpenseService.getExpensesByCategory("cat-1");
-
-    expect(vi.mocked(prisma.expense.findMany)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      }),
-    );
-  });
-
   it("should delete an expense permanently", async () => {
     const expenseId = "exp-1";
     vi.mocked(prisma.expense.findUnique).mockResolvedValue({

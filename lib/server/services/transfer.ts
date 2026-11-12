@@ -194,15 +194,10 @@ export const TransferService = {
     limit = 20,
     offset = 0,
   ) {
-    const categories = await prisma.category.findMany({
-      where: { groupId },
-      select: { id: true },
-    });
-
-    const categoryIds = categories.map((c) => c.id);
-
+    // The group scope stays on the relation so a caller-supplied `categoryId`
+    // narrows the result and can never replace the group filter.
     const whereClause: Prisma.TransferWhereInput = {
-      categoryId: { in: categoryIds },
+      category: { groupId },
     };
 
     if (categoryId) {

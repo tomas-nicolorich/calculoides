@@ -91,8 +91,10 @@ export const SummaryService = {
       })),
       transfers.map((t) => ({
         categoryId: t.categoryId,
-        fromMemberId: t.fromMemberId,
-        toMemberId: t.toMemberId,
+        // `Transfer.fromMemberId`/`toMemberId` reference `category_members`
+        // rows; the balance math needs the group member ids behind them.
+        fromMemberId: t.fromMember.memberId,
+        toMemberId: t.toMember.memberId,
         amount: Number(t.amount),
       })),
     );
@@ -134,8 +136,8 @@ export const SummaryService = {
             amount: Number(e.amount),
           })),
           catTransfers.map((t) => ({
-            fromMemberId: t.fromMemberId,
-            toMemberId: t.toMemberId,
+            fromMemberId: t.fromMember.memberId,
+            toMemberId: t.toMember.memberId,
             amount: Number(t.amount),
           })),
         );
