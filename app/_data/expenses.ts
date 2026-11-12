@@ -9,6 +9,7 @@ import {
 } from "../../lib/actions/expense";
 import { fetchJson } from "./fetch-json";
 import { invalidateGroupQueries } from "./invalidate";
+import { throwOnFailure } from "./throw-on-failure";
 
 /** Hoisted from `app/(app)/expenses/[groupId]/queries.ts` per ADR-2. */
 export function useExpensesList(groupId: string, filters: ExpenseFilters = {}) {
@@ -54,7 +55,7 @@ export function useUpdateExpense(groupId: string) {
 export function useDeleteExpense(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteExpense,
+    mutationFn: throwOnFailure(deleteExpense),
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }
@@ -62,7 +63,7 @@ export function useDeleteExpense(groupId: string) {
 export function useDeleteAllExpenses(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteAll,
+    mutationFn: throwOnFailure(deleteAll),
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }

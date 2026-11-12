@@ -8,6 +8,7 @@ import {
 } from "../../lib/actions/transfer";
 import { fetchJson } from "./fetch-json";
 import { invalidateGroupQueries } from "./invalidate";
+import { throwOnFailure } from "./throw-on-failure";
 
 /** Hoisted from `app/(app)/transfers/[groupId]/queries.ts` per ADR-2. */
 export function useTransfersList(
@@ -45,7 +46,7 @@ export function useCreateTransfer(groupId: string) {
 export function useDeleteTransfer(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteTransfer,
+    mutationFn: throwOnFailure(deleteTransfer),
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }
@@ -53,7 +54,7 @@ export function useDeleteTransfer(groupId: string) {
 export function useDeleteAllTransfers(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deleteAll,
+    mutationFn: throwOnFailure(deleteAll),
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }

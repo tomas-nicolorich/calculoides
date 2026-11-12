@@ -171,15 +171,39 @@ describe("IncomeOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
     await waitFor(() => {
-      expect(updateIncome).toHaveBeenCalledWith(
-        { memberId: "m1", income: 3500 },
-        expect.anything(),
-      );
+      expect(updateIncome).toHaveBeenCalledWith({
+        memberId: "m1",
+        income: 3500,
+      });
     });
     await waitFor(() => {
       expect(
         queryClient.getQueryState(queryKeys.summary(GROUP_ID))?.isInvalidated,
       ).toBe(true);
     });
+  });
+
+  // Server Actions return `{ ok: false }` instead of throwing; the edit
+  // panel must still report the failure instead of closing as if saved.
+  it("shows the save error when updateIncome returns a failed result", async () => {
+    vi.mocked(updateIncome).mockResolvedValue({
+      ok: false,
+      error: "Unauthorized: not a member of this group",
+      status: 403,
+    });
+
+    await renderHydrated(SUMMARY_FIXTURE);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Edit incomes" }),
+    );
+    fireEvent.change(screen.getByLabelText("Income for Alice"), {
+      target: { value: "3500" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(
+      await screen.findByText("Failed to save income changes."),
+    ).toBeInTheDocument();
   });
 });

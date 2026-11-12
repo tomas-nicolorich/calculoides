@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateIncome } from "../../lib/actions/member";
 import { invalidateGroupQueries } from "./invalidate";
+import { throwOnFailure } from "./throw-on-failure";
 
 /**
  * Hoisted mutation hook (ADR-2). `IncomeOverview` is the first consumer of
@@ -12,7 +13,7 @@ import { invalidateGroupQueries } from "./invalidate";
 export function useUpdateIncome(groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateIncome,
+    mutationFn: throwOnFailure(updateIncome),
     onSuccess: () => invalidateGroupQueries(queryClient, groupId),
   });
 }
